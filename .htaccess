@@ -1,0 +1,154 @@
+# ============================================================
+# Sensum Construcciones — .htaccess for Namecheap / cPanel (Apache)
+# Upload this file (with the leading dot) into public_html alongside
+# index.html. See DEPLOY.md for the full go-live checklist and for a
+# header-verification checklist/command to run once this is live.
+# ============================================================
+
+# ----------------------------------------------------------------
+# Force HTTPS + canonical host (no www), WITHOUT ever reflecting the
+# incoming Host header into the redirect target. The old version of
+# this rule redirected to "https://%{HTTP_HOST}%{REQUEST_URI}" — that
+# reflects attacker-controlled input (a spoofed/stale Host header)
+# straight into a 301 Location, which is exactly the "untrusted
+# Host-derived redirect" pattern to avoid. The redirect target below
+# is always the literal, hardcoded canonical domain — never anything
+# derived from the request — so a bogus Host header just gets sent to
+# the real site instead of being reflected anywhere.
+# ----------------------------------------------------------------
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  RewriteCond %{HTTPS} off [OR]
+  RewriteCond %{HTTP_HOST} !^sensumconstrucciones\.com$ [NC]
+  RewriteRule ^ https://sensumconstrucciones.com%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# ----------------------------------------------------------------
+# Security headers
+# ----------------------------------------------------------------
+<IfModule mod_headers.c>
+  # HSTS: safe to ship from day one — browsers only ever honor an
+  # HSTS header received over an already-secure HTTPS connection, so
+  # this has no effect until AutoSSL/HTTPS is live (see DEPLOY.md step
+  # 4), and no risk of stranding HTTP-only visitors before then. Once
+  # HTTPS is confirmed working, re-verify this header is actually
+  # served (see the header-verification checklist in DEPLOY.md).
+  # Separately: do NOT submit this domain to the browser HSTS preload
+  # list (hstspreload.org) — a manual step, not something this file
+  # does — until EVERY subdomain (not just www/bare) is permanently
+  # served over HTTPS. Preload is effectively irreversible for a long
+  # time once accepted, and it applies to the whole domain,
+  # includeSubDomains and all.
+  Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+
+  # CSS and JS both live in external files (assets/main.css, assets/main.js)
+  # and there are no inline <script>/<style> blocks or inline event-handler
+  # attributes anywhere on the site (including the no-JS fallback page
+  # assets/contact-handler.php can render), so this CSP needs no
+  # 'unsafe-inline'. fonts.googleapis.com/fonts.gstatic.com are listed
+  # only while fonts are loaded from Google Fonts — remove both once
+  # assets/fonts/local-fonts.css is wired in (see assets/fonts/README.md).
+  # If you later add a live Google Maps <iframe> embed, add
+  # "frame-src https://www.google.com" to this line.
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; frame-src 'none'; connect-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
+
+  # COOP/CORP reviewed for compatibility with this site: COOP
+  # same-origin only governs this page's window.opener relationship
+  # and does not block outbound requests (Google Fonts) or the
+  # target="_blank" links to Maps/Instagram/WhatsApp, since those open
+  # new, independent browsing contexts rather than relying on
+  # window.opener access. CORP same-origin restricts OTHER sites from
+  # embedding this site's own assets (images/CSS/JS) — it has no
+  # effect on this page loading Google Fonts' resources, since that
+  # permission is controlled by Google's own CORP/CORS headers, not
+  # ours. Both are safe to keep as the strictest setting.
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set Cross-Origin-Resource-Policy "same-origin"
+
+  # Don't leak the PHP version / server signature in response headers.
+  # (ServerSignature/ServerTokens require server-config context and are
+  # usually not overridable from .htaccess on shared hosting — safe to
+  # leave here in case your plan allows it; otherwise Apache ignores it.)
+  Header unset X-Powered-By
+</IfModule>
+
+# ----------------------------------------------------------------
+# Compression
+# ----------------------------------------------------------------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml
+  AddOutputFilterByType DEFLATE application/javascript application/json application/xml
+  AddOutputFilterByType DEFLATE image/svg+xml font/woff2
+</IfModule>
+
+# ----------------------------------------------------------------
+# Browser caching for static assets. index.html, privacy-notice.html,
+# and 404.html are left out so content edits go live immediately on
+# next deploy. Static asset URLs are versioned with a "?v=" query
+# string (see index.html) as a cache-busting mechanism compatible
+# with this no-build, upload-the-file-again deployment workflow —
+# bump the version number when you change main.css/main.js so
+# returning visitors don't keep serving a stale cached copy for the
+# full month below.
+# ----------------------------------------------------------------
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/avif "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType image/x-icon "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType application/manifest+json "access plus 1 week"
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(css|js|png|jpe?g|webp|avif|svg|ico|woff2?)$">
+    Header set Cache-Control "public, max-age=2592000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.php$">
+    Header set Cache-Control "no-store"
+  </FilesMatch>
+</IfModule>
+
+# ----------------------------------------------------------------
+# Block direct access to source/config/backup files that shouldn't be
+# served — including the mail-config example, any real deployed
+# variant of it that accidentally ends up inside public_html, rate-
+# limit data, and common dotfiles/backup/editor-swap patterns.
+# ----------------------------------------------------------------
+<FilesMatch "\.(py|sh|log|md|bak|sql|ini|env|swp|orig)$">
+  Require all denied
+</FilesMatch>
+<FilesMatch "^sensum-mail-config.*\.php$">
+  Require all denied
+</FilesMatch>
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+<IfModule mod_rewrite.c>
+  RewriteRule ^assets/\.rl-data/ - [F,L]
+</IfModule>
+
+# ----------------------------------------------------------------
+# Custom error pages
+# ----------------------------------------------------------------
+ErrorDocument 404 /404.html
+
+# ----------------------------------------------------------------
+# Default charset + directory listing off
+# ----------------------------------------------------------------
+AddDefaultCharset UTF-8
+Options -Indexes

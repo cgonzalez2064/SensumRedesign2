@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="es-GT">
+<head>
+<meta charset="UTF-8">
+<title id="pageTitle">Sensum Construcciones | Construcción y Remodelación en Guatemala</title>
+<meta name="description" content="Empresa constructora en Ciudad de Guatemala: diseño arquitectónico, remodelación, ampliación y obra civil, con planificación, precisión y respaldo técnico." id="metaDescription">
+<meta name="author" content="Sensum Construcciones">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#1c1c1c">
+<meta name="color-scheme" content="light">
+<link rel="canonical" href="https://sensumconstrucciones.com/">
+
+<!--
+  BILINGUAL SEO ARCHITECTURE — DECISION NOTE (see completion report for the
+  full rationale): this project ships one URL ("/") with a client-side
+  ES/EN toggle rather than separate crawlable /es/ and /en/ documents.
+  There is therefore no hreflang/x-default block here — hreflang describes
+  alternate URLs for the same content, and only one URL exists. The meta
+  tags below are updated at runtime by assets/main.js when the visitor
+  switches language (see applyLang()), but search engine crawlers index
+  the server-rendered Spanish version below, since they do not execute
+  the toggle. Do not present this page as if it had independently
+  indexable ES/EN URLs.
+-->
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_GT" id="ogLocale">
+<meta property="og:site_name" content="Sensum Construcciones">
+<meta property="og:title" content="Sensum Construcciones | Construcción y Remodelación en Guatemala" id="ogTitle">
+<meta property="og:description" content="Construcción y remodelación con planificación, precisión y respaldo técnico en Ciudad de Guatemala. Conoce nuestros servicios y proyectos." id="ogDescription">
+<meta property="og:url" content="https://sensumconstrucciones.com/">
+<meta property="og:image" content="https://sensumconstrucciones.com/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Sensum Construcciones Guatemala">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sensum Construcciones Guatemala" id="twitterTitle">
+<meta name="twitter:description" content="Construcción y remodelación con planificación, precisión y respaldo técnico en Ciudad de Guatemala." id="twitterDescription">
+<meta name="twitter:image" content="https://sensumconstrucciones.com/assets/og-image.png">
+
+<!-- Icons -->
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="assets/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
+<link rel="manifest" href="/site.webmanifest">
+
+<!-- Fonts: Oswald (600,700) + Roboto (400,500,600,700) — trimmed to the
+     exact weights assets/main.css actually uses (previously 400/500/600/700
+     for Oswald and 300/400/500/700 for Roboto — Oswald 400/500 and Roboto
+     300 were never used anywhere in the stylesheet). display=swap avoids
+     invisible text while the font loads.
+     Self-hosting these as WOFF2 is the preferred long-term setup and is
+     scaffolded and ready to run — see assets/fonts/README.md — but this
+     sandbox's network policy blocks fonts.googleapis.com/fonts.gstatic.com,
+     so the actual font files could not be fetched and bundled from here.
+     See the completion report. Until that migration is run, this Google
+     Fonts stylesheet is the working, already-in-production font source. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Roboto:wght@400;500;600;700&display=swap">
+
+<!-- Structured data: LocalBusiness / GeneralContractor.
+     Fields below (address, phone, email, hours, geo, sameAs) reflect the
+     business's previously-confirmed contact details and are left
+     unchanged. `priceRange` was removed — it was an unverified estimate,
+     not confirmed business data. See CONTENT-APPROVAL.md. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "GeneralContractor",
+  "@id": "https://sensumconstrucciones.com/#organization",
+  "name": "Sensum Construcciones",
+  "alternateName": "Sensum",
+  "url": "https://sensumconstrucciones.com/",
+  "logo": "https://sensumconstrucciones.com/assets/logo-full-color.png",
+  "image": "https://sensumconstrucciones.com/assets/og-image.png",
+  "description": "Empresa guatemalteca de construcción y remodelación en Ciudad de Guatemala: diseño arquitectónico, obra civil, impermeabilización, instalaciones generales y mantenimiento preventivo.",
+  "slogan": "Tu mejor opción en servicios de construcción",
+  "telephone": ["+502-2256-7954", "+502-3481-9804"],
+  "email": "contacto@sensumconstrucciones.com",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Edificio Ascend, 13 Calle 5-31 Zona 9, Oficina 332",
+    "addressLocality": "Ciudad de Guatemala",
+    "addressRegion": "Guatemala",
+    "addressCountry": "GT"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 14.5951,
+    "longitude": -90.5136
+  },
+  "areaServed": {
+    "@type": "City",
+    "name": "Ciudad de Guatemala"
+  },
+  "sameAs": [
+    "https://www.instagram.com/sensumconstruccionesgt/"
+  ],
+  "openingHoursSpecification": {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
+    "opens": "08:00",
+    "closes": "17:30"
+  },
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Servicios de construcción y remodelación",
+    "itemListElement": [
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Remodelaciones", "description": "Ampliación y redistribución de ambientes, texturizado y pintura profesional, fachaletas o piedra decorativa, y restauración de pisos y cielo falso." } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Diseño arquitectónico", "description": "Conceptualización, desarrollo de anteproyecto, elaboración de planos a nivel de anteproyecto y constructivo, y acompañamiento técnico durante todo el diseño." } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Impermeabilización y tratamientos técnicos", "description": "Impermeabilización de losas y cubiertas, tratamiento de muros húmedos y curado de hongo, sellado de superficies naturales y reparación de fisuras y juntas frías." } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Obra civil", "description": "Trazado y movimiento de tierra, armado de estructura y cimentación, levantamiento de muros y fundición de losas y gradas, con procesos técnicos y seguros." } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Instalaciones generales", "description": "Instalaciones hidráulicas, eléctricas, de climatización y comunicaciones, además de instalaciones especiales como gas y equipos de bombeo o presión." } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Mantenimiento preventivo", "description": "Limpieza de losas, bajadas pluviales, filtros y calentadores, revisión de instalaciones eléctricas y cuidado de áreas verdes, con planes preventivos y correctivos." } }
+    ]
+  }
+}
+</script>
+
+<!-- FAQ structured data — mirrors the visible, approved FAQ section below
+     word-for-word (Spanish, the server-rendered language). Remove or
+     update this block immediately if the visible FAQ copy changes. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "¿Qué tipos de proyectos realiza Sensum Construcciones?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Trabajamos en remodelaciones, diseño arquitectónico, impermeabilización y tratamientos técnicos, obra civil, instalaciones generales y mantenimiento preventivo, para proyectos residenciales, comerciales e institucionales." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Cómo es el proceso para iniciar un proyecto?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Iniciamos con una consulta inicial para conocer tus necesidades, seguida de una visita y una propuesta con alcance, tiempos y presupuesto. Luego coordinamos la planificación y ejecución, y finalizamos con la entrega y la documentación de garantía." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿En qué zona de Guatemala trabajan?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Desarrollamos proyectos residenciales, comerciales e institucionales en Ciudad de Guatemala." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Cuál es su horario de atención?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Atendemos de lunes a viernes, de 8:00 a 17:30." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿Cómo puedo contactarlos?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Puedes escribirnos por WhatsApp o teléfono, enviarnos un correo, o completar el formulario de contacto de este sitio; también puedes visitarnos en nuestra oficina en Ciudad de Guatemala." }
+    },
+    {
+      "@type": "Question",
+      "name": "¿El sitio está disponible en inglés?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Sí. Puedes cambiar el idioma del sitio con el botón ES/EN en la parte superior." }
+    }
+  ]
+}
+</script>
+
+<link rel="stylesheet" href="assets/main.css?v=2">
+
+<!-- If styles fail to load or JS is unavailable, scroll-reveal elements
+     must not stay invisible — .reveal starts at opacity:0 and only a
+     running IntersectionObserver (assets/main.js) ever adds .in-view.
+     This unconditionally restores visibility without JS. -->
+<noscript><style>.reveal{opacity:1 !important; transform:none !important;}</style></noscript>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Saltar al contenido principal</a>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <a href="#inicio" class="brand" data-i18n-attr="aria-label:brand.aria" aria-label="Sensum Construcciones - Inicio">
+      <img class="brand-mark" src="assets/logo-icon.png" alt="" aria-hidden="true" width="44" height="44">
+      <span class="brand-text"><span class="brand-name">Sensum</span><small>Construcciones</small></span>
+    </a>
+    <nav class="nav-desktop" aria-label="Navegación principal">
+      <ul>
+        <li><a href="#inicio" data-i18n="nav.inicio">Inicio</a></li>
+        <li><a href="#nosotros" data-i18n="nav.nosotros">Nosotros</a></li>
+        <li><a href="#servicios" data-i18n="nav.servicios">Servicios</a></li>
+        <li><a href="#proyectos" data-i18n="nav.proyectos">Tipos de proyectos</a></li>
+        <li><a href="#faq" data-i18n="nav.faq">Preguntas frecuentes</a></li>
+        <li><a href="#contacto" data-i18n="nav.contacto">Contacto</a></li>
+      </ul>
+    </nav>
+    <a href="#contacto" class="btn btn-gold header-cta" data-i18n="nav.cta">Cotizar proyecto</a>
+    <button class="lang-toggle" id="langToggle" type="button" data-i18n-attr="aria-label:lang.toggle_aria" aria-label="Cambiar idioma">EN</button>
+    <button class="menu-toggle" id="menuToggle" type="button" data-i18n-attr="aria-label:menu.open_aria" aria-label="Abrir menú de navegación" aria-expanded="false" aria-controls="mobileNav">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<div class="mobile-nav-scrim" id="navScrim"></div>
+<nav class="mobile-nav" id="mobileNav" data-i18n-attr="aria-label:mobilenav.aria" aria-label="Menú móvil" aria-hidden="true" inert>
+  <ul>
+    <li><a href="#inicio" data-i18n="nav.inicio">Inicio</a></li>
+    <li><a href="#nosotros" data-i18n="nav.nosotros">Nosotros</a></li>
+    <li><a href="#servicios" data-i18n="nav.servicios">Servicios</a></li>
+    <li><a href="#proyectos" data-i18n="nav.proyectos">Tipos de proyectos</a></li>
+    <li><a href="#faq" data-i18n="nav.faq">Preguntas frecuentes</a></li>
+    <li><a href="#contacto" data-i18n="nav.contacto">Contacto</a></li>
+  </ul>
+  <a href="#contacto" class="btn btn-gold" data-i18n="nav.cta">Cotizar proyecto</a>
+  <div class="mobile-nav-social">
+    <a href="https://www.instagram.com/sensumconstruccionesgt/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2c2.7 0 3.06.01 4.12.06 1.06.05 1.79.22 2.43.47.66.26 1.21.6 1.76 1.15.55.55.9 1.1 1.15 1.76.25.64.42 1.37.47 2.43.05 1.06.06 1.42.06 4.13s-.01 3.06-.06 4.12c-.05 1.06-.22 1.79-.47 2.43a4.9 4.9 0 0 1-1.15 1.76 4.9 4.9 0 0 1-1.76 1.15c-.64.25-1.37.42-2.43.47-1.06.05-1.42.06-4.12.06s-3.06-.01-4.13-.06c-1.06-.05-1.79-.22-2.43-.47a4.9 4.9 0 0 1-1.76-1.15 4.9 4.9 0 0 1-1.15-1.76c-.25-.64-.42-1.37-.47-2.43C2.01 15.06 2 14.7 2 12s.01-3.06.06-4.13c.05-1.06.22-1.79.47-2.43.26-.66.6-1.21 1.15-1.76A4.9 4.9 0 0 1 5.44 2.53c.64-.25 1.37-.42 2.43-.47C8.94 2.01 9.3 2 12 2m0 1.8c-2.66 0-2.98.01-4.02.06-.87.04-1.34.18-1.65.3-.42.16-.71.35-1.02.66-.31.31-.5.6-.66 1.02-.12.31-.26.78-.3 1.65-.05 1.04-.06 1.36-.06 4.02s.01 2.98.06 4.02c.04.87.18 1.34.3 1.65.16.42.35.71.66 1.02.31.31.6.5 1.02.66.31.12.78.26 1.65.3 1.04.05 1.36.06 4.02.06s2.98-.01 4.02-.06c.87-.04 1.34-.18 1.65-.3.42-.16.71-.35 1.02-.66.31-.31.5-.6.66-1.02.12-.31.26-.78.3-1.65.05-1.04.06-1.36.06-4.02s-.01-2.98-.06-4.02c-.04-.87-.18-1.34-.3-1.65a2.8 2.8 0 0 0-.66-1.02 2.8 2.8 0 0 0-1.02-.66c-.31-.12-.78-.26-1.65-.3-1.04-.05-1.36-.06-4.02-.06M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10m0 1.8a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4m5.2-2.9a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0"/></svg><span class="visually-hidden" data-i18n="a11y.new_tab"> (se abre en una pestaña nueva)</span></a>
+  </div>
+</nav>
+
+<main id="main">
+
+  <!-- ============================================================
+       HERO
+       ============================================================ -->
+  <section id="inicio" class="hero">
+    <div class="hero-grid" aria-hidden="true"></div>
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-glow two" aria-hidden="true"></div>
+    <div class="container hero-inner">
+      <div class="hero-copy">
+        <span class="eyebrow" data-i18n="hero.eyebrow">Construcción y remodelación en Ciudad de Guatemala</span>
+        <h1 data-i18n="hero.title">Construcción y remodelación con planificación, <em>precisión</em> y respaldo técnico</h1>
+        <p data-i18n="hero.desc">Desarrollamos proyectos residenciales, comerciales e institucionales en Ciudad de Guatemala, desde el diseño y la cotización hasta la ejecución y entrega.</p>
+        <div class="hero-actions">
+          <a href="#contacto" class="btn btn-gold" data-i18n="hero.cta1">Solicitar evaluación técnica</a>
+          <a href="#proyectos" class="btn btn-outline" data-i18n="hero.cta2">Conocer nuestros proyectos</a>
+        </div>
+        <div class="hero-badges">
+          <span class="hero-badge"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="hero.badge1">Comunicación clara</span></span>
+          <span class="hero-badge"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="hero.badge2">Supervisión técnica</span></span>
+          <span class="hero-badge"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="hero.badge3">Presupuestos detallados</span></span>
+        </div>
+      </div>
+      <div class="hero-panel reveal" role="group" data-i18n-attr="aria-label:hero.panel_label" aria-label="Cómo trabajamos en Sensum Construcciones">
+        <div class="hero-pillar">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <div class="label" data-i18n="pillar.plan_label">Planificación</div>
+        </div>
+        <div class="hero-pillar">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+          <div class="label" data-i18n="pillar.precision_label">Precisión</div>
+        </div>
+        <div class="hero-pillar">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <div class="label" data-i18n="pillar.comm_label">Comunicación clara</div>
+        </div>
+        <div class="hero-pillar">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.5 13.5 15 19l-3-3-6.5-6.5L9 6l3 3 8.5-8.5z" opacity="0"/><path d="M17 4h3v3M12 9l8-8M8 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          <div class="label" data-i18n="pillar.support_label">Respaldo técnico</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       ABOUT / NOSOTROS
+       ============================================================ -->
+  <section id="nosotros" class="section-pad about">
+    <div class="container about-grid">
+      <div class="reveal">
+        <div class="about-art">
+          <svg class="blueprint-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true">
+            <path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/>
+          </svg>
+          <div class="about-art-caption">
+            <p data-i18n="about.art_caption">Planificación y supervisión técnica en cada etapa del proyecto.</p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="section-head reveal">
+          <span class="eyebrow" data-i18n="about.eyebrow">Quiénes somos</span>
+          <h2 class="section-title" data-i18n="about.title">Nosotros</h2>
+          <p data-i18n="about.desc">En Sensum Construcciones planificamos y ejecutamos proyectos de diseño, remodelación, ampliación y obra civil. Nuestro equipo acompaña cada etapa con comunicación clara, supervisión técnica y presupuestos detallados, para que cada cliente conozca el alcance, el proceso y los avances de su proyecto.</p>
+        </div>
+
+        <div class="mission-vision reveal-group">
+          <div class="mv-card reveal i0">
+            <h3><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg><span data-i18n="about.mission_title">Misión</span></h3>
+            <p data-i18n="about.mission_desc">Diseñar y ejecutar soluciones de construcción funcionales, seguras y duraderas, mediante procesos transparentes, supervisión técnica y atención cercana en cada etapa.</p>
+          </div>
+          <div class="mv-card reveal i1">
+            <h3><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><span data-i18n="about.vision_title">Visión</span></h3>
+            <p data-i18n="about.vision_desc">Consolidarnos como una empresa de construcción reconocida en Guatemala por la calidad de su ejecución, el cumplimiento de sus compromisos y la confianza de sus clientes.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SERVICES
+       ============================================================ -->
+  <section id="servicios" class="section-pad services">
+    <div class="container">
+      <div class="section-head center reveal">
+        <span class="eyebrow" data-i18n="services.eyebrow">Lo que hacemos</span>
+        <h2 class="section-title" data-i18n="services.title">Servicios</h2>
+        <p data-i18n="services.desc">Soluciones de diseño, construcción y mantenimiento adaptadas a las condiciones, objetivos y presupuesto de cada proyecto.</p>
+      </div>
+      <div class="services-grid reveal-group">
+
+        <article class="service-card reveal i0">
+          <div class="icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg></div>
+          <h3 data-i18n="service1.title">Remodelaciones</h3>
+          <p data-i18n="service1.desc">Ampliación y redistribución de ambientes, texturizado y pintura profesional, fachaletas o piedra decorativa, y restauración de pisos y cielo falso.</p>
+          <a class="learn" href="#contacto"><span data-i18n="services.cta">Solicitar cotización</span> <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </article>
+
+        <article class="service-card reveal i1">
+          <div class="icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2M11.5 9.5l2-2M8.5 6.5l2-2M17.5 15.5l2-2"/></svg></div>
+          <h3 data-i18n="service2.title">Diseño arquitectónico</h3>
+          <p data-i18n="service2.desc">Conceptualización, desarrollo de anteproyecto, elaboración de planos a nivel de anteproyecto y constructivo, y acompañamiento técnico durante todo el diseño.</p>
+          <a class="learn" href="#contacto"><span data-i18n="services.cta">Solicitar cotización</span> <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </article>
+
+        <article class="service-card reveal i2">
+          <div class="icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2.5c-3 4-6 7.5-6 11.2a6 6 0 0 0 12 0c0-3.7-3-7.2-6-11.2Z"/><path d="M8.5 14.5a3.5 3.5 0 0 0 3.5 3.5"/></svg></div>
+          <h3 data-i18n="service3.title">Impermeabilización y tratamientos técnicos</h3>
+          <p data-i18n="service3.desc">Impermeabilización de losas y cubiertas, tratamiento de muros húmedos y curado de hongo, sellado de superficies naturales y reparación de fisuras y juntas frías.</p>
+          <a class="learn" href="#contacto"><span data-i18n="services.cta">Solicitar cotización</span> <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </article>
+
+        <article class="service-card reveal i3">
+          <div class="icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 10V5a2 2 0 0 1 4 0v5"/><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><path d="M3 15h18v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+          <h3 data-i18n="service4.title">Obra civil</h3>
+          <p data-i18n="service4.desc">Trazado y movimiento de tierra, armado de estructura y cimentación, levantamiento de muros y fundición de losas y gradas, con procesos técnicos y seguros.</p>
+          <a class="learn" href="#contacto"><span data-i18n="services.cta">Solicitar cotización</span> <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </article>
+
+        <article class="service-card reveal i4">
+          <div class="icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg></div>
+          <h3 data-i18n="service5.title">Instalaciones generales</h3>
+          <p data-i18n="service5.desc">Instalaciones hidráulicas, eléctricas, de climatización y comunicaciones, además de instalaciones especiales como gas y equipos de bombeo o presión.</p>
+          <a class="learn" href="#contacto"><span data-i18n="services.cta">Solicitar cotización</span> <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </article>
+
+        <article class="service-card reveal i5">
+          <div class="icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a1 1 0 0 0 1.4 1.4l3.6-3.6a5 5 0 0 1-6.7 6.7L4.4 19.4a2 2 0 0 1-2.8-2.8L11.5 6.4a5 5 0 0 1 6.7-6.7z"/><circle cx="12" cy="12" r="1"/></svg></div>
+          <h3 data-i18n="service6.title">Mantenimiento preventivo</h3>
+          <p data-i18n="service6.desc">Limpieza de losas, bajadas pluviales, filtros y calentadores, revisión de instalaciones eléctricas y cuidado de áreas verdes, con planes preventivos y correctivos.</p>
+          <a class="learn" href="#contacto"><span data-i18n="services.cta">Solicitar cotización</span> <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PROCESS — items sit one level below this section's H2, so
+       they are H3s (not H4s) to keep the heading outline unbroken.
+       ============================================================ -->
+  <section class="section-pad process">
+    <div class="container">
+      <div class="section-head center reveal">
+        <span class="eyebrow" data-i18n="process.eyebrow">Cómo trabajamos</span>
+        <h2 class="section-title" data-i18n="process.title">Nuestro proceso</h2>
+      </div>
+      <div class="process-list reveal-group">
+        <div class="process-item reveal i0"><h3 data-i18n="process1.title">Consulta inicial</h3><p data-i18n="process1.desc">Conocemos tus necesidades, el tipo de inmueble y el alcance preliminar.</p></div>
+        <div class="process-item reveal i1"><h3 data-i18n="process2.title">Visita y propuesta</h3><p data-i18n="process2.desc">Evaluamos el espacio y preparamos una propuesta con alcance, tiempos y presupuesto.</p></div>
+        <div class="process-item reveal i2"><h3 data-i18n="process3.title">Planificación y ejecución</h3><p data-i18n="process3.desc">Coordinamos recursos, supervisamos los trabajos y comunicamos el avance.</p></div>
+        <div class="process-item reveal i3"><h3 data-i18n="process4.title">Entrega y garantía</h3><p data-i18n="process4.desc">Revisamos contigo el resultado final y documentamos las condiciones de garantía aplicables.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       TYPES OF PROJECTS (formerly "Proyectos"). Relabeled: these are
+       project *categories* we take on, not a portfolio of completed
+       case studies — no real project photos, locations, or client
+       details have been supplied/approved yet. Each card below is
+       built as a reusable case-study card: the commented block inside
+       shows exactly where a real photo, location, scope, summary, and
+       optional before/after images go once real, approved project
+       data exists. See CONTENT-APPROVAL.md.
+       ============================================================ -->
+  <section id="proyectos" class="section-pad projects">
+    <div class="container">
+      <div class="section-head center reveal">
+        <span class="eyebrow" data-i18n="projects.eyebrow">Nuestro trabajo</span>
+        <h2 class="section-title" data-i18n="projects.title">Tipos de proyectos</h2>
+        <p data-i18n="projects.desc">Categorías de proyectos que desarrollamos, adaptadas a cada tipo de inmueble, alcance y presupuesto.</p>
+      </div>
+      <div class="project-grid reveal-group">
+        <article class="project-card case-study-card reveal pc-0 i0">
+          <!--
+            Reusable case-study card — currently showing a category (no
+            completed-project claim). To turn this into a real case study
+            once approved data/images exist, replace the <span class="illus">
+            block with:
+              <img class="case-photo" src="assets/projects/<slug>-01.webp"
+                   alt="<Descriptive alt text of the real project>"
+                   width="640" height="480" loading="lazy">
+            and add inside the card, after the <p> summary:
+              <p class="case-meta"><strong>Ubicación:</strong> <Zona real></p>
+              <p class="case-meta"><strong>Alcance:</strong> <alcance real></p>
+              <div class="case-before-after">
+                <img src="assets/projects/<slug>-before.webp" alt="Antes" loading="lazy">
+                <img src="assets/projects/<slug>-after.webp" alt="Después" loading="lazy">
+              </div>
+            (before/after images are optional — only include them when both
+            exist and consent to publish them has been confirmed)
+          -->
+          <span class="illus" aria-hidden="true">
+            <svg viewBox="0 0 100 100" focusable="false">
+              <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
+              <path d="M30 54 L50 36 L70 54" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M36 54 V72 H64 V54" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M46 72 V60 H54 V72" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M67 30 a12 12 0 1 1 -9 -4" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" opacity=".85"/>
+              <path d="M58 22 L57 28 L64 29" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+            </svg>
+          </span>
+          <span class="tag" data-i18n="proj1.tag">Residencial</span>
+          <h3 data-i18n="proj1.title">Remodelación residencial</h3>
+          <p data-i18n="proj1.desc">Renovación integral de espacios habitacionales.</p>
+        </article>
+        <article class="project-card case-study-card reveal pc-1 i1">
+          <span class="illus" aria-hidden="true">
+            <svg viewBox="0 0 100 100" focusable="false">
+              <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
+              <path d="M38 30 H62 V74 H38 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+              <path d="M44 38 H48 M52 38 H56 M44 46 H48 M52 46 H56 M44 54 H48 M52 54 H56 M44 62 H48 M52 62 H56" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+              <path d="M18 50 H30 M30 50 L25 45 M30 50 L25 55" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M82 50 H70 M70 50 L75 45 M70 50 L75 55" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="tag" data-i18n="proj2.tag">Comercial</span>
+          <h3 data-i18n="proj2.title">Ampliación comercial</h3>
+          <p data-i18n="proj2.desc">Crecimiento de espacios para locales y oficinas.</p>
+        </article>
+        <article class="project-card case-study-card reveal pc-2 i2">
+          <span class="illus" aria-hidden="true">
+            <svg viewBox="0 0 100 100" focusable="false">
+              <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
+              <path d="M26 40 H74 M26 40 V70 M74 40 V70 M26 70 H74" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+              <path d="M26 55 H74" stroke="currentColor" stroke-width="3" opacity=".7"/>
+              <path d="M34 40 L38 55 L44 40 L48 55 L54 40 L58 55 L64 40" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+            </svg>
+          </span>
+          <span class="tag" data-i18n="proj3.tag">Obra civil</span>
+          <h3 data-i18n="proj3.title">Obra gris y cimentación</h3>
+          <p data-i18n="proj3.desc">Estructuras seguras desde los cimientos.</p>
+        </article>
+        <article class="project-card case-study-card reveal pc-3 i3">
+          <span class="illus" aria-hidden="true">
+            <svg viewBox="0 0 100 100" focusable="false">
+              <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
+              <path d="M28 30 H72 V74 H28 Z" fill="none" stroke="currentColor" stroke-width="2" opacity=".4"/>
+              <path d="M50 34 L38 68 M50 34 L62 68 M42 60 H58" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="50" cy="34" r="3.6" fill="currentColor" opacity=".9"/>
+            </svg>
+          </span>
+          <span class="tag" data-i18n="proj4.tag">Diseño</span>
+          <h3 data-i18n="proj4.title">Diseño arquitectónico</h3>
+          <p data-i18n="proj4.desc">Planos y anteproyectos a la medida del cliente.</p>
+        </article>
+        <article class="project-card case-study-card reveal pc-4 i4">
+          <span class="illus" aria-hidden="true">
+            <svg viewBox="0 0 100 100" focusable="false">
+              <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
+              <path d="M30 76 V32 M30 32 L70 40 M30 40 L58 46" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M58 46 V60" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+              <path d="M48 60 H68 V68 H48 Z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
+              <path d="M22 76 H38" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="tag" data-i18n="proj5.tag">Nueva construcción</span>
+          <h3 data-i18n="proj5.title">Construcción desde cero</h3>
+          <p data-i18n="proj5.desc">Proyectos completos, de la concepción a la entrega.</p>
+        </article>
+        <article class="project-card case-study-card reveal pc-5 i5">
+          <span class="illus" aria-hidden="true">
+            <svg viewBox="0 0 100 100" focusable="false">
+              <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
+              <circle cx="42" cy="42" r="14" fill="none" stroke="currentColor" stroke-width="3.4"/>
+              <path d="M42 24 V30 M42 54 V60 M60 42 H54 M30 42 H24 M54.5 29.5 L50.5 33.5 M33.5 50.5 L29.5 54.5 M54.5 54.5 L50.5 50.5 M33.5 33.5 L29.5 29.5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <path d="M58 58 L72 72 M72 58 L58 72" stroke="currentColor" stroke-width="4" stroke-linecap="round" opacity=".9"/>
+            </svg>
+          </span>
+          <span class="tag" data-i18n="proj6.tag">Mantenimiento</span>
+          <h3 data-i18n="proj6.title">Mantenimiento general</h3>
+          <p data-i18n="proj6.desc">Planes preventivos y correctivos a la medida.</p>
+        </article>
+      </div>
+      <div class="projects-cta reveal">
+        <a href="#contacto" class="btn btn-gold" data-i18n="projects.cta">Conversemos sobre tu proyecto</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CTA BANNER
+       ============================================================ -->
+  <section class="section-pad cta-banner">
+    <div class="container reveal">
+      <h2 data-i18n="ctabanner.title">¡Comencemos tu proyecto!</h2>
+      <p data-i18n="ctabanner.desc">Escríbenos hoy y agenda una evaluación técnica con nuestro equipo.</p>
+      <a href="#contacto" class="btn btn-dark" data-i18n="ctabanner.cta">Contáctanos ahora</a>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CONTACT
+       ============================================================ -->
+  <section id="contacto" class="section-pad contact">
+    <div class="container contact-grid">
+
+      <div class="contact-info reveal">
+        <span class="eyebrow" data-i18n="contact.eyebrow">Hablemos</span>
+        <h2 data-i18n="contact.title">Contacto</h2>
+        <p data-i18n="contact.desc">Cuéntanos qué deseas construir, ampliar o renovar. Revisaremos la información y nos comunicaremos contigo para definir el siguiente paso.</p>
+
+        <ul class="contact-list">
+          <li>
+            <span class="icn"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
+            <span><strong data-i18n="contact.label_address">Dirección</strong><a href="https://www.google.com/maps/search/?api=1&query=13+Calle+5-31+Zona+9+Ciudad+de+Guatemala" target="_blank" rel="noopener noreferrer">Edificio Ascend, 13 Calle 5-31 Zona 9, Oficina 332, Ciudad de Guatemala<span class="visually-hidden" data-i18n="a11y.new_tab"> (se abre en una pestaña nueva)</span></a></span>
+          </li>
+          <li>
+            <span class="icn"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6 6l1.1-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2Z"/></svg></span>
+            <span><strong data-i18n="contact.label_phone">Teléfono</strong><a href="tel:+50222567954">2256&#8209;7954</a> &nbsp;/&nbsp; <a href="tel:+50234819804">3481&#8209;9804</a></span>
+          </li>
+          <li>
+            <span class="icn"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="m4 6 8 7 8-7"/></svg></span>
+            <span><strong data-i18n="contact.label_email">Correo</strong><a href="mailto:contacto@sensumconstrucciones.com">contacto@sensumconstrucciones.com</a></span>
+          </li>
+          <li>
+            <span class="icn"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+            <span><strong data-i18n="contact.label_hours">Horario</strong><span data-i18n="contact.hours_value">Lunes a viernes, 8:00 – 17:30</span></span>
+          </li>
+          <li>
+            <span class="icn"><svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c2.7 0 3.06.01 4.12.06 1.06.05 1.79.22 2.43.47.66.26 1.21.6 1.76 1.15.55.55.9 1.1 1.15 1.76.25.64.42 1.37.47 2.43.05 1.06.06 1.42.06 4.13s-.01 3.06-.06 4.12c-.05 1.06-.22 1.79-.47 2.43a4.9 4.9 0 0 1-1.15 1.76 4.9 4.9 0 0 1-1.76 1.15c-.64.25-1.37.42-2.43.47-1.06.05-1.42.06-4.12.06s-3.06-.01-4.13-.06c-1.06-.05-1.79-.22-2.43-.47a4.9 4.9 0 0 1-1.76-1.15 4.9 4.9 0 0 1-1.15-1.76c-.25-.64-.42-1.37-.47-2.43C2.01 15.06 2 14.7 2 12s.01-3.06.06-4.13c.05-1.06.22-1.79.47-2.43.26-.66.6-1.21 1.15-1.76A4.9 4.9 0 0 1 5.44 2.53c.64-.25 1.37-.42 2.43-.47C8.94 2.01 9.3 2 12 2m0 1.8c-2.66 0-2.98.01-4.02.06-.87.04-1.34.18-1.65.3-.42.16-.71.35-1.02.66-.31.31-.5.6-.66 1.02-.12.31-.26.78-.3 1.65-.05 1.04-.06 1.36-.06 4.02s.01 2.98.06 4.02c.04.87.18 1.34.3 1.65.16.42.35.71.66 1.02.31.31.6.5 1.02.66.31.12.78.26 1.65.3 1.04.05 1.36.06 4.02.06s2.98-.01 4.02-.06c.87-.04 1.34-.18 1.65-.3.42-.16.71-.35 1.02-.66.31-.31.5-.6.66-1.02.12-.31.26-.78.3-1.65.05-1.04.06-1.36.06-4.02s-.01-2.98-.06-4.02c-.04-.87-.18-1.34-.3-1.65a2.8 2.8 0 0 0-.66-1.02 2.8 2.8 0 0 0-1.02-.66c-.31-.12-.78-.26-1.65-.3-1.04-.05-1.36-.06-4.02-.06M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10m0 1.8a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4m5.2-2.9a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0"/></svg></span>
+            <span><strong data-i18n="contact.label_social">Instagram</strong><a href="https://www.instagram.com/sensumconstruccionesgt/" target="_blank" rel="noopener noreferrer">@sensumconstruccionesgt<span class="visually-hidden" data-i18n="a11y.new_tab"> (se abre en una pestaña nueva)</span></a></span>
+          </li>
+        </ul>
+
+        <div class="contact-map">
+          <a class="map-card" href="https://www.google.com/maps/search/?api=1&query=13+Calle+5-31+Zona+9+Ciudad+de+Guatemala" target="_blank" rel="noopener noreferrer" data-i18n-attr="aria-label:contact.map_aria" aria-label="Abrir la ubicación de Sensum Construcciones en Google Maps (se abre en una pestaña nueva)">
+            <div class="hero-grid" aria-hidden="true"></div>
+            <span class="pin" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg></span>
+            <h3>Edificio Ascend, Zona 9</h3>
+            <p>13 Calle 5-31 Zona 9, Oficina 332, Ciudad de Guatemala</p>
+            <span class="btn btn-gold" data-i18n="contact.map_open">Abrir en Google Maps</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <div class="contact-form">
+          <h3 class="form-title" data-i18n="form.title">Envíanos un mensaje</h3>
+
+          <div class="form-summary" id="formSummary" role="alert" tabindex="-1" hidden></div>
+
+          <form id="contactForm" novalidate action="assets/contact-handler.php" method="post">
+            <div class="form-row">
+              <div class="field">
+                <label for="name" data-i18n="form.name_label">Nombre completo</label>
+                <input type="text" id="name" name="name" autocomplete="name" required minlength="2" maxlength="120" aria-describedby="name-error" aria-invalid="false">
+                <small class="err" id="name-error"><svg class="err-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 1 21h22L12 2Zm0 6 1 7h-2l1-7Zm0 9.2a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z"/></svg><span data-i18n="form.name_err">Ingresa tu nombre completo.</span></small>
+              </div>
+              <div class="field">
+                <label for="phone" data-i18n="form.phone_label">Teléfono</label>
+                <input type="tel" id="phone" name="phone" autocomplete="tel" required pattern="[\d\s\(\)+\-]{8,}" maxlength="30" aria-describedby="phone-error" aria-invalid="false">
+                <small class="err" id="phone-error"><svg class="err-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 1 21h22L12 2Zm0 6 1 7h-2l1-7Zm0 9.2a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z"/></svg><span data-i18n="form.phone_err">Ingresa un número de teléfono válido.</span></small>
+              </div>
+            </div>
+            <div class="field">
+              <label for="email" data-i18n="form.email_label">Correo electrónico</label>
+              <input type="email" id="email" name="email" autocomplete="email" required maxlength="180" aria-describedby="email-error" aria-invalid="false">
+              <small class="err" id="email-error"><svg class="err-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 1 21h22L12 2Zm0 6 1 7h-2l1-7Zm0 9.2a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z"/></svg><span data-i18n="form.email_err">Ingresa un correo electrónico válido.</span></small>
+            </div>
+            <div class="field">
+              <label for="service" data-i18n="form.service_label">Servicio de interés</label>
+              <select id="service" name="service" autocomplete="off" required aria-describedby="service-error" aria-invalid="false">
+                <option value="" selected disabled data-i18n="form.opt_placeholder">Selecciona un servicio</option>
+                <option value="Remodelaciones" data-i18n="form.opt_remodel">Remodelaciones</option>
+                <option value="Diseño arquitectónico" data-i18n="form.opt_design">Diseño arquitectónico</option>
+                <option value="Impermeabilización y tratamientos técnicos" data-i18n="form.opt_waterproof">Impermeabilización y tratamientos técnicos</option>
+                <option value="Obra civil" data-i18n="form.opt_civil">Obra civil</option>
+                <option value="Instalaciones generales" data-i18n="form.opt_installations">Instalaciones generales</option>
+                <option value="Mantenimiento preventivo" data-i18n="form.opt_maintenance">Mantenimiento preventivo</option>
+                <option value="Otro" data-i18n="form.opt_other">Otro</option>
+              </select>
+              <small class="err" id="service-error"><svg class="err-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 1 21h22L12 2Zm0 6 1 7h-2l1-7Zm0 9.2a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z"/></svg><span data-i18n="form.service_err">Selecciona el servicio que te interesa.</span></small>
+            </div>
+            <div class="field">
+              <label for="message" data-i18n="form.message_label">Cuéntanos sobre tu proyecto</label>
+              <textarea id="message" name="message" required minlength="10" maxlength="4000" aria-describedby="message-error" aria-invalid="false"></textarea>
+              <small class="err" id="message-error"><svg class="err-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 1 21h22L12 2Zm0 6 1 7h-2l1-7Zm0 9.2a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z"/></svg><span data-i18n="form.message_err">Cuéntanos un poco más sobre tu proyecto (mínimo 10 caracteres).</span></small>
+            </div>
+
+            <!-- Honeypot anti-spam field: hidden from real users via CSS, left blank by them.
+                 If it arrives filled, the request is treated as a bot and discarded server-side. -->
+            <div class="hp-field" aria-hidden="true">
+              <label for="website" data-i18n="form.hp_label">No completar este campo</label>
+              <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+            </div>
+            <!-- Minimum-completion-time signal: set by JS on page load, checked
+                 server-side alongside the honeypot. Invisible and never read by
+                 or expected from the visitor, so it has no accessibility impact. -->
+            <input type="hidden" id="formLoadedAt" name="loaded_at" value="">
+
+            <button type="submit" class="btn btn-gold btn-block" data-i18n="form.submit">Enviar mensaje</button>
+            <p class="form-note" data-i18n-html="form.note">Usaremos tus datos únicamente para responder a tu solicitud y dar seguimiento a tu proyecto. Consulta nuestro <a href="privacy-notice.html">Aviso de Privacidad</a>.</p>
+            <p class="form-fallback" data-i18n-html="form.fallback">¿Prefieres no usar el formulario? Escríbenos por <a href="tel:+50222567954">teléfono</a>, <a href="mailto:contacto@sensumconstrucciones.com">correo</a> o <a href="https://wa.me/50234819804" target="_blank" rel="noopener noreferrer">WhatsApp</a>.</p>
+            <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FAQ — only questions answerable from information already
+       confirmed/visible elsewhere on this page (services, process,
+       area served, hours, contact channels, language toggle). No
+       commercial policy (pricing, warranty terms, financing, etc.)
+       is stated here that isn't already stated above.
+       ============================================================ -->
+  <section id="faq" class="section-pad faq">
+    <div class="container">
+      <div class="section-head center reveal">
+        <span class="eyebrow" data-i18n="faq.eyebrow">Dudas frecuentes</span>
+        <h2 class="section-title" data-i18n="faq.title">Preguntas frecuentes</h2>
+      </div>
+      <div class="faq-list reveal-group">
+        <details class="faq-item reveal i0">
+          <summary><span data-i18n="faq.q1">¿Qué tipos de proyectos realiza Sensum Construcciones?</span></summary>
+          <p data-i18n="faq.a1">Trabajamos en remodelaciones, diseño arquitectónico, impermeabilización y tratamientos técnicos, obra civil, instalaciones generales y mantenimiento preventivo, para proyectos residenciales, comerciales e institucionales.</p>
+        </details>
+        <details class="faq-item reveal i1">
+          <summary><span data-i18n="faq.q2">¿Cómo es el proceso para iniciar un proyecto?</span></summary>
+          <p data-i18n="faq.a2">Iniciamos con una consulta inicial para conocer tus necesidades, seguida de una visita y una propuesta con alcance, tiempos y presupuesto. Luego coordinamos la planificación y ejecución, y finalizamos con la entrega y la documentación de garantía.</p>
+        </details>
+        <details class="faq-item reveal i2">
+          <summary><span data-i18n="faq.q3">¿En qué zona de Guatemala trabajan?</span></summary>
+          <p data-i18n="faq.a3">Desarrollamos proyectos residenciales, comerciales e institucionales en Ciudad de Guatemala.</p>
+        </details>
+        <details class="faq-item reveal i3">
+          <summary><span data-i18n="faq.q4">¿Cuál es su horario de atención?</span></summary>
+          <p data-i18n="faq.a4">Atendemos de lunes a viernes, de 8:00 a 17:30.</p>
+        </details>
+        <details class="faq-item reveal i4">
+          <summary><span data-i18n="faq.q5">¿Cómo puedo contactarlos?</span></summary>
+          <p data-i18n="faq.a5">Puedes escribirnos por WhatsApp o teléfono, enviarnos un correo, o completar el formulario de contacto de este sitio; también puedes visitarnos en nuestra oficina en Ciudad de Guatemala.</p>
+        </details>
+        <details class="faq-item reveal i5">
+          <summary><span data-i18n="faq.q6">¿El sitio está disponible en inglés?</span></summary>
+          <p data-i18n="faq.a6">Sí. Puedes cambiar el idioma del sitio con el botón ES/EN en la parte superior.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-about">
+      <div class="footer-brand">
+        <img class="brand-mark" src="assets/logo-icon.png" alt="" aria-hidden="true" width="44" height="44">
+        <span class="brand-text"><span class="brand-name">Sensum</span><small>Construcciones</small></span>
+      </div>
+      <p data-i18n="footer.about_desc">Diseño y construcción profesional en Ciudad de Guatemala.</p>
+      <div class="footer-social">
+        <a href="https://www.instagram.com/sensumconstruccionesgt/" target="_blank" rel="noopener noreferrer">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c2.7 0 3.06.01 4.12.06 1.06.05 1.79.22 2.43.47.66.26 1.21.6 1.76 1.15.55.55.9 1.1 1.15 1.76.25.64.42 1.37.47 2.43.05 1.06.06 1.42.06 4.13s-.01 3.06-.06 4.12c-.05 1.06-.22 1.79-.47 2.43a4.9 4.9 0 0 1-1.15 1.76 4.9 4.9 0 0 1-1.76 1.15c-.64.25-1.37.42-2.43.47-1.06.05-1.42.06-4.12.06s-3.06-.01-4.13-.06c-1.06-.05-1.79-.22-2.43-.47a4.9 4.9 0 0 1-1.76-1.15 4.9 4.9 0 0 1-1.15-1.76c-.25-.64-.42-1.37-.47-2.43C2.01 15.06 2 14.7 2 12s.01-3.06.06-4.13c.05-1.06.22-1.79.47-2.43.26-.66.6-1.21 1.15-1.76A4.9 4.9 0 0 1 5.44 2.53c.64-.25 1.37-.42 2.43-.47C8.94 2.01 9.3 2 12 2m0 1.8c-2.66 0-2.98.01-4.02.06-.87.04-1.34.18-1.65.3-.42.16-.71.35-1.02.66-.31.31-.5.6-.66 1.02-.12.31-.26.78-.3 1.65-.05 1.04-.06 1.36-.06 4.02s.01 2.98.06 4.02c.04.87.18 1.34.3 1.65.16.42.35.71.66 1.02.31.31.6.5 1.02.66.31.12.78.26 1.65.3 1.04.05 1.36.06 4.02.06s2.98-.01 4.02-.06c.87-.04 1.34-.18 1.65-.3.42-.16.71-.35 1.02-.66.31-.31.5-.6.66-1.02.12-.31.26-.78.3-1.65.05-1.04.06-1.36.06-4.02s-.01-2.98-.06-4.02c-.04-.87-.18-1.34-.3-1.65a2.8 2.8 0 0 0-.66-1.02 2.8 2.8 0 0 0-1.02-.66c-.31-.12-.78-.26-1.65-.3-1.04-.05-1.36-.06-4.02-.06M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10m0 1.8a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4m5.2-2.9a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0"/></svg>
+          <span data-i18n="footer.social_label">Síguenos en Instagram</span>
+          <span class="visually-hidden" data-i18n="a11y.new_tab"> (se abre en una pestaña nueva)</span>
+        </a>
+      </div>
+    </div>
+
+    <nav aria-label="Enlaces rápidos">
+      <h4 data-i18n="footer.links_heading">Enlaces</h4>
+      <ul class="footer-links">
+        <li><a href="#inicio"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="nav.inicio">Inicio</span></a></li>
+        <li><a href="#nosotros"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="nav.nosotros">Nosotros</span></a></li>
+        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="nav.servicios">Servicios</span></a></li>
+        <li><a href="#proyectos"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="nav.proyectos">Tipos de proyectos</span></a></li>
+        <li><a href="#faq"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="nav.faq">Preguntas frecuentes</span></a></li>
+        <li><a href="#contacto"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="nav.contacto">Contacto</span></a></li>
+        <li><a href="privacy-notice.html"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="footer.privacy_link">Aviso de Privacidad</span></a></li>
+      </ul>
+    </nav>
+
+    <nav aria-label="Servicios">
+      <h4 data-i18n="footer.services_heading">Servicios</h4>
+      <ul class="footer-links">
+        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="service1.title">Remodelaciones</span></a></li>
+        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="service2.title">Diseño arquitectónico</span></a></li>
+        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="service3.title">Impermeabilización y tratamientos técnicos</span></a></li>
+        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="service4.title">Obra civil</span></a></li>
+        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="service5.title">Instalaciones generales</span></a></li>
+        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-i18n="service6.title">Mantenimiento preventivo</span></a></li>
+      </ul>
+    </nav>
+
+    <div>
+      <h4 data-i18n="footer.contact_heading">Contacto</h4>
+      <ul class="footer-contact">
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><a href="https://www.google.com/maps/search/?api=1&query=13+Calle+5-31+Zona+9+Ciudad+de+Guatemala" target="_blank" rel="noopener noreferrer">Edificio Ascend, 13 Calle 5-31 Zona 9, Of. 332<span class="visually-hidden" data-i18n="a11y.new_tab"> (se abre en una pestaña nueva)</span></a></li>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6 6l1.1-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2Z"/></svg><a href="tel:+50222567954">2256&#8209;7954&nbsp;/&nbsp;3481&#8209;9804</a></li>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="m4 6 8 7 8-7"/></svg><a href="mailto:contacto@sensumconstrucciones.com">contacto@sensumconstrucciones.com</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p class="container">© <span id="year"></span> Sensum Construcciones. <span data-i18n="footer.rights">Todos los derechos reservados.</span> <a href="privacy-notice.html" data-i18n="footer.privacy_link">Aviso de Privacidad</a></p>
+  </div>
+</footer>
+
+<a class="whatsapp-fab" id="whatsappFab" href="https://wa.me/50234819804?text=Hola%2C%20me%20interesa%20solicitar%20informaci%C3%B3n%20sobre%20sus%20servicios." target="_blank" rel="noopener noreferrer" data-i18n-attr="aria-label:whatsapp.aria" aria-label="Chatea con nosotros por WhatsApp (se abre en una pestaña nueva)">
+  <svg aria-hidden="true" viewBox="0 0 32 32" fill="currentColor"><path d="M16.02 3C9.4 3 4.02 8.37 4.02 15c0 2.4.64 4.66 1.87 6.66L4 29l7.5-1.83A11.9 11.9 0 0 0 16.02 27C22.64 27 28 21.63 28 15S22.64 3 16.02 3Zm0 21.8a9.7 9.7 0 0 1-4.95-1.36l-.35-.21-4.45 1.09 1.13-4.34-.23-.36A9.72 9.72 0 1 1 25.8 15a9.75 9.75 0 0 1-9.78 9.8Zm5.4-7.3c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.66.15-.2.3-.76.96-.93 1.16-.17.2-.34.22-.63.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.65-2.05-.17-.3-.02-.46.13-.61.13-.13.3-.34.44-.51.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.66-1.6-.91-2.19-.24-.58-.48-.5-.66-.5-.17-.01-.37-.01-.57-.01-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.21 5.09 4.5.71.31 1.27.49 1.7.63.71.23 1.36.2 1.87.12.57-.08 1.75-.72 2-1.41.24-.7.24-1.29.17-1.41-.07-.13-.27-.2-.56-.35Z"/></svg>
+</a>
+<button class="back-to-top" id="backToTop" type="button" data-i18n-attr="aria-label:backtotop.aria" aria-label="Volver arriba">
+  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
+<script src="assets/main.js?v=2" defer></script>
+
+</body>
+</html>

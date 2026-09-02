@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://sensumconstrucciones.com/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://sensumconstrucciones.com/privacy-notice.html</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>
+<!--
+  This site ships as a single page with in-page sections (#nosotros,
+  #servicios, #proyectos, #faq, #contacto) plus two standalone pages
+  (privacy-notice.html and 404.html). 404.html is intentionally NOT
+  listed here (it's noindex — see its <meta name="robots"> tag).
+
+  Bilingual note: the ES/EN toggle is client-side and shares this one
+  URL (see the note in index.html's <head> and the completion report),
+  so there is no separate /en/ URL to list here. If a crawlable /en/
+  page is added later, list it here with hreflang handled via
+  reciprocal <link> tags on both pages, not in this file.
+
+  If this site is later split into separate pages to match the old
+  site's URLs (/about, /servicios, /proyectos, /contact), add one
+  <url> entry per page here with its own <loc> and a <lastmod> date,
+  and update index.html's navigation links accordingly.
+-->

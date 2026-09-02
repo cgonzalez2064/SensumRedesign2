@@ -1,0 +1,56 @@
+/* ==============================================================
+   Self-hosted Oswald + Roboto — generated file names assumed.
+   Run assets/fonts/fetch-fonts.sh first (from a machine with normal
+   internet access) to produce the six .woff2 files this references,
+   then swap the Google Fonts <link> in index.html for:
+     <link rel="stylesheet" href="assets/fonts/local-fonts.css">
+   and remove the two fonts.googleapis.com/fonts.gstatic.com
+   preconnect hints and the fonts.googleapis.com stylesheet link.
+   Also update the CSP in .htaccess: once nothing loads from
+   fonts.googleapis.com/fonts.gstatic.com, drop those hosts from
+   style-src/font-src so the policy stays as narrow as what's
+   actually used.
+   ============================================================== */
+
+@font-face{
+  font-family: "Oswald";
+  src: url("oswald-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: "Oswald";
+  src: url("oswald-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: "Roboto";
+  src: url("roboto-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: "Roboto";
+  src: url("roboto-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: "Roboto";
+  src: url("roboto-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face{
+  font-family: "Roboto";
+  src: url("roboto-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
