@@ -404,7 +404,7 @@
         <p data-i18n="projects.desc">Categorías de proyectos que desarrollamos, adaptadas a cada tipo de inmueble, alcance y presupuesto.</p>
       </div>
       <div class="project-grid reveal-group">
-        <article class="project-card case-study-card reveal pc-0 i0">
+        <article class="project-card case-study-card reveal pc-0 i0" data-project="proj1">
           <!--
             Reusable case-study card — currently showing a category (no
             completed-project claim). To turn this into a real case study
@@ -436,8 +436,9 @@
           <span class="tag" data-i18n="proj1.tag">Residencial</span>
           <h3 data-i18n="proj1.title">Remodelación residencial</h3>
           <p data-i18n="proj1.desc">Renovación integral de espacios habitacionales.</p>
+          <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-1 i1">
+        <article class="project-card case-study-card reveal pc-1 i1" data-project="proj2">
           <span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
@@ -450,8 +451,9 @@
           <span class="tag" data-i18n="proj2.tag">Comercial</span>
           <h3 data-i18n="proj2.title">Ampliación comercial</h3>
           <p data-i18n="proj2.desc">Crecimiento de espacios para locales y oficinas.</p>
+          <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-2 i2">
+        <article class="project-card case-study-card reveal pc-2 i2" data-project="proj3">
           <span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
@@ -463,8 +465,9 @@
           <span class="tag" data-i18n="proj3.tag">Obra civil</span>
           <h3 data-i18n="proj3.title">Obra gris y cimentación</h3>
           <p data-i18n="proj3.desc">Estructuras seguras desde los cimientos.</p>
+          <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-3 i3">
+        <article class="project-card case-study-card reveal pc-3 i3" data-project="proj4">
           <span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
@@ -476,8 +479,9 @@
           <span class="tag" data-i18n="proj4.tag">Diseño</span>
           <h3 data-i18n="proj4.title">Diseño arquitectónico</h3>
           <p data-i18n="proj4.desc">Planos y anteproyectos a la medida del cliente.</p>
+          <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-4 i4">
+        <article class="project-card case-study-card reveal pc-4 i4" data-project="proj5">
           <span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
@@ -490,8 +494,9 @@
           <span class="tag" data-i18n="proj5.tag">Nueva construcción</span>
           <h3 data-i18n="proj5.title">Construcción desde cero</h3>
           <p data-i18n="proj5.desc">Proyectos completos, de la concepción a la entrega.</p>
+          <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-5 i5">
+        <article class="project-card case-study-card reveal pc-5 i5" data-project="proj6">
           <span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
@@ -503,6 +508,7 @@
           <span class="tag" data-i18n="proj6.tag">Mantenimiento</span>
           <h3 data-i18n="proj6.title">Mantenimiento general</h3>
           <p data-i18n="proj6.desc">Planes preventivos y correctivos a la medida.</p>
+          <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
       </div>
       <div class="projects-cta reveal">
@@ -743,6 +749,45 @@
 <button class="back-to-top" id="backToTop" type="button" data-i18n-attr="aria-label:backtotop.aria" aria-label="Volver arriba">
   <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
 </button>
+
+<!-- ============================================================
+     PROJECT DETAIL MODAL — opened from each "Tipos de proyectos"
+     card. Shows a 3-slide placeholder slideshow: as documented above
+     the Proyectos section and in CONTENT-APPROVAL.md, no real project
+     photography has been supplied/approved yet, so each slide is a
+     clearly-labeled placeholder illustration (reusing icons already
+     used elsewhere on the page) rather than a fabricated photo. Once
+     real, approved photos exist per project, replace the markup
+     main.js generates in renderProjectModalSlides() with real <img>
+     tags (see the reusable-card comment above for the expected
+     photo/location/scope fields).
+     Mirrors the mobile nav's scrim/inert/focus-trap/Escape pattern.
+     ============================================================ -->
+<div class="project-modal-scrim" id="projectModalScrim"></div>
+<div class="project-modal" id="projectModal" role="dialog" aria-modal="true" aria-labelledby="projectModalTitle" tabindex="-1" inert>
+  <div class="project-modal-panel">
+    <button type="button" class="project-modal-close" id="projectModalClose" data-i18n-attr="aria-label:projects.modal_close" aria-label="Cerrar">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="project-modal-slideshow" id="projectModalSlideshow">
+      <div class="project-modal-slides" id="projectModalSlides"></div>
+      <button type="button" class="project-modal-nav prev" id="projectModalPrev" data-i18n-attr="aria-label:projects.modal_prev" aria-label="Imagen anterior">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <button type="button" class="project-modal-nav next" id="projectModalNext" data-i18n-attr="aria-label:projects.modal_next" aria-label="Siguiente imagen">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <div class="project-modal-dots" id="projectModalDots" role="group" data-i18n-attr="aria-label:projects.modal_dots_aria" aria-label="Seleccionar imagen"></div>
+    </div>
+    <div class="project-modal-body">
+      <span class="tag" id="projectModalTag"></span>
+      <h3 id="projectModalTitle">&nbsp;</h3>
+      <p id="projectModalDesc"></p>
+      <p class="project-modal-note" data-i18n="projects.modal_placeholder_note">Imágenes de referencia — fotografías reales de cada proyecto próximamente.</p>
+    </div>
+  </div>
+  <div class="visually-hidden" id="projectModalLive" aria-live="polite"></div>
+</div>
 
 <script src="assets/main.js?v=2" defer></script>
 

@@ -432,7 +432,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .project-card{
   position:relative; border-radius: var(--radius); overflow:hidden; aspect-ratio: 4/3;
   color:#fff; display:flex; flex-direction:column; justify-content:flex-end; padding: 1.6rem;
-  isolation:isolate;
+  isolation:isolate; cursor:pointer;
 }
 .project-card::before{
   content:""; position:absolute; inset:0; z-index:-2;
@@ -726,6 +726,127 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   padding:.9rem 1.1rem; font-size:.9rem; color: var(--gray-text-2);
 }
 .legal-updated{ margin-top:2.4rem; padding-top:1.4rem; border-top:1px solid var(--border); font-size:.88rem; color: var(--gray-mid); }
+
+
+/* ============================================================
+   PROJECT DETAIL MODAL — opened from a "Tipos de proyectos" card.
+   Mirrors the mobile nav's scrim/transform/is-open pattern. The
+   slideshow is a 3-position carousel driven purely by class toggles
+   (.is-active/.is-prev/.is-next) — never inline styles — so it stays
+   compatible with this site's CSP (style-src has no unsafe-inline).
+   ============================================================ */
+.project-card-btn{
+  align-self:flex-start; margin-top:.9rem; font:700 .76rem/1 var(--font-body); letter-spacing:.04em;
+  text-transform:uppercase; color:#fff; background:transparent; border:1.5px solid rgba(255,255,255,.55);
+  border-radius:999px; padding:.5em 1.1em; cursor:pointer; position:relative; z-index:1;
+  transition: background var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+}
+.project-card-btn:hover, .project-card-btn:focus-visible{
+  background: var(--brand-orange); border-color: var(--brand-orange); color: var(--charcoal);
+}
+
+.project-modal-scrim{
+  position:fixed; inset:0; background: rgba(10,10,10,.65); z-index: 1200;
+  opacity:0; pointer-events:none; transition: opacity var(--dur) var(--ease-out);
+}
+.project-modal-scrim.is-open{ opacity:1; pointer-events:auto; }
+
+.project-modal{
+  position:fixed; inset:0; z-index: 1210; display:flex; align-items:center; justify-content:center;
+  padding: 1.4rem; opacity:0; pointer-events:none; transition: opacity var(--dur) var(--ease-out);
+}
+/* The wrapper itself stays pointer-events:none even while open — only the
+   panel (below) re-enables pointer events. This lets a click in the empty
+   gutter around the panel fall through to .project-modal-scrim underneath,
+   so backdrop-click-to-close actually reaches the scrim's click handler
+   instead of being swallowed by this full-viewport flex wrapper. */
+.project-modal.is-open{ opacity:1; }
+
+.project-modal-panel{
+  position:relative; background: var(--white); border-radius: calc(var(--radius) + 4px); overflow:hidden;
+  width:min(640px, 100%); max-height: 92vh; display:flex; flex-direction:column;
+  box-shadow: 0 24px 64px rgba(0,0,0,.35);
+  transform: scale(.92) translateY(10px); transition: transform var(--dur-slow) var(--ease-spring);
+  pointer-events:auto;
+}
+.project-modal.is-open .project-modal-panel{ transform: scale(1) translateY(0); }
+
+.project-modal-close{
+  position:absolute; top:.8rem; right:.8rem; z-index:3;
+  width:40px; height:40px; border-radius:50%; border:0; background: rgba(10,10,10,.55); color:#fff;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  transition: background var(--dur) var(--ease-out), transform var(--dur) var(--ease-spring);
+}
+.project-modal-close:hover, .project-modal-close:focus-visible{ background: var(--brand-orange); color: var(--charcoal); transform: scale(1.08); }
+.project-modal-close svg{ width:18px; height:18px; }
+
+.project-modal-slideshow{ position:relative; aspect-ratio: 4/3; overflow:hidden; touch-action: pan-y; }
+.project-modal-slides{ position:relative; width:100%; height:100%; }
+.project-modal-slide{
+  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:.9rem; color:#fff; text-align:center;
+  background: linear-gradient(150deg, var(--pc-a, #262626), var(--pc-b, #333333));
+  opacity:0; transform: translateX(100%);
+  transition: opacity var(--dur-slow) var(--ease-spring), transform var(--dur-slow) var(--ease-spring);
+  pointer-events:none;
+}
+.project-modal-slide.is-prev{ opacity:0; transform: translateX(-100%); }
+.project-modal-slide.is-next{ opacity:0; transform: translateX(100%); }
+.project-modal-slide.is-active{ opacity:1; transform: translateX(0); pointer-events:auto; }
+.project-modal-slide-art{ width:25%; max-width:92px; color: var(--brand-amber); opacity:.9; }
+.project-modal-slide-art svg{ width:100%; height:100%; overflow:visible; }
+.project-modal-slide-caption{ font:700 .8rem/1 var(--font-body); letter-spacing:.08em; text-transform:uppercase; color: rgba(255,255,255,.85); }
+
+.project-modal-nav{
+  position:absolute; top:50%; transform: translateY(-50%); z-index:2;
+  width:38px; height:38px; border-radius:50%; border:0; background: rgba(10,10,10,.5); color:#fff;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  transition: background var(--dur) var(--ease-out), transform var(--dur) var(--ease-spring);
+}
+.project-modal-nav:hover, .project-modal-nav:focus-visible{ background: var(--brand-orange); color: var(--charcoal); transform: translateY(-50%) scale(1.08); }
+.project-modal-nav.prev{ left:.7rem; }
+.project-modal-nav.next{ right:.7rem; }
+.project-modal-nav svg{ width:16px; height:16px; }
+
+.project-modal-dots{
+  position:absolute; left:0; right:0; bottom:.8rem; z-index:2;
+  display:flex; justify-content:center; gap:.45rem;
+}
+.project-modal-dots button{
+  width:8px; height:8px; border-radius:50%; border:0; padding:0; background: rgba(255,255,255,.45); cursor:pointer;
+  transition: background var(--dur) var(--ease-out), transform var(--dur) var(--ease-spring);
+}
+.project-modal-dots button.is-active{ background: var(--brand-orange); transform: scale(1.3); }
+.project-modal-dots button:focus-visible{ outline:2px solid var(--brand-orange); outline-offset:2px; }
+
+.project-modal-body{ padding: 1.4rem 1.6rem 1.6rem; overflow-y:auto; }
+.project-modal-body .tag{
+  display:inline-block; font:700 10px/1 var(--font-body); letter-spacing:.08em; text-transform:uppercase;
+  background: var(--brand-orange); color: var(--charcoal); padding:.45em .8em; border-radius:999px; margin-bottom:.7rem;
+}
+.project-modal-body h3{ font-size:1.25rem; margin-bottom:.4rem; text-transform:uppercase; color: var(--ink); }
+.project-modal-body p{ color: var(--gray-text); font-size:.94rem; margin:0 0 .6rem; }
+.project-modal-note{ font-size:.8rem; font-style:italic; color: var(--gray-mid); margin:0; }
+
+/* Page-scroll lock while the modal (or the mobile nav) is open —
+   a class toggle rather than a direct .style.overflow assignment, so
+   it stays within the CSP's style-src (no unsafe-inline). */
+html.no-scroll, html.no-scroll body{ overflow:hidden; }
+
+@media (max-width: 560px){
+  .project-modal{ padding:0; align-items:flex-end; }
+  .project-modal-panel{
+    width:100%; max-height:92vh; border-radius: calc(var(--radius) + 4px) calc(var(--radius) + 4px) 0 0;
+    transform: translateY(100%);
+  }
+  .project-modal.is-open .project-modal-panel{ transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .project-modal-panel{ transform:none; }
+  .project-modal-slide{ transform:none; transition: opacity 150ms ease; }
+  .project-modal-close, .project-modal-nav, .project-modal-dots button{ transition:none; }
+}
 
 /* ============================================================
    404 PAGE

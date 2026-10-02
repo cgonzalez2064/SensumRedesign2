@@ -93,6 +93,17 @@
       "proj5.tag": "Nueva construcción", "proj5.title": "Construcción desde cero", "proj5.desc": "Proyectos completos, de la concepción a la entrega.",
       "proj6.tag": "Mantenimiento", "proj6.title": "Mantenimiento general", "proj6.desc": "Planes preventivos y correctivos a la medida.",
       "projects.cta": "Conversemos sobre tu proyecto",
+      "projects.view_details": "Ver detalles",
+      "projects.modal_close": "Cerrar",
+      "projects.modal_prev": "Imagen anterior",
+      "projects.modal_next": "Siguiente imagen",
+      "projects.modal_dots_aria": "Seleccionar imagen",
+      "projects.modal_goto_slide": "Ir a la imagen {n}",
+      "projects.modal_image_of": "Imagen {n} de {total}",
+      "projects.modal_phase1": "Planificación",
+      "projects.modal_phase2": "Ejecución",
+      "projects.modal_phase3": "Entrega",
+      "projects.modal_placeholder_note": "Imágenes de referencia — fotografías reales de cada proyecto próximamente.",
 
       "ctabanner.title": "¡Comencemos tu proyecto!",
       "ctabanner.desc": "Escríbenos hoy y agenda una evaluación técnica con nuestro equipo.",
@@ -233,6 +244,17 @@
       "proj5.tag": "New Construction", "proj5.title": "Ground-Up Construction", "proj5.desc": "Complete projects, from conception to delivery.",
       "proj6.tag": "Maintenance", "proj6.title": "General Maintenance", "proj6.desc": "Preventive and corrective plans tailored to your needs.",
       "projects.cta": "Let's Talk About Your Project",
+      "projects.view_details": "View details",
+      "projects.modal_close": "Close",
+      "projects.modal_prev": "Previous image",
+      "projects.modal_next": "Next image",
+      "projects.modal_dots_aria": "Select image",
+      "projects.modal_goto_slide": "Go to image {n}",
+      "projects.modal_image_of": "Image {n} of {total}",
+      "projects.modal_phase1": "Planning",
+      "projects.modal_phase2": "Execution",
+      "projects.modal_phase3": "Handover",
+      "projects.modal_placeholder_note": "Reference images — real project photos coming soon.",
 
       "ctabanner.title": "Let's start your project!",
       "ctabanner.desc": "Write to us today and schedule a technical evaluation with our team.",
@@ -482,7 +504,7 @@
       setInert([nav], false, navTabindexBackup);
       nav.setAttribute('aria-hidden', 'false');
       toggle.setAttribute('aria-expanded', 'true');
-      document.body.style.overflow = 'hidden';
+      document.documentElement.classList.add('no-scroll');
       setInert(backgroundTargets, true, backgroundTabindexBackup);
       document.addEventListener('keydown', trapKeydown);
       var firstLink = nav.querySelector('a');
@@ -494,7 +516,7 @@
       nav.setAttribute('aria-hidden', 'true');
       setInert([nav], true, navTabindexBackup);
       toggle.setAttribute('aria-expanded', 'false');
-      document.body.style.overflow = '';
+      document.documentElement.classList.remove('no-scroll');
       setInert(backgroundTargets, false, backgroundTabindexBackup);
       document.removeEventListener('keydown', trapKeydown);
       if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
@@ -506,6 +528,239 @@
     nav.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', closeNav); });
     document.addEventListener('keydown', function(e){
       if (e.key === 'Escape' && nav.classList.contains('is-open')) closeNav();
+    });
+  }
+
+
+  /* ============================================================
+     Project detail modal — opened from each "Tipos de proyectos"
+     card. A 3-slide carousel (Planificación / Ejecución / Entrega)
+     using placeholder illustrations, since no real project photos
+     exist yet (see the HTML comment above the Proyectos section and
+     CONTENT-APPROVAL.md). Slides are positioned with three classes
+     (.is-active/.is-prev/.is-next) driven purely by classList, never
+     inline styles, to stay inside this site's CSP (no unsafe-inline
+     for style-src). Mirrors the mobile nav's scrim/inert/focus-trap/
+     Escape/backdrop-close/focus-restore pattern above.
+     ============================================================ */
+  var projectCards = document.querySelectorAll('.project-card[data-project]');
+  var modalScrim = document.getElementById('projectModalScrim');
+  var modal = document.getElementById('projectModal');
+
+  if (projectCards.length && modalScrim && modal){
+    var modalSlideshow = document.getElementById('projectModalSlideshow');
+    var modalSlides = document.getElementById('projectModalSlides');
+    var modalPrevBtn = document.getElementById('projectModalPrev');
+    var modalNextBtn = document.getElementById('projectModalNext');
+    var modalDots = document.getElementById('projectModalDots');
+    var modalCloseBtn = document.getElementById('projectModalClose');
+    var modalTagEl = document.getElementById('projectModalTag');
+    var modalTitleEl = document.getElementById('projectModalTitle');
+    var modalDescEl = document.getElementById('projectModalDesc');
+    var modalLiveEl = document.getElementById('projectModalLive');
+
+    /* Two placeholder-slide icons, reused as-is from elsewhere on this
+       page (the maintenance service icon and the hero checkmark) so no
+       new iconography is invented for this feature. Static, hand-authored
+       markup only — never built from user input. */
+    var PHASE2_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14.7 6.3a1 1 0 0 0 1.4 1.4l3.6-3.6a5 5 0 0 1-6.7 6.7L4.4 19.4a2 2 0 0 1-2.8-2.8L11.5 6.4a5 5 0 0 1 6.7-6.7z"/><circle cx="12" cy="12" r="1"/></svg>';
+    var PHASE3_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>';
+    var PHASE_KEYS = ['projects.modal_phase1', 'projects.modal_phase2', 'projects.modal_phase3'];
+
+    var modalSupportsInert = 'inert' in HTMLElement.prototype;
+    var MODAL_FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    var setElementsInert = function(elements, on, tabindexBackups){
+      elements.forEach(function(el){
+        if (!el) return;
+        if (modalSupportsInert){
+          if (on) el.setAttribute('inert', ''); else el.removeAttribute('inert');
+        } else if (on){
+          el.setAttribute('aria-hidden', 'true');
+        } else {
+          el.removeAttribute('aria-hidden');
+        }
+      });
+      if (!modalSupportsInert){
+        if (on){
+          tabindexBackups.length = 0;
+          elements.forEach(function(root){
+            if (!root) return;
+            root.querySelectorAll(MODAL_FOCUSABLE_SELECTOR).forEach(function(el){
+              tabindexBackups.push([el, el.getAttribute('tabindex')]);
+              el.setAttribute('tabindex', '-1');
+            });
+          });
+        } else {
+          tabindexBackups.forEach(function(pair){
+            var el = pair[0], prev = pair[1];
+            if (prev === null) el.removeAttribute('tabindex'); else el.setAttribute('tabindex', prev);
+          });
+          tabindexBackups.length = 0;
+        }
+      }
+    };
+
+    var modalBackgroundTargets = [
+      document.getElementById('siteHeader'),
+      document.getElementById('main'),
+      document.querySelector('.site-footer'),
+      document.getElementById('backToTop'),
+      document.getElementById('whatsappFab')
+    ].filter(Boolean);
+    var modalBackgroundTabindexBackup = [];
+
+    var activeIndex = 0;
+    var slideEls = [];
+    var lastFocusedTrigger = null;
+
+    var renderSlidePositions = function(){
+      var total = slideEls.length;
+      slideEls.forEach(function(slideEl, i){
+        slideEl.classList.remove('is-active', 'is-prev', 'is-next');
+        if (i === activeIndex) slideEl.classList.add('is-active');
+        else if (i === (activeIndex + 1) % total) slideEl.classList.add('is-next');
+        else slideEl.classList.add('is-prev');
+      });
+      if (modalDots){
+        Array.prototype.forEach.call(modalDots.children, function(dot, i){
+          dot.classList.toggle('is-active', i === activeIndex);
+          dot.setAttribute('aria-current', i === activeIndex ? 'true' : 'false');
+        });
+      }
+      if (modalLiveEl){
+        var phaseLabel = t(PHASE_KEYS[activeIndex]);
+        modalLiveEl.textContent = t('projects.modal_image_of')
+          .replace('{n}', String(activeIndex + 1)).replace('{total}', String(total)) + ': ' + phaseLabel;
+      }
+    };
+
+    var goTo = function(i){
+      var total = slideEls.length;
+      activeIndex = ((i % total) + total) % total;
+      renderSlidePositions();
+    };
+    var goPrev = function(){ goTo(activeIndex - 1); };
+    var goNext = function(){ goTo(activeIndex + 1); };
+
+    var buildSlides = function(cardEl){
+      modalSlides.innerHTML = '';
+      slideEls = [];
+
+      var illusSvg = cardEl.querySelector('.illus svg');
+      var icons = [
+        illusSvg ? illusSvg.cloneNode(true) : null,
+        PHASE2_ICON_SVG,
+        PHASE3_ICON_SVG
+      ];
+
+      icons.forEach(function(icon, i){
+        var slideEl = document.createElement('div');
+        slideEl.className = 'project-modal-slide';
+        slideEl.setAttribute('role', 'group');
+        slideEl.setAttribute('aria-roledescription', 'slide');
+
+        var art = document.createElement('span');
+        art.className = 'project-modal-slide-art';
+        art.setAttribute('aria-hidden', 'true');
+        if (icon && typeof icon === 'string') art.innerHTML = icon;
+        else if (icon) art.appendChild(icon);
+        slideEl.appendChild(art);
+
+        var caption = document.createElement('span');
+        caption.className = 'project-modal-slide-caption';
+        caption.setAttribute('data-i18n', PHASE_KEYS[i]);
+        caption.textContent = t(PHASE_KEYS[i]);
+        slideEl.appendChild(caption);
+
+        modalSlides.appendChild(slideEl);
+        slideEls.push(slideEl);
+      });
+
+      if (modalDots){
+        modalDots.innerHTML = '';
+        slideEls.forEach(function(_, i){
+          var dot = document.createElement('button');
+          dot.type = 'button';
+          dot.setAttribute('aria-label', t('projects.modal_goto_slide').replace('{n}', String(i + 1)));
+          dot.addEventListener('click', function(){ goTo(i); });
+          modalDots.appendChild(dot);
+        });
+      }
+    };
+
+    var trapModalKeydown = function(e){
+      if (e.key === 'Escape'){ closeProjectModal(); return; }
+      if (e.key === 'ArrowLeft'){ goPrev(); return; }
+      if (e.key === 'ArrowRight'){ goNext(); return; }
+      if (e.key !== 'Tab') return;
+      var focusables = Array.prototype.slice.call(modal.querySelectorAll(MODAL_FOCUSABLE_SELECTOR));
+      if (!focusables.length) return;
+      var first = focusables[0], last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first){
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && document.activeElement === last){
+        e.preventDefault(); first.focus();
+      }
+    };
+
+    var openProjectModal = function(cardEl){
+      lastFocusedTrigger = cardEl.querySelector('.project-card-btn') || cardEl;
+
+      var tagText = cardEl.querySelector('.tag');
+      var titleText = cardEl.querySelector('h3');
+      var descText = cardEl.querySelector('p');
+      if (modalTagEl) modalTagEl.textContent = tagText ? tagText.textContent : '';
+      if (modalTitleEl) modalTitleEl.textContent = titleText ? titleText.textContent : '';
+      if (modalDescEl) modalDescEl.textContent = descText ? descText.textContent : '';
+
+      var pcMatch = cardEl.className.match(/\bpc-\d\b/);
+      modalSlideshow.className = 'project-modal-slideshow' + (pcMatch ? ' ' + pcMatch[0] : '');
+
+      buildSlides(cardEl);
+      activeIndex = 0;
+      renderSlidePositions();
+
+      modalScrim.classList.add('is-open');
+      modal.classList.add('is-open');
+      setElementsInert([modal], false, []);
+      document.documentElement.classList.add('no-scroll');
+      setElementsInert(modalBackgroundTargets, true, modalBackgroundTabindexBackup);
+      document.addEventListener('keydown', trapModalKeydown);
+      modal.focus();
+    };
+
+    var closeProjectModal = function(){
+      modalScrim.classList.remove('is-open');
+      modal.classList.remove('is-open');
+      setElementsInert([modal], true, []);
+      document.documentElement.classList.remove('no-scroll');
+      setElementsInert(modalBackgroundTargets, false, modalBackgroundTabindexBackup);
+      document.removeEventListener('keydown', trapModalKeydown);
+      if (lastFocusedTrigger && typeof lastFocusedTrigger.focus === 'function') lastFocusedTrigger.focus();
+    };
+
+    projectCards.forEach(function(cardEl){
+      cardEl.addEventListener('click', function(){ openProjectModal(cardEl); });
+    });
+    modalCloseBtn.addEventListener('click', closeProjectModal);
+    modalScrim.addEventListener('click', closeProjectModal);
+    if (modalPrevBtn) modalPrevBtn.addEventListener('click', goPrev);
+    if (modalNextBtn) modalNextBtn.addEventListener('click', goNext);
+
+    /* Discrete swipe: detect a horizontal flick on pointerup and step
+       to the adjacent slide — not a live 1:1 drag-follow, since that
+       would require continuous inline-style transforms this site's
+       strict CSP (no unsafe-inline for style-src) does not allow. */
+    var swipeStartX = null, swipeStartY = null;
+    modalSlideshow.addEventListener('pointerdown', function(e){
+      swipeStartX = e.clientX; swipeStartY = e.clientY;
+    });
+    modalSlideshow.addEventListener('pointerup', function(e){
+      if (swipeStartX === null) return;
+      var dx = e.clientX - swipeStartX, dy = e.clientY - swipeStartY;
+      swipeStartX = null; swipeStartY = null;
+      if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+      if (dx < 0) goNext(); else goPrev();
     });
   }
 
