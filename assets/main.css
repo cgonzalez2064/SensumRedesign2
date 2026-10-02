@@ -289,6 +289,20 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   .menu-toggle{ display:block; }
 }
 
+/* Small phones (iPhone SE/mini-width devices down to 320px). Found via a
+   responsiveness audit: .header-inner's 2rem gap plus the brand's full
+   "Sensum Construcciones" wordmark don't fit next to the language toggle
+   and the hamburger button in the ~300px of header width left on a 320px
+   screen — the menu button was being pushed off the right edge of the
+   viewport entirely. Tightening the gap and the two toggle buttons' own
+   padding (never their tap-target size, which stays at the 44px already
+   used site-wide) closes that gap without touching the brand mark itself. */
+@media (max-width: 400px){
+  .header-inner{ gap:.5rem; }
+  .lang-toggle{ padding:0 .6rem; }
+  .brand-text small{ letter-spacing:.14em; }
+}
+
 /* ============================================================
    HERO
    ============================================================ */
@@ -356,6 +370,19 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 @media (max-width: 620px){
   .hero-panel{ grid-template-columns: repeat(2,1fr); }
+  /* Found via a responsiveness audit: on common phone sizes (iPhone
+     12/13/14 at 390x844, iPhone 11/XR at 414x896, and others) the
+     heading wraps to enough lines that the hero's last row — the
+     "Comunicación clara / Supervisión técnica / Presupuestos
+     detallados" badges — landed right behind the fixed WhatsApp
+     button, hiding part of a badge's text behind it. The hero's
+     content here is taller than the viewport (min-height:100svh is a
+     floor, not a cap), so there's no centering slack to redistribute —
+     the only way to pull the badges clear is to trim the space above
+     them. Tightening the top padding and the badges' own top margin
+     does that without touching their spacing from each other. */
+  .hero{ padding-top: 96px; }
+  .hero-badges{ margin-top: 1.75rem; }
 }
 
 /* ============================================================
@@ -534,13 +561,24 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .contact-grid{ display:grid; grid-template-columns: 1fr 1.1fr; gap: 3.5rem; }
 .contact-info h2{ font-size:1.5rem; text-transform:uppercase; }
 .contact-list{ margin-top:1.6rem; display:grid; gap:1.1rem; }
-.contact-list li{ display:flex; gap:1rem; align-items:flex-start; }
+/* min-width:0 lets this flex row actually shrink below its text's
+   natural size — flex items default to min-width:auto, which (found via
+   a responsiveness audit) was letting the unbroken email address below
+   force the row, the list, and the whole contact section wider than a
+   320px screen, pushing the entire page into horizontal overflow. */
+.contact-list li{ display:flex; gap:1rem; align-items:flex-start; min-width:0; }
 .contact-list .icn{
   width:44px; height:44px; border-radius:10px; background: var(--bg-light); flex:none;
   display:flex; align-items:center; justify-content:center;
 }
 .contact-list .icn svg{ width:20px; height:20px; color: var(--brand-amber); }
-.contact-list a, .contact-list span{ font-size:.95rem; color: var(--gray-text); }
+/* overflow-wrap lets a long unbroken token (the email address has no
+   spaces to break on) wrap onto a second line on narrow screens instead
+   of forcing the row wider than the viewport. min-width:0 is needed in
+   addition to the min-width:0 on the <li> above: this span is itself a
+   flex child of the <li> and defaults to min-width:auto same as any
+   other flex item, which was still blocking the wrap above without it. */
+.contact-list a, .contact-list span{ font-size:.95rem; color: var(--gray-text); overflow-wrap: break-word; min-width:0; }
 .contact-list strong{ display:block; color: var(--charcoal); font-size:.82rem; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.15rem; }
 .contact-map{ margin-top: 2.2rem; border-radius: var(--radius); overflow:hidden; border:1px solid var(--border); aspect-ratio: 16/10; }
 .contact-map iframe{ width:100%; height:100%; border:0; }
@@ -676,7 +714,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .footer-links a{ font-size:.9rem; color: rgba(255,255,255,.68); display:flex; align-items:center; gap:.5rem; transition: color var(--dur) var(--ease-out), gap var(--dur) var(--ease-out); }
 .footer-links a svg{ width:12px; height:12px; color: var(--brand-orange); flex:none; }
 .footer-links a:hover{ color: var(--brand-orange); gap:.75rem; }
-.footer-contact li{ display:flex; gap:.6rem; margin-bottom:.9rem; font-size:.88rem; }
+.footer-contact li{ display:flex; gap:.6rem; margin-bottom:.9rem; font-size:.88rem; min-width:0; }
 .footer-contact svg{ width:16px; height:16px; color: var(--brand-orange); flex:none; margin-top:.15rem; }
 .footer-contact a{ color: rgba(255,255,255,.75); overflow-wrap: anywhere; }
 .footer-contact a:hover{ color: var(--brand-orange); }
@@ -732,6 +770,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   /* Keep the fixed WhatsApp/back-to-top buttons from covering the
      copyright line on narrow screens, where it wraps to two lines. */
   .footer-bottom{ padding-bottom: 4.5rem; }
+  /* Same fix, applied to the hero badges. Trimming the space above them
+     (see the .hero/.hero-badges rule in the 620px breakpoint) shrinks
+     how often they land behind the fixed WhatsApp button, but can't
+     guarantee it — the badges can wrap onto 2–3 lines, taller than the
+     button itself, so no amount of vertical shifting clears every
+     combination of viewport height and heading line-wrap. Reserving
+     the button's own footprint (its 50px width + 1rem offset, plus a
+     little breathing room) as left padding on the badges row instead
+     removes the horizontal overlap outright, which is reliable
+     regardless of how tall the row ends up being. */
+  .hero-badges{ padding-left: 74px; }
 }
 
 /* Reduced transparency: make translucent chrome solid */
