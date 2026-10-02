@@ -36,9 +36,18 @@
 
   --ease-out: cubic-bezier(.16,1,.3,1);
   --ease-spring: cubic-bezier(.22,1.12,.36,1);
+  /* Critically-damped-style deceleration — reaches the target smoothly with
+     no overshoot. Reserved for transitions triggered by a single discrete
+     action (a click/tap/key press) rather than a live, continuously-tracked
+     drag — per this project's Apple Design motion notes, bounce is earned
+     by momentum carried over from an actual gesture, not added by default. */
+  --ease-fluid: cubic-bezier(.32,.72,0,1);
   --dur-fast: 150ms;
   --dur: 300ms;
   --dur-slow: 550ms;
+  /* Slide-to-slide step duration for carousels (project modal). Shorter
+     than --dur-slow so stepping through slides feels brisk, not sluggish. */
+  --dur-slide: 420ms;
 
   color-scheme: light;
 }
@@ -156,6 +165,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   -webkit-backdrop-filter: blur(18px) saturate(180%);
   box-shadow: 0 1px 0 rgba(20,20,20,.06), 0 12px 30px rgba(20,20,20,.08);
 }
+/* While the mobile drawer (.mobile-nav, z-index 1100) is open, lift the
+   whole header above it — found via testing: #menuToggle lives inside
+   .site-header, which has its own stacking context at z-index 1000, so
+   giving the button alone a higher z-index could never lift it above a
+   1100 sibling; only raising the context-establishing ancestor does.
+   This keeps the toggle visible/usable as the morphed "X" close control
+   on top of the open drawer, instead of being covered by it. */
+.site-header.nav-above-drawer{ z-index: 1150; }
 .header-inner{
   width: min(94%, 1320px); margin-inline:auto;
   display:flex; align-items:center; gap: 2rem;
@@ -184,7 +201,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .site-header.is-scrolled .nav-desktop a{ color: var(--charcoal); }
 .nav-desktop a::after{
   content:""; position:absolute; left:0; right:100%; bottom:-2px; height:2px; background: var(--brand-orange);
-  transition: right var(--dur-slow) var(--ease-spring);
+  transition: right var(--dur) var(--ease-fluid);
 }
 .nav-desktop a:hover::after, .nav-desktop a:focus-visible::after, .nav-desktop a.active::after{ right:0; }
 .header-cta{ flex:none; }
@@ -192,18 +209,21 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   flex:none; height:38px; padding:0 .85rem; border-radius:999px;
   border:1.5px solid rgba(255,255,255,.35); background: rgba(255,255,255,.08); color:#fff;
   font:700 12px/1 var(--font-body); letter-spacing:.06em; cursor:pointer;
-  transition: background var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+  transition: background var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 .site-header.is-scrolled .lang-toggle{ border-color: rgba(20,20,20,.25); color: var(--charcoal); background: rgba(20,20,20,.04); }
 .lang-toggle:hover, .lang-toggle:focus-visible{ background: var(--brand-orange); border-color: var(--brand-orange); color:#fff; }
+.lang-toggle:active{ transform: scale(.92); transition-duration: 90ms; }
 .menu-toggle{
   display:none; flex:none; width:44px; height:44px; border-radius:8px; border:0;
   background: rgba(255,255,255,.14); position:relative;
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur) var(--ease-out);
 }
 .site-header.is-scrolled .menu-toggle{ background: rgba(20,20,20,.06); }
+.menu-toggle:active{ transform: scale(.92); transition-duration: 90ms; }
 .menu-toggle span{
   position:absolute; left:11px; right:11px; height:2px; background:#fff; border-radius:2px;
-  transition: transform var(--dur) var(--ease-spring), opacity var(--dur-fast) linear, background var(--dur) var(--ease-out);
+  transition: transform var(--dur) var(--ease-fluid), opacity var(--dur-fast) linear, background var(--dur) var(--ease-out);
 }
 .site-header.is-scrolled .menu-toggle span{ background: var(--ink); }
 .menu-toggle span:nth-child(1){ top:14px; }
@@ -239,9 +259,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .mobile-nav-social{ margin-top:auto; display:flex; gap:.7rem; padding-top:2rem; }
 .mobile-nav-social a{
   width:38px; height:38px; border:2px solid rgba(255,255,255,.25); border-radius:50%;
-  display:flex; align-items:center; justify-content:center; transition: all var(--dur) var(--ease-out);
+  display:flex; align-items:center; justify-content:center;
+  transition: background var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 .mobile-nav-social a:hover{ background: var(--brand-orange); border-color: var(--brand-orange); color: var(--ink); }
+.mobile-nav-social a:active{ transform: scale(.9); transition-duration: 90ms; }
 .mobile-nav-social svg{ width:16px; height:16px; fill:currentColor; }
 
 @media (max-width: 900px){
@@ -388,21 +410,24 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   content:""; position:absolute; left:0; top:0; height:4px; width:100%;
   background: var(--brand-gradient);
   transform: scaleX(0); transform-origin: 0 50%;
-  transition: transform var(--dur-slow) var(--ease-spring);
+  transition: transform var(--dur) var(--ease-fluid);
 }
 .service-card:hover::before{ transform: scaleX(1); }
 .service-card .icon{
   width:58px; height:58px; border-radius:14px; background: rgba(20,20,20,.06);
   display:flex; align-items:center; justify-content:center; margin-bottom:1.3rem;
+  transition: background var(--dur) var(--ease-out), transform var(--dur) var(--ease-fluid);
 }
-.service-card .icon svg{ width:28px; height:28px; color: var(--ink); }
+.service-card:hover .icon{ background: rgba(var(--brand-orange-rgb),.14); transform: translateY(-3px); }
+.service-card .icon svg{ width:28px; height:28px; color: var(--ink); transition: color var(--dur) var(--ease-out); }
+.service-card:hover .icon svg{ color: var(--brand-orange); }
 .service-card h3{ font-size:1.15rem; text-transform:uppercase; margin-bottom:.6rem; }
 .service-card p{ font-size:.94rem; margin-bottom:1.1rem; }
 .service-card .learn{
   font: 700 12px/1 var(--font-body); letter-spacing:.05em; text-transform:uppercase;
   color: var(--ink); display:inline-flex; align-items:center; gap:.4rem;
 }
-.service-card .learn svg{ width:14px; height:14px; transition: transform var(--dur) var(--ease-spring); }
+.service-card .learn svg{ width:14px; height:14px; transition: transform var(--dur) var(--ease-fluid); }
 .service-card:hover .learn svg{ transform: translateX(5px); }
 
 @media (max-width: 980px){ .services-grid{ grid-template-columns: 1fr 1fr; } }
@@ -655,10 +680,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   width:48px; height:48px; border-radius:50%; background: var(--ink); color:#fff; border:0;
   display:flex; align-items:center; justify-content:center; box-shadow: var(--shadow-md);
   opacity:0; transform: translateY(12px) scale(.9); pointer-events:none;
-  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-spring), background var(--dur) var(--ease-out);
+  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-fluid), background var(--dur) var(--ease-out);
 }
 .back-to-top.show{ opacity:1; transform: translateY(0) scale(1); pointer-events:auto; }
 .back-to-top:hover{ background: var(--brand-orange); color: var(--charcoal); }
+.back-to-top:active{ transform: translateY(0) scale(.9); transition-duration: 90ms; }
 .back-to-top svg{ width:20px; height:20px; }
 
 /* ============================================================
@@ -668,9 +694,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   position:fixed; left:1.4rem; bottom:1.4rem; z-index: 900;
   width:56px; height:56px; border-radius:50%; background:#25D366; color:#fff;
   display:flex; align-items:center; justify-content:center; box-shadow: 0 10px 26px rgba(37,211,102,.45);
-  transition: transform var(--dur) var(--ease-spring), box-shadow var(--dur) var(--ease-out);
+  transition: transform var(--dur) var(--ease-fluid), box-shadow var(--dur) var(--ease-out);
 }
 .whatsapp-fab:hover, .whatsapp-fab:focus-visible{ transform: translateY(-3px) scale(1.05); box-shadow: 0 14px 32px rgba(37,211,102,.55); }
+.whatsapp-fab:active{ transform: translateY(-3px) scale(.98); transition-duration: 90ms; }
 .whatsapp-fab svg{ width:28px; height:28px; }
 .whatsapp-fab::before{
   content:""; position:absolute; inset:0; border-radius:50%; background:#25D366;
@@ -775,9 +802,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   position:absolute; top:.8rem; right:.8rem; z-index:3;
   width:40px; height:40px; border-radius:50%; border:0; background: rgba(10,10,10,.55); color:#fff;
   display:flex; align-items:center; justify-content:center; cursor:pointer;
-  transition: background var(--dur) var(--ease-out), transform var(--dur) var(--ease-spring);
+  transition: background var(--dur) var(--ease-out), transform var(--dur) var(--ease-fluid);
 }
 .project-modal-close:hover, .project-modal-close:focus-visible{ background: var(--brand-orange); color: var(--charcoal); transform: scale(1.08); }
+.project-modal-close:active{ transform: scale(.96); transition-duration: 90ms; }
 .project-modal-close svg{ width:18px; height:18px; }
 
 .project-modal-slideshow{ position:relative; aspect-ratio: 4/3; overflow:hidden; touch-action: pan-y; }
@@ -786,13 +814,21 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:.9rem; color:#fff; text-align:center;
   background: linear-gradient(150deg, var(--pc-a, #262626), var(--pc-b, #333333));
-  opacity:0; transform: translateX(100%);
-  transition: opacity var(--dur-slow) var(--ease-spring), transform var(--dur-slow) var(--ease-spring);
+  opacity:0; transform: translateX(100%) scale(.98);
+  /* Slide stepping is a discrete action (button/dot/key/swipe-release),
+     never a live drag the user is tracking frame-by-frame — so this uses
+     --ease-fluid (no overshoot) rather than --ease-spring. The earlier
+     spring easing let the incoming slide overshoot past translateX(0) and
+     wobble back, which read as janky rather than fluid. A touch of scale
+     is added on top of the slide+fade so the incoming slide settles into
+     place rather than just appearing, without introducing any bounce. */
+  transition: opacity var(--dur-slide) var(--ease-fluid), transform var(--dur-slide) var(--ease-fluid);
   pointer-events:none;
+  will-change: transform, opacity;
 }
-.project-modal-slide.is-prev{ opacity:0; transform: translateX(-100%); }
-.project-modal-slide.is-next{ opacity:0; transform: translateX(100%); }
-.project-modal-slide.is-active{ opacity:1; transform: translateX(0); pointer-events:auto; }
+.project-modal-slide.is-prev{ opacity:0; transform: translateX(-100%) scale(.98); }
+.project-modal-slide.is-next{ opacity:0; transform: translateX(100%) scale(.98); }
+.project-modal-slide.is-active{ opacity:1; transform: translateX(0) scale(1); pointer-events:auto; }
 .project-modal-slide-art{ width:25%; max-width:92px; color: var(--brand-amber); opacity:.9; }
 .project-modal-slide-art svg{ width:100%; height:100%; overflow:visible; }
 .project-modal-slide-caption{ font:700 .8rem/1 var(--font-body); letter-spacing:.08em; text-transform:uppercase; color: rgba(255,255,255,.85); }
@@ -801,9 +837,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   position:absolute; top:50%; transform: translateY(-50%); z-index:2;
   width:38px; height:38px; border-radius:50%; border:0; background: rgba(10,10,10,.5); color:#fff;
   display:flex; align-items:center; justify-content:center; cursor:pointer;
-  transition: background var(--dur) var(--ease-out), transform var(--dur) var(--ease-spring);
+  transition: background var(--dur) var(--ease-out), transform var(--dur) var(--ease-fluid);
 }
 .project-modal-nav:hover, .project-modal-nav:focus-visible{ background: var(--brand-orange); color: var(--charcoal); transform: translateY(-50%) scale(1.08); }
+.project-modal-nav:active{ transform: translateY(-50%) scale(.94); transition-duration: 90ms; }
 .project-modal-nav.prev{ left:.7rem; }
 .project-modal-nav.next{ right:.7rem; }
 .project-modal-nav svg{ width:16px; height:16px; }
@@ -814,7 +851,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 .project-modal-dots button{
   width:8px; height:8px; border-radius:50%; border:0; padding:0; background: rgba(255,255,255,.45); cursor:pointer;
-  transition: background var(--dur) var(--ease-out), transform var(--dur) var(--ease-spring);
+  transition: background var(--dur) var(--ease-out), transform var(--dur) var(--ease-fluid);
 }
 .project-modal-dots button.is-active{ background: var(--brand-orange); transform: scale(1.3); }
 .project-modal-dots button:focus-visible{ outline:2px solid var(--brand-orange); outline-offset:2px; }

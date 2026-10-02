@@ -104,3 +104,20 @@ single-URL, client-side ES/EN toggle rather than shipping separate
 `/` and `/en/` documents, and why. This is a decision, not an
 unverified-content item, but it does affect what search engines can
 independently index — see the report for the full reasoning.
+
+## Project portfolio PDF (download button)
+
+The "Conversemos sobre tu proyecto" button at the end of "Tipos de
+proyectos" now downloads a PDF (`assets/portfolio/sensum-portafolio-proyectos.pdf`)
+instead of scrolling to the contact form. The file currently shipped is
+a **generated placeholder**, not a real portfolio — it reuses only the
+already-approved project category names and the business's published
+contact details, with no invented projects, photos, clients, or
+statistics, and every page is clearly labeled "DOCUMENTO DE MUESTRA —
+ESTE ARCHIVO ES UN MARCADOR DE POSICIÓN (PLACEHOLDER)" so it can't be
+mistaken for a finished deliverable.
+
+See `assets/portfolio/README.md` for the exact steps to swap in the
+client's real portfolio once they supply it — in the simple case
+(keeping the same filename) it's a single file overwrite, no code
+changes needed.

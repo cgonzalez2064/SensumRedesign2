@@ -93,6 +93,7 @@
       "proj5.tag": "Nueva construcción", "proj5.title": "Construcción desde cero", "proj5.desc": "Proyectos completos, de la concepción a la entrega.",
       "proj6.tag": "Mantenimiento", "proj6.title": "Mantenimiento general", "proj6.desc": "Planes preventivos y correctivos a la medida.",
       "projects.cta": "Conversemos sobre tu proyecto",
+      "projects.cta_aria": "Conversemos sobre tu proyecto (descarga el portafolio en PDF)",
       "projects.view_details": "Ver detalles",
       "projects.modal_close": "Cerrar",
       "projects.modal_prev": "Imagen anterior",
@@ -244,6 +245,7 @@
       "proj5.tag": "New Construction", "proj5.title": "Ground-Up Construction", "proj5.desc": "Complete projects, from conception to delivery.",
       "proj6.tag": "Maintenance", "proj6.title": "General Maintenance", "proj6.desc": "Preventive and corrective plans tailored to your needs.",
       "projects.cta": "Let's Talk About Your Project",
+      "projects.cta_aria": "Let's Talk About Your Project (downloads the portfolio PDF)",
       "projects.view_details": "View details",
       "projects.modal_close": "Close",
       "projects.modal_prev": "Previous image",
@@ -506,6 +508,14 @@
       toggle.setAttribute('aria-expanded', 'true');
       document.documentElement.classList.add('no-scroll');
       setInert(backgroundTargets, true, backgroundTabindexBackup);
+      /* .site-header (z-index 1000) establishes its own stacking context,
+         so raising #menuToggle's own z-index alone can't lift it above
+         .mobile-nav (z-index 1100) — it stays trapped inside the header's
+         context and ends up covered by the open drawer. Raising the
+         header itself (only while the drawer is open) keeps the toggle
+         visible and clickable as the morphed "X" close control, instead
+         of relying solely on Escape/backdrop to close the menu. */
+      if (header) header.classList.add('nav-above-drawer');
       document.addEventListener('keydown', trapKeydown);
       var firstLink = nav.querySelector('a');
       if (firstLink) firstLink.focus();
@@ -518,6 +528,7 @@
       toggle.setAttribute('aria-expanded', 'false');
       document.documentElement.classList.remove('no-scroll');
       setInert(backgroundTargets, false, backgroundTabindexBackup);
+      if (header) header.classList.remove('nav-above-drawer');
       document.removeEventListener('keydown', trapKeydown);
       if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
     }

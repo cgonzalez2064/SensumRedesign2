@@ -426,11 +426,12 @@
           <span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
-              <path d="M30 54 L50 36 L70 54" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M36 54 V72 H64 V54" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M46 72 V60 H54 V72" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M67 30 a12 12 0 1 1 -9 -4" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" opacity=".85"/>
-              <path d="M58 22 L57 28 L64 29" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+              <path d="M28 58 L48 40 L68 58" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M34 58 V76 H62 V58" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M44 76 V64 H52 V76" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="63" y="16" width="20" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linejoin="round"/>
+              <path d="M73 25 V30 M69 30 H77" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M73 30 L73 42" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
             </svg>
           </span>
           <span class="tag" data-i18n="proj1.tag">Residencial</span>
@@ -471,9 +472,13 @@
           <span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
-              <path d="M28 30 H72 V74 H28 Z" fill="none" stroke="currentColor" stroke-width="2" opacity=".4"/>
-              <path d="M50 34 L38 68 M50 34 L62 68 M42 60 H58" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="50" cy="34" r="3.6" fill="currentColor" opacity=".9"/>
+              <g transform="rotate(-20 50 50)">
+                <rect x="22" y="58" width="48" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+                <path d="M30 58 V65 M38 58 V63 M46 58 V65 M54 58 V63 M62 58 V65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </g>
+              <path d="M40 46 L66 20" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              <path d="M66 20 L72 20 L72 26 Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M36 50 L40 46 L44 50" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </span>
           <span class="tag" data-i18n="proj4.tag">Diseño</span>
@@ -502,7 +507,10 @@
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
               <circle cx="42" cy="42" r="14" fill="none" stroke="currentColor" stroke-width="3.4"/>
               <path d="M42 24 V30 M42 54 V60 M60 42 H54 M30 42 H24 M54.5 29.5 L50.5 33.5 M33.5 50.5 L29.5 54.5 M54.5 54.5 L50.5 50.5 M33.5 33.5 L29.5 29.5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-              <path d="M58 58 L72 72 M72 58 L58 72" stroke="currentColor" stroke-width="4" stroke-linecap="round" opacity=".9"/>
+              <g transform="translate(66,66) rotate(45)">
+                <path d="M-14 0 H9" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                <path d="M9 -5 a5 5 0 1 0 0 10" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
+              </g>
             </svg>
           </span>
           <span class="tag" data-i18n="proj6.tag">Mantenimiento</span>
@@ -512,7 +520,17 @@
         </article>
       </div>
       <div class="projects-cta reveal">
-        <a href="#contacto" class="btn btn-gold" data-i18n="projects.cta">Conversemos sobre tu proyecto</a>
+        <!-- PORTFOLIO PDF — this button downloads
+             assets/portfolio/sensum-portafolio-proyectos.pdf instead of
+             scrolling to the contact form. That file is currently a
+             placeholder (clearly labeled as such inside the PDF itself) —
+             see assets/portfolio/README.md for exactly how to swap it for
+             the client's real portfolio once supplied. In the simple case
+             (same filename), nothing here needs to change. The `download`
+             attribute makes the browser save the file instead of
+             navigating to it; its value is the suggested saved filename.
+             If you'd rather this open in a new tab, remove `download`. -->
+        <a href="assets/portfolio/sensum-portafolio-proyectos.pdf" download="Sensum-Construcciones-Portafolio.pdf" class="btn btn-gold" data-i18n="projects.cta" data-i18n-attr="aria-label:projects.cta_aria" aria-label="Conversemos sobre tu proyecto (descarga el portafolio en PDF)">Conversemos sobre tu proyecto</a>
       </div>
     </div>
   </section>
