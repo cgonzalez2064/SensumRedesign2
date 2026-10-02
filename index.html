@@ -404,7 +404,7 @@
         <p data-i18n="projects.desc">Categorías de proyectos que desarrollamos, adaptadas a cada tipo de inmueble, alcance y presupuesto.</p>
       </div>
       <div class="project-grid reveal-group">
-        <article class="project-card case-study-card reveal pc-0 i0" data-project="proj1">
+        <article class="project-card case-study-card reveal pc-0 i0" data-project="proj1" data-images="">
           <!--
             Reusable case-study card — currently showing a category (no
             completed-project claim). To turn this into a real case study
@@ -422,6 +422,19 @@
               </div>
             (before/after images are optional — only include them when both
             exist and consent to publish them has been confirmed)
+
+            SEPARATELY — the "Ver detalles" button opens a modal with its
+            own small 3-image carousel (Planificación / Ejecución /
+            Entrega), currently filled with placeholder icons for the
+            same reason as above. To swap THAT carousel to real photos,
+            fill in this card's own data-images="" attribute (right on the
+            project-card tag that wraps this comment) with the image
+            file paths, separated by commas:
+              data-images="assets/projects/remodelacion-residencial/1.jpg, assets/projects/remodelacion-residencial/2.jpg"
+            Any number of images works (not just 3), and no other file
+            needs to change — see assets/projects/README.md for the full
+            walkthrough. This is independent of the case-study photo
+            above: you can fill in one, both, or neither.
           -->
           <span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
@@ -439,7 +452,10 @@
           <p data-i18n="proj1.desc">Renovación integral de espacios habitacionales.</p>
           <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-1 i1" data-project="proj2">
+        <article class="project-card case-study-card reveal pc-1 i1" data-project="proj2" data-images="">
+          <!-- To show real photos in this card's modal carousel instead of the
+               placeholder icons, fill in data-images="" above — see the
+               full instructions on the first project card. -->
           <span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
@@ -454,7 +470,10 @@
           <p data-i18n="proj2.desc">Crecimiento de espacios para locales y oficinas.</p>
           <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-2 i2" data-project="proj3">
+        <article class="project-card case-study-card reveal pc-2 i2" data-project="proj3" data-images="">
+          <!-- To show real photos in this card's modal carousel instead of the
+               placeholder icons, fill in data-images="" above — see the
+               full instructions on the first project card. -->
           <span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
@@ -468,7 +487,10 @@
           <p data-i18n="proj3.desc">Estructuras seguras desde los cimientos.</p>
           <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-3 i3" data-project="proj4">
+        <article class="project-card case-study-card reveal pc-3 i3" data-project="proj4" data-images="">
+          <!-- To show real photos in this card's modal carousel instead of the
+               placeholder icons, fill in data-images="" above — see the
+               full instructions on the first project card. -->
           <span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
@@ -486,7 +508,10 @@
           <p data-i18n="proj4.desc">Planos y anteproyectos a la medida del cliente.</p>
           <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-4 i4" data-project="proj5">
+        <article class="project-card case-study-card reveal pc-4 i4" data-project="proj5" data-images="">
+          <!-- To show real photos in this card's modal carousel instead of the
+               placeholder icons, fill in data-images="" above — see the
+               full instructions on the first project card. -->
           <span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
@@ -501,7 +526,10 @@
           <p data-i18n="proj5.desc">Proyectos completos, de la concepción a la entrega.</p>
           <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-5 i5" data-project="proj6">
+        <article class="project-card case-study-card reveal pc-5 i5" data-project="proj6" data-images="">
+          <!-- To show real photos in this card's modal carousel instead of the
+               placeholder icons, fill in data-images="" above — see the
+               full instructions on the first project card. -->
           <span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
@@ -801,7 +829,7 @@
       <span class="tag" id="projectModalTag"></span>
       <h3 id="projectModalTitle">&nbsp;</h3>
       <p id="projectModalDesc"></p>
-      <p class="project-modal-note" data-i18n="projects.modal_placeholder_note">Imágenes de referencia — fotografías reales de cada proyecto próximamente.</p>
+      <p class="project-modal-note" id="projectModalNote" data-i18n="projects.modal_placeholder_note">Imágenes de referencia — fotografías reales de cada proyecto próximamente.</p>
     </div>
   </div>
   <div class="visually-hidden" id="projectModalLive" aria-live="polite"></div>

@@ -913,6 +913,20 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .project-modal-slide-art{ width:25%; max-width:92px; color: var(--brand-amber); opacity:.9; }
 .project-modal-slide-art svg{ width:100%; height:100%; overflow:visible; }
 .project-modal-slide-caption{ font:700 .8rem/1 var(--font-body); letter-spacing:.08em; text-transform:uppercase; color: rgba(255,255,255,.85); }
+/* A real-photo slide (see the data-images swap in main.js's
+   buildSlides()) replaces the icon+caption placeholder with a single
+   <img>, so it drops the flex centering/gap/padding meant for those —
+   the photo fills the whole slide instead. object-fit:cover crops to
+   fill the slideshow's 4:3 box cleanly regardless of the photo's own
+   aspect ratio, exactly like .case-photo does for the project cards'
+   own thumbnails (see the project-grid comment near the top of
+   index.html). */
+.project-modal-slide.has-photo{ display:block; gap:0; }
+/* object-fit:cover crops to fill the slideshow's 4:3 box cleanly no
+   matter what aspect ratio the source photo happens to be, so photos
+   of mixed shapes/sizes still line up consistently from slide to
+   slide instead of leaving letterboxed gaps. */
+.project-modal-slide.has-photo img{ width:100%; height:100%; object-fit:cover; display:block; }
 
 .project-modal-nav{
   position:absolute; top:50%; transform: translateY(-50%); z-index:2;
@@ -945,6 +959,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .project-modal-body h3{ font-size:1.25rem; margin-bottom:.4rem; text-transform:uppercase; color: var(--ink); }
 .project-modal-body p{ color: var(--gray-text); font-size:.94rem; margin:0 0 .6rem; }
 .project-modal-note{ font-size:.8rem; font-style:italic; color: var(--gray-mid); margin:0; }
+/* Toggled by main.js once a project has real data-images photos — the
+   "reference images, real photos coming soon" note stops applying. */
+.project-modal-note.is-hidden{ display:none; }
 
 /* Page-scroll lock while the modal (or the mobile nav) is open —
    a class toggle rather than a direct .style.overflow assignment, so

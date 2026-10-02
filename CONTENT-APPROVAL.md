@@ -75,6 +75,16 @@ and optional before/after images per project — once you can supply:
 - Optional before/after photo pairs, only where both exist and
   publishing them has been confirmed with the client.
 
+Separately, clicking "Ver detalles" on any of the six cards opens a
+modal with its own small 3-slide carousel (Planificación / Ejecución /
+Entrega), currently filled with placeholder icons for the same reason
+as the cards themselves — no real, approved photos exist yet. This is
+switched on a per-project basis (independent of the card photo above)
+by filling in that project's `data-images=""` attribute in
+`index.html`; see `assets/projects/README.md` for the exact steps. No
+other code changes are needed, and projects without real photos yet
+simply keep showing the icon placeholders.
+
 ## FAQ section
 
 Every question/answer in the new FAQ section is derived only from

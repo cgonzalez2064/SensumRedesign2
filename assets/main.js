@@ -101,6 +101,7 @@
       "projects.modal_dots_aria": "Seleccionar imagen",
       "projects.modal_goto_slide": "Ir a la imagen {n}",
       "projects.modal_image_of": "Imagen {n} de {total}",
+      "projects.modal_photo_alt": "Foto {n} de {title}",
       "projects.modal_phase1": "Planificación",
       "projects.modal_phase2": "Ejecución",
       "projects.modal_phase3": "Entrega",
@@ -253,6 +254,7 @@
       "projects.modal_dots_aria": "Select image",
       "projects.modal_goto_slide": "Go to image {n}",
       "projects.modal_image_of": "Image {n} of {total}",
+      "projects.modal_photo_alt": "Photo {n} of {title}",
       "projects.modal_phase1": "Planning",
       "projects.modal_phase2": "Execution",
       "projects.modal_phase3": "Handover",
@@ -568,6 +570,7 @@
     var modalTagEl = document.getElementById('projectModalTag');
     var modalTitleEl = document.getElementById('projectModalTitle');
     var modalDescEl = document.getElementById('projectModalDesc');
+    var modalNoteEl = document.getElementById('projectModalNote');
     var modalLiveEl = document.getElementById('projectModalLive');
 
     /* Two placeholder-slide icons, reused as-is from elsewhere on this
@@ -577,6 +580,13 @@
     var PHASE2_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14.7 6.3a1 1 0 0 0 1.4 1.4l3.6-3.6a5 5 0 0 1-6.7 6.7L4.4 19.4a2 2 0 0 1-2.8-2.8L11.5 6.4a5 5 0 0 1 6.7-6.7z"/><circle cx="12" cy="12" r="1"/></svg>';
     var PHASE3_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>';
     var PHASE_KEYS = ['projects.modal_phase1', 'projects.modal_phase2', 'projects.modal_phase3'];
+    /* Set by buildSlides() each time the modal opens: true once a card
+       has a data-images attribute with real photos, so the rest of the
+       modal (the aria-live announcement below) knows not to look for a
+       Planificación/Ejecución/Entrega phase label that won't exist for
+       a photo-based slide count. See buildSlides() for the full
+       photo-swap explanation. */
+    var usingPhotoSlides = false;
 
     var modalSupportsInert = 'inert' in HTMLElement.prototype;
     var MODAL_FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -639,9 +649,13 @@
         });
       }
       if (modalLiveEl){
-        var phaseLabel = t(PHASE_KEYS[activeIndex]);
-        modalLiveEl.textContent = t('projects.modal_image_of')
-          .replace('{n}', String(activeIndex + 1)).replace('{total}', String(total)) + ': ' + phaseLabel;
+        var announcement = t('projects.modal_image_of')
+          .replace('{n}', String(activeIndex + 1)).replace('{total}', String(total));
+        /* Real photos are self-explanatory ("Imagen 2 de 4" is enough);
+           the icon placeholders need the extra phase name since the
+           icon alone doesn't say what step it represents. */
+        if (!usingPhotoSlides) announcement += ': ' + t(PHASE_KEYS[activeIndex]);
+        modalLiveEl.textContent = announcement;
       }
     };
 
@@ -657,35 +671,87 @@
       modalSlides.innerHTML = '';
       slideEls = [];
 
-      var illusSvg = cardEl.querySelector('.illus svg');
-      var icons = [
-        illusSvg ? illusSvg.cloneNode(true) : null,
-        PHASE2_ICON_SVG,
-        PHASE3_ICON_SVG
-      ];
+      /* ================================================================
+         SWAPPING IN REAL PROJECT PHOTOS
+         ----------------------------------------------------------------
+         By default this modal shows 3 placeholder slides (this card's
+         own icon, then two generic "phase" icons below) because no real
+         project photos exist yet — see CONTENT-APPROVAL.md.
 
-      icons.forEach(function(icon, i){
-        var slideEl = document.createElement('div');
-        slideEl.className = 'project-modal-slide';
-        slideEl.setAttribute('role', 'group');
-        slideEl.setAttribute('aria-roledescription', 'slide');
+         To show real photos instead, for THIS project only:
+           1. Put the image files somewhere under assets/projects/ (a
+              folder per project keeps things tidy, e.g.
+              assets/projects/remodelacion-residencial/1.jpg).
+           2. Add a data-images="..." attribute to this card's
+              <article class="project-card"> tag in index.html, listing
+              those file paths separated by commas, e.g.:
+                data-images="assets/projects/remodelacion-residencial/1.jpg, assets/projects/remodelacion-residencial/2.jpg"
+         That's the whole change — nothing below needs editing. As soon
+         as data-images is present and non-empty, this function builds
+         the carousel from those photos instead of the icon placeholders,
+         and automatically supports however many images you list (not
+         just 3). See assets/projects/README.md for the full walkthrough.
+         ================================================================ */
+      var imagesAttr = cardEl.getAttribute('data-images');
+      var imagePaths = imagesAttr
+        ? imagesAttr.split(',').map(function(s){ return s.trim(); }).filter(Boolean)
+        : [];
+      usingPhotoSlides = imagePaths.length > 0;
 
-        var art = document.createElement('span');
-        art.className = 'project-modal-slide-art';
-        art.setAttribute('aria-hidden', 'true');
-        if (icon && typeof icon === 'string') art.innerHTML = icon;
-        else if (icon) art.appendChild(icon);
-        slideEl.appendChild(art);
+      if (usingPhotoSlides){
+        var titleEl = cardEl.querySelector('h3');
+        var titleText = titleEl ? titleEl.textContent.trim() : '';
 
-        var caption = document.createElement('span');
-        caption.className = 'project-modal-slide-caption';
-        caption.setAttribute('data-i18n', PHASE_KEYS[i]);
-        caption.textContent = t(PHASE_KEYS[i]);
-        slideEl.appendChild(caption);
+        imagePaths.forEach(function(path, i){
+          var slideEl = document.createElement('div');
+          slideEl.className = 'project-modal-slide has-photo';
+          slideEl.setAttribute('role', 'group');
+          slideEl.setAttribute('aria-roledescription', 'slide');
 
-        modalSlides.appendChild(slideEl);
-        slideEls.push(slideEl);
-      });
+          var img = document.createElement('img');
+          img.src = path;
+          img.loading = 'lazy';
+          /* Per-photo alt text is auto-generated ("Photo 2 of
+             Remodelación residencial") since there's no per-image
+             caption field to fill in — keeps this a one-line swap. */
+          img.alt = t('projects.modal_photo_alt')
+            .replace('{n}', String(i + 1)).replace('{title}', titleText);
+          slideEl.appendChild(img);
+
+          modalSlides.appendChild(slideEl);
+          slideEls.push(slideEl);
+        });
+      } else {
+        var illusSvg = cardEl.querySelector('.illus svg');
+        var icons = [
+          illusSvg ? illusSvg.cloneNode(true) : null,
+          PHASE2_ICON_SVG,
+          PHASE3_ICON_SVG
+        ];
+
+        icons.forEach(function(icon, i){
+          var slideEl = document.createElement('div');
+          slideEl.className = 'project-modal-slide';
+          slideEl.setAttribute('role', 'group');
+          slideEl.setAttribute('aria-roledescription', 'slide');
+
+          var art = document.createElement('span');
+          art.className = 'project-modal-slide-art';
+          art.setAttribute('aria-hidden', 'true');
+          if (icon && typeof icon === 'string') art.innerHTML = icon;
+          else if (icon) art.appendChild(icon);
+          slideEl.appendChild(art);
+
+          var caption = document.createElement('span');
+          caption.className = 'project-modal-slide-caption';
+          caption.setAttribute('data-i18n', PHASE_KEYS[i]);
+          caption.textContent = t(PHASE_KEYS[i]);
+          slideEl.appendChild(caption);
+
+          modalSlides.appendChild(slideEl);
+          slideEls.push(slideEl);
+        });
+      }
 
       if (modalDots){
         modalDots.innerHTML = '';
@@ -728,6 +794,12 @@
       modalSlideshow.className = 'project-modal-slideshow' + (pcMatch ? ' ' + pcMatch[0] : '');
 
       buildSlides(cardEl);
+      /* The "reference images, real photos coming soon" note only makes
+         sense while this project is still on the icon placeholders —
+         once data-images gives it real photos (buildSlides() above sets
+         usingPhotoSlides), hide it automatically so nobody has to
+         remember to go delete it by hand when they fill in photos. */
+      if (modalNoteEl) modalNoteEl.classList.toggle('is-hidden', usingPhotoSlides);
       activeIndex = 0;
       renderSlidePositions();
 
