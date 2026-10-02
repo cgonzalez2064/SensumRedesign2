@@ -576,9 +576,11 @@
     /* Two placeholder-slide icons, reused as-is from elsewhere on this
        page (the maintenance service icon and the hero checkmark) so no
        new iconography is invented for this feature. Static, hand-authored
-       markup only — never built from user input. */
-    var PHASE2_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14.7 6.3a1 1 0 0 0 1.4 1.4l3.6-3.6a5 5 0 0 1-6.7 6.7L4.4 19.4a2 2 0 0 1-2.8-2.8L11.5 6.4a5 5 0 0 1 6.7-6.7z"/><circle cx="12" cy="12" r="1"/></svg>';
-    var PHASE3_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>';
+       markup only — never built from user input. Both are Bootstrap
+       Icons (bi-tools / bi-check-lg), matching the rest of the site's
+       icon set for visual consistency. */
+    var PHASE2_ICON_SVG = '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 0 0 1l2.2 3.081a1 1 0 0 0 .815.419h.07a1 1 0 0 1 .708.293l2.675 2.675-2.617 2.654A3.003 3.003 0 0 0 0 13a3 3 0 1 0 5.878-.851l2.654-2.617.968.968-.305.914a1 1 0 0 0 .242 1.023l3.27 3.27a.997.997 0 0 0 1.414 0l1.586-1.586a.997.997 0 0 0 0-1.414l-3.27-3.27a1 1 0 0 0-1.023-.242L10.5 9.5l-.96-.96 2.68-2.643A3.005 3.005 0 0 0 16 3q0-.405-.102-.777l-2.14 2.141L12 4l-.364-1.757L13.777.102a3 3 0 0 0-3.675 3.68L7.462 6.46 4.793 3.793a1 1 0 0 1-.293-.707v-.071a1 1 0 0 0-.419-.814zm9.646 10.646a.5.5 0 0 1 .708 0l2.914 2.915a.5.5 0 0 1-.707.707l-2.915-2.914a.5.5 0 0 1 0-.708M3 11l.471.242.529.026.287.445.445.287.026.529L5 13l-.242.471-.026.529-.445.287-.287.445-.529.026L3 15l-.471-.242L2 14.732l-.287-.445L1.268 14l-.026-.529L1 13l.242-.471.026-.529.445-.287.287-.445.529-.026z"/></svg>';
+    var PHASE3_ICON_SVG = '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg>';
     var PHASE_KEYS = ['projects.modal_phase1', 'projects.modal_phase2', 'projects.modal_phase3'];
     /* Set by buildSlides() each time the modal opens: true once a card
        has a data-images attribute with real photos, so the rest of the
