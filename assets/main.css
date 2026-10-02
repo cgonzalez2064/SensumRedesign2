@@ -64,6 +64,16 @@
 html{
   scroll-behavior: smooth;
   scroll-padding-top: 92px;
+  /* Reserve the vertical-scrollbar's width at all times (instead of only
+     when a scrollbar is actually showing). Without this, toggling
+     `.no-scroll` below (used by the mobile nav drawer and the project
+     modal) removes the scrollbar and the page's content area suddenly
+     gets wider by the scrollbar's width, forcing a full-page layout
+     recalculation at the exact moment the modal/drawer starts to open —
+     which painted as a brief white flash/flicker. Reserving the gutter
+     up front means opening/closing never changes the content width, so
+     there is nothing to reflow and nothing to flicker. */
+  scrollbar-gutter: stable;
 }
 body{
   margin:0;
@@ -801,7 +811,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   position:relative; background: var(--white); border-radius: calc(var(--radius) + 4px); overflow:hidden;
   width:min(640px, 100%); max-height: 92vh; display:flex; flex-direction:column;
   box-shadow: 0 24px 64px rgba(0,0,0,.35);
-  transform: scale(.92) translateY(10px); transition: transform var(--dur-slow) var(--ease-spring);
+  transform: scale(.96) translateY(8px);
+  /* --ease-glide, not --ease-spring: the spring's overshoot (briefly past
+     100% scale, then settling back) combined with the aspect-ratio
+     slideshow box resizing along with the panel read as a flicker on
+     open rather than a lively bounce. A smaller scale delta (.96 vs the
+     previous .92) plus a clean, no-overshoot glide opens just as
+     noticeably but settles in one direction only. */
+  transition: transform var(--dur-slow) var(--ease-glide);
   pointer-events:auto;
 }
 .project-modal.is-open .project-modal-panel{ transform: scale(1) translateY(0); }
@@ -816,33 +833,34 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .project-modal-close:active{ transform: scale(.96); transition-duration: 90ms; }
 .project-modal-close svg{ width:18px; height:18px; }
 
-.project-modal-slideshow{ position:relative; aspect-ratio: 4/3; overflow:hidden; touch-action: pan-y; }
+.project-modal-slideshow{ position:relative; aspect-ratio: 4/3; overflow:hidden; touch-action: pan-y; background: var(--ink); }
 .project-modal-slides{ position:relative; width:100%; height:100%; }
 .project-modal-slide{
   position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap:.9rem; color:#fff; text-align:center;
   background: linear-gradient(150deg, var(--pc-a, #262626), var(--pc-b, #333333));
-  opacity:0; transform: translateX(10%) scale(.97);
+  opacity:0; transform: translateX(10%);
   /* Slide stepping is a discrete action (button/dot/key/swipe-release),
      never a live drag the user is tracking frame-by-frame, so there is
-     no earned momentum to carry into an overshoot/spring — but a quick,
-     ease-OUT-only snap (the previous attempt at "more fluid": --dur 300ms
-     opacity + --dur-slide 380ms transform on --ease-fluid, a fast-start
-     curve) finished almost as soon as it began, which read as abrupt
-     rather than fluid. --ease-glide is a slower, symmetric ease-in-out —
-     it visibly accelerates, glides, and settles — so the motion itself
-     is felt rather than just registered as a flicker. A full ±100% slide
-     (the very first attempt) is still avoided: travelling the
-     slideshow's entire width is what reads as mechanical no matter how
-     it's eased. This keeps the short ~10% drift-and-fade ("shared axis"
-     cross-fade) but gives it room to actually glide. */
+     no earned momentum to carry into an overshoot/spring. --ease-glide
+     is a slower, symmetric ease-in-out — it visibly accelerates, glides,
+     and settles — so the motion is felt rather than just registered as
+     a flicker. A full ±100% slide (an earlier attempt) is still avoided:
+     travelling the slideshow's entire width reads as mechanical no
+     matter how it's eased, so this keeps a short ~10% drift-and-fade.
+     No scale() here (an earlier attempt added one for a bit of
+     "settle"): shrinking an inset:0 slide opens a thin gap around its
+     edges for the duration of the transition, and while the slide is
+     also semi-transparent mid-fade, that gap let the panel's white
+     background show through as a flickering edge. A pure translate+fade
+     never shrinks the slide, so no gap ever opens. */
   transition: opacity var(--dur-slide) var(--ease-glide), transform var(--dur-slide) var(--ease-glide);
   pointer-events:none;
   will-change: transform, opacity;
 }
-.project-modal-slide.is-prev{ opacity:0; transform: translateX(-10%) scale(.97); }
-.project-modal-slide.is-next{ opacity:0; transform: translateX(10%) scale(.97); }
-.project-modal-slide.is-active{ opacity:1; transform: translateX(0) scale(1); pointer-events:auto; }
+.project-modal-slide.is-prev{ opacity:0; transform: translateX(-10%); }
+.project-modal-slide.is-next{ opacity:0; transform: translateX(10%); }
+.project-modal-slide.is-active{ opacity:1; transform: translateX(0); pointer-events:auto; }
 .project-modal-slide-art{ width:25%; max-width:92px; color: var(--brand-amber); opacity:.9; }
 .project-modal-slide-art svg{ width:100%; height:100%; overflow:visible; }
 .project-modal-slide-caption{ font:700 .8rem/1 var(--font-body); letter-spacing:.08em; text-transform:uppercase; color: rgba(255,255,255,.85); }
