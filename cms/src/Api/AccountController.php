@@ -29,13 +29,17 @@ final class AccountController extends Controller
      */
     public function password(): never
     {
-        if (!$this->app->rateLimiter()->hit('password_change', (string) $this->uid(), 5, 900)) {
+        // Throttle guesses of the current password (5 wrong per 15 minutes);
+        // policy mistakes on the new password are not counted.
+        $rl = $this->app->rateLimiter();
+        if ($rl->tooMany('password_change', (string) $this->uid(), 5, 900)) {
             throw new ApiError(429, 'too_many_attempts');
         }
         $user = (new Users($this->app))->find($this->uid());
         $current = $this->str('currentPassword');
         $new = $this->str('password');
         if ($current === '' || !Passwords::verify($current, (string) $user['password_hash'])) {
+            $rl->hit('password_change', (string) $this->uid(), PHP_INT_MAX, 900);
             $this->app->activity($this->uid(), 'password_change_failed', '', [], $this->req->ip());
             throw ApiError::validation(['currentPassword' => 'current_password_wrong']);
         }

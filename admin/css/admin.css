@@ -483,11 +483,13 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 
 /* ---------- Auth screens ---------- */
 .auth{
-  min-height:100vh; display:grid; place-items:center; padding:1.25rem 1rem 2rem;
+  min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1.25rem 1rem 2rem;
   background: radial-gradient(1200px 500px at 85% -10%, rgba(246,116,10,.14), transparent 60%), radial-gradient(900px 500px at -10% 110%, rgba(240,53,31,.08), transparent 60%), var(--bg);
 }
-.auth-top{ position:fixed; top:.75rem; right:.75rem; display:flex; gap:.4rem; z-index:5; }
-.auth-card{ width:min(440px, 100%); background:var(--surface); border:1px solid var(--border); border-radius:var(--r-xl); box-shadow:var(--shadow-2); padding:1.6rem 1.3rem; animation: dialog-in var(--t-slow) var(--ease); }
+.auth-top{ display:flex; flex-wrap:wrap; justify-content:center; gap:.4rem; margin:0 auto .9rem; width:min(440px, 100%); }
+.auth-top .seg-text{ position:absolute !important; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+.auth > .stack{ width:min(440px, 100%); }
+.auth-card{ width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-xl); box-shadow:var(--shadow-2); padding:1.6rem 1.3rem; animation: dialog-in var(--t-slow) var(--ease); }
 .auth-brand{ display:flex; align-items:center; gap:.75rem; margin-bottom:1.3rem; }
 .auth-brand img{ width:46px; height:46px; }
 .auth-brand strong{ display:block; font-size:1.08rem; }
@@ -507,11 +509,14 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 .intro-steps li{ display:flex; gap:.75rem; align-items:flex-start; }
 .intro-steps li::before{ counter-increment: step; content: counter(step); flex:none; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:.85rem; background:var(--brand); color:var(--brand-ink); }
 .intro-card{ background: linear-gradient(135deg, var(--accent-soft), var(--surface) 70%); }
+.intro-actions{ margin-top:1.1rem; }
 
 /* ==========================================================================
    Responsive
    ========================================================================== */
 @media (min-width: 560px){
+  .auth-top{ position:fixed; top:.75rem; right:.75rem; width:auto; margin:0; z-index:5; }
+  .auth-top .seg-text{ position:static !important; width:auto; height:auto; overflow:visible; clip:auto; }
   .main{ padding:1.6rem 1.5rem 6rem; }
   .card{ padding:1.35rem; }
   .auth-card{ padding:2rem 2rem 1.8rem; }
@@ -536,9 +541,13 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
   .dash-grid{ grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items:start; }
   .savebar{ left: calc(50% + var(--sidebar-w) / 2); }
 }
+@media (max-width: 559px){
+  .topbar .brand small{ display:none; }
+  .topbar .brand span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+}
 @media (max-width: 719px){
   .hide-sm{ display:none !important; }
-  dialog.dialog{ width:100vw; max-width:100vw; max-height:92vh; margin:auto 0 0; border-radius: var(--r-xl) var(--r-xl) 0 0; }
+  dialog.dialog, dialog.dialog.wide{ width:100%; max-width:100%; max-height:92vh; margin:auto 0 0; border-radius: var(--r-xl) var(--r-xl) 0 0; }
   dialog.dialog[open]{ animation: sheet-in var(--t-slow) var(--ease); }
   dialog.dialog.closing{ animation: sheet-out var(--t) var(--ease) forwards; }
   .dialog-foot{ padding-bottom: calc(.85rem + env(safe-area-inset-bottom)); }

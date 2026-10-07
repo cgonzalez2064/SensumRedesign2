@@ -299,9 +299,9 @@ export function segmented(options, value, onChange, label) {
     clear(group);
     for (const o of options) {
       group.appendChild(h('button', {
-        type: 'button', 'aria-pressed': String(o.value === current),
+        type: 'button', 'aria-pressed': String(o.value === current), 'aria-label': o.icon ? o.label : null,
         onclick: () => { render(o.value); onChange(o.value); },
-      }, o.icon ? icon(o.icon) : null, o.label));
+      }, o.icon ? icon(o.icon) : null, h('span', { class: o.icon ? 'seg-text' : null, text: o.label })));
     }
   };
   render(value);

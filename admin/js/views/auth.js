@@ -15,7 +15,7 @@ function layout(app, title, lead, ...content) {
   clear(app).append(
     h('main', { class: 'auth', id: 'main' },
       h('div', { class: 'auth-top' }, langSwitch(), themeSwitch()),
-      h('div', { class: 'stack', style: null }, card,
+      h('div', { class: 'stack' }, card,
         h('p', { class: 'auth-foot' }, h('a', { href: '../' }, icon('arrow-left'), ' ', t('auth.backToSite'))))));
   document.title = title + ' · ' + t('app.name');
   h1.focus();

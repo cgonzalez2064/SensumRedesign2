@@ -29,11 +29,10 @@ export async function render({ main, session, isAdmin }) {
       const intro = h('section', { class: 'card intro-card', 'aria-labelledby': 'intro-title' },
         h('div', { class: 'card-header' }, h('h2', { id: 'intro-title', text: t('dashboard.introTitle') })),
         h('ol', { class: 'intro-steps' }, t('dashboard.introSteps').map((s) => h('li', null, h('span', { text: s })))),
-        h('div', { class: 'row', style: null }, button(t('dashboard.introDismiss'), { variant: 'primary', small: true, onClick: () => {
+        h('div', { class: 'row intro-actions' }, button(t('dashboard.introDismiss'), { variant: 'primary', small: true, onClick: () => {
           try { localStorage.setItem(INTRO_KEY(user.id), '1'); } catch (e) { /* ignore */ }
           intro.remove();
         } })));
-      intro.lastChild.classList.add('intro-actions');
       body.append(intro);
     }
 

@@ -56,7 +56,9 @@ final class App
 
     public function storage(string $sub = ''): string
     {
-        $base = $this->root('storage');
+        // STORAGE_DIR lets automated tests run against a throwaway database.
+        $dir = $this->config->get('STORAGE_DIR');
+        $base = $dir === null ? $this->root('storage') : (str_starts_with($dir, '/') ? rtrim($dir, '/') : $this->root($dir));
         if (!is_dir($base)) {
             @mkdir($base, 0700, true);
         }

@@ -4,7 +4,7 @@
   "description": "Development-only test tooling for the Sensum website and Content Manager. Never uploaded to the server.",
   "type": "module",
   "scripts": {
-    "test": "node --test --test-concurrency=1 integration/",
+    "test": "node --test --test-concurrency=1 \"integration/*.test.mjs\"",
     "test:visual": "playwright test --config visual/playwright.config.js",
     "test:visual:update": "playwright test --config visual/playwright.config.js --update-snapshots",
     "test:e2e": "playwright test --config e2e/playwright.config.js"

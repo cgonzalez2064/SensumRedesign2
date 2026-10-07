@@ -98,6 +98,13 @@ function emphasisPreview(text) {
 
 const INPUT_TYPES = { phone: 'tel', whatsapp: 'tel', email: 'email', url: 'url' };
 
+/** "50234819804" → "+502 3481 9804" for display (the server stores digits only). */
+function formatWhatsapp(digits) {
+  const d = String(digits).replace(/\D/g, '');
+  if (/^502\d{8}$/.test(d)) return `+502 ${d.slice(3, 7)} ${d.slice(7)}`;
+  return d ? '+' + d : '';
+}
+
 function buildEditor(main, section, { siteUrl, onSaved, singleLanguage = false, extras = null }) {
   const fieldsState = new Map(); // key -> { field, inputs: {lang: textField}, card, loaded: {lang: value} }
   let version = section.version;
@@ -133,9 +140,10 @@ function buildEditor(main, section, { siteUrl, onSaved, singleLanguage = false, 
     for (const st of fieldsState.values()) {
       const isDirty = Object.entries(st.inputs).some(([l, f]) => f.input.value !== st.loaded[l]);
       st.card.classList.toggle('dirty', isDirty);
-      const differsNow = Object.entries(st.inputs).some(([l, f]) => f.input.value.replace(/\s+/g, ' ').trim() !== st.field.default[l]);
+      const norm = (v) => (st.field.type === 'whatsapp' ? v.replace(/\D/g, '') : v.replace(/\s+/g, ' ').trim());
+      const differsNow = Object.entries(st.inputs).some(([l, f]) => norm(f.input.value) !== norm(st.field.default[l]));
       st.resetBtn.hidden = !differsNow;
-      st.modified.hidden = !Object.entries(st.loaded).some(([l, v]) => v !== st.field.default[l]);
+      st.modified.hidden = !Object.entries(st.loaded).some(([l, v]) => norm(v) !== norm(st.field.default[l]));
     }
   };
 
@@ -153,7 +161,7 @@ function buildEditor(main, section, { siteUrl, onSaved, singleLanguage = false, 
       const inputs = {};
       const loaded = {};
       for (const lang of langs) {
-        loaded[lang] = field.value[lang] ?? '';
+        loaded[lang] = field.type === 'whatsapp' ? formatWhatsapp(field.value[lang] ?? '') : (field.value[lang] ?? '');
         const f = textField({
           label: field.bilingual ? (lang === 'es' ? t('common.spanish') : t('common.english')) : ft.label,
           langTag: field.bilingual ? lang.toUpperCase() : null,
@@ -191,7 +199,7 @@ function buildEditor(main, section, { siteUrl, onSaved, singleLanguage = false, 
       const resetBtn = h('button', { type: 'button', class: 'btn btn-link small', hidden: true }, icon('arrow-counterclockwise'), t('content.resetDefault'));
       const modified = h('span', { class: 'badge badge-brand', hidden: true, text: t('content.modified') });
       resetBtn.addEventListener('click', () => {
-        for (const [l, f] of Object.entries(inputs)) { f.input.value = field.default[l]; f.input.dispatchEvent(new Event('input')); }
+        for (const [l, f] of Object.entries(inputs)) { f.input.value = field.type === 'whatsapp' ? formatWhatsapp(field.default[l]) : field.default[l]; f.input.dispatchEvent(new Event('input')); }
         toast(t('content.resetDone'), { type: 'info' });
       });
       const card = h('div', { class: 'field-card' },
@@ -242,7 +250,8 @@ function buildEditor(main, section, { siteUrl, onSaved, singleLanguage = false, 
       for (const [key, lang] of changed) {
         const st = fieldsState.get(key);
         // Store what the server will render (whitespace collapsed).
-        st.loaded[lang] = st.inputs[lang].input.value.replace(/\s+/g, ' ').trim();
+        const saved = st.inputs[lang].input.value.replace(/\s+/g, ' ').trim();
+        st.loaded[lang] = st.field.type === 'whatsapp' ? formatWhatsapp(saved) : saved;
         st.inputs[lang].input.value = st.loaded[lang];
       }
       setBusy(saveBtn, false);

@@ -95,11 +95,6 @@ final class Reports
             throw ApiError::validation($errors);
         }
 
-        // Abuse limits: a misbehaving or compromised account cannot flood the support inbox.
-        $rl = $this->app->rateLimiter();
-        if (!$rl->hit('report_burst', (string) $userId, 5, 600) || !$rl->hit('report_day', (string) $userId, 20, 86400)) {
-            throw new ApiError(429, 'too_many_reports');
-        }
         $fingerprint = hash('sha256', $type . '|' . mb_strtolower($title) . '|' . mb_strtolower($description));
         $dupe = $this->app->db()->one(
             'SELECT id, email_status FROM support_reports WHERE user_id = ? AND fingerprint = ? AND created_at > ?',
@@ -109,11 +104,21 @@ final class Reports
             throw new ApiError(409, 'duplicate_report', [], ['report' => ['id' => (int) $dupe['id'], 'emailStatus' => $dupe['email_status']]]);
         }
 
+        // Abuse limits: a misbehaving or compromised account cannot flood the
+        // support inbox. Checked after validation and the duplicate check, so
+        // fixing a mistake never uses up someone's quota.
+        $rl = $this->app->rateLimiter();
+        if ($rl->tooMany('report_burst', (string) $userId, 5, 600) || $rl->tooMany('report_day', (string) $userId, 20, 86400)) {
+            throw new ApiError(429, 'too_many_reports');
+        }
+
         $context = $this->sanitizeContext($in['context'] ?? null);
         $file = null;
         if ($screenshot && ($screenshot['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
             $file = $this->storeScreenshot($screenshot);
         }
+        $rl->hit('report_burst', (string) $userId, PHP_INT_MAX, 600);
+        $rl->hit('report_day', (string) $userId, PHP_INT_MAX, 86400);
 
         $db = $this->app->db();
         $id = $db->insert(
@@ -253,9 +258,16 @@ final class Reports
             'Fecha y hora' => $when,
             'Número de reporte' => '#' . $r['id'],
         ];
+        // Friendly values for the support engineer (raw codes otherwise).
+        $readable = [
+            'device' => ['mobile' => 'Celular', 'tablet' => 'Tableta', 'desktop' => 'Computadora'],
+            'theme' => ['light' => 'Claro', 'dark' => 'Oscuro', 'system' => 'Sistema'],
+            'lang' => ['es' => 'Español', 'en' => 'Inglés'],
+            'online' => ['online' => 'En línea', 'offline' => 'Sin conexión'],
+        ];
         $tech = [];
         foreach ($context as $k => $v) {
-            $tech[self::CONTEXT_LABELS[$k] ?? $k] = (string) $v;
+            $tech[self::CONTEXT_LABELS[$k] ?? $k] = $readable[$k][(string) $v] ?? (string) $v;
         }
 
         $text = "Nuevo reporte desde el Administrador de contenido de Sensum Construcciones\n\n";

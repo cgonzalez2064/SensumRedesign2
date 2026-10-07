@@ -60,7 +60,7 @@ export function openReportDialog() {
 
   const ctxList = h('dl', { class: 'kv context-list' }, Object.entries(context).map(([k, v]) => [
     h('dt', { text: t('report.context.' + k) }),
-    h('dd', { text: k === 'device' ? t('report.devices.' + v) : v }),
+    h('dd', { text: k === 'device' ? t('report.devices.' + v) : k === 'theme' ? t('theme.' + v) : k === 'lang' ? t('langs.' + v) : k === 'online' ? t('report.connection.' + v) : v }),
   ]));
   const status = h('div', { 'aria-live': 'polite' });
   const form = h('form', { class: 'stack', novalidate: true },
