@@ -386,6 +386,16 @@ dialog.dialog.closing::backdrop{ animation: fade-out var(--t) var(--ease) forwar
 .field-card-head .where{ display:flex; gap:.35rem; align-items:center; font-size:.82rem; color:var(--text-3); margin-top:.2rem; }
 .lang-cols{ display:grid; gap:.85rem; }
 .lang-tag{ display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:20px; padding:0 .4rem; border-radius:6px; background:var(--surface-3); color:var(--text-2); font-size:.7rem; font-weight:800; letter-spacing:.04em; margin-right:.35rem; }
+/* Automatic translation: status, undo and "translate from…" under each language box */
+.auto-row{ display:flex; flex-wrap:wrap; align-items:center; gap:.15rem .9rem; font-size:.84rem; }
+.auto-row .btn-link{ font-size:.84rem; font-weight:600; gap:.3rem; }
+.auto-status{ display:inline-flex; align-items:center; gap:.4rem; color:var(--text-2); min-width:0; }
+.auto-status:empty{ display:none; }
+.auto-status .icon{ color:var(--info); flex:none; }
+.auto-status.error .icon{ color:var(--bad); }
+.auto-status .spinner{ width:14px; height:14px; border-width:2px; color:var(--info); }
+.field.is-auto .input, .field.is-auto .textarea{ border-color:var(--info); box-shadow: inset 3px 0 0 var(--info); }
+@media (pointer: coarse){ .auto-row .btn-link{ min-height:40px; } }
 .preview-title{ font-size:1.05rem; font-weight:800; text-transform:uppercase; letter-spacing:-.01em; line-height:1.15; color:var(--text); padding:.6rem .8rem; border-radius:var(--r); background:var(--surface-2); border:1px dashed var(--border-strong); }
 .preview-title em{ font-style:normal; color:var(--accent); }
 .preview-box{ padding:.75rem .9rem; border-radius:var(--r); background:var(--surface-2); border:1px dashed var(--border-strong); font-size:.9rem; display:grid; gap:.35rem; }

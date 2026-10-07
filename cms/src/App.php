@@ -26,6 +26,7 @@ final class App
     private ?MediaService $media = null;
     private ?Publisher $publisher = null;
     private ?Settings $settings = null;
+    private ?Translator $translator = null;
     private ?string $key = null;
     /** @var list<string> migrations applied automatically when the database was opened */
     private array $migratedOnOpen = [];
@@ -194,6 +195,11 @@ final class App
     public function settings(): Settings
     {
         return $this->settings ??= new Settings($this->db());
+    }
+
+    public function translator(): Translator
+    {
+        return $this->translator ??= new Translator($this->config, $this->logger());
     }
 
     public function activity(?int $userId, string $action, string $target = '', array $details = [], ?string $ip = null): void

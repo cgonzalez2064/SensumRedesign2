@@ -78,6 +78,7 @@ sensum-cms/                          (PRIVATE — outside public_html)
 | Area | What users can do |
 |---|---|
 | Texts | 92 bilingual fields (ES + EN) across Inicio → Sección principal, Nosotros, Servicios, Proceso, Tipos de proyectos, Llamado a la acción, Contacto, Preguntas frecuentes, Pie de página. Friendly names, help text, limits, live counters, highlight preview (`*palabra*`), restore original, unsaved-changes protection, edit-conflict detection |
+| Automatic translation (optional, DeepL) | Typing in one language fills the other with a machine translation, shown in the editor for review before saving (§2a) |
 | Contact details | Office/mobile phone (mobile optional), WhatsApp number, e-mail, address (building, street, office, city), map card title, Google Maps link (host allow-list), Instagram link and handle. Updates contact section, footer, WhatsApp button, form fallback text, structured data, 404 and privacy pages |
 | Photos | "Nosotros" photo; per project: card photo and a "Ver detalles" gallery (up to 10, ordered). Preview of the exact crop per screen shape, framing control, alt text ES/EN, replace, remove |
 | Documents | Replace the portfolio PDF (or go back to the sample) |
@@ -86,6 +87,42 @@ sensum-cms/                          (PRIVATE — outside public_html)
 | Support | "Reportar un problema" from every screen; history with delivery status and retry |
 | Dashboard | Site status, last publish, sync check + republish (admins), diagnostics, recent errors, recent activity, monitoring status |
 | Interface | Spanish by default, English optional; light/dark/system theme; responsive from 320 px phones to large monitors; reduced-motion aware |
+
+### 2a. Automatic translation ES ⇄ EN
+
+Off until `DEEPL_API_KEY` is set (DeepL API Free: 500,000 characters/month;
+all of the site's editable text is ≈ 5,000 characters per language). Then, in
+**Textos del sitio**:
+
+| What the person does | What happens |
+|---|---|
+| Types in Spanish | ~1 s after they stop typing (or when they leave the box) the English box fills in, marked "Traducido automáticamente del español. Revísalo." with **Deshacer**. Same in the other direction. |
+| Edits the translated box by hand | That language becomes theirs: later edits in the other language never overwrite it (until the section is saved). Both languages can therefore be written separately. |
+| Presses **Deshacer** | The previous text comes back and is kept while they keep editing the other language. |
+| Presses **Traducir del español / del inglés** | Translates on demand into that box, even if it was edited by hand. |
+| Returns the source text to the saved version | The translation is undone too. |
+| Presses **Guardar cambios** while a translation is still coming | The save waits for it ("Terminando traducciones…") and saves what is then on screen. |
+| DeepL fails / quota used up / offline | Nothing changes in the box; a short message under it explains why; saving works as usual. |
+
+Nothing is saved by translating: `POST /api/content/translate` only returns
+text. Server side (`cms/src/Translator.php`): `*highlights*` are sent as
+`<em>` and restored; "Sensum"/"Sensum Construcciones" are excluded from
+translation; English target **EN-US**, Spanish target **ES-419** (Latin
+American) with the informal *tú* the site uses; tags or `<`/`>` in a reply are
+stripped; results that exceed a field's limit are shown with the usual
+"demasiado largo" message so the person shortens them before saving.
+
+Limits: 300 translation requests per user per hour and
+`TRANSLATE_DAILY_CHAR_LIMIT` (default 60,000) characters per day for all users,
+so a runaway or compromised account cannot exhaust the monthly quota.
+`php sensum-cms/bin/console translate:test` checks the key and shows the
+characters used this period; the dashboard diagnostics show whether it is on.
+
+**Privacy.** Only the text being edited — public website copy — is sent to
+DeepL (Germany), never names, e-mails or settings. DeepL API **Free** may use
+submitted text to improve its models; DeepL API **Pro** deletes it after
+translating. For website copy this is acceptable; switch to a Pro key (no code
+change) if that ever matters.
 
 **Roles.** *Administrador*: everything. *Editor*: texts, contact details,
 photos, documents, own account, reports — no user management or republish.
@@ -140,6 +177,7 @@ photos, documents, own account, reports — no user management or republish.
 | `GET /api/dashboard` | user | dashboard data (admins get diagnostics/errors/activity) |
 | `POST /api/site/republish` | admin | regenerate pages |
 | `GET /api/content` · `PUT /api/content/{section}` | user | read/save a section (optimistic `version`) |
+| `POST /api/content/translate` | user | machine-translate field text ES⇄EN for review (saves nothing; off without `DEEPL_API_KEY`) |
 | `GET /api/media` · `POST /api/media/{slot}/upload` · `PUT /api/media/{slot}/order` · `PUT`/`DELETE /api/media/item/{id}` | user | photos & PDF |
 | `PUT /api/account/profile` · `POST /api/account/password` · `POST /api/account/sessions/revoke-others` | user | own account |
 | `GET`/`POST /api/reports` · `POST /api/reports/{id}/retry` | user | support reports |
@@ -244,14 +282,17 @@ All keys are documented in `.env.example`. Required in production: `APP_URL`,
 `SMTP_*`. Common: `SUPPORT_EMAIL` (default `it@gruposensum.com`),
 `SESSION_IDLE_MINUTES`, `SESSION_ABSOLUTE_HOURS`, `INVITE_TTL_HOURS`,
 `RESET_TTL_MINUTES`, `UPLOAD_MAX_MB`, `PUBLIC_ERROR_REPORTING`,
-`CF_WEB_ANALYTICS_TOKEN`, `SETUP_TOKEN` (remove after first use), `PUBLIC_DIR`
+`CF_WEB_ANALYTICS_TOKEN`, `DEEPL_API_KEY` + `TRANSLATE_DAILY_CHAR_LIMIT`
+(automatic translation), `SETUP_TOKEN` (remove after first use), `PUBLIC_DIR`
 (only if the folders aren't side by side), `APP_KEY` (optional; otherwise
-generated into `storage/app.key`). Testing only: `STORAGE_DIR`.
+generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`
+(ignored unless `APP_ENV=development`).
 
 ## 11. Command line (`php sensum-cms/bin/console …`)
 
 `check` · `migrate` · `create-admin` · `publish` · `render <dir>` ·
-`mail:test <email>` · `reports:retry` · `backup` (consistent DB copy, keeps 14)
+`mail:test <email>` · `translate:test` (checks the DeepL key, shows usage) ·
+`reports:retry` · `backup` (consistent DB copy, keeps 14)
 
 ## 12. Logs, backups and recovery
 
@@ -270,6 +311,9 @@ generated into `storage/app.key`). Testing only: `STORAGE_DIR`.
 ## 13. Known limitations
 
 * No draft/review workflow: saved changes publish immediately.
+* Automatic translation is machine translation: it must be reviewed (the panel
+  says so on every translated box). Photo descriptions (alt text) and contact
+  details are not translated automatically.
 * No content version history UI (previous values are in the activity log and
   page backups; restoring is manual).
 * Single-factor authentication (no 2FA yet).

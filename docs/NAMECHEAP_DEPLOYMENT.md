@@ -155,6 +155,10 @@ RESET_TTL_MINUTES=60
 UPLOAD_MAX_MB=10
 PUBLIC_ERROR_REPORTING=false
 CF_WEB_ANALYTICS_TOKEN=
+
+# Automatic translation ES <-> EN in the text editor (optional, see §7b)
+DEEPL_API_KEY=
+TRANSLATE_DAILY_CHAR_LIMIT=60000
 ```
 
 Then set the file's permission to `600`. Keep a copy of these values in a
@@ -192,6 +196,24 @@ Without these, invitations, resets and support reports may land in spam.
 **Support reports** go to `SUPPORT_EMAIL` (**it@gruposensum.com**). Make sure that
 mailbox accepts mail from `sensumconstrucciones.com` (whitelist the sender if it
 uses aggressive filtering).
+
+## 7b. Automatic translation (DeepL) — optional
+
+1. Create a **DeepL API Free** account at https://www.deepl.com/pro-api
+   (choose the *API* plan, not the Translator app; DeepL may ask for a card to
+   verify the account — the Free plan is not charged).
+2. DeepL account → **API Keys** → copy the key (Free keys end in `:fx`).
+3. Put it in `sensum-cms/.env` as `DEEPL_API_KEY=…` (it is a secret: never
+   e-mail it or commit it).
+4. Check it from Terminal: `php ~/sensum-cms/bin/console translate:test`
+   (shows a sample translation and the characters used this month), or open
+   Dashboard → *Diagnóstico técnico* → "Traducción automática (DeepL)".
+
+The free plan allows 500,000 characters per month; all of the site's editable
+text is about 5,000 characters per language. `TRANSLATE_DAILY_CHAR_LIMIT` caps
+daily use. Without a key the panel works exactly the same, minus automatic
+translation. Outgoing HTTPS from PHP (curl) is enabled on Namecheap shared
+hosting; nothing else needs configuring.
 
 ## 8. HTTPS and first administrator
 
@@ -268,6 +290,9 @@ Do these on the live site and tick them in `docs/PRODUCTION_CHECKLIST.md`:
     sitio público" check confirms the folder layout).
 14. Logs: File Manager → `sensum-cms/storage/logs/app-YYYY-MM.log` contains the
     test actions and no passwords or tokens.
+15. Automatic translation (if configured): in a text section type a word in
+    Spanish → the English box fills in marked "Traducido automáticamente";
+    press **Deshacer** and leave without saving.
 
 ## 11. Updating later (new release)
 

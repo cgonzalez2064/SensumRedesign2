@@ -6,6 +6,7 @@ namespace Sensum\Cms\Api;
 use Sensum\Cms\Content\Validator;
 use Sensum\Cms\Http\ApiError;
 use Sensum\Cms\Http\Response;
+use Sensum\Cms\TranslationError;
 
 /**
  * Text, business details, photos and documents. Every successful change is
@@ -14,6 +15,8 @@ use Sensum\Cms\Http\Response;
  */
 final class ContentController extends Controller
 {
+    private const LANGS = ['es' => true, 'en' => true];
+
     public function index(): never
     {
         $schema = $this->app->schema();
@@ -48,7 +51,69 @@ final class ContentController extends Controller
                 'fields' => $fields,
             ];
         }
-        Response::ok(['sections' => $sections, 'siteUrl' => $this->app->config->appUrl()]);
+        Response::ok([
+            'sections' => $sections,
+            'siteUrl' => $this->app->config->appUrl(),
+            'translation' => ['enabled' => $this->app->translator()->isEnabled()],
+        ]);
+    }
+
+    /**
+     * Machine-translates editor text between Spanish and English. Nothing is
+     * saved: the admin shows the result in the other language's box for review.
+     */
+    public function translate(): never
+    {
+        $translator = $this->app->translator();
+        if (!$translator->isEnabled()) {
+            throw new ApiError(503, 'translation_unavailable');
+        }
+        $from = $this->str('from');
+        $to = $this->str('to');
+        $items = $this->req->raw('items');
+        if (!isset(self::LANGS[$from], self::LANGS[$to]) || $from === $to
+            || !is_array($items) || !$items || count($items) > 50 || !array_is_list($items)) {
+            throw new ApiError(400, 'malformed_request');
+        }
+
+        $schema = $this->app->schema();
+        $batch = [];
+        $chars = 0;
+        foreach ($items as $item) {
+            $key = is_array($item) ? ($item['key'] ?? null) : null;
+            $raw = is_array($item) ? ($item['text'] ?? null) : null;
+            $field = is_string($key) ? $schema->field($key) : null;
+            if (!$field || !$field['bilingual'] || !is_string($raw)) {
+                throw new ApiError(400, 'malformed_request');
+            }
+            if (strlen($raw) > 4000) {
+                throw new ApiError(413, 'payload_too_large');
+            }
+            $text = Validator::normalizeText($raw);
+            if (preg_match('/[<>]/', $text)) {
+                throw ApiError::validation([$key . '.' . $from => 'no_html']);
+            }
+            $batch[] = ['key' => $key, 'text' => $text, 'emphasis' => $field['type'] === 'emphasis'];
+            $chars += mb_strlen($text);
+        }
+
+        // Protect the translation quota from a runaway or compromised account.
+        $limiter = $this->app->rateLimiter();
+        if (!$limiter->hit('translate', (string) $this->uid(), 300, 3600)
+            || !$limiter->consume('translate_chars', 'all', $chars, $this->app->config->int('TRANSLATE_DAILY_CHAR_LIMIT', 60000, 1000), 86400)) {
+            throw new ApiError(429, 'translation_busy');
+        }
+
+        try {
+            $out = $translator->translate($batch, $from, $to);
+        } catch (TranslationError $e) {
+            throw new ApiError(503, $e->getMessage());
+        }
+        $translations = [];
+        foreach ($batch as $i => $item) {
+            $translations[] = ['key' => $item['key'], 'text' => $out[$i]];
+        }
+        Response::ok(['translations' => $translations]);
     }
 
     public function update(string $sectionId): never

@@ -36,6 +36,7 @@ Release: `release-________-_______` · Deployed by: __________ · Date: ________
 - [ ] Database configured (`/api/health` → all `ok`; dashboard diagnostics green)
 - [ ] First administrator created; `SETUP_TOKEN` removed from `.env`
 - [ ] SPF, DKIM and DMARC valid (cPanel → Email Deliverability)
+- [ ] Automatic translation: `DEEPL_API_KEY` set and `bin/console translate:test` OK — or consciously left off
 
 ## C. Functional tests on the live site
 
@@ -51,6 +52,7 @@ Release: `release-________-_______` · Deployed by: __________ · Date: ________
 - [ ] Image upload tested (card photo, gallery photo, removal)
 - [ ] File restrictions tested (`.svg` / renamed file refused)
 - [ ] Content updates tested (edit, check live page, restore)
+- [ ] Automatic translation tested (Spanish fills English for review; Undo works) — if configured
 - [ ] Mobile tested (admin on a phone; public site on a phone)
 - [ ] Spanish tested
 - [ ] English tested (admin and public toggle)

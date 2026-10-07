@@ -26,6 +26,7 @@ final class Cli
             'publish' => $this->publish(),
             'render' => $this->render($args[0] ?? ''),
             'mail:test' => $this->mailTest($args[0] ?? ''),
+            'translate:test' => $this->translateTest(),
             'reports:retry' => $this->retryReports(),
             'backup' => $this->backup(),
             default => $this->help(),
@@ -39,7 +40,7 @@ final class Cli
 
     private function help(): int
     {
-        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|reports:retry|backup>');
+        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|translate:test|reports:retry|backup>');
         return 0;
     }
 
@@ -144,6 +145,29 @@ final class Cli
         ]);
         $this->out($ok ? 'Sent (driver: ' . $this->app->mailer()->driver() . ').' : 'FAILED — see storage/logs for the error category.');
         return $ok ? 0 : 1;
+    }
+
+    /** Checks the DeepL key: one short translation each way plus this period's usage. */
+    private function translateTest(): int
+    {
+        $tr = $this->app->translator();
+        if (!$tr->isEnabled()) {
+            fwrite(STDERR, "Automatic translation is off: set DEEPL_API_KEY in .env.\n");
+            return 1;
+        }
+        try {
+            [$en] = $tr->translate([['text' => 'Construimos con *precisión*', 'emphasis' => true]], 'es', 'en');
+            [$es] = $tr->translate([['text' => 'Your project, on time', 'emphasis' => false]], 'en', 'es');
+            $usage = $tr->usage();
+        } catch (TranslationError $e) {
+            fwrite(STDERR, 'FAILED: ' . $e->getMessage() . " — see storage/logs for the reason.\n");
+            return 1;
+        }
+        $this->out($tr->plan() . ' is working.');
+        $this->out("  ES → EN: Construimos con *precisión*  →  {$en}");
+        $this->out("  EN → ES: Your project, on time  →  {$es}");
+        $this->out(sprintf('  Used this period: %s of %s characters', number_format($usage['used']), $usage['limit'] ? number_format($usage['limit']) : 'unlimited'));
+        return 0;
     }
 
     /**

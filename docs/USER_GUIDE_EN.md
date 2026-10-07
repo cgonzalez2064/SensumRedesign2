@@ -52,6 +52,23 @@ Your choice is remembered. You can also change it in **My account**.
 5. Press **Save changes** in the bar at the bottom. You'll see "Changes published
    on the website" with a link to view it.
 
+**Automatic translation** (if it's on, you'll see a blue notice when you open a
+section):
+* When you type in **Spanish**, the **English** box fills in by itself a second
+  after you stop typing (and the other way round). Below it you'll see
+  "Translated automatically from Spanish. Please review.": read it and fix it if
+  needed before saving.
+* **Undo** brings back the previous text and keeps it while you go on editing
+  the other language.
+* If you correct the translated text yourself, the panel won't change it again:
+  you can write each language separately and both are kept.
+* **Translate from Spanish** / **Translate from English** translates that text
+  again whenever you want.
+* If a translation is longer than the maximum, the field turns red: shorten it
+  before saving.
+* If translation isn't available at that moment, the panel tells you and
+  changes nothing; just type the text yourself.
+
 Tips:
 * **Highlight a word in color** (main title only): wrap it in asterisks, e.g.
   `Built with *precision*`. A preview shows the result.

@@ -46,6 +46,13 @@ final class Health
             $inside = str_starts_with(realpath($app->root()) ?: $app->root(), (realpath($public) ?: $public) . '/');
             $c['private_folder'] = ['ok' => !$inside, 'optional' => true, 'detail' => $inside ? 'cms folder is inside the web root (protected by .htaccess; moving it outside is recommended)' : ''];
             $c['https'] = ['ok' => str_starts_with($app->config->appUrl(), 'https://'), 'optional' => !$app->config->isProduction(), 'detail' => $app->config->appUrl()];
+            $tr = $app->translator();
+            $canConnect = function_exists('curl_init') || filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN);
+            $c['translation'] = ['ok' => $tr->isEnabled() && $canConnect, 'optional' => true, 'detail' => match (true) {
+                !$tr->isEnabled() => 'not configured (DEEPL_API_KEY) — editors write both languages by hand',
+                !$canConnect => 'PHP cannot make outgoing HTTPS requests (enable curl or allow_url_fopen)',
+                default => $tr->plan(),
+            }];
             $c['upload_limit'] = ['ok' => $app->media()->maxUploadBytes() >= 8 * 1024 * 1024, 'optional' => true,
                 'detail' => round($app->media()->maxUploadBytes() / 1048576, 1) . ' MB' . (PHP_SAPI === 'cli' ? ' (command-line PHP; the web server may use other limits)' : '')];
         }

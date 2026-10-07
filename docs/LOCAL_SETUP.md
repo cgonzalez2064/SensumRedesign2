@@ -180,6 +180,26 @@ php cms/bin/console mail:test you@example.com
 `MAIL_DRIVER=log` writes messages to `cms/storage/mail/*.eml` instead of sending;
 `MAIL_DRIVER=disabled` simulates "no e-mail available".
 
+### Automatic translation (DeepL)
+Off until you add a key. Create a free **DeepL API Free** account at
+https://www.deepl.com/pro-api (the API plan, not the DeepL Translator app),
+copy the *Authentication Key* (it ends in `:fx`) and add it to `cms/.env`:
+
+```ini
+DEEPL_API_KEY=your-key:fx
+```
+
+Restart `tools/dev-server.sh`, then check it:
+
+```bash
+php cms/bin/console translate:test
+```
+
+In **Textos del sitio** a blue notice confirms it is on; type in Spanish and the
+English box fills in after a second. Every translation uses your real DeepL
+quota (500,000 characters/month on the free plan). The automated tests never
+call DeepL — they use a local stand-in (`tests/integration/deepl-stub.mjs`).
+
 ### Telemetry
 Off by default. To try public-site error reporting locally set
 `PUBLIC_ERROR_REPORTING=true` in `cms/.env`, then republish
@@ -201,8 +221,8 @@ Mailpit must be running for the e-mail tests (`mailpit &`).
 
 | Suite | Command | What it covers |
 |---|---|---|
-| API integration (85 tests) | `npm --prefix tests test` | auth, sessions, CSRF, passwords, invitations, content, uploads, reports, telemetry, failure handling. Each file starts its own server with a throwaway database. |
-| Browser E2E | `npm --prefix tests run test:e2e` | every admin screen in light/dark on desktop Chrome, tablet and iPhone (WebKit) with accessibility scans; public site with managed content; content stress test; existing site behavior |
+| API integration (95 tests) | `npm --prefix tests test` | auth, sessions, CSRF, passwords, invitations, content, automatic translation, uploads, reports, telemetry, failure handling. Each file starts its own server with a throwaway database. |
+| Browser E2E | `npm --prefix tests run test:e2e` | every admin screen in light/dark on desktop Chrome, tablet and iPhone (WebKit) with accessibility scans; automatic translation; public site with managed content; content stress test; existing site behavior |
 | Visual regression | see below | the public site against the approved screenshots |
 | Production build on Apache | see section 8 | `.htaccess` behavior of the built release |
 

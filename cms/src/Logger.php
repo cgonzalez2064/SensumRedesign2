@@ -11,7 +11,7 @@ namespace Sensum\Cms;
  */
 final class Logger
 {
-    private const REDACT = '/pass|token|secret|cookie|session|authorization|smtp_password|csrf/i';
+    private const REDACT = '/pass|token|secret|cookie|session|authorization|smtp_password|csrf|api_?key/i';
 
     public function __construct(private string $dir)
     {

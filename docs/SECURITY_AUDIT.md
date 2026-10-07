@@ -124,7 +124,9 @@ flaw was found.
   strict CSP with no `unsafe-inline`.
 * Control/bidi/zero-width characters stripped; invalid UTF-8 rejected; JSON
   bodies capped at 256 KB; unknown fields/languages rejected.
-* No redirects based on user input; no server-side fetches (no SSRF surface).
+* No redirects based on user input. The only server-side outbound request is
+  the optional DeepL call (§7): fixed host chosen by the key type, never a URL
+  from input, no redirects followed (no SSRF surface).
 * Path traversal: slot ids validated by pattern and lookup; file names never
   derived from input; screenshot names re-validated before attaching.
 
@@ -203,3 +205,22 @@ Re-run on commit `c8e709c` (and again for the final release):
    activity monthly; keep PHP and PHPMailer updated (`composer audit`).
 9. Back up the database and uploads as described in `NAMECHEAP_DEPLOYMENT.md`.
 10. After deployment, verify headers (command in `NAMECHEAP_DEPLOYMENT.md` §10).
+
+## 7. Change review — automatic translation (DeepL), added after Audit 2
+
+A feature added after the two audits, reviewed and tested to the same standard.
+
+| Area | Design | Verified by |
+|---|---|---|
+| Access | `POST /api/content/translate`: signed-in users only, same-origin + CSRF like every change; saves nothing | `10-translation` (anonymous 401, no CSRF 403, foreign origin 403, version unchanged) |
+| Input | only bilingual text fields from the schema; `es`/`en` only and different; ≤ 50 items, ≤ 4,000 bytes each; `<`/`>` refused (`no_html`) | `10-translation` (8 malformed shapes, HTML payload, oversized) |
+| Output | DeepL replies are untrusted: tags stripped, entities decoded, `<`/`>` removed, control characters stripped, then shown in a text box (`value`, never HTML) and validated again on save | `10-translation` (hostile reply with `<script>`/`onerror`) |
+| Outbound request | fixed host `api-free.deepl.com` / `api.deepl.com`; TLS verified; no redirects; 5 s connect / 15 s total timeout. `DEEPL_API_URL` (tests) is ignored unless `APP_ENV=development` | `10-translation` (production ignores the override) |
+| Secret | `DEEPL_API_KEY` only in `.env` (git-ignored, outside the web root); sent only in the `Authorization` header; never logged (logger also redacts `api_key`-like keys) | `10-translation` (logs scanned for the key and for edited text after failures) |
+| Data sent | only the text being edited (public website copy); no names, e-mails or settings. DeepL API Free may use submitted text to improve its models; Pro deletes it — documented in `CONTENT_MANAGER.md` §2a | review |
+| Abuse / cost | 300 requests per user per hour; `TRANSLATE_DAILY_CHAR_LIMIT` (default 60,000 characters/day, all users) | `10-translation` (cap returns `translation_busy`) |
+| Failure | quota (456), rate limit (429), bad key (401/403), outage (5xx/network) → short error code, category logged, nothing changed in the editor, saving unaffected | `10-translation`, `e2e/translate.spec.js` |
+| Admin UI | no new `innerHTML`; strict admin CSP unchanged (the browser never talks to DeepL); axe scan of the editor with translation notes: no serious issues | `e2e/translate.spec.js` on Chrome desktop/tablet and iPhone (WebKit) |
+
+Static analysis (PHPStan level 6): 0 errors after the change. No new dependency
+(uses PHP's curl, with a stream fallback).

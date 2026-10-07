@@ -9,8 +9,8 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 
 | Suite | Location | Size |
 |---|---|---|
-| API integration | `tests/integration/*.test.mjs` | 85 tests in 10 files; each file runs its own PHP server with a throwaway database; one server deliberately has SMTP down |
-| Browser E2E | `tests/e2e/*.spec.js` | 24 specs × 3 browser profiles (72 runs, 13 skipped by design: phone-only or single-submission tests) |
+| API integration | `tests/integration/*.test.mjs` | 95 tests in 11 files; each file runs its own PHP server with a throwaway database; one server deliberately has SMTP down; translation tests use a local DeepL stand-in |
+| Browser E2E | `tests/e2e/*.spec.js` | 29 specs × 3 browser profiles (87 runs, 21 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
 | Production build | `tests/apache/apache.test.mjs` | 6 checks of the built release under Apache + PHP-FPM |
 
@@ -87,6 +87,23 @@ site still served), offline save in the browser, small landscape phones.
 visual 22/22 · release from the clone 6/6 on Apache. Re-run after the security
 fixes: API 84/84 on PHP 8.2 **and** 8.5, E2E 59/59, Apache 6/6.
 
+## Change after the two passes — automatic translation (DeepL)
+
+Added at the owner's request after Pass 2: typing in one language fills the
+other for review (see `CONTENT_MANAGER.md` §2a). Tested against a local DeepL
+stand-in (`tests/integration/deepl-stub.mjs`) — the real service is never
+called by tests.
+
+| Suite | Added | Result |
+|---|---|---|
+| API (`10-translation`) | off without a key; access control; ES→EN with `*highlights*`, `&` and the company name; EN→ES (ES-419, informal); validation; hostile replies; quota/rate-limit/outage/bad-key handling; key never logged; daily character cap; CLI `check`/`translate:test`; production ignores the test URL | 10/10 |
+| Browser (`translate.spec.js`) | auto-fill + review note, Undo, manual edits kept, "Traducir del español", save publishes both (3 devices, axe scan); English-first; revert when the source returns to the saved text; save waits for a pending translation; failure message; no controls without a key | 7 passed, 8 skipped by design |
+
+Full re-run after the change: API **95/95**, browser **66 passed / 21 skipped**,
+PHPStan level 6 **0 errors**. The visual regression suite was not re-run for
+this change because no public-site file changed (only `admin/`, `cms/`, docs
+and tests).
+
 ## Other audits
 
 | Audit | Result |
@@ -107,6 +124,6 @@ See `docs/LOCAL_SETUP.md` §7–8. In short:
 ```bash
 npm --prefix tests ci && npx --prefix tests playwright install webkit
 mailpit &
-npm --prefix tests test            # API (≈ 25 s)
-npm --prefix tests run test:e2e    # browsers (≈ 3 min)
+npm --prefix tests test            # API (≈ 30 s)
+npm --prefix tests run test:e2e    # browsers (≈ 4 min)
 ```

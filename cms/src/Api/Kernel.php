@@ -37,6 +37,7 @@ final class Kernel
         ['POST', '/api/site/republish', SystemController::class, 'republish', 'admin'],
 
         ['GET', '/api/content', ContentController::class, 'index', 'user'],
+        ['POST', '/api/content/translate', ContentController::class, 'translate', 'user'],
         ['PUT', '/api/content/{section}', ContentController::class, 'update', 'user'],
         ['GET', '/api/media', ContentController::class, 'media', 'user'],
         ['POST', '/api/media/{slot}/upload', ContentController::class, 'upload', 'user'],

@@ -52,6 +52,23 @@ Tu elección se recuerda. También puedes cambiarla en **Mi cuenta**.
 5. Presiona **Guardar cambios** en la barra que aparece abajo.
    Verás el mensaje «Cambios publicados en el sitio» y un enlace para verlo.
 
+**Traducción automática** (si está activada, verás un aviso azul al abrir una
+sección):
+* Cuando escribes en **español**, el **inglés** se llena solo un segundo después
+  de que dejas de escribir (y al revés). Debajo aparece «Traducido
+  automáticamente del español. Revísalo.»: léelo y corrígelo si hace falta antes
+  de guardar.
+* **Deshacer** devuelve el texto que había antes y lo deja fijo mientras sigues
+  editando el otro idioma.
+* Si corriges el texto traducido tú mismo, el panel ya no lo vuelve a cambiar:
+  puedes escribir cada idioma por separado y se respetan los dos.
+* **Traducir del español** / **Traducir del inglés** vuelve a traducir ese
+  texto cuando tú quieras.
+* Si la traducción queda más larga que el máximo, el campo se marca en rojo:
+  acórtala antes de guardar.
+* Si la traducción no está disponible en ese momento, el panel te lo dice y no
+  cambia nada; simplemente escribe el texto tú.
+
 Consejos:
 * **Resaltar una palabra en color** (solo en el título principal): enciérrala
   entre asteriscos, por ejemplo `Construcción con *precisión*`. Verás una vista

@@ -19,6 +19,12 @@ final class RateLimiter
         return $this->count($bucket, $key, $windowSeconds, 1) <= $limit;
     }
 
+    /** Records $amount units (e.g. characters); returns false if the window's total is now over $limit. */
+    public function consume(string $bucket, string $key, int $amount, int $limit, int $windowSeconds): bool
+    {
+        return $this->count($bucket, $key, $windowSeconds, max(1, $amount)) <= $limit;
+    }
+
     /** True if the limit is already reached (does not record a hit). */
     public function tooMany(string $bucket, string $key, int $limit, int $windowSeconds): bool
     {
