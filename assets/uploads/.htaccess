@@ -12,10 +12,10 @@ Options -Indexes -ExecCGI
 <FilesMatch "^[a-z0-9-]+-w[0-9]+\.(webp|jpg)$|^[a-z0-9-]+\.pdf$">
   Require all granted
 </FilesMatch>
+# X-Content-Type-Options: nosniff is already sent for every file by the root .htaccess.
 <IfModule mod_headers.c>
-  Header set X-Content-Type-Options "nosniff"
   <FilesMatch "\.pdf$">
     Header set Content-Disposition "attachment"
-    Header set Content-Security-Policy "sandbox"
+    Header always set Content-Security-Policy "sandbox"
   </FilesMatch>
 </IfModule>

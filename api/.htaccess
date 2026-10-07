@@ -1,11 +1,10 @@
-# Content Manager API: every /api/* request goes to index.php.
+# Content Manager API: every /api/* request goes to the front controller.
+# (This folder contains only index.php; dotfiles are denied by the root
+# .htaccess. Note: a <FilesMatch> deny here would be evaluated against the
+# original URL before this rewrite and would block every API call.)
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteRule ^ index.php [L,QSA]
 </IfModule>
-# Only the front controller may run here.
-<FilesMatch "^(?!index\.php$).+$">
-  Require all denied
-</FilesMatch>
 Options -Indexes
