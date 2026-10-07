@@ -200,3 +200,66 @@ test('sending a report with a screenshot shows the confirmation', async ({ page 
   await dlg.getByRole('button', { name: 'Enviar reporte' }).click();
   await expect(dlg.getByText('¡Gracias! Tu reporte fue enviado correctamente al equipo de soporte.')).toBeVisible();
 });
+
+// ---------------------------------------------------------------- Pass 2 (adversarial)
+test('losing the connection while saving keeps the edit and explains what to do', async ({ page, context }) => {
+  await login(page);
+  await page.goto('/admin/#/textos/cta');
+  const input = page.locator('main textarea, main input').first();
+  await input.fill('Texto escrito sin conexión');
+  await context.setOffline(true);
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  // The save error explains what happened and that nothing was lost (the
+  // offline banner at the top says so too).
+  const err = page.locator('main form .alert-bad');
+  await expect(err).toContainText('No pudimos conectar con el servidor');
+  await expect(err).toContainText('sigue en pantalla');
+  await expect(page.getByText('Sin conexión a internet.', { exact: false })).toBeVisible();
+  await expect(input).toHaveValue('Texto escrito sin conexión');
+  await context.setOffline(false);
+  await page.getByRole('button', { name: 'Descartar' }).click();
+});
+
+test('the panel works normally when telemetry is blocked (ad-blockers)', async ({ page }) => {
+  await page.route('**/api/telemetry/**', (r) => r.abort());
+  const problems = watch(page);
+  await login(page);
+  await page.evaluate(() => setTimeout(() => { throw new Error('forced test error'); }, 0));
+  await page.goto('/admin/#/textos');
+  await expect(page.locator('main h1')).toHaveText('Textos del sitio');
+  // Only the deliberately blocked telemetry request may fail.
+  expect(problems.filter((p) => !/forced test error|telemetry|ERR_FAILED/.test(p))).toEqual([]);
+});
+
+test('report text containing HTML is shown as text, never executed', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop-chrome', 'one submission is enough');
+  let dialogs = 0;
+  page.on('dialog', (d) => { dialogs++; d.dismiss(); });
+  await login(page);
+  await page.locator('.topbar .report-btn').click();
+  const dlg = page.getByRole('dialog', { name: /Reportar un problema/ });
+  await dlg.getByLabel('Título').fill('<img src=x onerror=alert(1)> ' + Date.now());
+  await dlg.getByLabel('Descripción').fill('<script>alert(2)</script> descripción de prueba');
+  await dlg.getByRole('button', { name: 'Enviar reporte' }).click();
+  await expect(dlg.getByText(/Tu reporte fue enviado/)).toBeVisible();
+  await dlg.getByRole('button', { name: 'Listo' }).click();
+  await page.goto('/admin/#/reportes');
+  await page.getByText('Ver detalle').first().click();
+  await expect(page.getByText('<script>alert(2)</script> descripción de prueba')).toBeVisible();
+  expect(await page.locator('main img[src="x"], main script').count()).toBe(0);
+  expect(dialogs).toBe(0);
+});
+
+test('small landscape phone: editor and dialogs fit', async ({ page }, info) => {
+  test.skip(info.project.name !== 'iphone-webkit', 'phone only');
+  await page.setViewportSize({ width: 667, height: 375 });
+  await login(page);
+  for (const hash of ['#/textos/hero', '#/fotos/proyectos', '#/usuarios']) {
+    await page.goto('/admin/' + hash);
+    await expect(page.locator('main h1')).toBeVisible();
+    await expectNoOverflow(page, hash);
+  }
+  await page.locator('.topbar .report-btn').click();
+  const box = await page.getByRole('dialog').boundingBox();
+  expect(box.height).toBeLessThanOrEqual(375);
+});
