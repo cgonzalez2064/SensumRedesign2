@@ -15,6 +15,11 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const FIXTURES = join(ROOT, 'tests', 'fixtures', 'out');
 export const PHP = process.env.PHP_BIN || 'php';
 export const MAILPIT = 'http://127.0.0.1:8025';
+
+// Test images are generated, not committed: create them on first use.
+if (!existsSync(join(FIXTURES, 'polyglot.jpg'))) {
+  execFileSync(PHP, ['-d', 'memory_limit=1G', join(ROOT, 'tests', 'fixtures', 'make-fixtures.php')], { stdio: 'ignore' });
+}
 export const ADMIN = { name: 'Ana Administradora', email: 'ana.admin@example.test', password: 'Clave-De-Prueba-2026' };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
