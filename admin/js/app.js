@@ -45,7 +45,6 @@ const currentPath = () => {
   return raw.startsWith('/') ? raw : '/' + raw;
 };
 export const navigate = (path) => { location.hash = '#' + path; };
-export const getSession = () => state.session;
 export const isAdmin = () => !!(state.session && state.session.user.role === 'admin');
 
 // --------------------------------------------------------------- session

@@ -43,14 +43,6 @@ final class App
         return self::$instance ??= new self($root);
     }
 
-    public static function instance(): self
-    {
-        if (!self::$instance) {
-            throw new \LogicException('App not booted');
-        }
-        return self::$instance;
-    }
-
     public function root(string $sub = ''): string
     {
         return $this->root . ($sub !== '' ? '/' . ltrim($sub, '/') : '');

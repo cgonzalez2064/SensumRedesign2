@@ -11,7 +11,6 @@ final class Request
         public readonly string $method,
         public readonly string $path,
         private array $server,
-        private array $query,
         private array $post,
         private array $files,
         private array $cookies,
@@ -34,7 +33,6 @@ final class Request
             strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')),
             $path,
             $_SERVER,
-            $_GET,
             $_POST,
             $_FILES,
             $_COOKIE,
@@ -54,12 +52,6 @@ final class Request
     public function cookie(string $name): string
     {
         $v = $this->cookies[$name] ?? '';
-        return is_string($v) ? $v : '';
-    }
-
-    public function query(string $name): string
-    {
-        $v = $this->query[$name] ?? '';
         return is_string($v) ? $v : '';
     }
 
@@ -134,12 +126,6 @@ final class Request
     public function userAgent(): string
     {
         return mb_substr((string) ($this->server['HTTP_USER_AGENT'] ?? ''), 0, 255);
-    }
-
-    public function isHttps(): bool
-    {
-        $https = strtolower((string) ($this->server['HTTPS'] ?? ''));
-        return $https === 'on' || $https === '1' || (string) ($this->server['SERVER_PORT'] ?? '') === '443';
     }
 
     public function isStateChanging(): bool

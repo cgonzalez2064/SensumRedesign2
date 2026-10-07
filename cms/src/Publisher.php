@@ -407,11 +407,4 @@ final class Publisher
         }
     }
 
-    /** @return list<array{id:string, files:list<string>}> newest first */
-    public function backups(): array
-    {
-        $dirs = glob($this->app->storage('backups/published') . '/*', GLOB_ONLYDIR) ?: [];
-        rsort($dirs, SORT_STRING);
-        return array_map(fn ($d) => ['id' => basename($d), 'files' => array_map('basename', glob("{$d}/*") ?: [])], $dirs);
-    }
 }

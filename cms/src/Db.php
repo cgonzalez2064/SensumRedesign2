@@ -38,11 +38,6 @@ final class Db
         }
     }
 
-    public function pdo(): PDO
-    {
-        return $this->pdo;
-    }
-
     public function run(string $sql, array $params = []): PDOStatement
     {
         $stmt = $this->pdo->prepare($sql);

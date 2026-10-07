@@ -138,8 +138,4 @@ final class Config
         return $this->string('SUPPORT_EMAIL', 'it@gruposensum.com');
     }
 
-    public function cmsRoot(): string
-    {
-        return $this->cmsRoot;
-    }
 }
