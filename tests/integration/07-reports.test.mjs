@@ -122,7 +122,8 @@ test('SMTP down: the report is kept as "failed", nothing is lost, and retry deli
     const retry = await u.post(`/api/reports/${reportId}/retry`, {});
     assert.equal(retry.status, 200);
     assert.equal(retry.data.report.emailStatus, 'sent');
-    assert.ok((await waitForMail(SUPPORT, before + 1)).length > before);
+    await waitForMail(SUPPORT, before + 1);
+    assert.ok((await countTo(SUPPORT)) > before, 'the retried report reached the support inbox');
     const dash = await u.get('/api/dashboard');
     assert.ok(dash.data.errors.some((e) => /Support report e-mail/.test(e.message)), 'delivery failure visible on the dashboard');
   } finally { await up.stop(); }
