@@ -2,3 +2,26 @@
 node_modules/
 *.log
 .git-broken-do-not-use/
+
+# --- Content Manager ---------------------------------------------------
+# Real secrets never go in git (copy .env.example → cms/.env)
+.env
+cms/.env
+# Runtime data: database, logs, backups, outbox, report screenshots
+cms/storage/*
+!cms/storage/.htaccess
+# Composer dependencies are installed with `composer install`
+cms/vendor/
+# Published uploads are runtime content (the folder's .htaccess is tracked)
+assets/uploads/*
+!assets/uploads/.htaccess
+# Release bundles
+dist/
+# Dev-only test tooling output
+tests/node_modules/
+tests/test-results/
+tests/playwright-report/
+tests/visual/baseline/
+tests/e2e/.artifacts/
+# Client document (kept local)
+Sensum-Construcciones-Actualizacion-Sitio-Web.docx
