@@ -3,6 +3,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { writeFileSync, chmodSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { startServer, Client, createAdmin, ROOT } from './helpers.mjs';
 
 let s; let c;
@@ -135,4 +136,11 @@ test('command-line check reports a healthy installation', () => {
   const out = s.cli(['check']);
   assert.match(out, /\[ OK \] database/);
   assert.match(out, /\[ OK \] publishing/);
+});
+
+test('command-line backup writes a consistent, readable copy of the database', () => {
+  const out = s.cli(['backup']);
+  const file = out.match(/Backup written: (\S+\.sqlite)/)[1];
+  const copy = execFileSync('sqlite3', [file, 'SELECT COUNT(*) FROM users']).toString().trim();
+  assert.equal(copy, s.sql('SELECT COUNT(*) FROM users'));
 });

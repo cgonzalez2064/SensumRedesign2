@@ -27,6 +27,7 @@ final class Cli
             'render' => $this->render($args[0] ?? ''),
             'mail:test' => $this->mailTest($args[0] ?? ''),
             'reports:retry' => $this->retryReports(),
+            'backup' => $this->backup(),
             default => $this->help(),
         };
     }
@@ -38,7 +39,7 @@ final class Cli
 
     private function help(): int
     {
-        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|reports:retry>');
+        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|reports:retry|backup>');
         return 0;
     }
 
@@ -143,6 +144,25 @@ final class Cli
         ]);
         $this->out($ok ? 'Sent (driver: ' . $this->app->mailer()->driver() . ').' : 'FAILED — see storage/logs for the error category.');
         return $ok ? 0 : 1;
+    }
+
+    /**
+     * Consistent copy of the database (SQLite VACUUM INTO — safe while the
+     * site is in use) into storage/backups/db/. Keeps the newest 14 copies.
+     */
+    private function backup(): int
+    {
+        $dir = $this->app->storageDir('backups/db');
+        $file = $dir . '/database-' . date('Ymd-His') . '.sqlite';
+        $this->app->db()->run('VACUUM INTO ?', [$file]);
+        @chmod($file, 0600);
+        $all = glob($dir . '/database-*.sqlite') ?: [];
+        rsort($all, SORT_STRING);
+        foreach (array_slice($all, 14) as $old) {
+            @unlink($old);
+        }
+        $this->out('Backup written: ' . $file . ' (' . round((int) filesize($file) / 1024) . ' KB)');
+        return 0;
     }
 
     private function retryReports(): int

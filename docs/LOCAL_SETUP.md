@@ -201,7 +201,7 @@ Mailpit must be running for the e-mail tests (`mailpit &`).
 
 | Suite | Command | What it covers |
 |---|---|---|
-| API integration (77 tests) | `npm --prefix tests test` | auth, sessions, CSRF, passwords, invitations, content, uploads, reports, telemetry, failure handling. Each file starts its own server with a throwaway database. |
+| API integration (85 tests) | `npm --prefix tests test` | auth, sessions, CSRF, passwords, invitations, content, uploads, reports, telemetry, failure handling. Each file starts its own server with a throwaway database. |
 | Browser E2E | `npm --prefix tests run test:e2e` | every admin screen in light/dark on desktop Chrome, tablet and iPhone (WebKit) with accessibility scans; public site with managed content; content stress test; existing site behavior |
 | Visual regression | see below | the public site against the approved screenshots |
 | Production build on Apache | see section 8 | `.htaccess` behavior of the built release |

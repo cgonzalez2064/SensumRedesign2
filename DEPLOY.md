@@ -1,5 +1,10 @@
 # Deploying Sensum Construcciones to Namecheap (cPanel)
 
+> **Content Manager release:** if you are deploying the `content-manager`
+> branch (admin panel at `/admin`), follow **[docs/NAMECHEAP_DEPLOYMENT.md](docs/NAMECHEAP_DEPLOYMENT.md)**.
+> It refers back to this file for DNS (§2), AutoSSL (§4) and the contact-form
+> checks (§5, §7), which are unchanged.
+
 Everything you need to take this folder live on your Namecheap hosting is
 below, in order. Most of it doesn't require the command line — cPanel's
 File Manager handles it through the browser — except the two optional

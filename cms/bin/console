@@ -10,6 +10,7 @@
  *   php cms/bin/console render <dir>           render the pages into <dir> without publishing
  *   php cms/bin/console mail:test <address>    send a test e-mail with the current SMTP settings
  *   php cms/bin/console reports:retry          retry support e-mails that failed to send
+ *   php cms/bin/console backup                 consistent copy of the database (keeps 14)
  */
 declare(strict_types=1);
 
