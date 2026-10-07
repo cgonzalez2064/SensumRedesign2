@@ -37,7 +37,12 @@ export const getLang = () => lang;
 export const locale = () => (lang === 'en' ? 'en-US' : 'es-GT');
 
 export function setLang(next) {
-  lang = next === 'en' ? 'en' : 'es';
+  const value = next === 'en' ? 'en' : 'es';
+  if (value === lang) {
+    try { localStorage.setItem(KEY, lang); } catch (e) { /* ignore */ }
+    return;
+  }
+  lang = value;
   try { localStorage.setItem(KEY, lang); } catch (e) { /* ignore */ }
   document.documentElement.lang = lang;
   listeners.forEach((fn) => fn(lang));

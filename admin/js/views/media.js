@@ -13,7 +13,7 @@ export async function render({ main, params, navigate }) {
   main.append(pageHead({ title: t('media.title'), lead: t('media.lead') }));
   const tabs = h('nav', { class: 'tabs', 'aria-label': t('media.title') },
     [['nosotros', 'about', 'people'], ['proyectos', 'projects', 'images'], ['documentos', 'documents', 'file-earmark-pdf']].map(([slug, key, ic]) =>
-      h('a', { class: 'tab', href: '#/fotos/' + slug, 'aria-selected': String(slug === tab), 'aria-current': slug === tab ? 'page' : null }, icon(ic), t('media.tabs.' + key))));
+      h('a', { class: 'tab', href: '#/fotos/' + slug, 'aria-current': slug === tab ? 'page' : null }, icon(ic), t('media.tabs.' + key))));
   const body = h('div', { class: 'stack-lg' }, loading());
   main.append(tabs, body);
 

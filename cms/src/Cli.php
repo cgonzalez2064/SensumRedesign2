@@ -8,8 +8,13 @@ use Sensum\Cms\Http\ApiError;
 /** Command-line tasks for setup, maintenance and support. */
 final class Cli
 {
+    private bool $tty;
+
     public function __construct(private App $app)
     {
+        // Checked once, before any input is read (a later check on a piped
+        // STDIN makes PHP warn about its read buffer).
+        $this->tty = @stream_isatty(STDIN);
     }
 
     public function run(string $cmd, array $args): int
@@ -57,7 +62,7 @@ final class Cli
     private function prompt(string $label, bool $hidden = false): string
     {
         fwrite(STDOUT, $label);
-        $tty = stream_isatty(STDIN);
+        $tty = $this->tty;
         if ($hidden && $tty) {
             @shell_exec('stty -echo');
         }

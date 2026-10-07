@@ -31,3 +31,6 @@ assets/.rl-data/
 
 # Generated upload fixtures
 tests/fixtures/out/
+
+# Playwright E2E artifacts
+tests/e2e/.artifacts/

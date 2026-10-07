@@ -47,7 +47,7 @@ test('length limits, required fields and emphasis syntax are enforced server-sid
   assert.equal((await save('hero', { 'hero.title': { es: 'Con *precisión y sin cierre' } })).data.fields['hero.title.es'], 'emphasis_unbalanced');
   assert.equal((await save('hero', { 'hero.title': { es: 'Vacío ** aquí' } })).data.fields['hero.title.es'], 'emphasis_empty');
   // Asterisks don't count towards the limit of emphasis fields.
-  assert.equal((await save('hero', { 'hero.title': { es: '*' + 'a'.repeat(100) + '*' } })).status, 200);
+  assert.equal((await save('hero', { 'hero.title': { es: '*' + 'a'.repeat(90) + '*' } })).status, 200);
 });
 
 test('unknown fields, languages and sections are rejected', async () => {

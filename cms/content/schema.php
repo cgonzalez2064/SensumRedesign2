@@ -8,7 +8,9 @@
  * ES/EN language toggle.
  *
  * Limits were sized from the approved copy and verified against the layout
- * at 320–1440 px (see docs/FRONTEND_INTEGRATION.md, "Content stress test").
+ * at 320–1440 px by filling every field to its maximum (tests/e2e/public.spec.js,
+ * "content stress test"). Hero and project-card limits sit just above the
+ * longest approved text, because those blocks change shape fastest on phones.
  *
  * Field types:
  *   text      one line                      textarea  paragraph (line breaks become spaces)
@@ -37,7 +39,7 @@ $projects = [];
 foreach (range(1, 6) as $i) {
     $projects[] = $t("proj{$i}.tag", 20);
     $projects[] = $t("proj{$i}.title", 30);
-    $projects[] = $p("proj{$i}.desc", 80);
+    $projects[] = $p("proj{$i}.desc", 60);
 }
 $faq = [];
 foreach (range(1, 6) as $i) {
@@ -48,11 +50,11 @@ foreach (range(1, 6) as $i) {
 return [
     'sections' => [
         ['id' => 'hero', 'anchor' => '#inicio', 'fields' => [
-            $t('hero.eyebrow', 60),
-            ['key' => 'hero.title', 'type' => 'emphasis', 'max' => 100],
-            $p('hero.desc', 220),
-            $t('hero.cta1', 32),
-            $t('hero.cta2', 32),
+            $t('hero.eyebrow', 48),
+            ['key' => 'hero.title', 'type' => 'emphasis', 'max' => 90],
+            $p('hero.desc', 180),
+            $t('hero.cta1', 30),
+            $t('hero.cta2', 30),
             $t('hero.badge1', 28),
             $t('hero.badge2', 28),
             $t('hero.badge3', 28),

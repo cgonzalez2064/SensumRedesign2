@@ -247,7 +247,13 @@ export function langSwitch() {
 }
 
 // --------------------------------------------------------------- router
+// Each navigation gets a sequence number; an older navigation that is
+// still awaiting something stops as soon as a newer one has started, so a
+// late render can never replace the screen the user is already using.
+let navSeq = 0;
 async function route(force = false) {
+  const seq = ++navSeq;
+  const stale = () => seq !== navSeq;
   const path = currentPath();
   if (!force && path === state.path && state.view) return;
 
@@ -259,6 +265,7 @@ async function route(force = false) {
       state.skipGuard = false;
       return;
     }
+    if (stale()) return;
   }
   state.skipGuard = false;
   if (state.view && state.view.destroy) state.view.destroy();
@@ -271,7 +278,8 @@ async function route(force = false) {
     state.shell = null;
     const app = document.getElementById('app');
     clear(app);
-    state.view = (await pub.view({ app, params: path.match(pub.re).slice(1), setupRequired: state.setupRequired, onSignedIn })) || null;
+    const view = (await pub.view({ app, params: path.match(pub.re).slice(1), setupRequired: state.setupRequired, onSignedIn })) || null;
+    if (!stale()) state.view = view;
     return;
   }
 
@@ -290,7 +298,12 @@ async function route(force = false) {
     focusHeading(main);
     return;
   }
-  state.view = (await priv.view({ main, params: path.match(priv.re).slice(1), session: state.session, navigate, isAdmin: isAdmin() })) || null;
+  const view = (await priv.view({ main, params: path.match(priv.re).slice(1), session: state.session, navigate, isAdmin: isAdmin() })) || null;
+  if (stale()) {
+    if (view && view.destroy) view.destroy();
+    return;
+  }
+  state.view = view;
   focusHeading(main);
 }
 
