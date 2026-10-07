@@ -1,7 +1,7 @@
 // Password change ("Cuenta / Seguridad") and password reset by e-mail.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { startServer, Client, createAdmin, ADMIN, mailpitUp, waitForMail, messagesTo, message, linkToken, unique } from './helpers.mjs';
+import { startServer, Client, createAdmin, ADMIN, mailpitUp, waitForMail, messagesTo, countTo, message, linkToken, unique } from './helpers.mjs';
 
 let s;
 const user = { name: 'Rosa Reset', email: unique('rosa'), password: 'Primera-Clave-2026' };
@@ -54,11 +54,11 @@ test('forgot-password answers the same for known and unknown e-mails', async () 
   const invalid = await new Client(s.base).post('/api/auth/forgot', { email: 'no-es-correo' });
   assert.equal(invalid.status, 422);
   await new Promise((r) => setTimeout(r, 800));
-  assert.equal((await messagesTo('nadie.' + user.email)).length, 0, 'nothing sent to unknown addresses');
+  assert.equal((await countTo('nadie.' + user.email)), 0, 'nothing sent to unknown addresses');
 });
 
 test('reset link: emailed, single use, tokens hashed at rest, sessions ended', async () => {
-  const before = (await messagesTo(user.email)).length;
+  const before = (await countTo(user.email));
   const signedIn = new Client(s.base);
   await signedIn.login(user.email, user.password);
   await new Client(s.base).post('/api/auth/forgot', { email: user.email });
@@ -90,7 +90,7 @@ test('expired, malformed and superseded reset links are rejected', async () => {
   for (const token of ['', 'abc', 'x'.repeat(43), '../../etc/passwd', "' OR 1=1 --"]) {
     assert.equal((await c.post('/api/auth/reset/verify', { token })).data.valid, false, token);
   }
-  const n = (await messagesTo(user.email)).length;
+  const n = (await countTo(user.email));
   await c.post('/api/auth/forgot', { email: user.email });
   const first = linkToken((await message((await waitForMail(user.email, n + 1))[0].ID)).Text, 'restablecer');
   // Expire it.
@@ -103,7 +103,7 @@ test('reset requests are throttled per address (3 per hour) without revealing it
   createAdmin(s, { name: 'T', email, password: 'Clave-Throttle-2026' });
   for (let i = 0; i < 5; i++) assert.equal((await new Client(s.base).post('/api/auth/forgot', { email })).status, 200);
   await new Promise((r) => setTimeout(r, 1000));
-  assert.equal((await messagesTo(email)).length, 3);
+  assert.equal((await countTo(email)), 3);
 });
 
 test('guessing the current password is throttled (5 wrong attempts)', async () => {

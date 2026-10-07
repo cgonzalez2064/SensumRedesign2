@@ -129,11 +129,16 @@ export async function messagesTo(address) {
 export async function message(id) {
   return (await fetch(`${MAILPIT}/api/v1/message/${id}`)).json();
 }
+/** Total matching messages (the search result itself is paged at 50). */
+export async function countTo(address) {
+  const r = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent('to:' + address)}`);
+  return (await r.json()).messages_count;
+}
+/** Waits until at least `count` messages exist for the address; returns the newest page. */
 export async function waitForMail(address, count = 1, timeout = 5000) {
   const start = Date.now();
   while (Date.now() - start < timeout) {
-    const list = await messagesTo(address);
-    if (list.length >= count) return list;
+    if ((await countTo(address)) >= count) return messagesTo(address);
     await sleep(150);
   }
   return messagesTo(address);

@@ -1,7 +1,7 @@
 // "Reportar un problema": validation, e-mail to it@gruposensum.com, failures, retry, abuse limits.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { startServer, Client, createAdmin, ADMIN, mailpitUp, waitForMail, messagesTo, message, unique } from './helpers.mjs';
+import { startServer, Client, createAdmin, ADMIN, mailpitUp, waitForMail, messagesTo, countTo, message, unique } from './helpers.mjs';
 
 let s; let c;
 const SUPPORT = 'it@gruposensum.com';
@@ -37,7 +37,7 @@ test('required fields and limits are validated', async () => {
 
 test('a report is stored and e-mailed to support with a scannable, escaped message', async () => {
   const title = `XSS <script>alert(1)</script> ${Date.now()}\r\nBcc: victim@example.test`;
-  const before = (await messagesTo(SUPPORT)).length;
+  const before = (await countTo(SUPPORT));
   const r = await report({ type: 'content', title, description: 'Línea 1\n<b>negrita</b> & "comillas"\nLínea 3 con ñ y emoji 🏗️', context: JSON.stringify({ browser: 'Chrome 152', cookie: 'secret-session', password: 'x', lang: 'es' }) });
   assert.equal(r.status, 201);
   assert.equal(r.data.delivered, true);
@@ -56,7 +56,7 @@ test('a report is stored and e-mailed to support with a scannable, escaped messa
 });
 
 test('an optional screenshot is validated, re-encoded and attached', async () => {
-  const before = (await messagesTo(SUPPORT)).length;
+  const before = (await countTo(SUPPORT));
   const ok = await report({ title: 'Con captura ' + Date.now() }, 'wide-1600x900.jpg');
   assert.equal(ok.status, 201);
   const mail = await message((await waitForMail(SUPPORT, before + 1))[0].ID);
@@ -118,7 +118,7 @@ test('SMTP down: the report is kept as "failed", nothing is lost, and retry deli
   try {
     const u = new Client(up.base);
     await u.login();
-    const before = (await messagesTo(SUPPORT)).length;
+    const before = (await countTo(SUPPORT));
     const retry = await u.post(`/api/reports/${reportId}/retry`, {});
     assert.equal(retry.status, 200);
     assert.equal(retry.data.report.emailStatus, 'sent');
