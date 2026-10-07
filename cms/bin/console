@@ -1,0 +1,29 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Sensum Content Manager — command line.
+ *
+ *   php cms/bin/console check                  environment & configuration check
+ *   php cms/bin/console migrate                apply database migrations
+ *   php cms/bin/console create-admin           create the first administrator (interactive)
+ *   php cms/bin/console publish                regenerate the public pages from current content
+ *   php cms/bin/console render <dir>           render the pages into <dir> without publishing
+ *   php cms/bin/console mail:test <address>    send a test e-mail with the current SMTP settings
+ *   php cms/bin/console reports:retry          retry support e-mails that failed to send
+ */
+declare(strict_types=1);
+
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
+
+$app = require dirname(__DIR__) . '/bootstrap.php';
+$cmd = $argv[1] ?? 'help';
+
+try {
+    exit((new Sensum\Cms\Cli($app))->run($cmd, array_slice($argv, 2)));
+} catch (Throwable $e) {
+    fwrite(STDERR, 'Error: ' . $e->getMessage() . PHP_EOL);
+    exit(1);
+}

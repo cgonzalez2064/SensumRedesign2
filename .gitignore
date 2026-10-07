@@ -25,3 +25,6 @@ tests/visual/baseline/
 tests/e2e/.artifacts/
 # Client document (kept local)
 Sensum-Construcciones-Actualizacion-Sitio-Web.docx
+
+# Contact-form rate-limit data (runtime)
+assets/.rl-data/

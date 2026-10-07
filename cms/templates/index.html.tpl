@@ -81,12 +81,12 @@
   "image": "https://sensumconstrucciones.com/assets/og-image.png",
   "description": "Empresa guatemalteca de construcción y remodelación en Guatemala: diseño arquitectónico, obra civil, impermeabilización, instalaciones generales y mantenimiento preventivo.",
   "slogan": "Tu mejor opción en servicios de construcción",
-  "telephone": ["+502-2256-7954", "+502-3481-9804"],
-  "email": "contacto@sensumconstrucciones.com",
+  "telephone": {{ld:telephones}},
+  "email": {{ld:email}},
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "Edificio Ascend, 13 Calle 5-31 Zona 9, Oficina 641",
-    "addressLocality": "Guatemala",
+    "streetAddress": {{ld:street_address}},
+    "addressLocality": {{ld:city}},
     "addressRegion": "Guatemala",
     "addressCountry": "GT"
   },
@@ -100,9 +100,9 @@
     "name": "Guatemala"
   },
   "sameAs": [
-    "https://www.instagram.com/sensumconstruccionesgt/"
+    {{ld:instagram_url}}
   ],
-  "openingHoursSpecification": [
+{{#if ld_hours}}  "openingHoursSpecification": [
     {
       "@type": "OpeningHoursSpecification",
       "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
@@ -116,16 +116,16 @@
       "closes": "12:00"
     }
   ],
-  "hasOfferCatalog": {
+{{/if}}  "hasOfferCatalog": {
     "@type": "OfferCatalog",
     "name": "Servicios de construcción y remodelación",
     "itemListElement": [
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Remodelaciones", "description": "Ampliación y redistribución de ambientes, texturizado y pintura profesional, fachaletas o piedra decorativa, y restauración de pisos y cielo falso." } },
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Diseño arquitectónico", "description": "Conceptualización, desarrollo de anteproyecto, elaboración de planos a nivel de anteproyecto y constructivo, y acompañamiento técnico durante todo el diseño." } },
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Impermeabilización y tratamientos técnicos", "description": "Impermeabilización de losas y cubiertas, tratamiento de muros húmedos y curado de hongo, sellado de superficies naturales y reparación de fisuras y juntas frías." } },
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Obra civil", "description": "Trazado y movimiento de tierra, armado de estructura y cimentación, levantamiento de muros y fundición de losas y gradas, con procesos técnicos y seguros." } },
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Instalaciones generales", "description": "Instalaciones hidráulicas, eléctricas, de climatización y comunicaciones, además de instalaciones especiales como gas y equipos de bombeo o presión." } },
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Mantenimiento preventivo", "description": "Limpieza de losas, bajadas pluviales, filtros y calentadores, revisión de instalaciones eléctricas y cuidado de áreas verdes, con planes preventivos y correctivos." } }
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": {{ld:service1.title}}, "description": {{ld:service1.desc}} } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": {{ld:service2.title}}, "description": {{ld:service2.desc}} } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": {{ld:service3.title}}, "description": {{ld:service3.desc}} } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": {{ld:service4.title}}, "description": {{ld:service4.desc}} } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": {{ld:service5.title}}, "description": {{ld:service5.desc}} } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": {{ld:service6.title}}, "description": {{ld:service6.desc}} } }
     ]
   }
 }
@@ -141,39 +141,39 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "¿Qué tipos de proyectos realiza Sensum Construcciones?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Trabajamos en remodelaciones, diseño arquitectónico, impermeabilización y tratamientos técnicos, obra civil, instalaciones generales y mantenimiento preventivo, para proyectos residenciales, comerciales e institucionales." }
+      "name": {{ld:faq.q1}},
+      "acceptedAnswer": { "@type": "Answer", "text": {{ld:faq.a1}} }
     },
     {
       "@type": "Question",
-      "name": "¿Cómo es el proceso para iniciar un proyecto?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Iniciamos con una consulta inicial para conocer tus necesidades, seguida de una visita y una propuesta con alcance, tiempos y presupuesto. Luego coordinamos la planificación y ejecución, y finalizamos con la entrega y la documentación de garantía." }
+      "name": {{ld:faq.q2}},
+      "acceptedAnswer": { "@type": "Answer", "text": {{ld:faq.a2}} }
     },
     {
       "@type": "Question",
-      "name": "¿En qué zona de Guatemala trabajan?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Desarrollamos proyectos residenciales, comerciales e institucionales en Guatemala." }
+      "name": {{ld:faq.q3}},
+      "acceptedAnswer": { "@type": "Answer", "text": {{ld:faq.a3}} }
     },
     {
       "@type": "Question",
-      "name": "¿Cuál es su horario de atención?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Atendemos de lunes a viernes, de 8:00 a 17:00, y sábados de 8:00 a 12:00." }
+      "name": {{ld:faq.q4}},
+      "acceptedAnswer": { "@type": "Answer", "text": {{ld:faq.a4}} }
     },
     {
       "@type": "Question",
-      "name": "¿Cómo puedo contactarlos?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Puedes escribirnos por WhatsApp o teléfono, enviarnos un correo, o completar el formulario de contacto de este sitio; también puedes visitarnos en nuestra oficina en Guatemala." }
+      "name": {{ld:faq.q5}},
+      "acceptedAnswer": { "@type": "Answer", "text": {{ld:faq.a5}} }
     },
     {
       "@type": "Question",
-      "name": "¿El sitio está disponible en inglés?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Sí. Puedes cambiar el idioma del sitio con el botón ES/EN en la parte superior." }
+      "name": {{ld:faq.q6}},
+      "acceptedAnswer": { "@type": "Answer", "text": {{ld:faq.a6}} }
     }
   ]
 }
 </script>
 
-<link rel="stylesheet" href="assets/main.css?v=3">
+<link rel="stylesheet" href="assets/main.css?v={{asset_version}}">
 
 <!-- If styles fail to load or JS is unavailable, scroll-reveal elements
      must not stay invisible — .reveal starts at opacity:0 and only a
@@ -224,7 +224,7 @@
   </ul>
   <a href="#contacto" class="btn btn-gold" data-i18n="nav.cta">Cotizar proyecto</a>
   <div class="mobile-nav-social">
-    <a href="https://www.instagram.com/sensumconstruccionesgt/" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/></svg><span class="visually-hidden" data-i18n="a11y.new_tab"> (se abre en una pestaña nueva)</span></a>
+    <a href="{{instagram_url}}" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/></svg><span class="visually-hidden" data-i18n="a11y.new_tab"> (se abre en una pestaña nueva)</span></a>
   </div>
 </nav>
 
@@ -239,35 +239,35 @@
     <div class="hero-glow two" aria-hidden="true"></div>
     <div class="container hero-inner">
       <div class="hero-copy">
-        <span class="eyebrow" data-i18n="hero.eyebrow">Construcción y remodelación en Guatemala</span>
-        <h1 data-i18n="hero.title">Construcción y remodelación con planificación, <em>precisión</em> y respaldo técnico</h1>
-        <p data-i18n="hero.desc">Desarrollamos proyectos residenciales, comerciales e institucionales en Guatemala, desde el diseño y la cotización hasta la ejecución y entrega.</p>
+        <span class="eyebrow" data-i18n="hero.eyebrow">{{t:hero.eyebrow}}</span>
+        <h1 data-i18n="hero.title">{{em:hero.title}}</h1>
+        <p data-i18n="hero.desc">{{t:hero.desc}}</p>
         <div class="hero-actions">
-          <a href="#contacto" class="btn btn-gold" data-i18n="hero.cta1">Solicitar evaluación técnica</a>
-          <a href="#proyectos" class="btn btn-outline" data-i18n="hero.cta2">Conocer nuestros proyectos</a>
+          <a href="#contacto" class="btn btn-gold" data-i18n="hero.cta1">{{t:hero.cta1}}</a>
+          <a href="#proyectos" class="btn btn-outline" data-i18n="hero.cta2">{{t:hero.cta2}}</a>
         </div>
         <div class="hero-badges">
-          <span class="hero-badge"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg><span data-i18n="hero.badge1">Comunicación clara</span></span>
-          <span class="hero-badge"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg><span data-i18n="hero.badge2">Supervisión técnica</span></span>
-          <span class="hero-badge"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg><span data-i18n="hero.badge3">Presupuestos detallados</span></span>
+          <span class="hero-badge"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg><span data-i18n="hero.badge1">{{t:hero.badge1}}</span></span>
+          <span class="hero-badge"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg><span data-i18n="hero.badge2">{{t:hero.badge2}}</span></span>
+          <span class="hero-badge"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg><span data-i18n="hero.badge3">{{t:hero.badge3}}</span></span>
         </div>
       </div>
       <div class="hero-panel reveal" role="group" data-i18n-attr="aria-label:hero.panel_label" aria-label="Cómo trabajamos en Sensum Construcciones">
         <div class="hero-pillar">
           <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0"/><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/></svg>
-          <div class="label" data-i18n="pillar.plan_label">Planificación</div>
+          <div class="label" data-i18n="pillar.plan_label">{{t:pillar.plan_label}}</div>
         </div>
         <div class="hero-pillar">
           <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="M8 13A5 5 0 1 1 8 3a5 5 0 0 1 0 10m0 1A6 6 0 1 0 8 2a6 6 0 0 0 0 12"/><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8"/><path d="M9.5 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/></svg>
-          <div class="label" data-i18n="pillar.precision_label">Precisión</div>
+          <div class="label" data-i18n="pillar.precision_label">{{t:pillar.precision_label}}</div>
         </div>
         <div class="hero-pillar">
           <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/><path d="m2.165 15.803.02-.004c1.83-.363 2.948-.842 3.468-1.105A9 9 0 0 0 8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.4 10.4 0 0 1-.524 2.318l-.003.011a11 11 0 0 1-.244.637c-.079.186.074.394.273.362a22 22 0 0 0 .693-.125m.8-3.108a1 1 0 0 0-.287-.801C1.618 10.83 1 9.468 1 8c0-3.192 3.004-6 7-6s7 2.808 7 6-3.004 6-7 6a8 8 0 0 1-2.088-.272 1 1 0 0 0-.711.074c-.387.196-1.24.57-2.634.893a11 11 0 0 0 .398-2"/></svg>
-          <div class="label" data-i18n="pillar.comm_label">Comunicación clara</div>
+          <div class="label" data-i18n="pillar.comm_label">{{t:pillar.comm_label}}</div>
         </div>
         <div class="hero-pillar">
           <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 63 63 0 0 1 5.072.56"/><path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0"/></svg>
-          <div class="label" data-i18n="pillar.support_label">Respaldo técnico</div>
+          <div class="label" data-i18n="pillar.support_label">{{t:pillar.support_label}}</div>
         </div>
       </div>
     </div>
@@ -279,28 +279,28 @@
   <section id="nosotros" class="section-pad about">
     <div class="container about-grid">
       <div class="reveal">
-        <div class="about-art">
-          <svg class="blueprint-icon" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M1 0a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5v-1H2v-1h4v-1H4v-1h2v-1H2v-1h4V9H4V8h2V7H2V6h4V2h1v4h1V4h1v2h1V2h1v4h1V4h1v2h1V2h1v4h1V1a1 1 0 0 0-1-1z"/></svg>
+        <div class="about-art{{about_art_class}}">
+          {{#if has_about_photo}}{{about_photo}}{{else}}<svg class="blueprint-icon" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M1 0a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5v-1H2v-1h4v-1H4v-1h2v-1H2v-1h4V9H4V8h2V7H2V6h4V2h1v4h1V4h1v2h1V2h1v4h1V4h1v2h1V2h1v4h1V1a1 1 0 0 0-1-1z"/></svg>{{/if}}
           <div class="about-art-caption">
-            <p data-i18n="about.art_caption">Planificación y supervisión técnica en cada etapa del proyecto.</p>
+            <p data-i18n="about.art_caption">{{t:about.art_caption}}</p>
           </div>
         </div>
       </div>
       <div>
         <div class="section-head reveal">
-          <span class="eyebrow" data-i18n="about.eyebrow">Quiénes somos</span>
-          <h2 class="section-title" data-i18n="about.title">Nosotros</h2>
-          <p data-i18n="about.desc">En Sensum creemos que cada espacio debe responder a una necesidad y tener un propósito. Desarrollamos proyectos de construcción y remodelación combinando diseño, funcionalidad y criterio técnico para crear soluciones adaptadas a cada cliente. Trabajamos cada proyecto con atención al detalle y una visión clara del resultado que queremos alcanzar.</p>
+          <span class="eyebrow" data-i18n="about.eyebrow">{{t:about.eyebrow}}</span>
+          <h2 class="section-title" data-i18n="about.title">{{t:about.title}}</h2>
+          <p data-i18n="about.desc">{{t:about.desc}}</p>
         </div>
 
         <div class="mission-vision reveal-group">
           <div class="mv-card reveal i0">
-            <h3><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M8 16.016a7.5 7.5 0 0 0 1.962-14.74A1 1 0 0 0 9 0H7a1 1 0 0 0-.962 1.276A7.5 7.5 0 0 0 8 16.016m6.5-7.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0"/><path d="m6.94 7.44 4.95-2.83-2.83 4.95-4.949 2.83 2.828-4.95z"/></svg><span data-i18n="about.mission_title">Misión</span></h3>
-            <p data-i18n="about.mission_desc">Desarrollar proyectos de construcción y remodelación con soluciones funcionales, planificación responsable y compromiso con cada cliente.</p>
+            <h3><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M8 16.016a7.5 7.5 0 0 0 1.962-14.74A1 1 0 0 0 9 0H7a1 1 0 0 0-.962 1.276A7.5 7.5 0 0 0 8 16.016m6.5-7.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0"/><path d="m6.94 7.44 4.95-2.83-2.83 4.95-4.949 2.83 2.828-4.95z"/></svg><span data-i18n="about.mission_title">{{t:about.mission_title}}</span></h3>
+            <p data-i18n="about.mission_desc">{{t:about.mission_desc}}</p>
           </div>
           <div class="mv-card reveal i1">
-            <h3><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/></svg><span data-i18n="about.vision_title">Visión</span></h3>
-            <p data-i18n="about.vision_desc">Consolidarnos como una empresa referente en Guatemala, ampliando nuestro alcance y desarrollando proyectos que marquen la diferencia por su calidad, innovación y confianza.</p>
+            <h3><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/></svg><span data-i18n="about.vision_title">{{t:about.vision_title}}</span></h3>
+            <p data-i18n="about.vision_desc">{{t:about.vision_desc}}</p>
           </div>
         </div>
       </div>
@@ -313,52 +313,52 @@
   <section id="servicios" class="section-pad services">
     <div class="container">
       <div class="section-head center reveal">
-        <span class="eyebrow" data-i18n="services.eyebrow">Lo que hacemos</span>
-        <h2 class="section-title" data-i18n="services.title">Servicios</h2>
-        <p data-i18n="services.desc">Soluciones de diseño, construcción y mantenimiento adaptadas a las condiciones, objetivos y presupuesto de cada proyecto.</p>
+        <span class="eyebrow" data-i18n="services.eyebrow">{{t:services.eyebrow}}</span>
+        <h2 class="section-title" data-i18n="services.title">{{t:services.title}}</h2>
+        <p data-i18n="services.desc">{{t:services.desc}}</p>
       </div>
       <div class="services-grid reveal-group">
 
         <article class="service-card reveal i0">
           <div class="icon"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z"/></svg></div>
-          <h3 data-i18n="service1.title">Remodelaciones</h3>
-          <p data-i18n="service1.desc">Ampliación y redistribución de ambientes, texturizado y pintura profesional, fachaletas o piedra decorativa, y restauración de pisos y cielo falso.</p>
-          <a class="learn" href="#contacto"><span data-i18n="services.cta">Solicitar cotización</span> <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg></a>
+          <h3 data-i18n="service1.title">{{t:service1.title}}</h3>
+          <p data-i18n="service1.desc">{{t:service1.desc}}</p>
+          <a class="learn" href="#contacto"><span data-i18n="services.cta">{{t:services.cta}}</span> <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg></a>
         </article>
 
         <article class="service-card reveal i1">
           <div class="icon"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M1 0a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5v-1H2v-1h4v-1H4v-1h2v-1H2v-1h4V9H4V8h2V7H2V6h4V2h1v4h1V4h1v2h1V2h1v4h1V4h1v2h1V2h1v4h1V1a1 1 0 0 0-1-1z"/></svg></div>
-          <h3 data-i18n="service2.title">Diseño arquitectónico</h3>
-          <p data-i18n="service2.desc">Conceptualización, desarrollo de anteproyecto, elaboración de planos a nivel de anteproyecto y constructivo, y acompañamiento técnico durante todo el diseño.</p>
-          <a class="learn" href="#contacto"><span data-i18n="services.cta">Solicitar cotización</span> <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg></a>
+          <h3 data-i18n="service2.title">{{t:service2.title}}</h3>
+          <p data-i18n="service2.desc">{{t:service2.desc}}</p>
+          <a class="learn" href="#contacto"><span data-i18n="services.cta">{{t:services.cta}}</span> <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg></a>
         </article>
 
         <article class="service-card reveal i2">
           <div class="icon"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M7.21.8C7.69.295 8 0 8 0q.164.544.371 1.038c.812 1.946 2.073 3.35 3.197 4.6C12.878 7.096 14 8.345 14 10a6 6 0 0 1-12 0C2 6.668 5.58 2.517 7.21.8m.413 1.021A31 31 0 0 0 5.794 3.99c-.726.95-1.436 2.008-1.96 3.07C3.304 8.133 3 9.138 3 10a5 5 0 0 0 10 0c0-1.201-.796-2.157-2.181-3.7l-.03-.032C9.75 5.11 8.5 3.72 7.623 1.82z"/><path fill-rule="evenodd" d="M4.553 7.776c.82-1.641 1.717-2.753 2.093-3.13l.708.708c-.29.29-1.128 1.311-1.907 2.87z"/></svg></div>
-          <h3 data-i18n="service3.title">Impermeabilización y tratamientos técnicos</h3>
-          <p data-i18n="service3.desc">Impermeabilización de losas y cubiertas, tratamiento de muros húmedos y curado de hongo, sellado de superficies naturales y reparación de fisuras y juntas frías.</p>
-          <a class="learn" href="#contacto"><span data-i18n="services.cta">Solicitar cotización</span> <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg></a>
+          <h3 data-i18n="service3.title">{{t:service3.title}}</h3>
+          <p data-i18n="service3.desc">{{t:service3.desc}}</p>
+          <a class="learn" href="#contacto"><span data-i18n="services.cta">{{t:services.cta}}</span> <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg></a>
         </article>
 
         <article class="service-card reveal i3">
           <div class="icon"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM4 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zM7.5 5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zM4.5 8a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/><path d="M2 1a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1zm11 0H3v14h3v-2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V15h3z"/></svg></div>
-          <h3 data-i18n="service4.title">Obra civil</h3>
-          <p data-i18n="service4.desc">Trazado y movimiento de tierra, armado de estructura y cimentación, levantamiento de muros y fundición de losas y gradas, con procesos técnicos y seguros.</p>
-          <a class="learn" href="#contacto"><span data-i18n="services.cta">Solicitar cotización</span> <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg></a>
+          <h3 data-i18n="service4.title">{{t:service4.title}}</h3>
+          <p data-i18n="service4.desc">{{t:service4.desc}}</p>
+          <a class="learn" href="#contacto"><span data-i18n="services.cta">{{t:services.cta}}</span> <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg></a>
         </article>
 
         <article class="service-card reveal i4">
           <div class="icon"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M5.52.359A.5.5 0 0 1 6 0h4a.5.5 0 0 1 .474.658L8.694 6H12.5a.5.5 0 0 1 .395.807l-7 9a.5.5 0 0 1-.873-.454L6.823 9.5H3.5a.5.5 0 0 1-.48-.641zM6.374 1 4.168 8.5H7.5a.5.5 0 0 1 .478.647L6.78 13.04 11.478 7H8a.5.5 0 0 1-.474-.658L9.306 1z"/></svg></div>
-          <h3 data-i18n="service5.title">Instalaciones generales</h3>
-          <p data-i18n="service5.desc">Instalaciones hidráulicas, eléctricas, de climatización y comunicaciones, además de instalaciones especiales como gas y equipos de bombeo o presión.</p>
-          <a class="learn" href="#contacto"><span data-i18n="services.cta">Solicitar cotización</span> <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg></a>
+          <h3 data-i18n="service5.title">{{t:service5.title}}</h3>
+          <p data-i18n="service5.desc">{{t:service5.desc}}</p>
+          <a class="learn" href="#contacto"><span data-i18n="services.cta">{{t:services.cta}}</span> <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg></a>
         </article>
 
         <article class="service-card reveal i5">
           <div class="icon"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M1 0 0 1l2.2 3.081a1 1 0 0 0 .815.419h.07a1 1 0 0 1 .708.293l2.675 2.675-2.617 2.654A3.003 3.003 0 0 0 0 13a3 3 0 1 0 5.878-.851l2.654-2.617.968.968-.305.914a1 1 0 0 0 .242 1.023l3.27 3.27a.997.997 0 0 0 1.414 0l1.586-1.586a.997.997 0 0 0 0-1.414l-3.27-3.27a1 1 0 0 0-1.023-.242L10.5 9.5l-.96-.96 2.68-2.643A3.005 3.005 0 0 0 16 3q0-.405-.102-.777l-2.14 2.141L12 4l-.364-1.757L13.777.102a3 3 0 0 0-3.675 3.68L7.462 6.46 4.793 3.793a1 1 0 0 1-.293-.707v-.071a1 1 0 0 0-.419-.814zm9.646 10.646a.5.5 0 0 1 .708 0l2.914 2.915a.5.5 0 0 1-.707.707l-2.915-2.914a.5.5 0 0 1 0-.708M3 11l.471.242.529.026.287.445.445.287.026.529L5 13l-.242.471-.026.529-.445.287-.287.445-.529.026L3 15l-.471-.242L2 14.732l-.287-.445L1.268 14l-.026-.529L1 13l.242-.471.026-.529.445-.287.287-.445.529-.026z"/></svg></div>
-          <h3 data-i18n="service6.title">Mantenimiento preventivo</h3>
-          <p data-i18n="service6.desc">Limpieza de losas, bajadas pluviales, filtros y calentadores, revisión de instalaciones eléctricas y cuidado de áreas verdes, con planes preventivos y correctivos.</p>
-          <a class="learn" href="#contacto"><span data-i18n="services.cta">Solicitar cotización</span> <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg></a>
+          <h3 data-i18n="service6.title">{{t:service6.title}}</h3>
+          <p data-i18n="service6.desc">{{t:service6.desc}}</p>
+          <a class="learn" href="#contacto"><span data-i18n="services.cta">{{t:services.cta}}</span> <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg></a>
         </article>
 
       </div>
@@ -372,14 +372,14 @@
   <section class="section-pad process">
     <div class="container">
       <div class="section-head center reveal">
-        <span class="eyebrow" data-i18n="process.eyebrow">Cómo trabajamos</span>
-        <h2 class="section-title" data-i18n="process.title">Nuestro proceso</h2>
+        <span class="eyebrow" data-i18n="process.eyebrow">{{t:process.eyebrow}}</span>
+        <h2 class="section-title" data-i18n="process.title">{{t:process.title}}</h2>
       </div>
       <div class="process-list reveal-group">
-        <div class="process-item reveal i0"><h3 data-i18n="process1.title">Consulta inicial</h3><p data-i18n="process1.desc">Conocemos tus necesidades, el tipo de inmueble y el alcance preliminar.</p></div>
-        <div class="process-item reveal i1"><h3 data-i18n="process2.title">Visita y propuesta</h3><p data-i18n="process2.desc">Evaluamos el espacio y preparamos una propuesta con alcance, tiempos y presupuesto.</p></div>
-        <div class="process-item reveal i2"><h3 data-i18n="process3.title">Planificación y ejecución</h3><p data-i18n="process3.desc">Coordinamos recursos, supervisamos los trabajos y comunicamos el avance.</p></div>
-        <div class="process-item reveal i3"><h3 data-i18n="process4.title">Entrega y garantía</h3><p data-i18n="process4.desc">Revisamos contigo el resultado final y documentamos las condiciones de garantía aplicables.</p></div>
+        <div class="process-item reveal i0"><h3 data-i18n="process1.title">{{t:process1.title}}</h3><p data-i18n="process1.desc">{{t:process1.desc}}</p></div>
+        <div class="process-item reveal i1"><h3 data-i18n="process2.title">{{t:process2.title}}</h3><p data-i18n="process2.desc">{{t:process2.desc}}</p></div>
+        <div class="process-item reveal i2"><h3 data-i18n="process3.title">{{t:process3.title}}</h3><p data-i18n="process3.desc">{{t:process3.desc}}</p></div>
+        <div class="process-item reveal i3"><h3 data-i18n="process4.title">{{t:process4.title}}</h3><p data-i18n="process4.desc">{{t:process4.desc}}</p></div>
       </div>
     </div>
   </section>
@@ -397,12 +397,12 @@
   <section id="proyectos" class="section-pad projects">
     <div class="container">
       <div class="section-head center reveal">
-        <span class="eyebrow" data-i18n="projects.eyebrow">Nuestro trabajo</span>
-        <h2 class="section-title" data-i18n="projects.title">Tipos de proyectos</h2>
-        <p data-i18n="projects.desc">Categorías de proyectos que desarrollamos, adaptadas a cada tipo de inmueble, alcance y presupuesto.</p>
+        <span class="eyebrow" data-i18n="projects.eyebrow">{{t:projects.eyebrow}}</span>
+        <h2 class="section-title" data-i18n="projects.title">{{t:projects.title}}</h2>
+        <p data-i18n="projects.desc">{{t:projects.desc}}</p>
       </div>
       <div class="project-grid reveal-group">
-        <article class="project-card case-study-card reveal pc-0 i0" data-project="proj1" data-images="">
+        <article class="project-card case-study-card reveal pc-0 i0" data-project="proj1" data-images="{{gallery:proj1}}">
           <!--
             Reusable case-study card — currently showing a category (no
             completed-project claim). To turn this into a real case study
@@ -434,7 +434,7 @@
             walkthrough. This is independent of the case-study photo
             above: you can fill in one, both, or neither.
           -->
-          <span class="illus" aria-hidden="true">
+          {{#if has_card_photo:proj1}}{{card_photo:proj1}}{{else}}<span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
               <path d="M28 58 L48 40 L68 58" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -444,17 +444,17 @@
               <path d="M73 25 V30 M69 30 H77" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M73 30 L73 42" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
             </svg>
-          </span>
-          <span class="tag" data-i18n="proj1.tag">Residencial</span>
-          <h3 data-i18n="proj1.title">Remodelación residencial</h3>
-          <p data-i18n="proj1.desc">Renovación integral de espacios habitacionales.</p>
+          </span>{{/if}}
+          <span class="tag" data-i18n="proj1.tag">{{t:proj1.tag}}</span>
+          <h3 data-i18n="proj1.title">{{t:proj1.title}}</h3>
+          <p data-i18n="proj1.desc">{{t:proj1.desc}}</p>
           <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-1 i1" data-project="proj2" data-images="">
+        <article class="project-card case-study-card reveal pc-1 i1" data-project="proj2" data-images="{{gallery:proj2}}">
           <!-- To show real photos in this card's modal carousel instead of the
                placeholder icons, fill in data-images="" above — see the
                full instructions on the first project card. -->
-          <span class="illus" aria-hidden="true">
+          {{#if has_card_photo:proj2}}{{card_photo:proj2}}{{else}}<span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
               <path d="M38 30 H62 V74 H38 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
@@ -462,34 +462,34 @@
               <path d="M18 50 H30 M30 50 L25 45 M30 50 L25 55" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M82 50 H70 M70 50 L75 45 M70 50 L75 55" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-          </span>
-          <span class="tag" data-i18n="proj2.tag">Comercial</span>
-          <h3 data-i18n="proj2.title">Ampliación comercial</h3>
-          <p data-i18n="proj2.desc">Crecimiento de espacios para locales y oficinas.</p>
+          </span>{{/if}}
+          <span class="tag" data-i18n="proj2.tag">{{t:proj2.tag}}</span>
+          <h3 data-i18n="proj2.title">{{t:proj2.title}}</h3>
+          <p data-i18n="proj2.desc">{{t:proj2.desc}}</p>
           <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-2 i2" data-project="proj3" data-images="">
+        <article class="project-card case-study-card reveal pc-2 i2" data-project="proj3" data-images="{{gallery:proj3}}">
           <!-- To show real photos in this card's modal carousel instead of the
                placeholder icons, fill in data-images="" above — see the
                full instructions on the first project card. -->
-          <span class="illus" aria-hidden="true">
+          {{#if has_card_photo:proj3}}{{card_photo:proj3}}{{else}}<span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
               <path d="M26 40 H74 M26 40 V70 M74 40 V70 M26 70 H74" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
               <path d="M26 55 H74" stroke="currentColor" stroke-width="3" opacity=".7"/>
               <path d="M34 40 L38 55 L44 40 L48 55 L54 40 L58 55 L64 40" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
             </svg>
-          </span>
-          <span class="tag" data-i18n="proj3.tag">Obra civil</span>
-          <h3 data-i18n="proj3.title">Obra gris y cimentación</h3>
-          <p data-i18n="proj3.desc">Estructuras seguras desde los cimientos.</p>
+          </span>{{/if}}
+          <span class="tag" data-i18n="proj3.tag">{{t:proj3.tag}}</span>
+          <h3 data-i18n="proj3.title">{{t:proj3.title}}</h3>
+          <p data-i18n="proj3.desc">{{t:proj3.desc}}</p>
           <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-3 i3" data-project="proj4" data-images="">
+        <article class="project-card case-study-card reveal pc-3 i3" data-project="proj4" data-images="{{gallery:proj4}}">
           <!-- To show real photos in this card's modal carousel instead of the
                placeholder icons, fill in data-images="" above — see the
                full instructions on the first project card. -->
-          <span class="illus" aria-hidden="true">
+          {{#if has_card_photo:proj4}}{{card_photo:proj4}}{{else}}<span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
               <g transform="rotate(-20 50 50)">
@@ -500,17 +500,17 @@
               <path d="M66 20 L72 20 L72 26 Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
               <path d="M36 50 L40 46 L44 50" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-          </span>
-          <span class="tag" data-i18n="proj4.tag">Diseño</span>
-          <h3 data-i18n="proj4.title">Diseño arquitectónico</h3>
-          <p data-i18n="proj4.desc">Planos y anteproyectos a la medida del cliente.</p>
+          </span>{{/if}}
+          <span class="tag" data-i18n="proj4.tag">{{t:proj4.tag}}</span>
+          <h3 data-i18n="proj4.title">{{t:proj4.title}}</h3>
+          <p data-i18n="proj4.desc">{{t:proj4.desc}}</p>
           <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-4 i4" data-project="proj5" data-images="">
+        <article class="project-card case-study-card reveal pc-4 i4" data-project="proj5" data-images="{{gallery:proj5}}">
           <!-- To show real photos in this card's modal carousel instead of the
                placeholder icons, fill in data-images="" above — see the
                full instructions on the first project card. -->
-          <span class="illus" aria-hidden="true">
+          {{#if has_card_photo:proj5}}{{card_photo:proj5}}{{else}}<span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
               <path d="M30 76 V32 M30 32 L70 40 M30 40 L58 46" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -518,17 +518,17 @@
               <path d="M48 60 H68 V68 H48 Z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/>
               <path d="M22 76 H38" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
             </svg>
-          </span>
-          <span class="tag" data-i18n="proj5.tag">Nueva construcción</span>
-          <h3 data-i18n="proj5.title">Construcción desde cero</h3>
-          <p data-i18n="proj5.desc">Proyectos completos, de la concepción a la entrega.</p>
+          </span>{{/if}}
+          <span class="tag" data-i18n="proj5.tag">{{t:proj5.tag}}</span>
+          <h3 data-i18n="proj5.title">{{t:proj5.title}}</h3>
+          <p data-i18n="proj5.desc">{{t:proj5.desc}}</p>
           <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
-        <article class="project-card case-study-card reveal pc-5 i5" data-project="proj6" data-images="">
+        <article class="project-card case-study-card reveal pc-5 i5" data-project="proj6" data-images="{{gallery:proj6}}">
           <!-- To show real photos in this card's modal carousel instead of the
                placeholder icons, fill in data-images="" above — see the
                full instructions on the first project card. -->
-          <span class="illus" aria-hidden="true">
+          {{#if has_card_photo:proj6}}{{card_photo:proj6}}{{else}}<span class="illus" aria-hidden="true">
             <svg viewBox="0 0 100 100" focusable="false">
               <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/>
               <circle cx="42" cy="42" r="14" fill="none" stroke="currentColor" stroke-width="3.4"/>
@@ -538,10 +538,10 @@
                 <path d="M9 -5 a5 5 0 1 0 0 10" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
               </g>
             </svg>
-          </span>
-          <span class="tag" data-i18n="proj6.tag">Mantenimiento</span>
-          <h3 data-i18n="proj6.title">Mantenimiento general</h3>
-          <p data-i18n="proj6.desc">Planes preventivos y correctivos a la medida.</p>
+          </span>{{/if}}
+          <span class="tag" data-i18n="proj6.tag">{{t:proj6.tag}}</span>
+          <h3 data-i18n="proj6.title">{{t:proj6.title}}</h3>
+          <p data-i18n="proj6.desc">{{t:proj6.desc}}</p>
           <button type="button" class="project-card-btn" data-i18n="projects.view_details">Ver detalles</button>
         </article>
       </div>
@@ -556,7 +556,7 @@
              attribute makes the browser save the file instead of
              navigating to it; its value is the suggested saved filename.
              If you'd rather this open in a new tab, remove `download`. -->
-        <a href="assets/portfolio/sensum-portafolio-proyectos.pdf" download="Sensum-Construcciones-Portafolio.pdf" class="btn btn-gold" data-i18n="projects.cta" data-i18n-attr="aria-label:projects.cta_aria" aria-label="Descargar nuestro portafolio de proyectos en PDF">Descargar nuestro portafolio de Proyectos</a>
+        <a href="{{portfolio_href}}" download="Sensum-Construcciones-Portafolio.pdf" class="btn btn-gold" data-i18n="projects.cta" data-i18n-attr="aria-label:projects.cta_aria" aria-label="{{projects_cta_aria}}">{{t:projects.cta}}</a>
       </div>
     </div>
   </section>
@@ -566,9 +566,9 @@
        ============================================================ -->
   <section class="section-pad cta-banner">
     <div class="container reveal">
-      <h2 data-i18n="ctabanner.title">¡Comencemos tu proyecto!</h2>
-      <p data-i18n="ctabanner.desc">Escríbenos hoy y agenda una evaluación técnica con nuestro equipo.</p>
-      <a href="#contacto" class="btn btn-dark" data-i18n="ctabanner.cta">Contáctanos ahora</a>
+      <h2 data-i18n="ctabanner.title">{{t:ctabanner.title}}</h2>
+      <p data-i18n="ctabanner.desc">{{t:ctabanner.desc}}</p>
+      <a href="#contacto" class="btn btn-dark" data-i18n="ctabanner.cta">{{t:ctabanner.cta}}</a>
     </div>
   </section>
 
@@ -579,39 +579,39 @@
     <div class="container contact-grid">
 
       <div class="contact-info reveal">
-        <span class="eyebrow" data-i18n="contact.eyebrow">Hablemos</span>
-        <h2 data-i18n="contact.title">Contacto</h2>
-        <p data-i18n="contact.desc">Cuéntanos qué deseas construir, ampliar o renovar. Revisaremos la información y nos comunicaremos contigo para definir el siguiente paso.</p>
+        <span class="eyebrow" data-i18n="contact.eyebrow">{{t:contact.eyebrow}}</span>
+        <h2 data-i18n="contact.title">{{t:contact.title}}</h2>
+        <p data-i18n="contact.desc">{{t:contact.desc}}</p>
 
         <ul class="contact-list">
           <li>
             <span class="icn"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A32 32 0 0 1 8 14.58a32 32 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10"/><path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4m0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/></svg></span>
-            <span><strong data-i18n="contact.label_address">Dirección</strong><a href="https://www.google.com/maps/search/?api=1&query=13+Calle+5-31+Zona+9+Ciudad+de+Guatemala" target="_blank" rel="noopener noreferrer">Edificio Ascend, 13 Calle 5-31 Zona 9, Oficina 641, Guatemala<span class="visually-hidden" data-i18n="a11y.new_tab"> (se abre en una pestaña nueva)</span></a></span>
+            <span><strong data-i18n="contact.label_address">Dirección</strong><a href="{{maps_url}}" target="_blank" rel="noopener noreferrer">{{address_full}}<span class="visually-hidden" data-i18n="a11y.new_tab"> (se abre en una pestaña nueva)</span></a></span>
           </li>
           <li>
             <span class="icn"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z"/></svg></span>
-            <span><strong data-i18n="contact.label_phone">Teléfono</strong><a href="tel:+50222567954">2256&#8209;7954</a> &nbsp;/&nbsp; <a href="tel:+50234819804">3481&#8209;9804</a></span>
+            <span><strong data-i18n="contact.label_phone">Teléfono</strong>{{phones_contact_html}}</span>
           </li>
           <li>
             <span class="icn"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z"/></svg></span>
-            <span><strong data-i18n="contact.label_email">Correo</strong><a href="mailto:contacto@sensumconstrucciones.com">contacto@sensumconstrucciones.com</a></span>
+            <span><strong data-i18n="contact.label_email">Correo</strong>{{email_link}}</span>
           </li>
           <li>
             <span class="icn"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/></svg></span>
-            <span><strong data-i18n="contact.label_hours">Horario</strong><span data-i18n="contact.hours_value">Lunes a viernes, 8:00 – 17:00. Sábados, 8:00 – 12:00.</span></span>
+            <span><strong data-i18n="contact.label_hours">Horario</strong><span data-i18n="contact.hours_value">{{t:contact.hours_value}}</span></span>
           </li>
           <li>
             <span class="icn"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/></svg></span>
-            <span><strong data-i18n="contact.label_social">Instagram</strong><a href="https://www.instagram.com/sensumconstruccionesgt/" target="_blank" rel="noopener noreferrer">@sensumconstruccionesgt<span class="visually-hidden" data-i18n="a11y.new_tab"> (se abre en una pestaña nueva)</span></a></span>
+            <span><strong data-i18n="contact.label_social">Instagram</strong><a href="{{instagram_url}}" target="_blank" rel="noopener noreferrer">{{instagram_handle}}<span class="visually-hidden" data-i18n="a11y.new_tab"> (se abre en una pestaña nueva)</span></a></span>
           </li>
         </ul>
 
         <div class="contact-map">
-          <a class="map-card" href="https://www.google.com/maps/search/?api=1&query=13+Calle+5-31+Zona+9+Ciudad+de+Guatemala" target="_blank" rel="noopener noreferrer" data-i18n-attr="aria-label:contact.map_aria" aria-label="Abrir la ubicación de Sensum Construcciones en Google Maps (se abre en una pestaña nueva)">
+          <a class="map-card" href="{{maps_url}}" target="_blank" rel="noopener noreferrer" data-i18n-attr="aria-label:contact.map_aria" aria-label="Abrir la ubicación de Sensum Construcciones en Google Maps (se abre en una pestaña nueva)">
             <div class="hero-grid" aria-hidden="true"></div>
             <span class="pin" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg></span>
-            <h3>Edificio Ascend, Zona 9</h3>
-            <p>13 Calle 5-31 Zona 9, Oficina 641, Guatemala</p>
+            <h3>{{map_title}}</h3>
+            <p>{{address_map}}</p>
             <span class="btn btn-gold" data-i18n="contact.map_open">Abrir en Google Maps</span>
           </a>
         </div>
@@ -619,7 +619,7 @@
 
       <div class="reveal">
         <div class="contact-form">
-          <h3 class="form-title" data-i18n="form.title">Envíanos un mensaje</h3>
+          <h3 class="form-title" data-i18n="form.title">{{t:form.title}}</h3>
 
           <div class="form-summary" id="formSummary" role="alert" tabindex="-1" hidden></div>
 
@@ -674,7 +674,7 @@
 
             <button type="submit" class="btn btn-gold btn-block" data-i18n="form.submit">Enviar mensaje</button>
             <p class="form-note" data-i18n-html="form.note">Usaremos tus datos únicamente para responder a tu solicitud y dar seguimiento a tu proyecto. Consulta nuestro <a href="privacy-notice.html">Aviso de Privacidad</a>.</p>
-            <p class="form-fallback" data-i18n-html="form.fallback">¿Prefieres no usar el formulario? Escríbenos por <a href="tel:+50222567954">teléfono</a>, <a href="mailto:contacto@sensumconstrucciones.com">correo</a> o <a href="https://wa.me/50234819804" target="_blank" rel="noopener noreferrer">WhatsApp</a>.</p>
+            <p class="form-fallback" data-i18n-html="form.fallback">{{form_fallback_html}}</p>
             <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
           </form>
         </div>
@@ -693,33 +693,33 @@
   <section id="faq" class="section-pad faq">
     <div class="container">
       <div class="section-head center reveal">
-        <span class="eyebrow" data-i18n="faq.eyebrow">Dudas frecuentes</span>
-        <h2 class="section-title" data-i18n="faq.title">Preguntas frecuentes</h2>
+        <span class="eyebrow" data-i18n="faq.eyebrow">{{t:faq.eyebrow}}</span>
+        <h2 class="section-title" data-i18n="faq.title">{{t:faq.title}}</h2>
       </div>
       <div class="faq-list reveal-group">
         <details class="faq-item reveal i0">
-          <summary><span data-i18n="faq.q1">¿Qué tipos de proyectos realiza Sensum Construcciones?</span></summary>
-          <p data-i18n="faq.a1">Trabajamos en remodelaciones, diseño arquitectónico, impermeabilización y tratamientos técnicos, obra civil, instalaciones generales y mantenimiento preventivo, para proyectos residenciales, comerciales e institucionales.</p>
+          <summary><span data-i18n="faq.q1">{{t:faq.q1}}</span></summary>
+          <p data-i18n="faq.a1">{{t:faq.a1}}</p>
         </details>
         <details class="faq-item reveal i1">
-          <summary><span data-i18n="faq.q2">¿Cómo es el proceso para iniciar un proyecto?</span></summary>
-          <p data-i18n="faq.a2">Iniciamos con una consulta inicial para conocer tus necesidades, seguida de una visita y una propuesta con alcance, tiempos y presupuesto. Luego coordinamos la planificación y ejecución, y finalizamos con la entrega y la documentación de garantía.</p>
+          <summary><span data-i18n="faq.q2">{{t:faq.q2}}</span></summary>
+          <p data-i18n="faq.a2">{{t:faq.a2}}</p>
         </details>
         <details class="faq-item reveal i2">
-          <summary><span data-i18n="faq.q3">¿En qué zona de Guatemala trabajan?</span></summary>
-          <p data-i18n="faq.a3">Desarrollamos proyectos residenciales, comerciales e institucionales en Guatemala.</p>
+          <summary><span data-i18n="faq.q3">{{t:faq.q3}}</span></summary>
+          <p data-i18n="faq.a3">{{t:faq.a3}}</p>
         </details>
         <details class="faq-item reveal i3">
-          <summary><span data-i18n="faq.q4">¿Cuál es su horario de atención?</span></summary>
-          <p data-i18n="faq.a4">Atendemos de lunes a viernes, de 8:00 a 17:00, y sábados de 8:00 a 12:00.</p>
+          <summary><span data-i18n="faq.q4">{{t:faq.q4}}</span></summary>
+          <p data-i18n="faq.a4">{{t:faq.a4}}</p>
         </details>
         <details class="faq-item reveal i4">
-          <summary><span data-i18n="faq.q5">¿Cómo puedo contactarlos?</span></summary>
-          <p data-i18n="faq.a5">Puedes escribirnos por WhatsApp o teléfono, enviarnos un correo, o completar el formulario de contacto de este sitio; también puedes visitarnos en nuestra oficina en Guatemala.</p>
+          <summary><span data-i18n="faq.q5">{{t:faq.q5}}</span></summary>
+          <p data-i18n="faq.a5">{{t:faq.a5}}</p>
         </details>
         <details class="faq-item reveal i5">
-          <summary><span data-i18n="faq.q6">¿El sitio está disponible en inglés?</span></summary>
-          <p data-i18n="faq.a6">Sí. Puedes cambiar el idioma del sitio con el botón ES/EN en la parte superior.</p>
+          <summary><span data-i18n="faq.q6">{{t:faq.q6}}</span></summary>
+          <p data-i18n="faq.a6">{{t:faq.a6}}</p>
         </details>
       </div>
     </div>
@@ -737,9 +737,9 @@
         <img class="brand-mark" src="assets/logo-icon.png" alt="" aria-hidden="true" width="44" height="44">
         <span class="brand-text"><span class="brand-name">Sensum</span><small>Construcciones</small></span>
       </div>
-      <p data-i18n="footer.about_desc">Diseño y construcción profesional en Guatemala.</p>
+      <p data-i18n="footer.about_desc">{{t:footer.about_desc}}</p>
       <div class="footer-social">
-        <a href="https://www.instagram.com/sensumconstruccionesgt/" target="_blank" rel="noopener noreferrer">
+        <a href="{{instagram_url}}" target="_blank" rel="noopener noreferrer">
           <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/></svg>
           <span data-i18n="footer.social_label">Síguenos en Instagram</span>
           <span class="visually-hidden" data-i18n="a11y.new_tab"> (se abre en una pestaña nueva)</span>
@@ -763,21 +763,21 @@
     <nav aria-label="Servicios">
       <h4 data-i18n="footer.services_heading">Servicios</h4>
       <ul class="footer-links">
-        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg><span data-i18n="service1.title">Remodelaciones</span></a></li>
-        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg><span data-i18n="service2.title">Diseño arquitectónico</span></a></li>
-        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg><span data-i18n="service3.title">Impermeabilización y tratamientos técnicos</span></a></li>
-        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg><span data-i18n="service4.title">Obra civil</span></a></li>
-        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg><span data-i18n="service5.title">Instalaciones generales</span></a></li>
-        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg><span data-i18n="service6.title">Mantenimiento preventivo</span></a></li>
+        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg><span data-i18n="service1.title">{{t:service1.title}}</span></a></li>
+        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg><span data-i18n="service2.title">{{t:service2.title}}</span></a></li>
+        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg><span data-i18n="service3.title">{{t:service3.title}}</span></a></li>
+        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg><span data-i18n="service4.title">{{t:service4.title}}</span></a></li>
+        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg><span data-i18n="service5.title">{{t:service5.title}}</span></a></li>
+        <li><a href="#servicios"><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg><span data-i18n="service6.title">{{t:service6.title}}</span></a></li>
       </ul>
     </nav>
 
     <div>
       <h4 data-i18n="footer.contact_heading">Contacto</h4>
       <ul class="footer-contact">
-        <li><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A32 32 0 0 1 8 14.58a32 32 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10"/><path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4m0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/></svg><a href="https://www.google.com/maps/search/?api=1&query=13+Calle+5-31+Zona+9+Ciudad+de+Guatemala" target="_blank" rel="noopener noreferrer">Edificio Ascend, 13 Calle 5-31 Zona 9, Of. 641<span class="visually-hidden" data-i18n="a11y.new_tab"> (se abre en una pestaña nueva)</span></a></li>
-        <li><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z"/></svg><a href="tel:+50222567954">2256&#8209;7954&nbsp;/&nbsp;3481&#8209;9804</a></li>
-        <li><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z"/></svg><a href="mailto:contacto@sensumconstrucciones.com">contacto@sensumconstrucciones.com</a></li>
+        <li><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A32 32 0 0 1 8 14.58a32 32 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10"/><path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4m0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/></svg><a href="{{maps_url}}" target="_blank" rel="noopener noreferrer">{{address_short}}<span class="visually-hidden" data-i18n="a11y.new_tab"> (se abre en una pestaña nueva)</span></a></li>
+        <li><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z"/></svg>{{phones_footer_html}}</li>
+        <li><svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z"/></svg>{{email_link}}</li>
       </ul>
     </div>
   </div>
@@ -787,7 +787,7 @@
   </div>
 </footer>
 
-<a class="whatsapp-fab" id="whatsappFab" href="https://wa.me/50234819804?text=Hola%2C%20me%20interesa%20solicitar%20informaci%C3%B3n%20sobre%20sus%20servicios." target="_blank" rel="noopener noreferrer" data-i18n-attr="aria-label:whatsapp.aria" aria-label="Chatea con nosotros por WhatsApp (se abre en una pestaña nueva)">
+<a class="whatsapp-fab" id="whatsappFab" href="https://wa.me/{{whatsapp}}?text={{whatsapp_text_url}}" target="_blank" rel="noopener noreferrer" data-i18n-attr="aria-label:whatsapp.aria" aria-label="Chatea con nosotros por WhatsApp (se abre en una pestaña nueva)">
   <svg aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/></svg>
 </a>
 <button class="back-to-top" id="backToTop" type="button" data-i18n-attr="aria-label:backtotop.aria" aria-label="Volver arriba">
@@ -833,7 +833,7 @@
   <div class="visually-hidden" id="projectModalLive" aria-live="polite"></div>
 </div>
 
-<script src="assets/main.js?v=3" defer></script>
-
+{{site_content_script}}<script src="assets/main.js?v={{asset_version}}" defer></script>
+{{extra_scripts}}
 </body>
 </html>

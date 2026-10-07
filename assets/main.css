@@ -425,6 +425,15 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .about-art .blueprint-icon{ position:relative; width:120px; height:120px; color: var(--brand-orange); opacity:.9; }
 .about-art-caption{ position:relative; color:#fff; }
 .about-art-caption p{ color: rgba(255,255,255,.85); margin:0; max-width:280px; font: 600 1.05rem/1.4 var(--font-head); text-transform:none; letter-spacing:0; }
+/* Optional About photo, published from the Content Manager. These rules
+   only apply once a photo exists (.about-art.has-photo); without one the
+   blueprint illustration above is unchanged. The box keeps its approved
+   size and the photo is cropped to fill it, with the same dark bottom
+   gradient the project cards use so the caption stays legible. */
+.about-art .about-photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.about-art.has-photo::before{ display:none; }
+.about-art.has-photo::after{ content:""; position:absolute; inset:0; background: linear-gradient(0deg, rgba(10,10,10,.85) 0%, rgba(10,10,10,.1) 55%); }
+.about-art.has-photo .about-art-caption{ z-index:1; }
 
 .mission-vision{ display:grid; gap:1.4rem; margin: 2rem 0 2.4rem; }
 .mv-card{

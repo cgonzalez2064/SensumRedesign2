@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Roboto:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/main.css?v=3">
+<link rel="stylesheet" href="assets/main.css?v={{asset_version}}">
 </head>
 <body>
 
@@ -35,9 +35,9 @@
       <a href="index.html#contacto" class="btn btn-outline">Contáctanos / Contact us</a>
     </div>
     <p class="error-fallback">
-      Teléfono / Phone: <a href="tel:+50222567954">2256&#8209;7954</a> ·
-      Correo / Email: <a href="mailto:contacto@sensumconstrucciones.com">contacto@sensumconstrucciones.com</a> ·
-      <a href="https://wa.me/50234819804" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      Teléfono / Phone: {{phone_office_link}} ·
+      Correo / Email: {{email_link}} ·
+      <a href="https://wa.me/{{whatsapp}}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
     </p>
   </div>
 </main>

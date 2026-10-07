@@ -322,6 +322,41 @@
     }
   };
 
+  /* ============================================================
+     CONTENT MANAGER OVERRIDES — text, contact details and photo alt
+     text edited in the Content Manager (/admin) are published into
+     index.html as an inert JSON data block (<script type="application/json"
+     id="siteContent">, which the CSP allows because it never executes).
+     Merging them into the dictionary above keeps the ES/EN toggle in
+     sync with the server-rendered page. When nothing has been changed
+     the block is absent and the dictionary above is used as-is.
+     ============================================================ */
+  var SITE_CONTENT = (function(){
+    var el = document.getElementById('siteContent');
+    if (!el) return {};
+    try {
+      var data = JSON.parse(el.textContent);
+      return (data && typeof data === 'object') ? data : {};
+    } catch (e) { return {}; }
+  })();
+  /* Only these keys may carry markup (built and escaped server-side).
+     Every other value must be plain text, because applyLang() below
+     switches to innerHTML whenever a value contains "<". */
+  var HTML_OVERRIDE_KEYS = { 'hero.title': true, 'form.fallback': true };
+  if (SITE_CONTENT.i18n && typeof SITE_CONTENT.i18n === 'object'){
+    ['es', 'en'].forEach(function(lang){
+      var overrides = SITE_CONTENT.i18n[lang];
+      if (!overrides || typeof overrides !== 'object') return;
+      Object.keys(overrides).forEach(function(key){
+        var val = overrides[key];
+        if (typeof val !== 'string') return;
+        if (val.indexOf('<') !== -1 && !HTML_OVERRIDE_KEYS[key]) return;
+        I18N[lang][key] = val;
+      });
+    });
+  }
+  var SITE_IMAGES = (SITE_CONTENT.images && typeof SITE_CONTENT.images === 'object') ? SITE_CONTENT.images : {};
+
   var LANG_KEY = 'sensum_lang';
   var currentLang = (function(){
     try {
@@ -331,7 +366,8 @@
     return 'es';
   })();
 
-  var WHATSAPP_NUMBER = '50234819804';
+  var WHATSAPP_NUMBER = (typeof SITE_CONTENT.whatsapp === 'string' && /^\d{8,15}$/.test(SITE_CONTENT.whatsapp))
+    ? SITE_CONTENT.whatsapp : '50234819804';
   var whatsappFab = document.getElementById('whatsappFab');
   var langToggle = document.getElementById('langToggle');
   var pageTitleEl = document.getElementById('pageTitle');
@@ -713,11 +749,17 @@
           var img = document.createElement('img');
           img.src = path;
           img.loading = 'lazy';
-          /* Per-photo alt text is auto-generated ("Photo 2 of
-             Remodelación residencial") since there's no per-image
-             caption field to fill in — keeps this a one-line swap. */
-          img.alt = t('projects.modal_photo_alt')
+          /* Alt text and responsive sizes come from the Content Manager
+             when the photo was uploaded there; otherwise the alt text is
+             auto-generated ("Photo 2 of Remodelación residencial"). */
+          var meta = Object.prototype.hasOwnProperty.call(SITE_IMAGES, path) ? SITE_IMAGES[path] : null;
+          var customAlt = meta && meta.alt && meta.alt[currentLang];
+          img.alt = (typeof customAlt === 'string' && customAlt) ? customAlt : t('projects.modal_photo_alt')
             .replace('{n}', String(i + 1)).replace('{title}', titleText);
+          if (meta && typeof meta.srcset === 'string'){
+            img.srcset = meta.srcset;
+            img.sizes = '(max-width: 560px) 100vw, 640px';
+          }
           slideEl.appendChild(img);
 
           modalSlides.appendChild(slideEl);

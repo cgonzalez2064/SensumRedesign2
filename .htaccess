@@ -143,6 +143,19 @@
 </IfModule>
 
 # ----------------------------------------------------------------
+# Content Manager. Its private code/data folder (cms/) belongs OUTSIDE
+# public_html (see docs/NAMECHEAP_DEPLOYMENT.md); these rules are a safety
+# net in case it, or any development-only folder/file, is uploaded here.
+# Without mod_rewrite, cms/.htaccess still denies the folder on its own.
+# ----------------------------------------------------------------
+<IfModule mod_rewrite.c>
+  RewriteRule ^(cms|tests|tools|docs|dist|node_modules|_to_delete)(/|$) - [F,L]
+</IfModule>
+<FilesMatch "^(composer\.(json|lock)|package(-lock)?\.json|.*\.tpl)$">
+  Require all denied
+</FilesMatch>
+
+# ----------------------------------------------------------------
 # Custom error pages
 # ----------------------------------------------------------------
 ErrorDocument 404 /404.html

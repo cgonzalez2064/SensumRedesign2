@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Roboto:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/main.css?v=3">
+<link rel="stylesheet" href="assets/main.css?v={{asset_version}}">
 </head>
 <body>
 
@@ -53,7 +53,7 @@
 
     <h2>1. Responsable del tratamiento de datos</h2>
     <p>
-      Sensum Construcciones, con oficina en Edificio Ascend, 13 Calle 5-31 Zona 9, Oficina 641, Guatemala, es responsable del
+      Sensum Construcciones, con oficina en {{address_full}}, es responsable del
       tratamiento de los datos personales que nos proporcionas a través del
       formulario de contacto de este sitio.
     </p>
@@ -128,7 +128,7 @@
       Puedes solicitarnos en cualquier momento acceder a los datos que
       tenemos sobre ti, corregirlos o solicitar su eliminación,
       escribiendo a
-      <a href="mailto:contacto@sensumconstrucciones.com">contacto@sensumconstrucciones.com</a>.
+      {{email_link}}.
     </p>
     <p class="legal-placeholder">
       <strong>[PLACEHOLDER:]</strong> confirmar con asesoría legal el
@@ -152,9 +152,8 @@
     <h2>10. Contacto</h2>
     <p>
       Si tienes preguntas sobre este Aviso de Privacidad, escríbenos a
-      <a href="mailto:contacto@sensumconstrucciones.com">contacto@sensumconstrucciones.com</a>
-      o llámanos al <a href="tel:+50222567954">2256&#8209;7954</a> /
-      <a href="tel:+50234819804">3481&#8209;9804</a>.
+      {{email_link}}
+      o llámanos al {{phones_privacy_html}}.
     </p>
 
     <p class="legal-updated">
@@ -173,6 +172,6 @@
      no-ops safely here since none of those elements exist on this page.
      Kept external (not inline) so this page stays covered by the same
      strict script-src 'self' CSP as the rest of the site. -->
-<script src="assets/main.js?v=3" defer></script>
+<script src="assets/main.js?v={{asset_version}}" defer></script>
 </body>
 </html>

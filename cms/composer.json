@@ -1,0 +1,23 @@
+{
+    "name": "sensum/content-manager",
+    "description": "Content Manager for the Sensum Construcciones website (private application code — never inside public_html in production).",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.1",
+        "ext-pdo_sqlite": "*",
+        "ext-gd": "*",
+        "ext-fileinfo": "*",
+        "ext-mbstring": "*",
+        "ext-json": "*",
+        "phpmailer/phpmailer": "^6.10"
+    },
+    "autoload": {
+        "psr-4": { "Sensum\\Cms\\": "src/" }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true,
+        "platform": { "php": "8.1.0" }
+    }
+}

@@ -1,0 +1,3 @@
+# Private application code — never served. In production this folder lives
+# outside public_html; this file is a safety net if it is uploaded by mistake.
+Require all denied
