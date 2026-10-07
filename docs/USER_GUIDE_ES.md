@@ -210,5 +210,30 @@ En **Usuarios** (solo visible para administradores):
   **Desactivar / Reactivar** (cierra su sesión de inmediato) y **Eliminar usuario**.
 * No puedes cambiar tu propio rol ni desactivarte; siempre debe quedar al menos
   un administrador.
+* La cuenta de soporte técnico (it@gruposensum.com) aparece como **Propietario**:
+  ninguna otra cuenta puede cambiarle el rol, desactivarla ni eliminarla.
 * En **Inicio** verás el estado del sitio, la actividad reciente y, si hace falta,
   el botón **Volver a publicar el sitio**.
+
+## 11. Para la cuenta propietaria (soporte técnico): Monitoreo
+
+Solo la cuenta **it@gruposensum.com** ve **Monitoreo** en el menú
+(Administración → Monitoreo). Ahí encuentras:
+
+* **Estado y cifras:** si el sistema funciona, errores críticos de las últimas
+  24 horas, errores de la semana y cuándo corrió la revisión automática.
+* **Registro de errores:** cada error del servidor, del panel y del sitio, del más
+  reciente al más antiguo. Filtra por gravedad (Crítico, Error, Advertencia),
+  origen y periodo, o busca por texto o por el **código de referencia** que vio
+  un usuario. «Detalles técnicos» muestra la ubicación en el código, la solicitud
+  y el usuario.
+* **Alertas por correo:** los errores críticos llegan automáticamente a
+  it@gruposensum.com (el mismo error como máximo una vez por hora). Usa **Enviar
+  correo de prueba** para comprobar que llegan.
+* **Actividad y errores:** inicios de sesión, intentos fallidos, cambios, fotos,
+  reportes y correos fallidos en 24 horas, 7 y 30 días.
+* **Sistema:** versión, espacio en disco, tamaño de la base de datos, último
+  respaldo y si las páginas publicadas coinciden con lo guardado.
+
+Si recibes una alerta: abre Monitoreo, busca el código de referencia del correo
+y revisa los detalles técnicos. Si fue un fallo puntual, no hace falta hacer nada.

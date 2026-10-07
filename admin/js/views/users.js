@@ -25,6 +25,8 @@ export async function render({ main }) {
     const actionsMenu = (u) => {
       const trigger = h('button', { type: 'button', class: 'btn btn-ghost btn-icon btn-sm', 'aria-label': t('users.actionsFor', { name: u.name }) }, icon('three-dots-vertical'));
       if (u.isSelf) return h('span', { class: 'badge badge-brand', text: t('users.you') });
+      // The owner account (IT) is protected: other administrators cannot change it.
+      if (u.isOwner) return h('span', { class: 'badge', title: t('users.ownerHint') }, icon('shield-lock'), t('users.owner'));
       return dropdown(trigger, (close) => [
         u.status === 'invited' ? menuItem('send', t('users.resend'), () => { close(); resend(u); }) : null,
         u.role === 'editor' ? menuItem('shield-lock', t('users.makeAdmin'), () => { close(); update(u, { role: 'admin' }); })

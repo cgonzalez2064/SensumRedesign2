@@ -138,4 +138,10 @@ final class Config
         return $this->string('SUPPORT_EMAIL', 'it@gruposensum.com');
     }
 
+    /** The owner account: the only one that sees Monitoring and the error log. */
+    public function ownerEmail(): string
+    {
+        return strtolower(trim($this->string('OWNER_EMAIL', 'it@gruposensum.com')));
+    }
+
 }

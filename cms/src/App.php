@@ -27,6 +27,8 @@ final class App
     private ?Publisher $publisher = null;
     private ?Settings $settings = null;
     private ?Translator $translator = null;
+    private ?ErrorLog $errors = null;
+    private ?Alerts $alerts = null;
     private ?string $key = null;
     /** @var list<string> migrations applied automatically when the database was opened */
     private array $migratedOnOpen = [];
@@ -154,7 +156,26 @@ final class App
 
     public function logger(): Logger
     {
-        return $this->logger ??= new Logger($this->storageDir('logs'));
+        if (!$this->logger) {
+            $this->logger = new Logger($this->storageDir('logs'));
+            $this->logger->setSink(fn (string $level, string $event, array $ctx) => $this->errors()->fromLog($level, $event, $ctx));
+        }
+        return $this->logger;
+    }
+
+    public function errors(): ErrorLog
+    {
+        return $this->errors ??= new ErrorLog($this);
+    }
+
+    public function alerts(): Alerts
+    {
+        return $this->alerts ??= new Alerts($this);
+    }
+
+    public function monitor(): Monitor
+    {
+        return new Monitor($this);
     }
 
     public function mailer(): Mailer

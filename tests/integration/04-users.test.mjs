@@ -6,7 +6,7 @@ import { startServer, Client, createAdmin, ADMIN, mailpitUp, waitForMail, messag
 let s; let admin;
 before(async () => {
   assert.ok(await mailpitUp(), 'Mailpit must be running');
-  s = await startServer({ port: 8195 });
+  s = await startServer({ port: 8195, env: { OWNER_EMAIL: 'owner.not.here@example.test' } });
   createAdmin(s);
   admin = new Client(s.base);
   await admin.login();

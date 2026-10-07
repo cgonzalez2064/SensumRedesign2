@@ -49,6 +49,14 @@ final class Request
         return (string) ($this->server[$key] ?? '');
     }
 
+    /** One query-string parameter (scalars only; anything else reads as empty). */
+    public function query(string $name): string
+    {
+        parse_str((string) ($this->server['QUERY_STRING'] ?? ''), $q);
+        $v = $q[$name] ?? '';
+        return is_string($v) ? mb_substr($v, 0, 200) : '';
+    }
+
     public function cookie(string $name): string
     {
         $v = $this->cookies[$name] ?? '';

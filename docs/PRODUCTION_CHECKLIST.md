@@ -34,7 +34,7 @@ Release: `release-________-_______` · Deployed by: __________ · Date: ________
 - [ ] `.env` filled (`APP_URL=https://sensumconstrucciones.com`, SMTP, `SUPPORT_EMAIL=it@gruposensum.com`)
 - [ ] HTTPS enabled (AutoSSL valid, `http://` and `www` redirect to `https://sensumconstrucciones.com`)
 - [ ] Database configured (`/api/health` → all `ok`; dashboard diagnostics green)
-- [ ] First administrator created; `SETUP_TOKEN` removed from `.env`
+- [ ] First administrator created as **it@gruposensum.com** (the owner, `OWNER_EMAIL`); `SETUP_TOKEN` removed from `.env`
 - [ ] SPF, DKIM and DMARC valid (cPanel → Email Deliverability)
 - [ ] Automatic translation: `DEEPL_API_KEY` set and `bin/console translate:test` OK — or consciously left off
 
@@ -64,7 +64,9 @@ Release: `release-________-_______` · Deployed by: __________ · Date: ________
 ## D. Monitoring and operations
 
 - [ ] Analytics tested — or consciously left off (default; needs privacy-notice update + CSP change)
-- [ ] Error monitoring tested (dashboard → *Errores recientes* shows a test admin error)
+- [ ] Error monitoring tested (Monitoreo → *Registro de errores*, signed in as it@gruposensum.com; other admins don't see it)
+- [ ] Critical-error alerts tested (Monitoreo → *Enviar correo de prueba* arrives at it@gruposensum.com, not in spam)
+- [ ] Scheduled check configured (cPanel cron every 15 min: `bin/console monitor`; Monitoreo shows *Última revisión automática*)
 - [ ] Uptime monitoring configured (Better Stack/UptimeRobot for the site and `/api/health`, SSL expiry alerts)
 - [ ] Health endpoint checked (`/api/health` → 200 `"status":"ok"`)
 - [ ] Logs reviewed (`sensum-cms/storage/logs/` — no secrets, no unexpected errors)

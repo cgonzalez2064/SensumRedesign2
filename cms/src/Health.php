@@ -53,6 +53,16 @@ final class Health
                 !$canConnect => 'PHP cannot make outgoing HTTPS requests (enable curl or allow_url_fopen)',
                 default => $tr->plan(),
             }];
+            $alerts = $app->alerts();
+            $c['alerts'] = ['ok' => $alerts->enabled() && $app->mailer()->isConfigured(), 'optional' => true,
+                'detail' => $alerts->enabled() ? $alerts->recipient() : 'off (ALERTS_ENABLED / ALERT_EMAIL)'];
+            try {
+                $last = (int) $app->settings()->get('monitor_last_run', '0');
+            } catch (\Throwable) {
+                $last = 0;
+            }
+            $c['scheduled_check'] = ['ok' => $last > time() - 2 * 3600, 'optional' => true,
+                'detail' => $last ? 'last run ' . date('Y-m-d H:i', $last) : 'not scheduled (cron: bin/console monitor)'];
             $c['upload_limit'] = ['ok' => $app->media()->maxUploadBytes() >= 8 * 1024 * 1024, 'optional' => true,
                 'detail' => round($app->media()->maxUploadBytes() / 1048576, 1) . ' MB' . (PHP_SAPI === 'cli' ? ' (command-line PHP; the web server may use other limits)' : '')];
         }

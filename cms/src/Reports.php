@@ -195,9 +195,8 @@ final class Reports
             [$ok ? 'sent' : 'failed', $now, $ok ? $now : null, $id]
         );
         if (!$ok) {
-            $this->app->logger()->error('report_email_failed', ['report' => $id]);
+            $this->app->logger()->error('report_email_failed', ['message' => 'Support report e-mail could not be delivered', 'at' => 'Reports::deliver', 'report' => $id]);
             $this->app->activity($r['user_id'] !== null ? (int) $r['user_id'] : null, 'report_email_failed', (string) $id);
-            ErrorTracker::record($this->app, 'server', 'Support report e-mail could not be delivered', 'Reports::deliver');
         }
         return $ok;
     }

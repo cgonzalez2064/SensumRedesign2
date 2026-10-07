@@ -515,6 +515,29 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 /* ---------- Dashboard ---------- */
 .hello{ display:flex; gap:1rem; align-items:center; }
 .dash-grid{ display:grid; gap:1rem; }
+
+/* ---------- Monitoring (owner) ---------- */
+.kpi-grid{ display:grid; gap:.75rem; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.kpi{ display:flex; flex-direction:column; gap:.2rem; padding:1rem 1.1rem; border:1px solid var(--border); border-radius:var(--r-lg); background:var(--surface); min-width:0; }
+.kpi-num{ display:flex; align-items:center; gap:.45rem; font-size:clamp(1.15rem, 3.6vw, 1.45rem); font-weight:800; line-height:1.15; overflow-wrap:break-word; }
+.kpi-num .icon{ flex:none; }
+@media (max-width: 560px){ .kpi-grid > .kpi:first-child{ grid-column: 1 / -1; } }
+.kpi-label{ font-size:.82rem; color:var(--text-2); }
+.kpi-ok .kpi-num{ color:var(--ok); } .kpi-bad .kpi-num{ color:var(--bad); } .kpi-warn .kpi-num{ color:var(--warn); }
+.log-filters{ display:grid; gap:.6rem .75rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items:end; margin-bottom:.9rem; }
+.log-filters .field{ margin:0; }
+.log-filters .log-search{ grid-column: 1 / -1; }
+.kv-tight{ grid-template-columns: minmax(7rem, 42%) minmax(0, 1fr); }
+.log-list{ list-style:none; margin:0; padding:0; display:grid; gap:.6rem; }
+.log-item{ display:grid; gap:.35rem; padding:.8rem .9rem; border:1px solid var(--border); border-radius:var(--r); background:var(--surface-2); min-width:0; }
+.log-message{ color:var(--text-2); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.82rem; }
+.log-item .kv code, .code-line code{ font-size:.82rem; }
+.log-pager{ margin-top:.8rem; }
+.code-line{ display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; padding:.6rem .75rem; border-radius:var(--r); background:var(--surface-2); border:1px dashed var(--border-strong); }
+.code-line code{ flex:1 1 220px; min-width:0; }
+.table-compact td, .table-compact th{ padding:.5rem .75rem; }
+.table .num{ text-align:right; font-variant-numeric: tabular-nums; white-space:nowrap; }
+.table tbody th{ text-align:left; font-weight:600; color:var(--text); text-transform:none; letter-spacing:0; font-size:.88rem; background:transparent; border-bottom:1px solid var(--border); padding:.5rem .75rem; }
 .quick{ display:grid; gap:.75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); }
 .quick a{ display:flex; align-items:center; gap:.8rem; padding:.95rem; }
 .quick a strong{ display:block; font-size:.95rem; }

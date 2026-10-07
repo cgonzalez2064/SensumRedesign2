@@ -13,8 +13,23 @@ final class Logger
 {
     private const REDACT = '/pass|token|secret|cookie|session|authorization|smtp_password|csrf|api_?key/i';
 
+    /** @var (callable(string,string,array):void)|null receives every critical/error/warning entry */
+    private $sink = null;
+    private bool $inSink = false;
+
     public function __construct(private string $dir)
     {
+    }
+
+    /** @param callable(string,string,array):void $sink */
+    public function setSink(callable $sink): void
+    {
+        $this->sink = $sink;
+    }
+
+    public function critical(string $event, array $context = []): void
+    {
+        $this->write('critical', $event, $context);
     }
 
     public function info(string $event, array $context = []): void
@@ -45,6 +60,17 @@ final class Logger
         @file_put_contents($file, $line . "\n", FILE_APPEND | LOCK_EX);
         if ($isNew) {
             @chmod($file, 0600);
+        }
+        // Errors also go to the error log (owner's Monitoring page); never recursively.
+        if ($this->sink !== null && $level !== 'info' && !$this->inSink) {
+            $this->inSink = true;
+            try {
+                ($this->sink)($level, $event, self::redact($context));
+            } catch (\Throwable) {
+                // The file log above already has the entry.
+            } finally {
+                $this->inSink = false;
+            }
         }
     }
 

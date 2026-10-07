@@ -200,6 +200,23 @@ English box fills in after a second. Every translation uses your real DeepL
 quota (500,000 characters/month on the free plan). The automated tests never
 call DeepL — they use a local stand-in (`tests/integration/deepl-stub.mjs`).
 
+### Monitoring, error log and critical-error alerts
+The **Monitoreo** page (error log, figures, alert settings) is visible only to
+the owner account — `OWNER_EMAIL`, default `it@gruposensum.com`. Locally, sign in
+with that account (or set `OWNER_EMAIL` in `cms/.env` to your own local admin).
+Critical errors are e-mailed to `ALERT_EMAIL` (default `it@gruposensum.com`) —
+locally they land in Mailpit. Try it:
+
+```bash
+php cms/bin/console alert:test     # test alert → Mailpit
+php cms/bin/console monitor        # the scheduled check (cron in production)
+```
+
+To see a real critical alert, make the publish folder read-only
+(`chmod 555 cms/storage/dev-public`), save any text in the panel (you get
+"Ocurrió un error inesperado" with a code), restore it (`chmod 755 …`), then
+check Mailpit and Monitoreo → *Registro de errores*.
+
 ### Telemetry
 Off by default. To try public-site error reporting locally set
 `PUBLIC_ERROR_REPORTING=true` in `cms/.env`, then republish
@@ -221,8 +238,8 @@ Mailpit must be running for the e-mail tests (`mailpit &`).
 
 | Suite | Command | What it covers |
 |---|---|---|
-| API integration (95 tests) | `npm --prefix tests test` | auth, sessions, CSRF, passwords, invitations, content, automatic translation, uploads, reports, telemetry, failure handling. Each file starts its own server with a throwaway database. |
-| Browser E2E | `npm --prefix tests run test:e2e` | every admin screen in light/dark on desktop Chrome, tablet and iPhone (WebKit) with accessibility scans; automatic translation; public site with managed content; content stress test; existing site behavior |
+| API integration (105 tests) | `npm --prefix tests test` | auth, sessions, CSRF, passwords, invitations, content, automatic translation, uploads, reports, telemetry, monitoring and alerts, failure handling. Each file starts its own server with a throwaway database. |
+| Browser E2E | `npm --prefix tests run test:e2e` | every admin screen in light/dark on desktop Chrome, tablet and iPhone (WebKit) with accessibility scans; automatic translation; owner-only Monitoring; public site with managed content; content stress test; existing site behavior |
 | Visual regression | see below | the public site against the approved screenshots |
 | Production build on Apache | see section 8 | `.htaccess` behavior of the built release |
 

@@ -38,6 +38,7 @@ final class UsersController extends Controller
         Response::ok(['users' => array_map(fn ($u) => Users::present($u) + [
             'inviteExpiresAt' => $u['invite_expires_at'] !== null ? (int) $u['invite_expires_at'] : null,
             'isSelf' => (int) $u['id'] === $this->uid(),
+            'isOwner' => $this->app->auth()->isOwner($u),
         ], $rows)]);
     }
 
@@ -77,12 +78,21 @@ final class UsersController extends Controller
         Response::ok($result);
     }
 
+    /** The owner account (Monitoring, alerts) cannot be demoted, disabled or deleted by other administrators. */
+    private function assertNotOwner(array $user): void
+    {
+        if ($this->app->auth()->isOwner($user)) {
+            throw ApiError::validation(['user' => 'owner_protected']);
+        }
+    }
+
     public function update(int $id): never
     {
         $user = $this->target($id);
         if ($id === $this->uid()) {
             throw ApiError::validation(['user' => 'cannot_change_self']);
         }
+        $this->assertNotOwner($user);
         $role = $this->str('role');
         $status = $this->str('status');
         $role = in_array($role, Users::ROLES, true) ? $role : $user['role'];
@@ -111,6 +121,7 @@ final class UsersController extends Controller
         if ($id === $this->uid()) {
             throw ApiError::validation(['user' => 'cannot_change_self']);
         }
+        $this->assertNotOwner($user);
         $this->app->db()->transaction(function () use ($id) {
             $this->app->db()->run('DELETE FROM users WHERE id = ?', [$id]);
             if ($this->users()->activeAdmins() < 1) {

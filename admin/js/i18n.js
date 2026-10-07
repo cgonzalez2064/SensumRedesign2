@@ -68,6 +68,7 @@ export function fmtRelative(ts) {
 export function fmtBytes(n) {
   if (!n && n !== 0) return '';
   const nf = (v, d) => new Intl.NumberFormat(locale(), { maximumFractionDigits: d }).format(v);
+  if (n >= 1073741824) return nf(n / 1073741824, 1) + ' GB';
   if (n >= 1048576) return nf(n / 1048576, 1) + ' MB';
   if (n >= 1024) return nf(n / 1024, 0) + ' KB';
   return nf(n, 0) + ' B';

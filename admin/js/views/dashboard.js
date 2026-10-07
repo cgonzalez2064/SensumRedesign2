@@ -84,9 +84,9 @@ export async function render({ main, session, isAdmin }) {
             a.action === 'content_updated' && a.target ? h('span', { class: 'muted', text: ' — ' + (t('sections.' + a.target)[0] || a.target) }) : null,
             h('div', { class: 'tiny muted', text: fmtDate(a.at) }))))) : h('p', { class: 'muted', text: t('dashboard.noActivity') })));
 
-      // Diagnostics.
-      const checks = data.health.checks || {};
-      right.append(h('section', { class: 'card', 'aria-labelledby': 'health-title' },
+      // Diagnostics and errors: owner account only (the server sends them only to the owner).
+      const checks = data.health.checks || null;
+      if (checks) right.append(h('section', { class: 'card', 'aria-labelledby': 'health-title' },
         h('div', { class: 'card-header' }, h('h2', { id: 'health-title', text: t('dashboard.healthTitle') })),
         h('ul', { class: 'status-list' }, Object.entries(checks).map(([k, c]) => {
           const cls = c.ok ? 'ok-text' : c.optional ? 'warn-text' : 'bad-text';
@@ -96,8 +96,9 @@ export async function render({ main, session, isAdmin }) {
 
       // Recent errors.
       const errs = data.errors || [];
-      right.append(h('section', { class: 'card', 'aria-labelledby': 'err-title' },
-        h('div', { class: 'card-header' }, h('h2', { id: 'err-title', text: t('dashboard.errorsTitle') })),
+      if (data.errors) right.append(h('section', { class: 'card', 'aria-labelledby': 'err-title' },
+        h('div', { class: 'card-header' }, h('h2', { id: 'err-title', text: t('dashboard.errorsTitle') }),
+          h('a', { class: 'btn btn-sm', href: '#/monitoreo' }, icon('activity'), t('dashboard.openMonitor'))),
         errs.length ? h('ul', { class: 'status-list' }, errs.map((e) => h('li', null, h('span', { class: 'bad-text' }, icon('bug')),
           h('div', { class: 'grow' }, h('div', { class: 'break', text: e.message }),
             h('div', { class: 'tiny muted break', text: [t('dashboard.sources.' + e.source), e.page, t('dashboard.times', { n: e.count }), fmtRelative(e.lastSeen)].filter(Boolean).join(' · ') })))))

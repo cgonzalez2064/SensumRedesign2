@@ -148,6 +148,13 @@ SMTP_TIMEOUT=15
 
 SUPPORT_EMAIL=it@gruposensum.com
 
+# Monitoring: owner account (sees Monitoreo) and critical-error alerts
+OWNER_EMAIL=it@gruposensum.com
+ALERTS_ENABLED=true
+ALERT_EMAIL=it@gruposensum.com
+ALERT_COOLDOWN_MINUTES=60
+ALERT_DAILY_MAX=20
+
 SESSION_IDLE_MINUTES=60
 SESSION_ABSOLUTE_HOURS=12
 INVITE_TTL_HOURS=72
@@ -293,6 +300,9 @@ Do these on the live site and tick them in `docs/PRODUCTION_CHECKLIST.md`:
 15. Automatic translation (if configured): in a text section type a word in
     Spanish → the English box fills in marked "Traducido automáticamente";
     press **Deshacer** and leave without saving.
+16. Monitoring: sign in as it@gruposensum.com → **Monitoreo** loads; **Enviar
+    correo de prueba** arrives; after the cron job's first run, *Última revisión
+    automática* shows a time. Sign in as another administrator → no Monitoreo menu.
 
 ## 11. Updating later (new release)
 
@@ -350,8 +360,23 @@ the admin API stops. Then disable accounts / reset passwords and restore.
   (expect status 200 and the keyword `"status":"ok"`). Alerts to it@gruposensum.com.
   UptimeRobot's free plan (50 monitors, 5-minute checks) is an alternative but
   its free tier doesn't alert on SSL expiry.
-* **Errors:** dashboard → *Errores recientes* (server and admin errors; public JS
-  errors only if `PUBLIC_ERROR_REPORTING=true` and republished).
+* **Owner account:** create the first administrator as **it@gruposensum.com**
+  (§8): that account (`OWNER_EMAIL`) is the only one that sees **Monitoreo** —
+  error log, figures, alert settings — and other administrators cannot remove it.
+* **Scheduled check (cron) — required for proactive alerts:** cPanel → **Cron
+  Jobs** → *Add New Cron Job* → Common Settings "Twice Per Hour" or custom
+  `*/15 * * * *`, command:
+  ```
+  php ~/sensum-cms/bin/console monitor > /dev/null 2>&1
+  ```
+  (use the full PHP path from *Select PHP Version* if `php` is another version,
+  e.g. `/opt/alt/php82/usr/bin/php`). Then Monitoreo → *Última revisión
+  automática* shows the time of the last run.
+* **Critical-error alerts:** Monitoreo → *Alertas por correo* → **Enviar correo de
+  prueba** (or `php ~/sensum-cms/bin/console alert:test`). Check that it arrives at
+  it@gruposensum.com and is not in spam; whitelist `no-reply@sensumconstrucciones.com`.
+* **Errors:** Monitoreo → *Registro de errores* (server, panel and — if
+  `PUBLIC_ERROR_REPORTING=true` — public-site errors; critical ones are e-mailed).
 * **Analytics (optional):** see `docs/CONTENT_MANAGER.md` §9 — requires a privacy
   notice update and a CSP change first.
 * **Logs:** `sensum-cms/storage/logs/` (application) and cPanel → *Errors* /

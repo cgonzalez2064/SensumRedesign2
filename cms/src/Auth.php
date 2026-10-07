@@ -124,10 +124,16 @@ final class Auth
             throw new ApiError(401, 'unauthenticated');
         }
         $this->assertCsrf($req, $s);
-        if ($role === 'admin' && $s['role'] !== 'admin') {
+        if (($role === 'admin' && $s['role'] !== 'admin') || ($role === 'owner' && !$this->isOwner($s))) {
             throw new ApiError(403, 'forbidden');
         }
         return $s;
+    }
+
+    /** The owner (OWNER_EMAIL, default it@gruposensum.com) is an administrator with access to Monitoring. */
+    public function isOwner(array $user): bool
+    {
+        return ($user['role'] ?? '') === 'admin' && strtolower((string) ($user['email'] ?? '')) === $this->app->config->ownerEmail();
     }
 
     // ------------------------------------------------------------------
@@ -260,13 +266,14 @@ final class Auth
         return $this->app->db()->run('UPDATE user_tokens SET used_at = ? WHERE id = ? AND used_at IS NULL', [time(), $tokenId])->rowCount() === 1;
     }
 
-    public static function publicUser(array $u): array
+    public function publicUser(array $u): array
     {
         return [
             'id' => (int) ($u['uid'] ?? $u['id']),
             'name' => (string) $u['name'],
             'email' => (string) $u['email'],
             'role' => (string) $u['role'],
+            'owner' => $this->isOwner($u),
             'lang' => (string) $u['lang'],
             'theme' => (string) $u['theme'],
         ];

@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Sensum\Cms\Api;
 
 use Sensum\Cms\App;
-use Sensum\Cms\ErrorTracker;
 use Sensum\Cms\Http\ApiError;
 use Sensum\Cms\Http\Request;
 use Sensum\Cms\Http\Response;
@@ -14,6 +13,7 @@ use Sensum\Cms\Http\Response;
  *   public  — no session (still origin-checked when it changes state)
  *   user    — signed-in user + same origin + CSRF token
  *   admin   — as "user", and the user must be an administrator
+ *   owner   — as "admin", and the account is OWNER_EMAIL (Monitoring)
  * Unexpected failures are logged privately and answered with a generic
  * "server_error" plus a short reference number — never with internals.
  */
@@ -34,6 +34,9 @@ final class Kernel
         ['POST', '/api/setup', AuthController::class, 'setup', 'public'],
 
         ['GET', '/api/dashboard', SystemController::class, 'dashboard', 'user'],
+        ['GET', '/api/monitor/summary', MonitorController::class, 'summary', 'owner'],
+        ['GET', '/api/monitor/errors', MonitorController::class, 'errors', 'owner'],
+        ['POST', '/api/monitor/test-alert', MonitorController::class, 'testAlert', 'owner'],
         ['POST', '/api/site/republish', SystemController::class, 'republish', 'admin'],
 
         ['GET', '/api/content', ContentController::class, 'index', 'user'],
@@ -60,12 +63,16 @@ final class Kernel
         ['DELETE', '/api/users/{id}', UsersController::class, 'delete', 'admin'],
     ];
 
+    private ?int $uid = null;
+
     public function __construct(private App $app)
     {
     }
 
     public function handle(Request $req): never
     {
+        // PHP fatal errors (e.g. memory exhausted) bypass the catch below.
+        register_shutdown_function(fn () => $this->recordFatal(error_get_last(), $req));
         try {
             $this->guardSize($req);
             [$route, $params] = $this->match($req);
@@ -74,7 +81,8 @@ final class Kernel
             if ($guard === 'public') {
                 $this->app->auth()->assertSameOrigin($req);
             } else {
-                $session = $this->app->auth()->require($req, $guard === 'admin' ? 'admin' : null);
+                $session = $this->app->auth()->require($req, $guard === 'user' ? null : $guard);
+                $this->uid = (int) $session['uid'];
             }
             $controller = new $class($this->app, $req, $session);
             $controller->$method(...$params);
@@ -83,17 +91,33 @@ final class Kernel
             Response::error($e);
         } catch (\Throwable $e) {
             $ref = strtoupper(bin2hex(random_bytes(3)));
-            $this->app->logger()->error('unhandled_exception', [
+            // Logged as critical: recorded in the error log and e-mailed to IT (throttled).
+            $this->app->logger()->critical('unhandled_exception', [
                 'ref' => $ref,
                 'type' => get_class($e),
                 'message' => $e->getMessage(),
                 'at' => basename($e->getFile()) . ':' . $e->getLine(),
                 'path' => $req->path,
                 'method' => $req->method,
+                'uid' => $this->uid,
             ]);
-            ErrorTracker::record($this->app, 'server', get_class($e) . ': ' . $e->getMessage(), basename($e->getFile()) . ':' . $e->getLine(), $req->method . ' ' . $req->path);
             Response::json(500, ['ok' => false, 'error' => 'server_error', 'ref' => $ref]);
         }
+    }
+
+    /** Logs a PHP fatal error as critical (error log + alert to IT). */
+    public function recordFatal(?array $err, Request $req): void
+    {
+        if (!$err || !in_array($err['type'] ?? 0, [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR], true)) {
+            return;
+        }
+        $this->app->logger()->critical('php_fatal', [
+            'message' => mb_substr((string) $err['message'], 0, 300),
+            'at' => basename((string) $err['file']) . ':' . $err['line'],
+            'path' => $req->path,
+            'method' => $req->method,
+            'uid' => $this->uid,
+        ]);
     }
 
     private function guardSize(Request $req): void

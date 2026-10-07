@@ -50,7 +50,7 @@ test('public-site error reports are ignored unless PUBLIC_ERROR_REPORTING is on'
 test('telemetry is throttled per visitor', async () => {
   const anon = new Client(s.base);
   for (let i = 0; i < 35; i++) await anon.post('/api/telemetry/error', { source: 'admin', message: 'flood ' + i, location: 'x', page: '/' });
-  const n = Number(s.sql("SELECT COUNT(*) FROM error_events WHERE message LIKE 'flood%'"));
+  const n = Number(s.sql("SELECT COUNT(*) FROM error_log WHERE message LIKE 'flood%'"));
   assert.ok(n <= 30, `stored ${n}`);
 });
 

@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { ADMIN, FIXTURES } from '../integration/helpers.mjs';
-import { EDITOR } from './global-setup.mjs';
+import { EDITOR, OTHER_ADMIN } from './global-setup.mjs';
 
 const SCREENS = join(import.meta.dirname, '.artifacts', 'screens');
 mkdirSync(SCREENS, { recursive: true });
@@ -14,7 +14,7 @@ const sql = (q) => execFileSync('sqlite3', [join(process.env.E2E_STORAGE, 'datab
 const PAGES = [
   ['dashboard', '#/'], ['texts', '#/textos'], ['hero', '#/textos/hero'], ['faq', '#/textos/faq'], ['details', '#/contacto'],
   ['photos-about', '#/fotos/nosotros'], ['photos-projects', '#/fotos/proyectos'], ['documents', '#/fotos/documentos'],
-  ['users', '#/usuarios'], ['reports', '#/reportes'], ['account', '#/cuenta'], ['help', '#/ayuda'],
+  ['users', '#/usuarios'], ['reports', '#/reportes'], ['account', '#/cuenta'], ['help', '#/ayuda'], ['monitor', '#/monitoreo'],
 ];
 
 /** Collects console errors, CSP violations, page errors and failed requests. */
@@ -184,6 +184,33 @@ test('an editor sees no user management and is refused if they try', async ({ pa
   await expect(page.locator('.nav a[href="#/usuarios"]')).toHaveCount(0);
   await page.goto('/admin/#/usuarios');
   await expect(page.locator('main h1')).toHaveText('No encontramos esta pantalla');
+});
+
+test('Monitoring is shown only to the owner account', async ({ page }) => {
+  // Owner: menu entry, error log with details, filters.
+  await login(page);
+  await expect(page.locator('.nav a[href="#/monitoreo"]')).toHaveCount(1);
+  await page.goto('/admin/#/monitoreo');
+  await expect(page.locator('main h1')).toHaveText('Monitoreo');
+  const log = page.locator('.log-list');
+  await expect(log.locator('.log-item')).toHaveCount(3);
+  await expect(log.getByText('RuntimeException: publish_write_failed')).toBeVisible();
+  await log.locator('.log-item').first().getByText('Detalles técnicos').click();
+  await expect(log.getByText('Publisher.php:372')).toBeVisible();
+  await page.getByLabel('Gravedad').selectOption('warning');
+  await expect(log.locator('.log-item')).toHaveCount(1);
+  await expect(log.getByText('Las páginas publicadas cambiaron fuera del panel')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Enviar correo de prueba' })).toBeVisible();
+  // Another administrator and an editor: no menu entry, route refused, no errors on the dashboard.
+  for (const user of [OTHER_ADMIN, EDITOR]) {
+    await page.context().clearCookies();
+    await page.goto('about:blank'); // unload the panel so it starts signed out
+    await login(page, user);
+    await expect(page.locator('.nav a[href="#/monitoreo"]')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Errores recientes' })).toHaveCount(0);
+    await page.goto('/admin/#/monitoreo');
+    await expect(page.locator('main h1')).toHaveText('No encontramos esta pantalla');
+  }
 });
 
 test('sending a report with a screenshot shows the confirmation', async ({ page }, info) => {

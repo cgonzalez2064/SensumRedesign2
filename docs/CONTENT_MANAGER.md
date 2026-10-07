@@ -85,7 +85,8 @@ sensum-cms/                          (PRIVATE — outside public_html)
 | Users (admins) | Invite (e-mailed single-use link), resend, change role (Administrador / Editor), disable/enable, delete; last-admin and self-lockout protection |
 | Account | Name, panel language, theme; change password (signs out other devices); sign out other sessions |
 | Support | "Reportar un problema" from every screen; history with delivery status and retry |
-| Dashboard | Site status, last publish, sync check + republish (admins), diagnostics, recent errors, recent activity, monitoring status |
+| Dashboard | Site status, last publish, sync check + republish (admins), recent activity, monitoring status; diagnostics and recent errors for the owner |
+| Monitoring (owner) | Error log with filters and details, key figures (24 h / 7 d / 30 d), most frequent errors, system details, e-mail alerts for critical errors + test e-mail (§9a) |
 | Interface | Spanish by default, English optional; light/dark/system theme; responsive from 320 px phones to large monitors; reduced-motion aware |
 
 ### 2a. Automatic translation ES ⇄ EN
@@ -124,6 +125,11 @@ submitted text to improve its models; DeepL API **Pro** deletes it after
 translating. For website copy this is acceptable; switch to a Pro key (no code
 change) if that ever matters.
 
+**Owner account.** The administrator whose e-mail is `OWNER_EMAIL` (default
+**it@gruposensum.com**) is the owner: the only account that sees
+**Monitoreo** (error log, metrics, alerts) and the diagnostics/errors cards on
+the dashboard. Other administrators cannot demote, disable or delete it.
+
 **Roles.** *Administrador*: everything. *Editor*: texts, contact details,
 photos, documents, own account, reports — no user management or republish.
 
@@ -147,7 +153,7 @@ photos, documents, own account, reports — no user management or republish.
   contact handler's allow-list), SEO meta, logos and icons, legal text of the
   privacy notice (only its contact details update).
 
-## 4. Data model (SQLite, `cms/migrations/001_initial.sql`)
+## 4. Data model (SQLite, `cms/migrations/*.sql`)
 
 | Table | Purpose |
 |---|---|
@@ -160,7 +166,7 @@ photos, documents, own account, reports — no user management or republish.
 | `support_reports` | reporter, type, title, description, area, page, allow-listed context, screenshot file, delivery status/attempts |
 | `activity_log` | who did what (content changes keep old/new values, max 300 chars each) |
 | `rate_limits` | fixed-window counters (keys are HMAC pseudonyms, never raw IPs/e-mails) |
-| `error_events` | grouped server/admin/public errors (message redacted, count, first/last seen) |
+| `error_log` | one row per error (severity critical/error/warning, source, event, redacted message, code location, request line, reference code, user, alert status); kept `ERROR_LOG_DAYS` (180). Replaced `error_events` in `002_monitoring.sql` |
 | `schema_migrations` | applied migrations (also applied automatically on first request) |
 
 ## 5. API (all under `/api`, JSON)
@@ -174,7 +180,8 @@ photos, documents, own account, reports — no user management or republish.
 | `POST /api/auth/forgot` · `/reset/verify` · `/reset` | public | password reset |
 | `POST /api/auth/invitation/verify` · `/invitation/accept` | public | invitation |
 | `POST /api/setup` | public, one-time | first admin with `SETUP_TOKEN` |
-| `GET /api/dashboard` | user | dashboard data (admins get diagnostics/errors/activity) |
+| `GET /api/dashboard` | user | dashboard data (admins get activity; the owner also gets diagnostics and errors) |
+| `GET /api/monitor/summary` · `GET /api/monitor/errors?severity=&source=&days=&q=&page=` · `POST /api/monitor/test-alert` | owner | Monitoring page, error log, test alert |
 | `POST /api/site/republish` | admin | regenerate pages |
 | `GET /api/content` · `PUT /api/content/{section}` | user | read/save a section (optimistic `version`) |
 | `POST /api/content/translate` | user | machine-translate field text ES⇄EN for review (saves nothing; off without `DEEPL_API_KEY`) |
@@ -257,12 +264,59 @@ site and the panel work normally (tested with blocked requests).
 
 | What | How | Default |
 |---|---|---|
-| Health endpoint | `GET /api/health` → `{"status":"ok|degraded","checks":{…}}`, HTTP 200/503 | on |
-| Admin JS errors | first-party, grouped on the dashboard (14 days) | on |
-| Server errors | log file + grouped on the dashboard with a reference code | on |
+| Health endpoint | `GET /api/health` → `{"status":"ok|degraded","checks":{…}}`, HTTP 200/503. A failing required check is logged as critical and alerts IT | on |
+| Error log | every server, panel and (if enabled) public-site error, one row each, in **Monitoreo** (owner only) | on |
+| Critical-error alerts | e-mail to `ALERT_EMAIL` (it@gruposensum.com) for unexpected server errors, PHP fatal errors and failing health checks; throttled (§9a) | on |
+| Monitoring page | status, key figures (24 h / 7 d / 30 d), most frequent errors, system details, alert settings + test e-mail, setup help | on (owner) |
+| Scheduled check | `bin/console monitor` from cron every 15 min (§9a) | set up at deployment |
 | Public JS errors | `PUBLIC_ERROR_REPORTING=true` adds `assets/error-reporter.js` (≤3 reports/page, message + file:line + path only, no cookies) | **off** |
 | Visitor analytics + Core Web Vitals (LCP, CLS, INP, TTFB) | Cloudflare Web Analytics: free, cookieless, no DNS change required. Set `CF_WEB_ANALYTICS_TOKEN` and republish | **off** |
 | Uptime + SSL expiry | external — Better Stack free plan (10 monitors, 3-min checks, SSL/domain expiry) or UptimeRobot free (50 monitors, 5-min, no SSL alerts on free) | set up at deployment |
+
+### 9a. Error log, critical alerts and the scheduled check
+
+**What is recorded.** Everything the application logs at warning level or
+above (e-mail failures, report delivery failures, translation failures,
+pages changed outside the panel, low disk space…), every unexpected server
+error and PHP fatal error, failing health checks, and JavaScript errors from
+the panel (and the public site when `PUBLIC_ERROR_REPORTING=true`). Failed
+sign-ins are security events and stay in the activity log. Messages are
+redacted (no long tokens, no e-mail addresses), never include request bodies,
+cookies or credentials, and the request line has no query string. The log file
+(`storage/logs/app-YYYY-MM.log`) still receives everything too.
+
+| Severity | Examples | E-mail alert |
+|---|---|---|
+| Crítico | unexpected server error (the user saw a reference code), PHP fatal error, failing required health check | **yes** |
+| Error | e-mail could not be sent, support report not delivered, automatic translation failed, browser errors | no |
+| Advertencia | published pages differ from saved content, low disk space, e-mail disabled | no |
+
+**Alerts.** Subject `[Sensum Website] Error crítico: <qué pasó>`; body: what
+happened, detail, code location, request, reference code, user, time, site and
+version, repeats since the previous alert, and a link to **Monitoreo**. Sent
+after the response is delivered (PHP-FPM/LiteSpeed), so a failing page is not
+slowed down. Throttling: the same error at most once per
+`ALERT_COOLDOWN_MINUTES` (60), at most `ALERT_DAILY_MAX` (20) per day;
+suppressed repeats are counted in the next alert. Throttle state is a small file
+in private storage, so alerts work even when the database is down. If e-mail is
+unavailable the entry is marked "no enviada" and the scheduled check sends one
+summary later. The owner can send a test alert from Monitoreo (3 per hour) or run
+`bin/console alert:test`.
+
+**Scheduled check** — cPanel → Cron Jobs, every 15 minutes:
+
+```
+*/15 * * * * php ~/sensum-cms/bin/console monitor > /dev/null 2>&1
+```
+
+It runs the health checks (critical → alert), checks free disk space
+(`DISK_WARN_MB`, 500) and whether the published pages still match the saved
+content, re-sends pending support reports and failed alerts, and removes log
+entries older than `ERROR_LOG_DAYS`. Monitoreo shows when it last ran.
+
+**What it cannot see.** If the whole server or PHP is down, nothing inside it
+can send an alert — that is what the external uptime monitor is for (Better
+Stack / UptimeRobot on the site and `/api/health`).
 
 **Turning on Cloudflare Web Analytics** (all three steps are required):
 1. Update `privacy-notice.html` §2 — it currently states the site uses no
@@ -283,7 +337,9 @@ All keys are documented in `.env.example`. Required in production: `APP_URL`,
 `SESSION_IDLE_MINUTES`, `SESSION_ABSOLUTE_HOURS`, `INVITE_TTL_HOURS`,
 `RESET_TTL_MINUTES`, `UPLOAD_MAX_MB`, `PUBLIC_ERROR_REPORTING`,
 `CF_WEB_ANALYTICS_TOKEN`, `DEEPL_API_KEY` + `TRANSLATE_DAILY_CHAR_LIMIT`
-(automatic translation), `SETUP_TOKEN` (remove after first use), `PUBLIC_DIR`
+(automatic translation), `OWNER_EMAIL`, `ALERTS_ENABLED`, `ALERT_EMAIL`,
+`ALERT_COOLDOWN_MINUTES`, `ALERT_DAILY_MAX`, `ERROR_LOG_DAYS`, `DISK_WARN_MB`
+(monitoring), `SETUP_TOKEN` (remove after first use), `PUBLIC_DIR`
 (only if the folders aren't side by side), `APP_KEY` (optional; otherwise
 generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`
 (ignored unless `APP_ENV=development`).
@@ -292,6 +348,7 @@ generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`
 
 `check` · `migrate` · `create-admin` · `publish` · `render <dir>` ·
 `mail:test <email>` · `translate:test` (checks the DeepL key, shows usage) ·
+`monitor` (scheduled check, cron) · `alert:test` ·
 `reports:retry` · `backup` (consistent DB copy, keeps 14)
 
 ## 12. Logs, backups and recovery

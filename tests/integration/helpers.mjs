@@ -21,6 +21,8 @@ if (!existsSync(join(FIXTURES, 'polyglot.jpg'))) {
   execFileSync(PHP, ['-d', 'memory_limit=1G', join(ROOT, 'tests', 'fixtures', 'make-fixtures.php')], { stdio: 'ignore' });
 }
 export const ADMIN = { name: 'Ana Administradora', email: 'ana.admin@example.test', password: 'Clave-De-Prueba-2026' };
+// Critical-error alerts go to their own Mailpit address so they never mix with support-report counts.
+export const ALERTS_TO = 'alerts@example.test';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -43,6 +45,8 @@ export async function startServer({ port, smtpDown = false, env = {}, reuseDir =
     SMTP_FROM_ADDRESS: 'no-reply@sensumconstrucciones.com',
     SUPPORT_EMAIL: 'it@gruposensum.com',
     SETUP_TOKEN: 'test-setup-token-0123456789abcdef',
+    OWNER_EMAIL: ADMIN.email, // the test administrator is the owner unless a test says otherwise
+    ALERT_EMAIL: ALERTS_TO,
     ...env,
   };
   const proc = spawn(PHP, ['-d', 'upload_max_filesize=16M', '-d', 'post_max_size=20M', '-d', 'memory_limit=256M',

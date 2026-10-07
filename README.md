@@ -5,7 +5,9 @@ The public website of [sensumconstrucciones.com](https://sensumconstrucciones.co
 a secure, Spanish-first admin panel at `/admin` that lets authorized staff
 change texts, photos, the portfolio PDF and contact details without touching
 code (with optional automatic Spanish ⇄ English translation through DeepL),
-and report problems to IT (it@gruposensum.com).
+and report problems to IT (it@gruposensum.com). The owner account
+(it@gruposensum.com) gets a Monitoring page with the full error log, and
+critical errors are e-mailed to IT automatically.
 
 The Content Manager is built *around* the approved site: it re-generates the
 same static pages from templates, byte-identical when nothing has changed. The
@@ -58,7 +60,7 @@ Earlier project notes (`NOTES.md`, `DEPLOY.md`, `CONTENT-APPROVAL.md`,
 
 ```bash
 npm --prefix tests ci
-npm --prefix tests test          # 95 API tests (each with a throwaway database)
+npm --prefix tests test          # 105 API tests (each with a throwaway database)
 npm --prefix tests run test:e2e  # Chrome + WebKit (iPhone), light/dark, accessibility scans
 ```
 

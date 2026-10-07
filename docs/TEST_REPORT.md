@@ -9,8 +9,8 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 
 | Suite | Location | Size |
 |---|---|---|
-| API integration | `tests/integration/*.test.mjs` | 95 tests in 11 files; each file runs its own PHP server with a throwaway database; one server deliberately has SMTP down; translation tests use a local DeepL stand-in |
-| Browser E2E | `tests/e2e/*.spec.js` | 29 specs × 3 browser profiles (87 runs, 21 skipped by design: phone-only, desktop-only or single-submission tests) |
+| API integration | `tests/integration/*.test.mjs` | 105 tests in 12 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation tests use a local DeepL stand-in |
+| Browser E2E | `tests/e2e/*.spec.js` | 30 specs × 3 browser profiles (90 runs, 21 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
 | Production build | `tests/apache/apache.test.mjs` | 6 checks of the built release under Apache + PHP-FPM |
 
@@ -103,6 +103,21 @@ Full re-run after the change: API **95/95**, browser **66 passed / 21 skipped**,
 PHPStan level 6 **0 errors**. The visual regression suite was not re-run for
 this change because no public-site file changed (only `admin/`, `cms/`, docs
 and tests).
+
+## Change after the two passes — monitoring, error log and critical-error alerts
+
+| Suite | Added | Result |
+|---|---|---|
+| API (`11-monitoring`) | owner-only access (owner / other admin / editor / anonymous); owner protection; unexpected server error → error-log entry with location, request, reference and user + one alert e-mail (no secrets); cooldown suppression and repeat count; failing health check (once per 15 min); browser errors without alerts; filters, search, paging and hostile filter values; test alert (3/h); PHP fatal-error capture; SMTP down → "failed" → `monitor` re-sends a summary; daily cap; alerts off; retention | 10/10 |
+| Existing API suites | dashboard errors now owner-only (the test administrator is the owner); grouped `error_events` replaced by `error_log` | updated, passing |
+| Browser | Monitoring page added to the every-screen tour (light/dark, 3 devices, axe, no overflow); owner sees and filters the log; other administrator and editor see no menu entry and are refused | passing |
+
+Issue found and fixed while testing: the log was ordered by insertion order, so
+entries carried over from the old table appeared out of time order — now sorted
+by time.
+
+Full re-run: API **105/105**, browser **69 passed / 21 skipped**, PHPStan level 6
+**0 errors**.
 
 ## Other audits
 

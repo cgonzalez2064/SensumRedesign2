@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Sensum\Cms\Api;
 
-use Sensum\Cms\Auth;
 use Sensum\Cms\Emails;
 use Sensum\Cms\Http\ApiError;
 use Sensum\Cms\Http\Response;
@@ -20,7 +19,7 @@ final class AccountController extends Controller
         $lang = $this->lang();
         $theme = in_array($this->str('theme'), ['light', 'dark', 'system'], true) ? $this->str('theme') : 'system';
         $this->app->db()->run('UPDATE users SET name = ?, lang = ?, theme = ?, updated_at = ? WHERE id = ?', [$name, $lang, $theme, time(), $this->uid()]);
-        Response::ok(['user' => Auth::publicUser($users->find($this->uid()))]);
+        Response::ok(['user' => $this->app->auth()->publicUser($users->find($this->uid()))]);
     }
 
     /**

@@ -27,6 +27,8 @@ final class Cli
             'render' => $this->render($args[0] ?? ''),
             'mail:test' => $this->mailTest($args[0] ?? ''),
             'translate:test' => $this->translateTest(),
+            'monitor' => $this->monitor(),
+            'alert:test' => $this->alertTest(),
             'reports:retry' => $this->retryReports(),
             'backup' => $this->backup(),
             default => $this->help(),
@@ -40,7 +42,7 @@ final class Cli
 
     private function help(): int
     {
-        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|translate:test|reports:retry|backup>');
+        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|translate:test|monitor|alert:test|reports:retry|backup>');
         return 0;
     }
 
@@ -144,6 +146,31 @@ final class Cli
             'text' => "Este es un correo de prueba del Administrador de contenido.\nThis is a test e-mail from the Content Manager.\n\n" . date('c'),
         ]);
         $this->out($ok ? 'Sent (driver: ' . $this->app->mailer()->driver() . ').' : 'FAILED — see storage/logs for the error category.');
+        return $ok ? 0 : 1;
+    }
+
+    /**
+     * Scheduled check — run it from cron (e.g. every 15 minutes): health checks
+     * (critical failures are e-mailed), disk space, published pages vs saved
+     * content, pending support reports, alerts that failed to send, log cleanup.
+     */
+    private function monitor(): int
+    {
+        foreach ($this->app->monitor()->run() as $line) {
+            $this->out($line);
+        }
+        return 0;
+    }
+
+    private function alertTest(): int
+    {
+        $alerts = $this->app->alerts();
+        if (!$alerts->enabled()) {
+            fwrite(STDERR, "Alerts are off: check ALERTS_ENABLED and ALERT_EMAIL in .env.\n");
+            return 1;
+        }
+        $ok = $alerts->sendTest('bin/console alert:test');
+        $this->out($ok ? 'Test alert sent to ' . $alerts->recipient() . '.' : 'FAILED — see storage/logs for the error category.');
         return $ok ? 0 : 1;
     }
 

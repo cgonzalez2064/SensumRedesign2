@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Sensum\Cms\Api;
 
-use Sensum\Cms\Auth;
 use Sensum\Cms\Emails;
 use Sensum\Cms\Http\ApiError;
 use Sensum\Cms\Http\Response;
@@ -16,7 +15,7 @@ final class AuthController extends Controller
     {
         return [
             'authenticated' => true,
-            'user' => Auth::publicUser($user),
+            'user' => $this->app->auth()->publicUser($user),
             'csrf' => $csrf,
             'app' => [
                 'version' => $this->app->version(),

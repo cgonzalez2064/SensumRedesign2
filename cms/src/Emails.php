@@ -68,6 +68,69 @@ final class Emails
         return ['to' => $user['email'], 'subject' => $s['changed.subject'], 'text' => $text, 'html' => $this->layout($html, $s, $user['lang'])];
     }
 
+    /**
+     * Critical-error alert for IT. Only the sanitized error-log fields are
+     * included — never request bodies, cookies, tokens or configuration.
+     *
+     * @param array{event:string,message:string,location:string,request:string,ref:?string,created_at:int} $entry
+     */
+    public function criticalAlert(string $to, string $lang, array $entry, string $userLabel, int $repeats): array
+    {
+        $s = $this->strings($lang);
+        $what = $s['alert.event.' . $entry['event']] ?? $s['alert.event.other'];
+        $rows = array_filter([
+            $s['alert.what'] => $what,
+            $s['alert.message'] => $entry['message'],
+            $s['alert.location'] => $entry['location'],
+            $s['alert.request'] => $entry['request'],
+            $s['alert.ref'] => (string) $entry['ref'],
+            $s['alert.user'] => $userLabel !== '' ? $userLabel : $s['alert.nouser'],
+            $s['alert.time'] => date('Y-m-d H:i:s T', $entry['created_at']),
+            $s['alert.site'] => $this->app->config->appUrl() . ' · ' . $this->app->version(),
+            $s['alert.repeats'] => $repeats > 0 ? (string) $repeats : '',
+        ], fn ($v) => $v !== '');
+        $link = $this->adminUrl('monitoreo');
+        $throttle = self::fill($s['alert.throttle'], [
+            'minutes' => (string) $this->app->config->int('ALERT_COOLDOWN_MINUTES', 60, 0, 1440),
+            'max' => (string) $this->app->config->int('ALERT_DAILY_MAX', 20, 1, 500),
+        ]);
+        $text = $s['alert.intro'] . "\n\n";
+        foreach ($rows as $k => $v) {
+            $text .= "{$k}: {$v}\n";
+        }
+        $text .= "\n{$s['alert.action']}\n{$link}\n\n{$throttle}\n\n— {$s['brand']} · {$s['product']}\n{$s['footer']}\n";
+        $table = '';
+        foreach ($rows as $k => $v) {
+            $table .= '<tr><td style="padding:4px 12px 4px 0;color:#666;vertical-align:top;white-space:nowrap">' . self::esc($k)
+                . '</td><td style="padding:4px 0;word-break:break-word">' . self::esc($v) . '</td></tr>';
+        }
+        $body = '<p>' . self::esc($s['alert.intro']) . '</p><table style="border-collapse:collapse;font-size:14px">' . $table . '</table>'
+            . '<p>' . self::esc($s['alert.action']) . '</p>' . self::button(self::esc($s['alert.button']), $link)
+            . '<p style="font-size:13px;color:#666">' . self::esc($throttle) . '</p>';
+        return ['to' => $to, 'subject' => self::fill($s['alert.subject'], ['what' => $what]), 'text' => $text, 'html' => $this->layout($body, $s, $lang)];
+    }
+
+    /** One message listing critical alerts that failed to send earlier. @param list<array> $entries */
+    public function alertDigest(string $to, string $lang, array $entries): array
+    {
+        $s = $this->strings($lang);
+        $lines = array_map(fn ($e) => date('Y-m-d H:i', (int) $e['created_at']) . ' — ' . ($s['alert.event.' . $e['event']] ?? $s['alert.event.other'])
+            . ($e['message'] !== '' ? ': ' . $e['message'] : '') . ($e['ref'] ? " ({$e['ref']})" : ''), $entries);
+        $link = $this->adminUrl('monitoreo');
+        $text = $s['digest.intro'] . "\n\n" . implode("\n", $lines) . "\n\n{$s['alert.action']}\n{$link}\n\n— {$s['brand']} · {$s['product']}\n";
+        $body = '<p>' . self::esc($s['digest.intro']) . '</p><ul>' . implode('', array_map(fn ($l) => '<li>' . self::esc($l) . '</li>', $lines)) . '</ul>'
+            . '<p>' . self::esc($s['alert.action']) . '</p>' . self::button(self::esc($s['alert.button']), $link);
+        return ['to' => $to, 'subject' => self::fill($s['digest.subject'], ['n' => (string) count($entries)]), 'text' => $text, 'html' => $this->layout($body, $s, $lang)];
+    }
+
+    public function alertTest(string $to, string $lang, string $requestedBy): array
+    {
+        $s = $this->strings($lang);
+        $lines = [$s['test.intro'], self::fill($s['test.ok'], ['to' => $to]), self::fill($s['test.by'], ['name' => $requestedBy]), date('Y-m-d H:i:s T')];
+        $html = implode('', array_map(fn ($l) => '<p>' . self::esc($l) . '</p>', $lines));
+        return ['to' => $to, 'subject' => $s['test.subject'], 'text' => implode("\n\n", $lines) . "\n", 'html' => $this->layout($html, $s, $lang)];
+    }
+
     public static function esc(string $s): string
     {
         return htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');

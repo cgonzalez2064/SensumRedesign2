@@ -17,6 +17,7 @@ import * as users from './views/users.js';
 import * as account from './views/account.js';
 import * as reports from './views/reports.js';
 import * as help from './views/help.js';
+import * as monitor from './views/monitor.js';
 
 const state = { session: null, setupRequired: false, view: null, shell: null, path: null, skipGuard: false };
 
@@ -35,6 +36,7 @@ const PRIVATE = [
   { re: /^\/contacto$/, view: content.details, nav: 'details' },
   { re: /^\/fotos(?:\/(nosotros|proyectos|documentos))?$/, view: media.render, nav: 'media' },
   { re: /^\/usuarios$/, view: users.render, nav: 'users', admin: true },
+  { re: /^\/monitoreo$/, view: monitor.render, nav: 'monitor', owner: true },
   { re: /^\/reportes$/, view: reports.render, nav: 'reports' },
   { re: /^\/cuenta$/, view: account.render, nav: 'account' },
   { re: /^\/ayuda$/, view: help.render, nav: 'help' },
@@ -46,6 +48,7 @@ const currentPath = () => {
 };
 export const navigate = (path) => { location.hash = '#' + path; };
 export const isAdmin = () => !!(state.session && state.session.user.role === 'admin');
+const isOwner = () => !!(state.session && state.session.user.owner);
 
 // --------------------------------------------------------------- session
 async function loadSession() {
@@ -201,7 +204,8 @@ function renderShell(activeNav) {
       navLink('/textos', 'content', 'pencil-square', active),
       navLink('/fotos', 'media', 'images', active),
       navLink('/contacto', 'details', 'telephone', active),
-      user.role === 'admin' ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active)] : null,
+      user.role === 'admin' ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active),
+        user.owner ? navLink('/monitoreo', 'monitor', 'activity', active) : null] : null,
       h('div', { class: 'nav-section', text: t('nav.groupSupport') }),
       navLink('/reportes', 'reports', 'chat-square-text', active),
       navLink('/ayuda', 'help', 'question-circle', active),
@@ -289,7 +293,7 @@ async function route(force = false) {
 
   const priv = PRIVATE.find((r) => r.re.test(path));
   const main = renderShell(priv ? priv.nav : null);
-  if (!priv || (priv.admin && !isAdmin())) {
+  if (!priv || (priv.admin && !isAdmin()) || (priv.owner && !isOwner())) {
     main.append(h('div', { class: 'card empty' }, h('span', { class: 'icon-tile' }, icon('exclamation-circle')),
       h('h1', { tabindex: '-1', text: t('notFound.title') }), h('p', { text: t('notFound.body') }),
       h('a', { class: 'btn btn-primary', href: '#/' }, t('notFound.home'))));

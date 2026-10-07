@@ -224,3 +224,24 @@ A feature added after the two audits, reviewed and tested to the same standard.
 
 Static analysis (PHPStan level 6): 0 errors after the change. No new dependency
 (uses PHP's curl, with a stream fallback).
+
+## 8. Change review — monitoring, error log and critical-error alerts
+
+Added after the audits at the owner's request; reviewed and tested to the same standard.
+
+| Area | Design | Verified by |
+|---|---|---|
+| Access | `GET /api/monitor/*` and `POST /api/monitor/test-alert` use a server-side `owner` guard: active administrator **and** e-mail = `OWNER_EMAIL` (default it@gruposensum.com). The dashboard sends diagnostics and errors only to the owner. The menu entry is cosmetic; the API refuses everyone else | `11-monitoring` (other admin 403, editor 403, anonymous 401; dashboard fields absent); `e2e/admin.spec.js` |
+| Owner protection | other administrators cannot demote, disable or delete the owner (`owner_protected`); the owner manages everyone else | `11-monitoring` |
+| What is stored | redacted message (no long tokens, no e-mail addresses, no control characters), code location (file:line, no full path), request method + path (no query string), reference code, user id, a few small context values already passed through the logger's secret redaction. Never request bodies, cookies, CSRF/session/reset/invitation tokens, passwords or SMTP data | `11-monitoring` (alert scanned for the password, CSRF token and session cookie); `08-system` (token/e-mail redaction) |
+| Alert e-mail | fixed recipient from configuration; every value HTML-escaped; subject built from fixed labels (no user text); link built from `APP_URL` | `11-monitoring` |
+| Abuse / flooding | the only anonymous paths that can add entries are the throttled telemetry endpoint (30/h per IP, 500/day) and `/api/health` (a degraded entry at most once per 15 min per failure). Alerts: same error once per cooldown (60 min), ≤ 20/day, file-based state with `flock` (works with the database down) | `11-monitoring` (cooldown, repeats count, daily cap, health polling) |
+| Failure safety | recording an error never throws (database down → file log still written, alert still sent); alerts are sent after the response; e-mail failure marks the entry "failed" and the scheduled check re-sends one summary; no recursion between logger, error log and mailer | `11-monitoring` (SMTP down → failed → `monitor` re-sends) |
+| Query safety | filters are allow-listed (severity, source), numbers cast, search uses bound parameters with escaped `LIKE` wildcards; hostile values return 200 with no effect | `11-monitoring` |
+| Retention | `ERROR_LOG_DAYS` (180) enforced by the scheduled check and opportunistically | `11-monitoring` |
+| Admin UI | rendered with `textContent` only (error messages are untrusted text); strict CSP unchanged; axe scans of the Monitoring page in light/dark on 3 devices | `e2e/admin.spec.js` |
+
+Residual risk: an attacker who can trigger many *different* server errors is
+still capped at 20 alert e-mails per day (then entries are logged as
+"suppressed"). Alerts cannot report a full server outage — the external uptime
+monitor covers that. PHPStan level 6: 0 errors after the change.

@@ -198,5 +198,29 @@ Under **Users** (visible to administrators only):
   **Disable / Re-enable** (signs them out immediately) and **Delete user**.
 * You can't change your own role or disable yourself; there must always be at
   least one administrator.
+* The technical-support account (it@gruposensum.com) is shown as **Owner**: no
+  other account can change its role, disable it or delete it.
 * On **Home** you'll see the website status, recent activity and, when needed,
   the **Republish the website** button.
+
+## 11. For the owner account (technical support): Monitoring
+
+Only the **it@gruposensum.com** account sees **Monitoring** in the menu
+(Administration → Monitoring). There you'll find:
+
+* **Status and figures:** whether the system is working, critical errors in the
+  last 24 hours, errors this week, and when the scheduled check last ran.
+* **Error log:** every server, panel and website error, newest first. Filter by
+  severity (Critical, Error, Warning), source and period, or search by text or
+  by the **reference code** a user saw. "Technical details" shows the code
+  location, the request and the user.
+* **E-mail alerts:** critical errors are e-mailed automatically to
+  it@gruposensum.com (the same error at most once an hour). Use **Send a test
+  e-mail** to check they arrive.
+* **Activity and errors:** sign-ins, failed attempts, changes, photos, reports and
+  failed e-mails over 24 hours, 7 and 30 days.
+* **System:** version, disk space, database size, last backup, and whether the
+  published pages match the saved content.
+
+If you receive an alert: open Monitoring, search for the reference code from the
+e-mail and look at the technical details. If it was a one-off, nothing else is needed.
