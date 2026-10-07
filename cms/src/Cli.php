@@ -46,7 +46,7 @@ final class Cli
     {
         $ok = true;
         foreach (Health::checks($this->app, true) as $name => $c) {
-            $this->out(sprintf('[%s] %-22s %s', $c['ok'] ? ' OK ' : 'FAIL', $name, $c['detail'] ?? ''));
+            $this->out(sprintf('[%s] %-22s %s', $c['ok'] ? ' OK ' : (empty($c['optional']) ? 'FAIL' : 'WARN'), $name, $c['detail'] ?? ''));
             $ok = $ok && ($c['ok'] || !empty($c['optional']));
         }
         return $ok ? 0 : 1;
@@ -54,7 +54,8 @@ final class Cli
 
     private function migrate(): int
     {
-        $ran = $this->app->db()->migrate($this->app->root('migrations'));
+        // Opening the database applies pending migrations automatically.
+        $ran = array_merge($this->app->db() ? $this->app->migratedOnOpen() : [], $this->app->db()->migrate($this->app->root('migrations')));
         $this->out($ran ? 'Applied: ' . implode(', ', $ran) : 'Database is up to date.');
         return 0;
     }

@@ -27,6 +27,8 @@ final class App
     private ?Publisher $publisher = null;
     private ?Settings $settings = null;
     private ?string $key = null;
+    /** @var list<string> migrations applied automatically when the database was opened */
+    private array $migratedOnOpen = [];
 
     public readonly Config $config;
 
@@ -106,6 +108,7 @@ final class App
                 $lock = fopen($this->storage('migrate.lock'), 'c');
                 if ($lock && flock($lock, LOCK_EX)) {
                     $ran = $this->db->migrate($migrations);
+                    $this->migratedOnOpen = $ran;
                     flock($lock, LOCK_UN);
                     if ($ran) {
                         $this->logger()->info('migrations_applied', ['versions' => $ran]);
@@ -149,6 +152,11 @@ final class App
     public function pseudonym(string $value): string
     {
         return substr(hash_hmac('sha256', strtolower($value), $this->key()), 0, 32);
+    }
+
+    public function migratedOnOpen(): array
+    {
+        return $this->migratedOnOpen;
     }
 
     public function logger(): Logger

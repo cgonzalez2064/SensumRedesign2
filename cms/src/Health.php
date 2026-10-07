@@ -28,10 +28,16 @@ final class Health
 
         $storage = $app->storage();
         $c['storage'] = ['ok' => is_dir($storage) && is_writable($storage)];
+        // A folder that doesn't exist yet is fine if it can be created.
+        $writable = static function (string $dir): bool {
+            while (!is_dir($dir) && dirname($dir) !== $dir) {
+                $dir = dirname($dir);
+            }
+            return is_writable($dir);
+        };
         $public = $app->publicPath();
-        $c['publishing'] = ['ok' => is_writable($public) && (!is_file($public . '/index.html') || is_writable($public . '/index.html'))];
-        $uploads = $app->publicPath('assets/uploads');
-        $c['uploads'] = ['ok' => is_dir($uploads) ? is_writable($uploads) : is_writable($app->publicPath('assets'))];
+        $c['publishing'] = ['ok' => $writable($public) && (!is_file($public . '/index.html') || is_writable($public . '/index.html'))];
+        $c['uploads'] = ['ok' => $writable($app->publicPath('assets/uploads'))];
 
         if ($detailed) {
             $c['mail'] = ['ok' => $app->mailer()->isConfigured(), 'optional' => true, 'detail' => 'driver: ' . $app->mailer()->driver()];
@@ -41,7 +47,7 @@ final class Health
             $c['private_folder'] = ['ok' => !$inside, 'optional' => true, 'detail' => $inside ? 'cms folder is inside the web root (protected by .htaccess; moving it outside is recommended)' : ''];
             $c['https'] = ['ok' => str_starts_with($app->config->appUrl(), 'https://'), 'optional' => !$app->config->isProduction(), 'detail' => $app->config->appUrl()];
             $c['upload_limit'] = ['ok' => $app->media()->maxUploadBytes() >= 8 * 1024 * 1024, 'optional' => true,
-                'detail' => round($app->media()->maxUploadBytes() / 1048576, 1) . ' MB'];
+                'detail' => round($app->media()->maxUploadBytes() / 1048576, 1) . ' MB' . (PHP_SAPI === 'cli' ? ' (command-line PHP; the web server may use other limits)' : '')];
         }
         return $c;
     }
