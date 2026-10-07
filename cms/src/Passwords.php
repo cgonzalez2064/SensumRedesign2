@@ -25,7 +25,7 @@ final class Passwords
         'zaq12wsxcde', 'changeme123', 'cambiame123', 'temporal123', 'password!1', 'p@ssw0rd123', 'holahola12',
     ];
 
-    public static function algorithm(): string|int|null
+    public static function algorithm(): string
     {
         return defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_DEFAULT;
     }

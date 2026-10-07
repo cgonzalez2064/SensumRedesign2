@@ -49,6 +49,12 @@ final class Users
         return $this->app->db()->one('SELECT * FROM users WHERE id = ?', [$id]);
     }
 
+    /**
+     * Re-checked inside the setup transaction to close a race, so the
+     * result may differ between calls.
+     *
+     * @phpstan-impure
+     */
     public function count(): int
     {
         return (int) $this->app->db()->value('SELECT COUNT(*) FROM users');

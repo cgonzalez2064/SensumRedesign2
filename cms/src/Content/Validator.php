@@ -63,7 +63,7 @@ final class Validator
                 if (!preg_match('/^[0-9+()\- ]{8,20}$/', $v)) {
                     return [$v, 'invalid_phone'];
                 }
-                $digits = preg_replace('/\D/', '', $v);
+                $digits = preg_replace('/\D/', '', $v) ?? '';
                 if (strlen($digits) < 8 || strlen($digits) > 15) {
                     return [$v, 'invalid_phone'];
                 }

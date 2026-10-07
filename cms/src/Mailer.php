@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Sensum\Cms;
 
-use PHPMailer\PHPMailer\Exception as MailException;
 use PHPMailer\PHPMailer\PHPMailer;
 
 /**
@@ -68,7 +67,7 @@ final class Mailer
             $mail->setFrom($this->fromAddress(), self::oneLine($this->config->string('SMTP_FROM_NAME', 'Sensum Construcciones')), false);
             $mail->addAddress($m['to']);
             if (!empty($m['replyTo']) && filter_var($m['replyTo'][0], FILTER_VALIDATE_EMAIL)) {
-                $mail->addReplyTo($m['replyTo'][0], self::oneLine($m['replyTo'][1] ?? ''));
+                $mail->addReplyTo($m['replyTo'][0], self::oneLine($m['replyTo'][1]));
             }
             $mail->Subject = self::oneLine($m['subject']);
             if (!empty($m['html'])) {
@@ -114,7 +113,7 @@ final class Mailer
             $mail->send();
             $this->logger->info('mail_sent', ['subject' => mb_substr($mail->Subject, 0, 80)]);
             return true;
-        } catch (MailException | \Throwable $e) {
+        } catch (\Throwable $e) {
             // Deliberately do not log $e->getMessage(): SMTP transcripts can
             // contain server details. The class name is enough to triage.
             $this->logger->error('mail_failed', ['driver' => $driver, 'kind' => (new \ReflectionClass($e))->getShortName()]);

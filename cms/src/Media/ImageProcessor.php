@@ -106,8 +106,7 @@ final class ImageProcessor
             $img = match ($type) {
                 IMAGETYPE_JPEG => imagecreatefromjpeg($path),
                 IMAGETYPE_PNG => imagecreatefrompng($path),
-                IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? imagecreatefromwebp($path) : false,
-                default => false,
+                default => function_exists('imagecreatefromwebp') ? imagecreatefromwebp($path) : false, // WebP
             };
         } finally {
             restore_error_handler();
@@ -229,7 +228,7 @@ final class ImageProcessor
             if (in_array($tw, $written, true)) {
                 continue;
             }
-            $th = (int) round($ch * $tw / $cw);
+            $th = max(1, (int) round($ch * $tw / $cw)); // extreme panoramas never round to 0 px
             $dst = imagecreatetruecolor($tw, $th);
             // Flatten any transparency onto the site's dark ink color.
             imagefill($dst, 0, 0, imagecolorallocate($dst, 28, 28, 28));

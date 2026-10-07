@@ -88,10 +88,11 @@ final class UsersController extends Controller
         $role = in_array($role, Users::ROLES, true) ? $role : $user['role'];
         if ($status === '') {
             $status = $user['status'];
-        } elseif (!in_array($status, ['active', 'disabled'], true) || ($user['status'] === 'invited' && $status !== 'disabled' && $status !== 'invited')) {
+        } elseif (!in_array($status, ['active', 'disabled'], true) || ($user['status'] === 'invited' && $status === 'active')) {
+            // Invited people become active only by accepting their invitation.
             throw ApiError::validation(['status' => 'invalid']);
         }
-        $this->app->db()->transaction(function () use ($user, $role, $status, $id) {
+        $this->app->db()->transaction(function () use ($role, $status, $id) {
             $this->app->db()->run('UPDATE users SET role = ?, status = ?, updated_at = ? WHERE id = ?', [$role, $status, time(), $id]);
             if ($this->users()->activeAdmins() < 1) {
                 throw ApiError::validation(['user' => 'last_admin']);

@@ -55,7 +55,8 @@ final class Cli
     private function migrate(): int
     {
         // Opening the database applies pending migrations automatically.
-        $ran = array_merge($this->app->db() ? $this->app->migratedOnOpen() : [], $this->app->db()->migrate($this->app->root('migrations')));
+        $db = $this->app->db();
+        $ran = array_merge($this->app->migratedOnOpen(), $db->migrate($this->app->root('migrations')));
         $this->out($ran ? 'Applied: ' . implode(', ', $ran) : 'Database is up to date.');
         return 0;
     }

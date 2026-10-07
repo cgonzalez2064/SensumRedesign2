@@ -5,9 +5,6 @@ namespace Sensum\Cms\Http;
 
 final class Response
 {
-    /** @var array<string> */
-    private static array $cookies = [];
-
     public static function json(int $status, array $payload): never
     {
         if (!headers_sent()) {
