@@ -28,3 +28,6 @@ Sensum-Construcciones-Actualizacion-Sitio-Web.docx
 
 # Contact-form rate-limit data (runtime)
 assets/.rl-data/
+
+# Generated upload fixtures
+tests/fixtures/out/

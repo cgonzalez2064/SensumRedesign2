@@ -24,7 +24,7 @@ foreach (range(1, 6) as $i) {
     $slots["proj{$i}.card"] = [
         'group' => 'projects', 'project' => "proj{$i}", 'kind' => 'image', 'multiple' => false, 'altRequired' => true,
         'ratio' => [4, 3], 'min' => [1000, 750], 'recommended' => [1600, 1200], 'variants' => [800, 1600],
-        'frames' => [[376, 282], [359, 269]],
+        'frames' => [[376, 282]],
         'sizes' => '(max-width: 620px) 92vw, (max-width: 980px) 46vw, 376px',
     ];
     $slots["proj{$i}.gallery"] = [

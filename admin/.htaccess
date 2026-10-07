@@ -1,0 +1,13 @@
+# Content Manager interface (static files only). It has its own, stricter
+# Content-Security-Policy than the public site: same-origin only, blob:
+# images for upload previews, no third-party scripts, styles or fonts.
+<IfModule mod_headers.c>
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; manifest-src 'self'"
+  Header always set Referrer-Policy "no-referrer"
+  Header always set X-Robots-Tag "noindex, nofollow"
+  # Always revalidate admin files so updates take effect immediately.
+  <FilesMatch "\.(html|js|css|svg)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+Options -Indexes

@@ -94,13 +94,31 @@ final class ImageProcessor
         }
         self::ensureMemory($w, $h);
 
-        $img = match ($type) {
-            IMAGETYPE_JPEG => @imagecreatefromjpeg($path),
-            IMAGETYPE_PNG => @imagecreatefrompng($path),
-            IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : false,
-            default => false,
-        };
-        if (!$img instanceof \GdImage) {
+        // Truncated or damaged files often still "decode" with a warning and
+        // a grey/partial picture: treat any decoder warning as corruption.
+        $previous = ini_set('gd.jpeg_ignore_warning', '0');
+        $warned = false;
+        set_error_handler(static function () use (&$warned): bool {
+            $warned = true;
+            return true;
+        });
+        try {
+            $img = match ($type) {
+                IMAGETYPE_JPEG => imagecreatefromjpeg($path),
+                IMAGETYPE_PNG => imagecreatefrompng($path),
+                IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? imagecreatefromwebp($path) : false,
+                default => false,
+            };
+        } finally {
+            restore_error_handler();
+            if ($previous !== false) {
+                ini_set('gd.jpeg_ignore_warning', $previous);
+            }
+        }
+        if (!$img instanceof \GdImage || $warned) {
+            if ($img instanceof \GdImage) {
+                imagedestroy($img);
+            }
             throw ApiError::validation(['file' => 'image_corrupt']);
         }
         if ($type === IMAGETYPE_JPEG) {
