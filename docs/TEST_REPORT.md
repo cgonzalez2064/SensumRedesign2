@@ -117,7 +117,10 @@ entries carried over from the old table appeared out of time order — now sorte
 by time.
 
 Full re-run: API **105/105**, browser **69 passed / 21 skipped**, PHPStan level 6
-**0 errors**.
+**0 errors**. Built release on Apache 2.4 + PHP-FPM: **6/6**, plus a critical
+error forced under PHP-FPM — the visitor's error response returned in 10 ms and
+the alert e-mail was delivered afterwards (`fastcgi_finish_request`), logged with
+status "sent".
 
 ## Other audits
 
