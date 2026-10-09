@@ -60,18 +60,18 @@ test('Monitoring and the error log are for the owner account only', async () => 
   assert.ok(Array.isArray(ad.activity), 'other admins still see activity');
 });
 
-test('other administrators cannot demote, disable or delete the owner', async () => {
+test('other accounts cannot change the owner (user management is owner-only)', async () => {
   const me = (await owner.get('/api/users')).data.users.find((u) => u.isSelf);
   assert.equal(me.isOwner, true);
-  for (const body of [{ role: 'editor' }, { status: 'disabled' }]) {
+  for (const body of [{ permissions: ['texts'] }, { status: 'disabled' }]) {
     const r = await other.put(`/api/users/${me.id}`, body);
-    assert.equal(r.status, 422);
-    assert.equal(r.data.fields.user, 'owner_protected');
+    assert.equal(r.status, 403);
+    assert.equal(r.data.error, 'forbidden');
   }
-  assert.equal((await other.del(`/api/users/${me.id}`)).data.fields.user, 'owner_protected');
+  assert.equal((await other.del(`/api/users/${me.id}`)).status, 403);
   // The owner can still manage the other accounts.
   const otherId = (await owner.get('/api/users')).data.users.find((u) => u.email === OTHER_ADMIN.email).id;
-  assert.equal((await owner.put(`/api/users/${otherId}`, { role: 'admin' })).status, 200);
+  assert.equal((await owner.put(`/api/users/${otherId}`, { permissions: ['texts', 'contact', 'photos', 'documents', 'site'] })).status, 200);
 });
 
 test('a critical error is logged with its details and e-mailed to IT once (throttled)', async () => {

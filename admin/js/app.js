@@ -18,6 +18,8 @@ import * as account from './views/account.js';
 import * as reports from './views/reports.js';
 import * as help from './views/help.js';
 import * as monitor from './views/monitor.js';
+import * as siteReport from './views/sitereport.js';
+import { can } from './access.js';
 
 const state = { session: null, setupRequired: false, view: null, shell: null, path: null, skipGuard: false };
 
@@ -31,12 +33,13 @@ const PUBLIC = [
 ];
 const PRIVATE = [
   { re: /^\/$/, view: dashboard.render, nav: 'dashboard' },
-  { re: /^\/textos$/, view: content.list, nav: 'content' },
-  { re: /^\/textos\/([a-z]+)$/, view: content.editor, nav: 'content' },
-  { re: /^\/contacto$/, view: content.details, nav: 'details' },
-  { re: /^\/fotos(?:\/(nosotros|proyectos|documentos))?$/, view: media.render, nav: 'media' },
-  { re: /^\/usuarios$/, view: users.render, nav: 'users', admin: true },
+  { re: /^\/textos$/, view: content.list, nav: 'content', perm: ['texts'] },
+  { re: /^\/textos\/([a-z]+)$/, view: content.editor, nav: 'content', perm: ['texts'] },
+  { re: /^\/contacto$/, view: content.details, nav: 'details', perm: ['contact'] },
+  { re: /^\/fotos(?:\/(nosotros|proyectos|documentos))?$/, view: media.render, nav: 'media', perm: ['photos', 'documents'] },
+  { re: /^\/usuarios$/, view: users.render, nav: 'users', owner: true },
   { re: /^\/monitoreo$/, view: monitor.render, nav: 'monitor', owner: true },
+  { re: /^\/informe$/, view: siteReport.render, nav: 'siteReport', owner: true },
   { re: /^\/reportes$/, view: reports.render, nav: 'reports' },
   { re: /^\/cuenta$/, view: account.render, nav: 'account' },
   { re: /^\/ayuda$/, view: help.render, nav: 'help' },
@@ -47,8 +50,9 @@ const currentPath = () => {
   return raw.startsWith('/') ? raw : '/' + raw;
 };
 export const navigate = (path) => { location.hash = '#' + path; };
-export const isAdmin = () => !!(state.session && state.session.user.role === 'admin');
 const isOwner = () => !!(state.session && state.session.user.owner);
+/** Whether the signed-in account may change this kind of information (see access.js). */
+export const userCan = (permission) => !!state.session && can(state.session.user, permission);
 
 // --------------------------------------------------------------- session
 async function loadSession() {
@@ -201,11 +205,11 @@ function renderShell(activeNav) {
     h('nav', { class: 'nav', 'aria-label': t('nav.main') },
       navLink('/', 'dashboard', 'house', active),
       h('div', { class: 'nav-section', text: t('nav.groupSite') }),
-      navLink('/textos', 'content', 'pencil-square', active),
-      navLink('/fotos', 'media', 'images', active),
-      navLink('/contacto', 'details', 'telephone', active),
-      user.role === 'admin' ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active),
-        user.owner ? navLink('/monitoreo', 'monitor', 'activity', active) : null] : null,
+      can(user, 'texts') ? navLink('/textos', 'content', 'pencil-square', active) : null,
+      can(user, 'photos') || can(user, 'documents') ? navLink('/fotos', 'media', 'images', active) : null,
+      can(user, 'contact') ? navLink('/contacto', 'details', 'telephone', active) : null,
+      user.owner ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active),
+        navLink('/monitoreo', 'monitor', 'activity', active), navLink('/informe', 'siteReport', 'bar-chart', active)] : null,
       h('div', { class: 'nav-section', text: t('nav.groupSupport') }),
       navLink('/reportes', 'reports', 'chat-square-text', active),
       navLink('/ayuda', 'help', 'question-circle', active),
@@ -293,7 +297,7 @@ async function route(force = false) {
 
   const priv = PRIVATE.find((r) => r.re.test(path));
   const main = renderShell(priv ? priv.nav : null);
-  if (!priv || (priv.admin && !isAdmin()) || (priv.owner && !isOwner())) {
+  if (!priv || (priv.owner && !isOwner()) || (priv.perm && !priv.perm.some(userCan))) {
     main.append(h('div', { class: 'card empty' }, h('span', { class: 'icon-tile' }, icon('exclamation-circle')),
       h('h1', { tabindex: '-1', text: t('notFound.title') }), h('p', { text: t('notFound.body') }),
       h('a', { class: 'btn btn-primary', href: '#/' }, t('notFound.home'))));
@@ -301,7 +305,7 @@ async function route(force = false) {
     focusHeading(main);
     return;
   }
-  const view = (await priv.view({ main, params: path.match(priv.re).slice(1), session: state.session, navigate, isAdmin: isAdmin() })) || null;
+  const view = (await priv.view({ main, params: path.match(priv.re).slice(1), session: state.session, navigate, isOwner: isOwner(), can: userCan })) || null;
   if (stale()) {
     if (view && view.destroy) view.destroy();
     return;

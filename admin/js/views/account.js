@@ -5,6 +5,7 @@ import { api, setCsrf } from '../api.js';
 import { pageHead, textField, passwordField, passwordGuide, alertBox, toast, errorText, fieldErrorText, setBusy, button } from '../ui.js';
 import { updateUser, themeSwitch } from '../app.js';
 import { getThemePref } from '../theme.js';
+import { permissionList } from '../access.js';
 
 export function render({ main, session }) {
   const user = session.user;
@@ -19,7 +20,8 @@ export function render({ main, session }) {
   const profile = h('form', { class: 'card stack', novalidate: true, 'aria-labelledby': 'prof-t' },
     h('h2', { id: 'prof-t', text: t('account.profile') }),
     name.wrap, email.wrap,
-    h('div', { class: 'field' }, h('span', { class: 'label', text: t('users.role') }), h('span', { class: 'badge', text: t('users.roles.' + user.role)[0] })),
+    h('div', { class: 'field' }, h('span', { class: 'label', text: t('access.yours') }),
+      h('span', { class: 'small', text: user.owner ? t('access.owner') : permissionList(user.permissions || []) })),
     h('div', { class: 'field' }, h('label', { class: 'label', for: 'acc-lang', text: t('account.language') }), langSel),
     h('div', { class: 'field' }, h('span', { class: 'label', text: t('account.theme') }), themeSwitch()),
     profMsg, h('div', null, saveProfile));

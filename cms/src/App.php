@@ -178,6 +178,16 @@ final class App
         return new Monitor($this);
     }
 
+    public function siteReport(): SiteReport
+    {
+        return new SiteReport($this);
+    }
+
+    public function pageSpeed(): PageSpeed
+    {
+        return new PageSpeed($this);
+    }
+
     public function mailer(): Mailer
     {
         return $this->mailer ??= new Mailer($this->config, $this->logger(), $this->storageDir('mail'));

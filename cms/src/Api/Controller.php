@@ -17,6 +17,17 @@ abstract class Controller
         return (int) ($this->session['uid'] ?? 0);
     }
 
+    /** @throws \Sensum\Cms\Http\ApiError 403 unless the account may change this kind of information */
+    protected function requirePermission(string $permission): void
+    {
+        $this->app->auth()->assertCan((array) $this->session, $permission);
+    }
+
+    protected function isOwner(): bool
+    {
+        return $this->session !== null && $this->app->auth()->isOwner($this->session);
+    }
+
     protected function str(string $name): string
     {
         return $this->req->input($name);

@@ -178,6 +178,11 @@ final class Monitor
         $this->reportHealth($checks);
         $failed = array_keys(array_filter($checks, fn ($c) => !$c['ok'] && empty($c['optional'])));
         $out[] = $failed ? 'Health: DEGRADED (' . implode(', ', $failed) . ')' : 'Health: ok';
+        // Each run counts toward the monthly report's availability figure.
+        $this->app->db()->run('INSERT INTO monitor_runs (created_at, ok, failed) VALUES (?, ?, ?)', [time(), $failed ? 0 : 1, implode(',', $failed)]);
+        if (random_int(1, 20) === 1) {
+            $this->app->db()->run('DELETE FROM monitor_runs WHERE created_at < ?', [time() - 400 * 86400]);
+        }
 
         $minFree = $this->app->config->int('DISK_WARN_MB', 500, 10, 1_000_000) * 1024 * 1024;
         $free = @disk_free_space($this->app->storage());
@@ -200,6 +205,11 @@ final class Monitor
         $out[] = "Pending support reports delivered: {$delivered}";
         $out[] = 'Failed alerts re-sent: ' . $this->app->alerts()->retryFailed();
         $out[] = 'Old error-log entries removed: ' . $this->app->errors()->prune();
+        $report = $this->app->siteReport();
+        $until = $report->refreshCertificate();
+        $out[] = 'HTTPS certificate: ' . ($until ? 'valid until ' . date('Y-m-d', $until) : 'not checked (needs a public https APP_URL)');
+        $out[] = 'Google PageSpeed: ' . $this->app->pageSpeed()->refreshIfStale();
+        $out[] = 'Monthly report reminder: ' . ($report->maybeRemind() ? 'sent to the owner' : 'not needed');
         $this->app->settings()->set('monitor_last_run', (string) time());
         return $out;
     }

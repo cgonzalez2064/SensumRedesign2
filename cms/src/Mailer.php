@@ -43,11 +43,12 @@ final class Mailer
     }
 
     /**
-     * @param array{to:string, subject:string, text:string, html?:string, replyTo?:array{0:string,1:string}, attachments?:list<array{path:string,name:string,mime:string}>} $m
+     * @param array{to:string|list<string>, subject:string, text:string, html?:string, replyTo?:array{0:string,1:string}, cc?:list<string>, attachments?:list<array{path:string,name:string,mime:string}>, embedded?:list<array{path:string,cid:string,name:string,mime:string}>} $m
      */
     public function send(array $m): bool
     {
-        if (!filter_var($m['to'], FILTER_VALIDATE_EMAIL)) {
+        $to = array_values((array) $m['to']);
+        if (!$to || array_filter($to, fn ($a) => !filter_var($a, FILTER_VALIDATE_EMAIL))) {
             $this->logger->error('mail_invalid_recipient');
             return false;
         }
@@ -65,7 +66,14 @@ final class Mailer
             // PHPMailer validates addresses and encodes headers, which closes
             // e-mail header injection; subjects are also stripped of CR/LF below.
             $mail->setFrom($this->fromAddress(), self::oneLine($this->config->string('SMTP_FROM_NAME', 'Sensum Construcciones')), false);
-            $mail->addAddress($m['to']);
+            foreach ($to as $address) {
+                $mail->addAddress($address);
+            }
+            foreach ($m['cc'] ?? [] as $cc) {
+                if (filter_var($cc, FILTER_VALIDATE_EMAIL) && !in_array(strtolower($cc), array_map('strtolower', $to), true)) {
+                    $mail->addCC($cc);
+                }
+            }
             if (!empty($m['replyTo']) && filter_var($m['replyTo'][0], FILTER_VALIDATE_EMAIL)) {
                 $mail->addReplyTo($m['replyTo'][0], self::oneLine($m['replyTo'][1]));
             }
@@ -79,6 +87,10 @@ final class Mailer
             }
             foreach ($m['attachments'] ?? [] as $a) {
                 $mail->addAttachment($a['path'], self::oneLine($a['name']), PHPMailer::ENCODING_BASE64, $a['mime']);
+            }
+            // Images shown inside the message (logo, screenshot preview) — referenced as cid:… in the HTML.
+            foreach ($m['embedded'] ?? [] as $e) {
+                $mail->addEmbeddedImage($e['path'], $e['cid'], self::oneLine($e['name']), PHPMailer::ENCODING_BASE64, $e['mime']);
             }
 
             if ($driver === 'log') {

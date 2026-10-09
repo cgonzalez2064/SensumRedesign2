@@ -7,7 +7,7 @@ import { openReportDialog } from '../report.js';
 
 const INTRO_KEY = (id) => 'sensum_admin_intro_done_' + id;
 
-export async function render({ main, session, isAdmin }) {
+export async function render({ main, session, isOwner, can }) {
   const user = session.user;
   main.append(pageHead({ title: t('dashboard.hello', { name: user.name.split(' ')[0] }), lead: t('dashboard.lead') }), loading());
   const body = h('div', { class: 'stack-lg' });
@@ -39,9 +39,9 @@ export async function render({ main, session, isAdmin }) {
     const quick = (href, ic, key, external) => h('a', { class: 'card card-link', href, target: external ? '_blank' : null, rel: external ? 'noopener' : null },
       h('span', { class: 'icon-tile' }, icon(ic)), h('span', null, h('strong', { text: t(`dashboard.quick.${key}`)[0] }), h('span', { text: t(`dashboard.quick.${key}`)[1] })));
     body.append(h('nav', { class: 'quick', 'aria-label': t('nav.main') },
-      quick('#/textos', 'pencil-square', 'content'),
-      quick('#/fotos', 'images', 'media'),
-      quick('#/contacto', 'telephone', 'details'),
+      can('texts') ? quick('#/textos', 'pencil-square', 'content') : null,
+      can('photos') || can('documents') ? quick('#/fotos', 'images', 'media') : null,
+      can('contact') ? quick('#/contacto', 'telephone', 'details') : null,
       quick(data.site.url + '/', 'box-arrow-up-right', 'site', true)));
 
     // Website status.
@@ -56,7 +56,7 @@ export async function render({ main, session, isAdmin }) {
         h('p', { class: 'small muted', text: t('dashboard.stats', { fields: data.stats.customizedFields, photos: data.stats.photos }) })));
     if (data.site.inSync === false) {
       const actions = [];
-      if (isAdmin) {
+      if (can('site')) {
         const btn = button(t('dashboard.republish'), { icon: 'arrow-repeat', small: true, variant: 'primary' });
         btn.addEventListener('click', async () => {
           setBusy(btn, true, t('common.saving'));
@@ -65,7 +65,10 @@ export async function render({ main, session, isAdmin }) {
         });
         actions.push(btn);
       }
-      statusCard.append(h('div', { class: 'stack-sm' }, alertBox('warn', null, t(isAdmin ? 'dashboard.outOfSync' : 'dashboard.outOfSyncEditor'), actions)));
+      statusCard.append(h('div', { class: 'stack-sm' }, alertBox('warn', null, t(can('site') ? 'dashboard.outOfSync' : 'dashboard.outOfSyncEditor'), actions)));
+    }
+    if (data.siteReport && !data.siteReport.sentAt && data.siteReport.overdue) {
+      statusCard.append(alertBox('warn', null, t('dashboard.reportOverdue'), [h('a', { class: 'btn btn-sm', href: '#/informe' }, icon('bar-chart'), t('dashboard.openReport'))]));
     }
     if (data.reports.pending > 0) {
       statusCard.append(alertBox('warn', null, t('dashboard.reportsPending', { n: data.reports.pending }), [h('a', { class: 'btn btn-sm', href: '#/reportes' }, t('dashboard.viewReports'))]));
@@ -74,10 +77,10 @@ export async function render({ main, session, isAdmin }) {
     const left = h('div', { class: 'stack-lg' }, statusCard);
     const right = h('div', { class: 'stack-lg' });
 
-    if (isAdmin) {
-      // Recent activity.
+    if (data.activity || isOwner) {
+      // Recent activity ("site" access and the owner).
       const acts = data.activity || [];
-      left.append(h('section', { class: 'card', 'aria-labelledby': 'act-title' },
+      if (data.activity) left.append(h('section', { class: 'card', 'aria-labelledby': 'act-title' },
         h('div', { class: 'card-header' }, h('h2', { id: 'act-title', text: t('dashboard.activityTitle') })),
         acts.length ? h('ul', { class: 'status-list' }, acts.map((a) => h('li', null, icon('clock-history', 'muted'),
           h('div', { class: 'grow' }, h('span', null, h('strong', { text: a.user || t('dashboard.someone') }), ' ', t('dashboard.actions.' + a.action)),
@@ -104,13 +107,14 @@ export async function render({ main, session, isAdmin }) {
             h('div', { class: 'tiny muted break', text: [t('dashboard.sources.' + e.source), e.page, t('dashboard.times', { n: e.count }), fmtRelative(e.lastSeen)].filter(Boolean).join(' · ') })))))
           : h('p', { class: 'muted', text: t('dashboard.noErrors') })));
 
-      right.append(h('section', { class: 'card', 'aria-labelledby': 'tel-title' },
+      if (isOwner) right.append(h('section', { class: 'card', 'aria-labelledby': 'tel-title' },
         h('div', { class: 'card-header' }, h('h2', { id: 'tel-title', text: t('dashboard.telemetryTitle') })),
         h('ul', { class: 'status-list' },
           h('li', null, icon('bar-chart', data.telemetry.analytics ? 'ok-text' : 'muted'), h('span', { text: t(data.telemetry.analytics ? 'dashboard.analyticsOn' : 'dashboard.analyticsOff') })),
           h('li', null, icon('activity', data.telemetry.publicErrors ? 'ok-text' : 'muted'), h('span', { text: t(data.telemetry.publicErrors ? 'dashboard.publicErrorsOn' : 'dashboard.publicErrorsOff') }))),
         h('p', { class: 'tiny muted', text: t('dashboard.telemetryHint') })));
-    } else {
+    }
+    if (!right.childElementCount) {
       right.append(h('section', { class: 'card' },
         h('div', { class: 'card-header' }, h('h2', { text: t('help.contactTitle') })),
         h('p', { class: 'muted', text: t('help.contactBody') }),

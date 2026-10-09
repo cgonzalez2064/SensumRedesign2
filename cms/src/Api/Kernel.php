@@ -12,8 +12,9 @@ use Sensum\Cms\Http\Response;
  * Routes /api/* requests. Every route declares its own guard:
  *   public  — no session (still origin-checked when it changes state)
  *   user    — signed-in user + same origin + CSRF token
- *   admin   — as "user", and the user must be an administrator
- *   owner   — as "admin", and the account is OWNER_EMAIL (Monitoring)
+ *   owner   — as "user", and the account is OWNER_EMAIL (users, Monitoring, site report)
+ * Finer rules (which information an account may change) are checked in the
+ * controllers with Auth::assertCan().
  * Unexpected failures are logged privately and answered with a generic
  * "server_error" plus a short reference number — never with internals.
  */
@@ -37,7 +38,11 @@ final class Kernel
         ['GET', '/api/monitor/summary', MonitorController::class, 'summary', 'owner'],
         ['GET', '/api/monitor/errors', MonitorController::class, 'errors', 'owner'],
         ['POST', '/api/monitor/test-alert', MonitorController::class, 'testAlert', 'owner'],
-        ['POST', '/api/site/republish', SystemController::class, 'republish', 'admin'],
+        ['GET', '/api/site-report', SiteReportController::class, 'index', 'owner'],
+        ['GET', '/api/site-report/preview', SiteReportController::class, 'preview', 'owner'],
+        ['PUT', '/api/site-report/settings', SiteReportController::class, 'settings', 'owner'],
+        ['POST', '/api/site-report/send', SiteReportController::class, 'send', 'owner'],
+        ['POST', '/api/site/republish', SystemController::class, 'republish', 'user'],
 
         ['GET', '/api/content', ContentController::class, 'index', 'user'],
         ['POST', '/api/content/translate', ContentController::class, 'translate', 'user'],
@@ -56,11 +61,11 @@ final class Kernel
         ['POST', '/api/reports', ReportsController::class, 'create', 'user'],
         ['POST', '/api/reports/{id}/retry', ReportsController::class, 'retry', 'user'],
 
-        ['GET', '/api/users', UsersController::class, 'index', 'admin'],
-        ['POST', '/api/users', UsersController::class, 'invite', 'admin'],
-        ['POST', '/api/users/{id}/resend', UsersController::class, 'resend', 'admin'],
-        ['PUT', '/api/users/{id}', UsersController::class, 'update', 'admin'],
-        ['DELETE', '/api/users/{id}', UsersController::class, 'delete', 'admin'],
+        ['GET', '/api/users', UsersController::class, 'index', 'owner'],
+        ['POST', '/api/users', UsersController::class, 'invite', 'owner'],
+        ['POST', '/api/users/{id}/resend', UsersController::class, 'resend', 'owner'],
+        ['PUT', '/api/users/{id}', UsersController::class, 'update', 'owner'],
+        ['DELETE', '/api/users/{id}', UsersController::class, 'delete', 'owner'],
     ];
 
     private ?int $uid = null;

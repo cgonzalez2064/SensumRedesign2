@@ -64,6 +64,7 @@ final class ContentController extends Controller
      */
     public function translate(): never
     {
+        $this->requirePermission('texts');
         $translator = $this->app->translator();
         if (!$translator->isEnabled()) {
             throw new ApiError(503, 'translation_unavailable');
@@ -122,6 +123,7 @@ final class ContentController extends Controller
         if (!in_array($sectionId, $schema->sectionIds(), true)) {
             throw new ApiError(404, 'not_found');
         }
+        $this->requirePermission($sectionId === 'details' ? 'contact' : 'texts');
         $repo = $this->app->content();
         $fields = $schema->sectionFields($sectionId);
         $input = $this->req->raw('values');
@@ -235,8 +237,19 @@ final class ContentController extends Controller
         });
     }
 
+    /** Photos and the PDF portfolio are separate permissions. */
+    private function requireSlotPermission(string $slot): void
+    {
+        $group = $this->app->media()->slots()[$slot]['group'] ?? null;
+        if ($group === null) {
+            throw new ApiError(404, 'not_found');
+        }
+        $this->requirePermission($group === 'documents' ? 'documents' : 'photos');
+    }
+
     public function upload(string $slot): never
     {
+        $this->requireSlotPermission($slot);
         if (!$this->app->rateLimiter()->hit('upload', (string) $this->uid(), 60, 3600)) {
             throw new ApiError(429, 'too_many_attempts');
         }
@@ -251,6 +264,7 @@ final class ContentController extends Controller
 
     public function updateItem(int $id): never
     {
+        $this->requireSlotPermission((string) $this->app->media()->find($id)['slot']);
         $media = $this->app->media();
         $row = $this->publishOrRollback(fn () => $media->updateAlt($id, $this->str('altEs'), $this->str('altEn')), 'media_alt_updated', (string) $id);
         Response::ok(['item' => $media->present($row)]);
@@ -258,6 +272,7 @@ final class ContentController extends Controller
 
     public function deleteItem(int $id): never
     {
+        $this->requireSlotPermission((string) $this->app->media()->find($id)['slot']);
         $media = $this->app->media();
         $this->publishOrRollback(fn () => $media->remove($id), 'media_removed', (string) $id);
         Response::ok();
@@ -265,6 +280,7 @@ final class ContentController extends Controller
 
     public function reorder(string $slot): never
     {
+        $this->requireSlotPermission($slot);
         $ids = $this->req->raw('ids');
         if (!is_array($ids) || count($ids) > 50 || array_filter($ids, fn ($v) => !is_int($v))) {
             throw new ApiError(400, 'malformed_request');

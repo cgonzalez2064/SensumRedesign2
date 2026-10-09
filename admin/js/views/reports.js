@@ -8,7 +8,7 @@ import { openReportDialog } from '../report.js';
 const TYPE_ICON = { problem: 'bug', improvement: 'lightbulb', content: 'card-text', design: 'palette', other: 'three-dots' };
 const STATUS = { sent: ['badge-ok', 'check-circle-fill'], failed: ['badge-bad', 'exclamation-triangle-fill'], pending: ['badge-warn', 'hourglass-split'] };
 
-export async function render({ main, isAdmin }) {
+export async function render({ main, isOwner: isAdmin }) {
   const newBtn = button(t('reports.new'), { variant: 'primary', icon: 'life-preserver', onClick: () => openReportDialog() });
   main.append(pageHead({ title: t('reports.title'), lead: isAdmin ? t('reports.leadAdmin') : t('reports.lead'), actions: [newBtn] }));
   const body = h('div', null, loading());

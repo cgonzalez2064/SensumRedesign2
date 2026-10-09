@@ -131,6 +131,53 @@ final class Emails
         return ['to' => $to, 'subject' => $s['test.subject'], 'text' => implode("\n\n", $lines) . "\n", 'html' => $this->layout($html, $s, $lang)];
     }
 
+    /**
+     * Branded layout for the richer messages (support reports, the monthly
+     * site report): dark header with the logo embedded in the message (no
+     * remote images to block), orange brand line, white card, light footer.
+     * Table-based with inline styles so it renders in Gmail, Outlook and
+     * phone mail apps.
+     *
+     * @return array{html:string, embedded:list<array{path:string,cid:string,name:string,mime:string}>}
+     */
+    public function branded(string $lang, string $tag, string $preheader, string $body, string $footer): array
+    {
+        $logo = $this->app->root('resources/email-logo.png');
+        $embedded = is_file($logo) ? [['path' => $logo, 'cid' => 'sensum-logo', 'name' => 'sensum.png', 'mime' => 'image/png']] : [];
+        $logoCell = $embedded
+            ? '<td width="52" valign="middle" style="padding:0 12px 0 0"><img src="cid:sensum-logo" width="44" height="44" alt="" style="display:block;border:0;border-radius:10px"></td>'
+            : '';
+        $html = '<!DOCTYPE html><html lang="' . ($lang === 'en' ? 'en' : 'es') . '"><head><meta charset="UTF-8">'
+            . '<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light only"><title></title></head>'
+            . '<body style="margin:0;padding:0;background:#eeeef1;-webkit-text-size-adjust:100%">'
+            // Hidden preview text shown by mail apps next to the subject.
+            . '<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#eeeef1">' . self::esc($preheader) . '</div>'
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eeeef1"><tr><td align="center" style="padding:28px 12px">'
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 6px 24px rgba(20,20,30,.08)">'
+            . '<tr><td style="background:#1c1c1c;padding:18px 24px">'
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' . $logoCell
+            . '<td valign="middle" style="font-family:Arial,Helvetica,sans-serif;color:#ffffff">'
+            . '<div style="font-size:18px;font-weight:800;letter-spacing:.14em;line-height:1">SENSUM</div>'
+            . '<div style="font-size:9px;font-weight:700;letter-spacing:.42em;color:#ffaa0b;margin-top:5px">CONSTRUCCIONES</div></td>'
+            . '<td align="right" valign="middle" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#bdbdc2">' . self::esc($tag) . '</td>'
+            . '</tr></table></td></tr>'
+            . '<tr><td height="4" style="height:4px;line-height:4px;font-size:0;background:#f6740a;background-image:linear-gradient(90deg,#f6740a,#ffaa0b)">&nbsp;</td></tr>'
+            . '<tr><td style="padding:28px 28px 8px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2328;font-size:15px;line-height:1.6">' . $body . '</td></tr>'
+            . '<tr><td style="padding:18px 28px 24px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:#7a7a82;border-top:1px solid #efeff2">' . $footer . '</td></tr>'
+            . '</table>'
+            . '<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a9aa2;padding:14px 8px">sensumconstrucciones.com</div>'
+            . '</td></tr></table></body></html>';
+        return ['html' => $html, 'embedded' => $embedded];
+    }
+
+    /** A rounded call-to-action button for the branded layout. */
+    public static function cta(string $label, string $url): string
+    {
+        return '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 10px"><tr><td style="border-radius:10px;background:#f6740a">'
+            . '<a href="' . self::esc($url) . '" style="display:inline-block;padding:13px 24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:#1c1c1c;text-decoration:none;border-radius:10px">'
+            . self::esc($label) . '</a></td></tr></table>';
+    }
+
     public static function esc(string $s): string
     {
         return htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');

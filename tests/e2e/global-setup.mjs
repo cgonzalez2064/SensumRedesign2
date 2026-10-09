@@ -5,12 +5,16 @@ export const PORT = 8210;
 export const EDITOR = { name: 'Elena Editora', email: 'elena.editora@example.test', password: 'Clave-Elena-2026' };
 // A second administrator who is NOT the owner (the owner is ADMIN — see OWNER_EMAIL in helpers).
 export const OTHER_ADMIN = { name: 'Omar Administrador', email: 'omar.admin@example.test', password: 'Clave-Omar-2026' };
+// An account that may only change the website text.
+export const TEXTS_ONLY = { name: 'Tere Textos', email: 'tere.textos@example.test', password: 'Clave-Tere-2026' };
 
 export default async function globalSetup() {
   const server = await startServer({ port: PORT });
   createAdmin(server, ADMIN);
   createAdmin(server, EDITOR);
   createAdmin(server, OTHER_ADMIN);
+  createAdmin(server, TEXTS_ONLY);
+  server.sql(`UPDATE users SET role='editor', permissions='texts' WHERE email='${TEXTS_ONLY.email}'`);
   server.sql(`UPDATE users SET role='editor' WHERE email='${EDITOR.email}'`);
   // A few error-log entries so Monitoring shows real content (one of each severity).
   const now = Math.floor(Date.now() / 1000);

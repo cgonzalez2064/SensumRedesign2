@@ -9,9 +9,10 @@ use Sensum\Cms\Http\Response;
 use Sensum\Cms\Users;
 
 /**
- * User management (administrators only). Accounts are created by
- * invitation: the invited person receives a single-use, expiring link and
- * chooses their own password. Passwords are never e-mailed.
+ * User management — the owner account only (OWNER_EMAIL). Accounts are
+ * created by invitation: the invited person receives a single-use, expiring
+ * link and chooses their own password. Passwords are never e-mailed.
+ * Each account gets an access type: the set of information it may change.
  */
 final class UsersController extends Controller
 {
@@ -35,11 +36,15 @@ final class UsersController extends Controller
             "SELECT u.*, (SELECT MAX(t.expires_at) FROM user_tokens t WHERE t.user_id = u.id AND t.purpose = 'invite' AND t.used_at IS NULL) AS invite_expires_at
                FROM users u ORDER BY CASE u.status WHEN 'active' THEN 0 WHEN 'invited' THEN 1 ELSE 2 END, u.name COLLATE NOCASE"
         );
-        Response::ok(['users' => array_map(fn ($u) => Users::present($u) + [
-            'inviteExpiresAt' => $u['invite_expires_at'] !== null ? (int) $u['invite_expires_at'] : null,
-            'isSelf' => (int) $u['id'] === $this->uid(),
-            'isOwner' => $this->app->auth()->isOwner($u),
-        ], $rows)]);
+        Response::ok([
+            'users' => array_map(fn ($u) => Users::present($u) + [
+                'inviteExpiresAt' => $u['invite_expires_at'] !== null ? (int) $u['invite_expires_at'] : null,
+                'isSelf' => (int) $u['id'] === $this->uid(),
+                'isOwner' => $this->app->auth()->isOwner($u),
+            ], $rows),
+            'permissions' => Users::PERMISSIONS,
+            'accessTypes' => Users::ACCESS_TYPES,
+        ]);
     }
 
     /** Issues an invitation and e-mails it. If e-mail is unavailable the link is returned once, so it can be shared another way. */
@@ -57,10 +62,11 @@ final class UsersController extends Controller
         if (!$this->app->rateLimiter()->hit('invite', (string) $this->uid(), 20, 3600)) {
             throw new ApiError(429, 'too_many_attempts');
         }
-        $id = $this->users()->createInvited($this->str('name'), $this->str('email'), $this->str('role'), $this->lang(), $this->uid());
+        $permissions = Users::normalizePermissions($this->req->raw('permissions'));
+        $id = $this->users()->createInvited($this->str('name'), $this->str('email'), $permissions, $this->lang(), $this->uid());
         $user = $this->target($id);
         $result = $this->sendInvitation($user);
-        $this->app->activity($this->uid(), 'user_invited', (string) $id, ['role' => $user['role'], 'emailSent' => $result['emailSent']], $this->req->ip());
+        $this->app->activity($this->uid(), 'user_invited', (string) $id, ['permissions' => $permissions, 'emailSent' => $result['emailSent']], $this->req->ip());
         Response::ok(['user' => Users::present($user)] + $result);
     }
 
@@ -78,7 +84,7 @@ final class UsersController extends Controller
         Response::ok($result);
     }
 
-    /** The owner account (Monitoring, alerts) cannot be demoted, disabled or deleted by other administrators. */
+    /** The owner account cannot be changed or deleted from the panel (not even by itself). */
     private function assertNotOwner(array $user): void
     {
         if ($this->app->auth()->isOwner($user)) {
@@ -93,25 +99,24 @@ final class UsersController extends Controller
             throw ApiError::validation(['user' => 'cannot_change_self']);
         }
         $this->assertNotOwner($user);
-        $role = $this->str('role');
         $status = $this->str('status');
-        $role = in_array($role, Users::ROLES, true) ? $role : $user['role'];
         if ($status === '') {
             $status = $user['status'];
         } elseif (!in_array($status, ['active', 'disabled'], true) || ($user['status'] === 'invited' && $status === 'active')) {
             // Invited people become active only by accepting their invitation.
             throw ApiError::validation(['status' => 'invalid']);
         }
-        $this->app->db()->transaction(function () use ($role, $status, $id) {
-            $this->app->db()->run('UPDATE users SET role = ?, status = ?, updated_at = ? WHERE id = ?', [$role, $status, time(), $id]);
-            if ($this->users()->activeAdmins() < 1) {
-                throw ApiError::validation(['user' => 'last_admin']);
-            }
+        $raw = $this->req->raw('permissions');
+        $permissions = $raw === null ? Users::permissionsOf($user) : Users::normalizePermissions($raw);
+        $this->app->db()->transaction(function () use ($status, $permissions, $id) {
+            $this->app->db()->run('UPDATE users SET status = ?, permissions = ?, updated_at = ? WHERE id = ?', [$status, implode(',', $permissions), time(), $id]);
             if ($status === 'disabled') {
                 $this->app->auth()->revokeSessions($id);
             }
         });
-        $this->app->activity($this->uid(), 'user_updated', (string) $id, ['role' => [$user['role'], $role], 'status' => [$user['status'], $status]], $this->req->ip());
+        $this->app->activity($this->uid(), 'user_updated', (string) $id, [
+            'permissions' => [Users::permissionsOf($user), $permissions], 'status' => [$user['status'], $status],
+        ], $this->req->ip());
         Response::ok(['user' => Users::present($this->target($id))]);
     }
 
@@ -122,12 +127,7 @@ final class UsersController extends Controller
             throw ApiError::validation(['user' => 'cannot_change_self']);
         }
         $this->assertNotOwner($user);
-        $this->app->db()->transaction(function () use ($id) {
-            $this->app->db()->run('DELETE FROM users WHERE id = ?', [$id]);
-            if ($this->users()->activeAdmins() < 1) {
-                throw ApiError::validation(['user' => 'last_admin']);
-            }
-        });
+        $this->app->db()->run('DELETE FROM users WHERE id = ?', [$id]);
         $this->app->activity($this->uid(), 'user_deleted', (string) $id, ['email' => $this->app->pseudonym((string) $user['email']), 'status' => $user['status']], $this->req->ip());
         Response::ok();
     }

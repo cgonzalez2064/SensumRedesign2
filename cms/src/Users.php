@@ -7,13 +7,26 @@ use Sensum\Cms\Content\Validator;
 use Sensum\Cms\Http\ApiError;
 
 /**
- * User accounts. There is no public registration: the first administrator
- * is created from the command line (or the one-time setup screen protected
- * by SETUP_TOKEN), and everyone else is invited by an administrator.
+ * User accounts. There is no public registration: the owner account is
+ * created from the command line (or the one-time setup screen protected by
+ * SETUP_TOKEN), and everyone else is invited by the owner.
+ *
+ * What an account may change is its set of permissions ("tipo de acceso").
+ * The owner (OWNER_EMAIL) always has every permission plus user management,
+ * Monitoring and the monthly site report.
  */
 final class Users
 {
     public const ROLES = ['admin', 'editor'];
+    public const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site'];
+    /** Ready-made access types offered when inviting (anything else shows as "Personalizado"). */
+    public const ACCESS_TYPES = [
+        'full' => ['texts', 'contact', 'photos', 'documents', 'site'],
+        'content' => ['texts', 'contact', 'photos', 'documents'],
+        'texts' => ['texts'],
+        'media' => ['photos', 'documents'],
+        'contact' => ['contact'],
+    ];
 
     public function __construct(private App $app)
     {
@@ -60,9 +73,26 @@ final class Users
         return (int) $this->app->db()->value('SELECT COUNT(*) FROM users');
     }
 
-    public function activeAdmins(): int
+    /**
+     * Validates a permission list (array of names) into the stored form.
+     * @return list<string>
+     */
+    public static function normalizePermissions(mixed $raw): array
     {
-        return (int) $this->app->db()->value("SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active'");
+        if (!is_array($raw) || !array_is_list($raw) || array_filter($raw, fn ($p) => !is_string($p) || !in_array($p, self::PERMISSIONS, true))) {
+            throw ApiError::validation(['permissions' => 'invalid']);
+        }
+        $list = array_values(array_intersect(self::PERMISSIONS, $raw)); // canonical order, no duplicates
+        if (!$list) {
+            throw ApiError::validation(['permissions' => 'required']);
+        }
+        return $list;
+    }
+
+    /** @return list<string> */
+    public static function permissionsOf(array $u): array
+    {
+        return array_values(array_intersect(self::PERMISSIONS, explode(',', (string) ($u['permissions'] ?? ''))));
     }
 
     /** Creates an active account with a password (first admin / CLI). */
@@ -77,28 +107,28 @@ final class Users
         }
         $now = time();
         return $this->app->db()->insert(
-            "INSERT INTO users (email, name, role, status, password_hash, lang, theme, created_at, updated_at, password_changed_at)
-             VALUES (?, ?, ?, 'active', ?, ?, 'system', ?, ?, ?)",
-            [$email, $name, in_array($role, self::ROLES, true) ? $role : 'editor', Passwords::hash($password), $lang === 'en' ? 'en' : 'es', $now, $now, $now]
+            "INSERT INTO users (email, name, role, status, password_hash, lang, theme, created_at, updated_at, password_changed_at, permissions)
+             VALUES (?, ?, ?, 'active', ?, ?, 'system', ?, ?, ?, ?)",
+            [$email, $name, in_array($role, self::ROLES, true) ? $role : 'editor', Passwords::hash($password), $lang === 'en' ? 'en' : 'es', $now, $now, $now, implode(',', self::PERMISSIONS)]
         );
     }
 
-    /** Creates an invited account (no password yet) and returns its id. */
-    public function createInvited(string $name, string $email, string $role, string $lang, int $invitedBy): int
+    /**
+     * Creates an invited account (no password yet) and returns its id.
+     * @param list<string> $permissions already validated
+     */
+    public function createInvited(string $name, string $email, array $permissions, string $lang, int $invitedBy): int
     {
         [$name, $email] = $this->validateIdentity($name, $email);
-        if (!in_array($role, self::ROLES, true)) {
-            throw ApiError::validation(['role' => 'invalid']);
-        }
         $existing = $this->app->db()->one('SELECT id, status FROM users WHERE email = ?', [$email]);
         if ($existing) {
             throw ApiError::validation(['email' => $existing['status'] === 'invited' ? 'email_already_invited' : 'email_taken']);
         }
         $now = time();
         return $this->app->db()->insert(
-            "INSERT INTO users (email, name, role, status, lang, theme, created_at, updated_at, invited_by)
-             VALUES (?, ?, ?, 'invited', ?, 'system', ?, ?, ?)",
-            [$email, $name, $role, $lang === 'en' ? 'en' : 'es', $now, $now, $invitedBy]
+            "INSERT INTO users (email, name, role, status, lang, theme, created_at, updated_at, invited_by, permissions)
+             VALUES (?, ?, 'editor', 'invited', ?, 'system', ?, ?, ?, ?)",
+            [$email, $name, $lang === 'en' ? 'en' : 'es', $now, $now, $invitedBy, implode(',', $permissions)]
         );
     }
 
@@ -118,6 +148,7 @@ final class Users
             'name' => (string) $u['name'],
             'email' => (string) $u['email'],
             'role' => (string) $u['role'],
+            'permissions' => self::permissionsOf($u),
             'status' => (string) $u['status'],
             'lang' => (string) $u['lang'],
             'createdAt' => (int) $u['created_at'],

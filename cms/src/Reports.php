@@ -22,6 +22,11 @@ final class Reports
     public const AREAS = ['website', 'admin', 'both'];
     private const TYPE_LABELS = ['problem' => 'Problema', 'improvement' => 'Mejora', 'content' => 'Contenido', 'design' => 'Diseño / visual', 'other' => 'Otro'];
     private const AREA_LABELS = ['website' => 'Sitio web', 'admin' => 'Panel de administración', 'both' => 'Ambos'];
+    /** Badge colours per report type in the e-mail: [background, text]. */
+    private const TYPE_COLORS = [
+        'problem' => ['#fdecec', '#b42318'], 'improvement' => ['#e8f6ee', '#1a7f45'], 'content' => ['#e8effd', '#1d4ed8'],
+        'design' => ['#f3ecfd', '#6d28d9'], 'other' => ['#f0f0f3', '#4b4b55'],
+    ];
     /** Technical context keys the browser may send (anything else is dropped). */
     private const CONTEXT_KEYS = ['lang', 'theme', 'route', 'browser', 'os', 'device', 'viewport', 'screen', 'dpr', 'timezone', 'online', 'locale'];
     private const CONTEXT_LABELS = [
@@ -201,11 +206,11 @@ final class Reports
         return $ok;
     }
 
-    /** Retry by the report's author or an administrator. */
+    /** Retry by the report's author or the owner. */
     public function retry(array $session, int $id): array
     {
         $r = $this->find($id);
-        if ((int) $r['user_id'] !== (int) $session['uid'] && $session['role'] !== 'admin') {
+        if ((int) $r['user_id'] !== (int) $session['uid'] && !$this->app->auth()->isOwner($session)) {
             throw new ApiError(404, 'not_found'); // don't reveal other users' reports
         }
         if (!$this->app->rateLimiter()->hit('report_retry', (string) $session['uid'], 10, 600)) {
@@ -215,10 +220,10 @@ final class Reports
         return ['report' => $this->present($this->find($id)), 'delivered' => $delivered];
     }
 
-    /** Recent reports: own for editors, all for administrators. */
+    /** Recent reports: own for everyone, all for the owner. */
     public function list(array $session): array
     {
-        $rows = $session['role'] === 'admin'
+        $rows = $this->app->auth()->isOwner($session)
             ? $this->app->db()->all('SELECT * FROM support_reports ORDER BY id DESC LIMIT 50')
             : $this->app->db()->all('SELECT * FROM support_reports WHERE user_id = ? ORDER BY id DESC LIMIT 50', [$session['uid']]);
         return array_map(fn ($r) => $this->present($r), $rows);
@@ -281,34 +286,100 @@ final class Reports
             $text .= "\nSe adjunta una captura de pantalla.\n";
         }
 
-        $tr = fn (array $pairs) => implode('', array_map(
-            fn ($k, $v) => '<tr><th align="left" valign="top" style="padding:6px 12px 6px 0;color:#555;font-weight:600;white-space:nowrap">' . Emails::esc((string) $k)
-                . '</th><td style="padding:6px 0;word-break:break-word">' . Emails::esc((string) $v) . '</td></tr>',
-            array_keys($pairs), $pairs
-        ));
-        $html = '<p style="margin-top:0"><strong>Nuevo reporte desde el Administrador de contenido</strong></p>'
-            . '<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px">' . $tr($rows) . '</table>'
-            . '<h3 style="font-size:15px;margin:20px 0 6px">Descripción</h3>'
-            . '<div style="white-space:pre-wrap;background:#f6f6f6;border-radius:8px;padding:12px;font-size:14px">' . Emails::esc($r['description']) . '</div>'
-            . '<h3 style="font-size:15px;margin:20px 0 6px">Información técnica (automática)</h3>'
-            . '<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:13px;color:#333">' . $tr($tech) . '</table>'
-            . ($r['screenshot'] ? '<p style="font-size:13px;color:#555">Se adjunta una captura de pantalla.</p>' : '');
-
+        // Screenshot: attached as sent, plus a JPEG preview shown inside the message.
         $attachments = [];
+        $embedded = [];
+        $preview = null;
         if ($r['screenshot'] && preg_match('/^report-\d{8}-[a-f0-9]{12}-w\d+\.(webp|jpg)$/', (string) $r['screenshot'], $m)) {
             $path = $this->app->storage('reports/' . $r['screenshot']);
             if (is_file($path)) {
                 $attachments[] = ['path' => $path, 'name' => 'captura-reporte-' . $r['id'] . '.' . $m[1], 'mime' => $m[1] === 'webp' ? 'image/webp' : 'image/jpeg'];
+                $preview = $this->emailPreview($path, (int) $r['id']);
+                if ($preview) {
+                    $embedded[] = ['path' => $preview['path'], 'cid' => 'report-shot', 'name' => 'vista-previa.jpg', 'mime' => 'image/jpeg'];
+                }
             }
         }
-        $s = ['brand' => 'Sensum Website', 'product' => 'Reporte de soporte', 'footer' => 'Enviado automáticamente por el Administrador de contenido de sensumconstrucciones.com. Responde a este correo para escribirle directamente a quien reportó.'];
+
+        $e = fn (string $v) => Emails::esc($v);
+        [$badgeBg, $badgeFg] = self::TYPE_COLORS[$r['type']] ?? self::TYPE_COLORS['other'];
+        $firstName = explode(' ', trim($r['reporter_name']))[0] ?: $r['reporter_name'];
+        $reply = 'mailto:' . rawurlencode($r['reporter_email']) . '?subject=' . rawurlencode('Re: ' . Mailer::oneLine($r['title'], 120));
+        $meta = $e($r['reporter_name']) . ' &nbsp;·&nbsp; ' . $e(self::friendlyDate((int) $r['created_at'])) . ' &nbsp;·&nbsp; ' . $e(self::AREA_LABELS[$r['area']] ?? $r['area']);
+        // Phone screenshots are tall: show them narrower so they don't take over the message.
+        $shotWidth = $preview && $preview['h'] > $preview['w'] ? 260 : 560;
+
+        $detail = fn (string $label, string $valueHtml) => '<td valign="top" width="50%" style="padding:10px 12px;background:#f7f7f9;border-radius:10px">'
+            . '<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7a7a82">' . $e($label) . '</div>'
+            . '<div style="font-size:14px;color:#1f2328;margin-top:2px;word-break:break-word">' . $valueHtml . '</div></td>';
+        $techRows = implode('', array_map(
+            fn ($k, $v) => '<tr><td valign="top" style="padding:4px 14px 4px 0;color:#7a7a82;white-space:nowrap">' . $e((string) $k) . '</td>'
+                . '<td style="padding:4px 0;color:#3c3c43;word-break:break-word">' . $e((string) $v) . '</td></tr>',
+            array_keys($tech), $tech
+        ));
+
+        $body = '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:' . $badgeBg . ';color:' . $badgeFg . ';border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif">'
+            . $e($typeLabel) . '</td></tr></table>'
+            . '<h1 style="margin:14px 0 6px;font-size:22px;line-height:1.3;color:#1c1c1c">' . $e($r['title']) . '</h1>'
+            . '<div style="font-size:13px;color:#7a7a82">' . $meta . '</div>'
+            . '<div style="margin:22px 0 0;padding:16px 18px;background:#fff8f1;border-left:4px solid #f6740a;border-radius:0 12px 12px 0;white-space:pre-wrap;font-size:15px;color:#1f2328">' . $e($r['description']) . '</div>'
+            . ($preview
+                ? '<div style="margin:22px 0 0"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7a7a82;margin-bottom:8px">Captura de pantalla</div>'
+                    . '<img src="cid:report-shot" alt="Captura de pantalla enviada con el reporte" width="' . $shotWidth . '" style="display:block;width:100%;max-width:' . $shotWidth . 'px;height:auto;border:1px solid #e7e7ea;border-radius:12px">'
+                    . '<div style="font-size:12px;color:#7a7a82;margin-top:6px">La imagen original va adjunta a este correo.</div></div>'
+                : '')
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="6" style="margin:18px -6px 0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif"><tr>'
+            . $detail('Página', $r['page'] !== '' ? $e($r['page']) : '—') . $detail('Número de reporte', '#' . (int) $r['id']) . '</tr><tr>'
+            . $detail('Reportado por', $e($r['reporter_name'])) . $detail('Correo', '<a href="mailto:' . $e($r['reporter_email']) . '" style="color:#c25500;text-decoration:none">' . $e($r['reporter_email']) . '</a>')
+            . '</tr></table>'
+            . Emails::cta('Responder a ' . $firstName, $reply)
+            . '<div style="font-size:13px;margin:0 0 4px"><a href="' . $e((new Emails($this->app))->adminUrl('reportes')) . '" style="color:#c25500;text-decoration:none">Ver todos los reportes en el panel →</a></div>'
+            . '<div style="margin:22px 0 6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7a7a82">Información técnica (automática)</div>'
+            . '<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:12px;line-height:1.5">' . $techRows . '</table>';
+        $footer = 'Enviado automáticamente por el Administrador de contenido de sensumconstrucciones.com. '
+            . 'Responde a este correo para escribirle directamente a ' . $e($r['reporter_name']) . '. No incluye contraseñas ni datos de sesión.';
+        $layout = (new Emails($this->app))->branded('es', 'Reporte de soporte #' . (int) $r['id'], $typeLabel . ': ' . $r['title'] . ' — ' . $r['reporter_name'], $body, $footer);
         return [
             'to' => $this->app->config->supportEmail(),
             'subject' => '[Sensum Website] ' . $typeLabel . ': ' . Mailer::oneLine($r['title'], 120),
             'text' => $text,
-            'html' => (new Emails($this->app))->layout($html, $s, 'es'),
+            'html' => $layout['html'],
             'replyTo' => [$r['reporter_email'], $r['reporter_name']],
             'attachments' => $attachments,
+            'embedded' => array_merge($layout['embedded'], $embedded),
         ];
+    }
+
+    /** "9 oct 2026, 16:05" — readable date for the e-mail header. */
+    private static function friendlyDate(int $ts): string
+    {
+        $months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        return date('j', $ts) . ' ' . $months[(int) date('n', $ts) - 1] . ' ' . date('Y, H:i', $ts);
+    }
+
+    /**
+     * Small JPEG copy of the screenshot for showing inside the e-mail (WebP is not shown by every mail app).
+     * @return array{path:string,w:int,h:int}|null
+     */
+    private function emailPreview(string $path, int $id): ?array
+    {
+        try {
+            $data = @file_get_contents($path);
+            $img = $data !== false ? @imagecreatefromstring($data) : false;
+            if (!$img) {
+                return null;
+            }
+            $w = imagesx($img);
+            $h = imagesy($img);
+            $scale = min(1, 1120 / max(1, $w));
+            $out = imagecreatetruecolor(max(1, (int) round($w * $scale)), max(1, (int) round($h * $scale)));
+            imagecopyresampled($out, $img, 0, 0, 0, 0, imagesx($out), imagesy($out), $w, $h);
+            $file = $this->app->storageDir('reports/previews') . '/report-' . $id . '.jpg';
+            imagejpeg($out, $file, 82);
+            @chmod($file, 0600);
+            return ['path' => $file, 'w' => imagesx($out), 'h' => imagesy($out)];
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

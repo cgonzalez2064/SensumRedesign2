@@ -53,6 +53,14 @@ final class Health
                 !$canConnect => 'PHP cannot make outgoing HTTPS requests (enable curl or allow_url_fopen)',
                 default => $tr->plan(),
             }];
+            $owner = $app->config->ownerEmail();
+            try {
+                $hasOwner = (bool) $app->db()->value("SELECT 1 FROM users WHERE lower(email) = ? AND status = 'active'", [$owner]);
+            } catch (\Throwable) {
+                $hasOwner = false;
+            }
+            $c['owner'] = ['ok' => $hasOwner, 'optional' => true,
+                'detail' => $owner . ($hasOwner ? '' : ' — not created yet (bin/console create-admin --email=' . $owner . '): nobody can manage users')];
             $alerts = $app->alerts();
             $c['alerts'] = ['ok' => $alerts->enabled() && $app->mailer()->isConfigured(), 'optional' => true,
                 'detail' => $alerts->enabled() ? $alerts->recipient() : 'off (ALERTS_ENABLED / ALERT_EMAIL)'];

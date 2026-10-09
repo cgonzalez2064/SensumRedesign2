@@ -107,7 +107,11 @@ final class Cli
             return 1;
         }
         $this->app->activity($id, 'user_created_cli', (string) $id);
-        $this->out("Administrator created (id {$id}).");
+        $this->out("Account created (id {$id}).");
+        $owner = $this->app->config->ownerEmail();
+        $this->out(strtolower(trim($email)) === $owner
+            ? 'This is the owner account: it manages users and sees Monitoring and the monthly site report.'
+            : "Note: this is NOT the owner account ({$owner}, OWNER_EMAIL). Only the owner can manage users, see Monitoring and send the site report.");
         return 0;
     }
 

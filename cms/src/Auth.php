@@ -96,7 +96,7 @@ final class Auth
         }
         $db = $this->app->db();
         $row = $db->one(
-            'SELECT s.*, u.id AS uid, u.email, u.name, u.role, u.status, u.lang, u.theme, u.last_login_at
+            'SELECT s.*, u.id AS uid, u.email, u.name, u.role, u.status, u.lang, u.theme, u.last_login_at, u.permissions
                FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id_hash = ?',
             [hash('sha256', $raw)]
         );
@@ -124,16 +124,33 @@ final class Auth
             throw new ApiError(401, 'unauthenticated');
         }
         $this->assertCsrf($req, $s);
-        if (($role === 'admin' && $s['role'] !== 'admin') || ($role === 'owner' && !$this->isOwner($s))) {
+        if ($role === 'owner' && !$this->isOwner($s)) {
             throw new ApiError(403, 'forbidden');
         }
         return $s;
     }
 
-    /** The owner (OWNER_EMAIL, default it@gruposensum.com) is an administrator with access to Monitoring. */
+    /**
+     * The owner account (OWNER_EMAIL, default it@gruposensum.com): the only one
+     * that manages users, sees Monitoring and sends the monthly site report.
+     */
     public function isOwner(array $user): bool
     {
-        return ($user['role'] ?? '') === 'admin' && strtolower((string) ($user['email'] ?? '')) === $this->app->config->ownerEmail();
+        return ($user['status'] ?? 'active') === 'active' && strtolower((string) ($user['email'] ?? '')) === $this->app->config->ownerEmail();
+    }
+
+    /** Whether the account may change this kind of information (the owner may change everything). */
+    public function can(array $user, string $permission): bool
+    {
+        return $this->isOwner($user) || in_array($permission, Users::permissionsOf($user), true);
+    }
+
+    /** @throws ApiError 403 when the account lacks the permission */
+    public function assertCan(array $user, string $permission): void
+    {
+        if (!$this->can($user, $permission)) {
+            throw new ApiError(403, 'forbidden');
+        }
     }
 
     // ------------------------------------------------------------------
@@ -274,6 +291,7 @@ final class Auth
             'email' => (string) $u['email'],
             'role' => (string) $u['role'],
             'owner' => $this->isOwner($u),
+            'permissions' => $this->isOwner($u) ? Users::PERMISSIONS : Users::permissionsOf($u),
             'lang' => (string) $u['lang'],
             'theme' => (string) $u['theme'],
         ];

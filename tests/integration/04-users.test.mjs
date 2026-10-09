@@ -1,22 +1,28 @@
-// User management and invitations (administrators only).
+// User management (owner only), invitations and access types (what each account may change).
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startServer, Client, createAdmin, ADMIN, mailpitUp, waitForMail, message, linkToken, unique } from './helpers.mjs';
 
-let s; let admin;
+const ALL = ['texts', 'contact', 'photos', 'documents', 'site'];
+let s; let owner;
 before(async () => {
   assert.ok(await mailpitUp(), 'Mailpit must be running');
-  s = await startServer({ port: 8195, env: { OWNER_EMAIL: 'owner.not.here@example.test' } });
+  s = await startServer({ port: 8195 }); // the test administrator (ADMIN) is the owner
   createAdmin(s);
-  admin = new Client(s.base);
-  await admin.login();
+  s.cli(['publish']);
+  owner = new Client(s.base);
+  await owner.login();
 });
 after(async () => { await s.stop(); });
 
-async function inviteAndAccept(role = 'editor') {
+// Invitations are limited to 20 per hour; these tests invite many people, so they reset that counter.
+const resetInviteLimit = () => s.sql("DELETE FROM rate_limits WHERE bucket = 'invite'");
+
+async function inviteAndAccept(permissions) {
+  resetInviteLimit();
   const email = unique('inv');
-  const r = await admin.post('/api/users', { name: 'Persona Invitada', email, role, lang: 'es' });
-  assert.equal(r.status, 200);
+  const r = await owner.post('/api/users', { name: 'Persona Invitada', email, permissions, lang: 'es' });
+  assert.equal(r.status, 200, JSON.stringify(r.data));
   assert.equal(r.data.emailSent, true);
   assert.equal(r.data.inviteLink, null, 'link not exposed when the e-mail was sent');
   const mail = await message((await waitForMail(email, 1))[0].ID);
@@ -26,13 +32,16 @@ async function inviteAndAccept(role = 'editor') {
   assert.equal(acc.status, 200);
   const sess = await c.get('/api/auth/session');
   c.csrf = sess.data.csrf;
-  return { email, token, client: c, id: r.data.user.id };
+  return { email, token, client: c, id: r.data.user.id, session: sess.data };
 }
+
+const version = async (c, id) => (await c.get('/api/content')).data.sections.find((x) => x.id === id).version;
 
 test('invitation: e-mailed link, account activates, link is single use', async () => {
   const email = unique('maria');
-  const r = await admin.post('/api/users', { name: 'María', email, role: 'editor', lang: 'en' });
+  const r = await owner.post('/api/users', { name: 'María', email, permissions: ['texts'], lang: 'en' });
   assert.equal(r.data.user.status, 'invited');
+  assert.deepEqual(r.data.user.permissions, ['texts']);
   const mail = await message((await waitForMail(email, 1))[0].ID);
   assert.match(mail.Subject, /invited/i, 'invitation in the invitee\'s language');
   assert.doesNotMatch(mail.Text, /password:|contraseña:/i);
@@ -49,9 +58,9 @@ test('invitation: e-mailed link, account activates, link is single use', async (
 
 test('expired invitations and old links after a resend are rejected', async () => {
   const email = unique('exp');
-  const r = await admin.post('/api/users', { name: 'Exp', email, role: 'editor', lang: 'es' });
+  const r = await owner.post('/api/users', { name: 'Exp', email, permissions: ['texts'], lang: 'es' });
   const first = linkToken((await message((await waitForMail(email, 1))[0].ID)).Text, 'invitacion');
-  assert.equal((await admin.post(`/api/users/${r.data.user.id}/resend`, {})).data.emailSent, true);
+  assert.equal((await owner.post(`/api/users/${r.data.user.id}/resend`, {})).data.emailSent, true);
   const second = linkToken((await message((await waitForMail(email, 2))[0].ID)).Text, 'invitacion');
   assert.notEqual(first, second);
   assert.equal((await new Client(s.base).post('/api/auth/invitation/verify', { token: first })).data.valid, false, 'old link superseded');
@@ -59,48 +68,110 @@ test('expired invitations and old links after a resend are rejected', async () =
   assert.equal((await new Client(s.base).post('/api/auth/invitation/verify', { token: second })).data.valid, false, 'expired');
 });
 
-test('invite validation: duplicates, bad e-mails, unknown roles', async () => {
-  assert.equal((await admin.post('/api/users', { name: 'Dup', email: ADMIN.email, role: 'editor', lang: 'es' })).data.fields.email, 'email_taken');
-  assert.equal((await admin.post('/api/users', { name: 'Bad', email: 'no@@x', role: 'editor', lang: 'es' })).data.fields.email, 'invalid_email');
-  assert.equal((await admin.post('/api/users', { name: 'Bad', email: unique('r'), role: 'superuser', lang: 'es' })).data.fields.role, 'invalid');
-  assert.equal((await admin.post('/api/users', { name: '<b>x</b>', email: unique('h'), role: 'editor', lang: 'es' })).data.fields.name, 'no_html');
-  const header = await admin.post('/api/users', { name: 'X', email: 'a@example.test\r\nBcc: victim@example.test', role: 'editor', lang: 'es' });
-  assert.equal(header.status, 422);
+test('invite validation: duplicates, bad e-mails, access types', async () => {
+  const ok = { lang: 'es', permissions: ['texts'] };
+  assert.equal((await owner.post('/api/users', { ...ok, name: 'Dup', email: ADMIN.email })).data.fields.email, 'email_taken');
+  assert.equal((await owner.post('/api/users', { ...ok, name: 'Bad', email: 'no@@x' })).data.fields.email, 'invalid_email');
+  for (const permissions of [[], ['superuser'], 'texts', { a: 'texts' }, [1], null]) {
+    const r = await owner.post('/api/users', { name: 'P', email: unique('p'), lang: 'es', permissions });
+    assert.equal(r.status, 422, JSON.stringify(permissions));
+    assert.ok(['invalid', 'required'].includes(r.data.fields.permissions));
+  }
+  // Duplicates and order are normalized.
+  const r = await owner.post('/api/users', { name: 'Orden', email: unique('o'), lang: 'es', permissions: ['site', 'texts', 'texts'] });
+  assert.deepEqual(r.data.user.permissions, ['texts', 'site']);
+  assert.equal((await owner.post('/api/users', { ...ok, name: '<b>x</b>', email: unique('h') })).data.fields.name, 'no_html');
+  assert.equal((await owner.post('/api/users', { ...ok, name: 'X', email: 'a@example.test\r\nBcc: victim@example.test' })).status, 422);
+  // The list offers the ready-made access types.
+  const list = (await owner.get('/api/users')).data;
+  assert.deepEqual(list.permissions, ALL);
+  assert.deepEqual(list.accessTypes.texts, ['texts']);
 });
 
-test('editors cannot manage users (server-side authorization)', async () => {
-  const { client: editor, id } = await inviteAndAccept('editor');
-  for (const [m, p, body] of [['GET', '/api/users'], ['POST', '/api/users', { name: 'X', email: unique('x'), role: 'admin', lang: 'es' }], ['PUT', '/api/users/1', { role: 'editor' }], ['DELETE', '/api/users/1'], ['POST', '/api/site/republish', {}]]) {
-    const r = await editor.req(m, p, { json: body });
+test('only the owner can manage users — not other accounts, whatever their access', async () => {
+  const { client: full } = await inviteAndAccept(ALL);
+  for (const [m, p, body] of [['GET', '/api/users'], ['POST', '/api/users', { name: 'X', email: unique('x'), permissions: ['texts'], lang: 'es' }], ['PUT', '/api/users/1', { permissions: ['texts'] }], ['DELETE', '/api/users/1'], ['POST', '/api/users/1/resend', {}]]) {
+    const r = await full.req(m, p, { json: body });
     assert.equal(r.status, 403, `${m} ${p}`);
     assert.equal(r.data.error, 'forbidden');
   }
-  // …but they can edit content.
-  assert.equal((await editor.get('/api/content')).status, 200);
-  assert.ok(id);
+  // A legacy "admin" role does not grant user management either: only OWNER_EMAIL does.
+  s.sql(`UPDATE users SET role = 'admin' WHERE email = '${(await full.get('/api/auth/session')).data.user.email}'`);
+  assert.equal((await full.get('/api/users')).status, 403);
 });
 
-test('admins cannot lock themselves out, and the last admin is protected', async () => {
-  const me = (await admin.get('/api/users')).data.users.find((u) => u.isSelf);
-  assert.equal((await admin.put(`/api/users/${me.id}`, { role: 'editor' })).data.fields.user, 'cannot_change_self');
-  assert.equal((await admin.del(`/api/users/${me.id}`)).data.fields.user, 'cannot_change_self');
-  const { id, client } = await inviteAndAccept('admin');
-  // The second admin demotes the first; then the first cannot be removed if it would leave no admin.
-  assert.equal((await client.put(`/api/users/${me.id}`, { role: 'editor' })).status, 200);
-  const blocked = await admin.del(`/api/users/${id}`);
-  assert.equal(blocked.status, 403, 'demoted user is no longer an admin');
-  assert.equal((await client.put(`/api/users/${me.id}`, { role: 'admin' })).status, 200);
+test('each access type can change only its own information', async () => {
+  const cases = {
+    texts: { texts: true, contact: false, photos: false, documents: false, site: false },
+    contact: { texts: false, contact: true, photos: false, documents: false, site: false },
+    media: { texts: false, contact: false, photos: true, documents: true, site: false },
+  };
+  const presets = (await owner.get('/api/users')).data.accessTypes;
+  for (const [type, expect] of Object.entries(cases)) {
+    const { client: c, session } = await inviteAndAccept(presets[type]);
+    assert.deepEqual(session.user.permissions, presets[type]);
+    assert.equal(session.user.owner, false);
+    const tries = {
+      texts: async () => (await c.put('/api/content/footer', { version: await version(c, 'footer'), values: { 'footer.about_desc': { es: 'Texto ' + type } } })).status,
+      contact: async () => (await c.put('/api/content/details', { version: await version(c, 'details'), values: { 'contact.address_office': { '*': 'Oficina 64' + type.length } } })).status,
+      photos: async () => (await c.upload('/api/media/proj1.card/upload', { anchor: 'center', altEs: 'Foto', altEn: 'Photo' }, { file: 'landscape-4000x3000.jpg' })).status,
+      documents: async () => (await c.upload('/api/media/portfolio.pdf/upload', {}, { file: 'portfolio.pdf' })).status,
+      site: async () => (await c.post('/api/site/republish', {})).status,
+    };
+    for (const [perm, allowed] of Object.entries(expect)) {
+      const status = await tries[perm]();
+      if (allowed) assert.equal(status, 200, `${type} should change ${perm}`);
+      else assert.equal(status, 403, `${type} must not change ${perm}`);
+    }
+    // Activity is part of "site"; everyone can still read content and send reports.
+    assert.equal((await c.get('/api/dashboard')).data.activity, undefined);
+    assert.equal((await c.get('/api/content')).status, 200);
+  }
+});
+
+test('photo items: permission is checked on the item, and translation needs "texts"', async () => {
+  const { client: photos } = await inviteAndAccept(['photos']);
+  const up = await photos.upload('/api/media/proj2.gallery/upload', { anchor: 'center', altEs: 'Foto', altEn: 'Photo' }, { file: 'landscape-4000x3000.jpg' });
+  assert.equal(up.status, 200);
+  const { client: texts } = await inviteAndAccept(['texts']);
+  assert.equal((await texts.put(`/api/media/item/${up.data.item.id}`, { altEs: 'x', altEn: 'x' })).status, 403);
+  assert.equal((await texts.del(`/api/media/item/${up.data.item.id}`)).status, 403);
+  assert.equal((await texts.put('/api/media/proj2.gallery/order', { ids: [up.data.item.id] })).status, 403);
+  assert.equal((await photos.del(`/api/media/item/${up.data.item.id}`)).status, 200);
+  assert.equal((await photos.post('/api/content/translate', { from: 'es', to: 'en', items: [{ key: 'hero.cta1', text: 'Hola' }] })).status, 403);
+});
+
+test('the owner changes access types; changes apply on the next request', async () => {
+  const { client, id } = await inviteAndAccept(['texts']);
+  assert.equal((await client.post('/api/site/republish', {})).status, 403);
+  const r = await owner.put(`/api/users/${id}`, { permissions: ['texts', 'site'] });
+  assert.deepEqual(r.data.user.permissions, ['texts', 'site']);
+  assert.equal((await client.post('/api/site/republish', {})).status, 200);
+  assert.deepEqual((await client.get('/api/auth/session')).data.user.permissions, ['texts', 'site']);
+  assert.equal((await owner.put(`/api/users/${id}`, { permissions: [] })).status, 422);
+  assert.equal((await owner.put(`/api/users/${id}`, { role: 'admin' })).status, 200, 'unknown fields are ignored');
+  assert.equal((await client.get('/api/users')).status, 403, 'role is not a way in');
+});
+
+test('the owner cannot be changed or locked out, not even by itself', async () => {
+  const me = (await owner.get('/api/users')).data.users.find((u) => u.isSelf);
+  assert.equal(me.isOwner, true);
+  assert.equal((await owner.put(`/api/users/${me.id}`, { status: 'disabled' })).data.fields.user, 'cannot_change_self');
+  assert.equal((await owner.put(`/api/users/${me.id}`, { permissions: ['texts'] })).data.fields.user, 'cannot_change_self');
+  assert.equal((await owner.del(`/api/users/${me.id}`)).data.fields.user, 'cannot_change_self');
+  const session = (await owner.get('/api/auth/session')).data.user;
+  assert.deepEqual([session.owner, session.permissions], [true, ALL]);
 });
 
 test('disabling a user ends their sessions immediately; deleting removes access', async () => {
-  const { client, id } = await inviteAndAccept('editor');
+  const { client, id } = await inviteAndAccept(['texts']);
   assert.equal((await client.get('/api/dashboard')).status, 200);
-  assert.equal((await admin.put(`/api/users/${id}`, { status: 'disabled' })).status, 200);
+  assert.equal((await owner.put(`/api/users/${id}`, { status: 'disabled' })).status, 200);
   assert.equal((await client.get('/api/dashboard')).status, 401);
-  assert.equal((await admin.del(`/api/users/${id}`)).status, 200);
-  assert.equal((await admin.put(`/api/users/${id}`, { status: 'active' })).status, 404);
-  assert.equal((await admin.put('/api/users/999999', { status: 'active' })).status, 404);
-  assert.equal((await admin.put('/api/users/abc', { status: 'active' })).status, 404);
+  assert.equal((await owner.del(`/api/users/${id}`)).status, 200);
+  assert.equal((await owner.put(`/api/users/${id}`, { status: 'active' })).status, 404);
+  assert.equal((await owner.put('/api/users/999999', { status: 'active' })).status, 404);
+  assert.equal((await owner.put('/api/users/abc', { status: 'active' })).status, 404);
 });
 
 test('without e-mail the invitation link is returned once so it can be shared', async () => {
@@ -109,9 +180,17 @@ test('without e-mail the invitation link is returned once so it can be shared', 
     createAdmin(down);
     const a = new Client(down.base);
     await a.login();
-    const r = await a.post('/api/users', { name: 'Sin Correo', email: unique('nomail'), role: 'editor', lang: 'es' });
+    const r = await a.post('/api/users', { name: 'Sin Correo', email: unique('nomail'), permissions: ['texts'], lang: 'es' });
     assert.equal(r.status, 200);
     assert.equal(r.data.emailSent, false);
     assert.match(r.data.inviteLink, /\/admin\/#\/invitacion\/[A-Za-z0-9_-]{43}$/);
   } finally { await down.stop(); }
+});
+
+test('invitations are limited to 20 per hour', async () => {
+  resetInviteLimit();
+  let last;
+  for (let i = 0; i < 21; i++) last = await owner.post('/api/users', { name: 'Lote', email: unique('lote'), permissions: ['texts'], lang: 'es' });
+  assert.equal(last.status, 429);
+  assert.equal(last.data.error, 'too_many_attempts');
 });

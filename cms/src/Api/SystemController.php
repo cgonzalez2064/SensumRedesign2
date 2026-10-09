@@ -54,8 +54,8 @@ final class SystemController extends Controller
     {
         $db = $this->app->db();
         $settings = $this->app->settings();
-        $isAdmin = $this->session['role'] === 'admin';
-        $isOwner = $this->app->auth()->isOwner($this->session);
+        $canSite = $this->app->auth()->can($this->session, 'site');
+        $isOwner = $this->isOwner();
         $publishedAt = (int) $settings->get('last_published_at', '0');
         $publishedBy = (int) $settings->get('last_published_by', '0');
 
@@ -74,7 +74,7 @@ final class SystemController extends Controller
             }
         }
         $photos = (int) $db->value("SELECT COUNT(*) FROM media WHERE deleted_at IS NULL AND kind = 'image'");
-        $failedReports = $isAdmin
+        $failedReports = $isOwner
             ? (int) $db->value("SELECT COUNT(*) FROM support_reports WHERE email_status <> 'sent'")
             : (int) $db->value("SELECT COUNT(*) FROM support_reports WHERE email_status <> 'sent' AND user_id = ?", [$this->uid()]);
 
@@ -102,6 +102,7 @@ final class SystemController extends Controller
         }
         // Technical diagnostics and errors: owner account only (see Monitoring).
         if ($isOwner) {
+            $out['siteReport'] = $this->app->siteReport()->status();
             $out['health']['checks'] = Health::checks($this->app, true);
             $out['errors'] = array_map(fn ($r) => [
                 'source' => $r['source'], 'severity' => $r['severity'], 'event' => $r['event'], 'message' => $r['message'],
@@ -112,7 +113,7 @@ final class SystemController extends Controller
                 [time() - 14 * 86400]
             ));
         }
-        if ($isAdmin) {
+        if ($canSite) {
             $out['activity'] = array_map(fn ($r) => [
                 'action' => $r['action'], 'target' => $r['target'], 'user' => $r['name'], 'at' => (int) $r['created_at'],
             ], $db->all(
@@ -126,6 +127,7 @@ final class SystemController extends Controller
 
     public function republish(): never
     {
+        $this->requirePermission('site');
         $result = $this->app->publisher()->publish($this->uid(), 'manual');
         $this->app->activity($this->uid(), 'publish_manual', '', ['changed' => $result['changed']], $this->req->ip());
         Response::ok(['publishedAt' => $result['published_at'], 'changed' => $result['changed']]);

@@ -8,11 +8,14 @@ const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const IMAGE_EXT = /\.(jpe?g|png|webp)$/i;
 const CLIENT_MAX_SIDE = 3200; // larger photos are reduced in the browser before uploading
 
-export async function render({ main, params, navigate }) {
-  const tab = params[0] || 'nosotros';
+export async function render({ main, params, navigate, can }) {
+  // Photos and the PDF portfolio are separate permissions: show only the tabs this account may change.
+  const allowed = [['nosotros', 'photos'], ['proyectos', 'photos'], ['documentos', 'documents']].filter(([, p]) => can(p)).map(([slug]) => slug);
+  const tab = allowed.includes(params[0]) ? params[0] : allowed[0];
+  if (params[0] && params[0] !== tab) { navigate('/fotos/' + tab); return null; }
   main.append(pageHead({ title: t('media.title'), lead: t('media.lead') }));
   const tabs = h('nav', { class: 'tabs', 'aria-label': t('media.title') },
-    [['nosotros', 'about', 'people'], ['proyectos', 'projects', 'images'], ['documentos', 'documents', 'file-earmark-pdf']].map(([slug, key, ic]) =>
+    [['nosotros', 'about', 'people'], ['proyectos', 'projects', 'images'], ['documentos', 'documents', 'file-earmark-pdf']].filter(([slug]) => allowed.includes(slug)).map(([slug, key, ic]) =>
       h('a', { class: 'tab', href: '#/fotos/' + slug, 'aria-current': slug === tab ? 'page' : null }, icon(ic), t('media.tabs.' + key))));
   const body = h('div', { class: 'stack-lg' }, loading());
   main.append(tabs, body);
