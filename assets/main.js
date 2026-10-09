@@ -143,6 +143,13 @@
       "form.status_rate_limited": "Has enviado varias solicitudes en poco tiempo. Espera unos minutos e intenta de nuevo.",
       "form.status_offline": "Parece que no tienes conexión a internet. Revisa tu conexión e intenta de nuevo.",
       "form.status_timeout": "El envío tardó demasiado. Revisa tu conexión e intenta de nuevo.",
+      "form.status_verifying": "Verificando que no eres un robot…",
+      "form.status_captcha": "No pudimos completar la verificación anti-spam. Recarga la página e intenta de nuevo, o escríbenos por WhatsApp.",
+      "form.status_turnstile": "Completa la verificación de seguridad de arriba y vuelve a enviar.",
+      "form.captcha_idle": "Protegido contra spam con verificación automática.",
+      "form.captcha_pending": "Verificación anti-spam en curso…",
+      "form.captcha_ok": "Verificación anti-spam completa.",
+      "form.captcha_error": "No se pudo cargar la verificación anti-spam. Recarga la página.",
 
       "faq.eyebrow": "Dudas frecuentes",
       "faq.title": "Preguntas frecuentes",
@@ -296,6 +303,13 @@
       "form.status_rate_limited": "You've sent several requests in a short time. Please wait a few minutes and try again.",
       "form.status_offline": "It looks like you're offline. Check your connection and try again.",
       "form.status_timeout": "The request took too long. Check your connection and try again.",
+      "form.status_verifying": "Checking you're not a robot…",
+      "form.status_captcha": "We couldn't complete the anti-spam check. Reload the page and try again, or message us on WhatsApp.",
+      "form.status_turnstile": "Complete the security check above and submit again.",
+      "form.captcha_idle": "Protected against spam with an automatic check.",
+      "form.captcha_pending": "Anti-spam check in progress…",
+      "form.captcha_ok": "Anti-spam check complete.",
+      "form.captcha_error": "The anti-spam check couldn't load. Reload the page.",
 
       "faq.eyebrow": "Common questions",
       "faq.title": "Frequently Asked Questions",
@@ -958,6 +972,163 @@
   var loadedAtField = document.getElementById('formLoadedAt');
   if (loadedAtField) loadedAtField.value = String(Date.now());
 
+  /* ------------------------------------------------------------
+     Captcha, two layers (verified again in assets/contact-handler.php):
+     1. Built-in, always on: the handler issues a signed, single-use
+        challenge and the browser finds the matching number with the
+        Web Crypto API (SHA-256) in the background while the visitor
+        types. Invisible: the visitor never has to do anything.
+     2. Optional Cloudflare Turnstile, only when the page carries a
+        site key (the owner enables it in the Content Manager). It
+        stays hidden unless Cloudflare needs the visitor to click.
+     ------------------------------------------------------------ */
+  var captchaInput = document.getElementById('formCaptchaAnswer');
+  var captchaText = document.getElementById('formCaptchaText');
+  var captchaNote = document.getElementById('formCaptcha');
+  var captchaJob = null;      /* Promise of the current answer */
+  var captchaIssued = 0;      /* when the current challenge was requested */
+  var CAPTCHA_FRESH_MS = 25 * 60 * 1000; /* the server accepts 30 min */
+
+  function setCaptchaState(state){
+    if (captchaNote) captchaNote.setAttribute('data-state', state);
+    if (captchaText){
+      captchaText.setAttribute('data-i18n', 'form.captcha_' + state);
+      captchaText.textContent = t('form.captcha_' + state);
+    }
+  }
+
+  function hexToBytes(hex){
+    var out = new Uint8Array(hex.length / 2);
+    for (var i = 0; i < out.length; i++) out[i] = parseInt(hex.substr(i * 2, 2), 16);
+    return out;
+  }
+
+  function sameBytes(buf, target){
+    var a = new Uint8Array(buf);
+    for (var i = 0; i < target.length; i++) if (a[i] !== target[i]) return false;
+    return true;
+  }
+
+  function solveCaptcha(){
+    if (!captchaInput) return Promise.resolve();
+    if (!window.crypto || !window.crypto.subtle || typeof TextEncoder === 'undefined' || typeof fetch === 'undefined'){
+      setCaptchaState('error');
+      return Promise.reject(new Error('captcha_unsupported'));
+    }
+    captchaInput.value = '';
+    captchaIssued = Date.now();
+    setCaptchaState('pending');
+    return fetch('assets/contact-handler.php?challenge=1', { headers: { 'Accept': 'application/json' }, cache: 'no-store', credentials: 'same-origin' })
+      .then(function(res){
+        if (!res.ok) throw new Error('captcha_challenge_' + res.status);
+        return res.json();
+      })
+      .then(function(c){
+        if (!c || c.algorithm !== 'SHA-256' || typeof c.salt !== 'string' || typeof c.challenge !== 'string') throw new Error('captcha_bad_challenge');
+        var enc = new TextEncoder();
+        var target = hexToBytes(c.challenge);
+        var BATCH = 1000;
+        var search = function(start){
+          if (start > c.maxnumber) throw new Error('captcha_unsolved');
+          var end = Math.min(start + BATCH, c.maxnumber + 1);
+          var jobs = [];
+          for (var n = start; n < end; n++) jobs.push(window.crypto.subtle.digest('SHA-256', enc.encode(c.salt + n)));
+          return Promise.all(jobs).then(function(hashes){
+            for (var i = 0; i < hashes.length; i++) if (sameBytes(hashes[i], target)) return start + i;
+            return search(end);
+          });
+        };
+        return search(0).then(function(number){
+          captchaInput.value = btoa(JSON.stringify({ algorithm: c.algorithm, challenge: c.challenge, number: number, salt: c.salt, signature: c.signature }));
+          setCaptchaState('ok');
+        });
+      })
+      .catch(function(err){
+        setCaptchaState('error');
+        captchaJob = null;
+        throw err;
+      });
+  }
+
+  /* The current answer, or a new one when there is none or it is getting old. */
+  function ensureCaptcha(){
+    if (!captchaJob || Date.now() - captchaIssued > CAPTCHA_FRESH_MS) captchaJob = solveCaptcha();
+    return captchaJob;
+  }
+
+  function startCaptcha(){
+    ensureCaptcha().catch(function(){ /* shown in the note; retried on submit */ });
+    loadTurnstile();
+  }
+
+  /* Optional Cloudflare Turnstile. */
+  var tsBox = document.getElementById('formTurnstile');
+  var tsSiteKey = tsBox ? (tsBox.getAttribute('data-sitekey') || '') : '';
+  var tsWidget = null;
+  var tsToken = '';
+  var tsWaiters = [];
+  var tsLoading = false;
+
+  function tsSettle(){
+    var w = tsWaiters; tsWaiters = [];
+    w.forEach(function(fn){ fn(); });
+  }
+
+  function loadTurnstile(){
+    if (!tsSiteKey || tsLoading) return;
+    tsLoading = true;
+    window.sensumTurnstileReady = function(){
+      if (!window.turnstile) return;
+      tsWidget = window.turnstile.render(tsBox, {
+        sitekey: tsSiteKey,
+        action: 'contact',
+        appearance: 'interaction-only',
+        language: currentLang === 'en' ? 'en' : 'es',
+        callback: function(token){ tsToken = token; tsSettle(); },
+        'expired-callback': function(){ tsToken = ''; },
+        'error-callback': function(){ tsToken = ''; tsSettle(); }
+      });
+    };
+    var sc = document.createElement('script');
+    sc.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=sensumTurnstileReady';
+    sc.async = true;
+    sc.defer = true;
+    document.head.appendChild(sc);
+  }
+
+  /* Resolves with true when Turnstile is off or has a token; false after waiting. */
+  function turnstileReady(){
+    if (!tsSiteKey) return Promise.resolve(true);
+    loadTurnstile();
+    if (tsToken) return Promise.resolve(true);
+    return new Promise(function(resolve){
+      var timer = setTimeout(function(){ resolve(!!tsToken); }, 20000);
+      tsWaiters.push(function(){ clearTimeout(timer); resolve(!!tsToken); });
+    });
+  }
+
+  function resetTurnstile(){
+    tsToken = '';
+    if (tsWidget !== null && window.turnstile) {
+      try { window.turnstile.reset(tsWidget); } catch (e) { /* widget gone */ }
+    }
+  }
+
+  /* Start as soon as the visitor shows interest in the form (or it scrolls into view). */
+  var contactFormEl = document.getElementById('contactForm');
+  if (contactFormEl && captchaInput){
+    var started = false;
+    var kick = function(){ if (!started){ started = true; startCaptcha(); } };
+    contactFormEl.addEventListener('focusin', kick);
+    contactFormEl.addEventListener('pointerdown', kick);
+    if ('IntersectionObserver' in window){
+      var io = new IntersectionObserver(function(entries){
+        if (entries.some(function(e){ return e.isIntersecting; })){ io.disconnect(); kick(); }
+      }, { rootMargin: '300px' });
+      io.observe(contactFormEl);
+    }
+  }
+
   if (form){
     var FIELD_IDS = ['name', 'phone', 'email', 'service', 'message'];
     var submitBtn = form.querySelector('button[type="submit"]');
@@ -1036,9 +1207,25 @@
       }
 
       submitting = true;
-      setStatus(t('form.status_sending'), '');
       if (submitBtn) submitBtn.disabled = true;
+      var done = function(){
+        submitting = false;
+        if (submitBtn) submitBtn.disabled = false;
+      };
+      if (captchaInput && !captchaInput.value) setStatus(t('form.status_verifying'), '');
 
+      ensureCaptcha()
+        .then(function(){ return turnstileReady(); })
+        .then(function(ok){
+          if (!ok){ setStatus(t('form.status_turnstile'), 'error'); done(); return; }
+          send(false);
+        }, function(){
+          setStatus(t('form.status_captcha'), 'error');
+          done();
+        });
+
+      function send(retried){
+      setStatus(t('form.status_sending'), '');
       var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
       var timeoutId = controller ? setTimeout(function(){ controller.abort(); }, 15000) : null;
 
@@ -1065,6 +1252,28 @@
             form.reset();
             FIELD_IDS.forEach(function(id){ setFieldValidity(id, true); });
             if (loadedAtField) loadedAtField.value = String(Date.now());
+            /* Each captcha answer works once: prepare the next one. */
+            captchaJob = null;
+            resetTurnstile();
+            ensureCaptcha().catch(function(){});
+            return;
+          }
+
+          if (res.status === 400 && data && data.error === 'captcha_failed'){
+            /* Expired or already used answer (e.g. the page was open for
+               hours): solve a fresh one and try once more on our own. */
+            captchaJob = null;
+            resetTurnstile();
+            if (!retried){
+              ensureCaptcha()
+                .then(function(){ return turnstileReady(); })
+                .then(function(ok){
+                  if (!ok){ setStatus(t('form.status_turnstile'), 'error'); done(); return; }
+                  send(true);
+                }, function(){ setStatus(t('form.status_captcha'), 'error'); done(); });
+              return 'pending';
+            }
+            setStatus(t('form.status_captcha'), 'error');
             return;
           }
 
@@ -1106,10 +1315,10 @@
             setStatus(t('form.status_error'), 'error');
           }
         })
-        .finally(function(){
-          submitting = false;
-          if (submitBtn) submitBtn.disabled = false;
+        .then(function(outcome){
+          if (outcome !== 'pending') done();
         });
+      }
     });
 
     form.querySelectorAll('input,textarea,select').forEach(function(input){

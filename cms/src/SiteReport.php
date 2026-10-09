@@ -417,7 +417,7 @@ final class SiteReport
     {
         $now ??= time();
         $st = $this->status($now);
-        if (!$st['overdue'] || $st['reminderSentAt']) {
+        if (!$st['overdue'] || $st['reminderSentAt'] || !$this->app->watchdog()->enabled('report_reminder')) {
             return false;
         }
         [, $end] = self::bounds($st['period']);

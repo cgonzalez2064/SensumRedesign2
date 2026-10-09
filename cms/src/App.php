@@ -29,6 +29,8 @@ final class App
     private ?Translator $translator = null;
     private ?ErrorLog $errors = null;
     private ?Alerts $alerts = null;
+    private ?MailSettings $mailSettings = null;
+    private ?Watchdog $watchdog = null;
     private ?string $key = null;
     /** @var list<string> migrations applied automatically when the database was opened */
     private array $migratedOnOpen = [];
@@ -173,6 +175,12 @@ final class App
         return $this->alerts ??= new Alerts($this);
     }
 
+    /** Automatic alerts (security, maintenance, digests). */
+    public function watchdog(): Watchdog
+    {
+        return $this->watchdog ??= new Watchdog($this);
+    }
+
     public function monitor(): Monitor
     {
         return new Monitor($this);
@@ -190,7 +198,18 @@ final class App
 
     public function mailer(): Mailer
     {
-        return $this->mailer ??= new Mailer($this->config, $this->logger(), $this->storageDir('mail'));
+        return $this->mailer ??= new Mailer($this->config, $this->logger(), $this->storageDir('mail'), fn () => $this->mailSettings()->smtp());
+    }
+
+    public function contactForm(): ContactForm
+    {
+        return new ContactForm($this);
+    }
+
+    /** E-mail settings: the owner's panel values over .env (see MailSettings). */
+    public function mailSettings(): MailSettings
+    {
+        return $this->mailSettings ??= new MailSettings($this);
     }
 
     public function rateLimiter(): RateLimiter

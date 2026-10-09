@@ -546,6 +546,23 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 .kpi-ok .kpi-num{ color:var(--ok); } .kpi-bad .kpi-num{ color:var(--bad); } .kpi-warn .kpi-num{ color:var(--warn); }
 .log-filters{ display:grid; gap:.6rem .75rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items:end; margin-bottom:.9rem; }
 .log-filters .field{ margin:0; }
+
+/* ---------- E-mail settings and automatic alerts ---------- */
+.form-grid{ display:grid; gap:1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); margin:.35rem 0 1rem; }
+.form-grid > *{ min-width:0; }
+.h-sub{ font-size:1rem; margin:1.25rem 0 .2rem; }
+.save-row{
+  position:sticky; bottom:.75rem; z-index:5; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r-lg); box-shadow:var(--shadow-2); padding:.75rem 1rem;
+}
+.rule-list{ list-style:none; margin:0; padding:0; }
+.rule{ display:flex; gap:.75rem; align-items:flex-start; padding:.7rem 0; border-top:1px solid var(--border); }
+.rule:first-child{ border-top:0; padding-top:.2rem; }
+.rule input{ width:20px; height:20px; accent-color:var(--brand); flex:none; margin:.12rem 0 0; cursor:pointer; }
+.rule label{ cursor:pointer; font-weight:600; }
+.rule .badge{ margin-left:.35rem; vertical-align:1px; }
+.finding-list{ margin:.5rem 0; padding-left:1.1rem; font-size:.88rem; }
+.steps{ margin:.3rem 0 .6rem; padding-left:1.2rem; display:grid; gap:.2rem; }
 .log-filters .log-search{ grid-column: 1 / -1; }
 .kv-tight{ grid-template-columns: minmax(7rem, 42%) minmax(0, 1fr); }
 .log-list{ list-style:none; margin:0; padding:0; display:grid; gap:.6rem; }

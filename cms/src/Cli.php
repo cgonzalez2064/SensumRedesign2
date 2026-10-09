@@ -31,6 +31,7 @@ final class Cli
             'alert:test' => $this->alertTest(),
             'reports:retry' => $this->retryReports(),
             'backup' => $this->backup(),
+            'integrity:accept' => $this->integrityAccept(),
             default => $this->help(),
         };
     }
@@ -42,7 +43,7 @@ final class Cli
 
     private function help(): int
     {
-        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|translate:test|monitor|alert:test|reports:retry|backup>');
+        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|translate:test|monitor|alert:test|reports:retry|backup|integrity:accept>');
         return 0;
     }
 
@@ -163,6 +164,20 @@ final class Cli
         foreach ($this->app->monitor()->run() as $line) {
             $this->out($line);
         }
+        return 0;
+    }
+
+    /**
+     * After changing public files on purpose (e.g. uploading a new version by
+     * hand), records them as the expected state so the integrity alert stops.
+     */
+    private function integrityAccept(): int
+    {
+        $wd = $this->app->watchdog();
+        foreach ($wd->integrityFindings() as $f) {
+            $this->out("  {$f['type']}: {$f['path']}");
+        }
+        $this->out('Accepted the current public files as expected (' . $wd->acceptIntegrity() . ' files).');
         return 0;
     }
 

@@ -28,7 +28,7 @@ Estimated time: 60–90 minutes the first time.
 ## 0. What you need before starting
 
 - [ ] cPanel login for the hosting account of `sensumconstrucciones.com`
-- [ ] A mailbox to send from (e.g. `no-reply@sensumconstrucciones.com`) and its
+- [ ] A mailbox to send from (e.g. `notificaciones@sensumconstrucciones.com`) and its
       password — or the SMTP details of the mail provider (§7)
 - [ ] The e-mail of the first administrator
 - [ ] A computer with the repository and the tools from `docs/LOCAL_SETUP.md`
@@ -142,24 +142,20 @@ APP_TIMEZONE=America/Guatemala
 # Use a long random value (e.g. from a password manager) and DELETE this line afterwards.
 SETUP_TOKEN=
 
+# E-mail: the sending account, contact form, report/alert recipients and the
+# Turnstile captcha are configured by the owner in the panel (§7). Only the
+# driver is needed here. (Or set SMTP_*/CONTACT_*/TURNSTILE_* here and add
+# EMAIL_SETTINGS_LOCKED=true to make the panel page read-only.)
 MAIL_DRIVER=smtp
-SMTP_HOST=<from §7>
-SMTP_PORT=465
-SMTP_ENCRYPTION=ssl
-SMTP_USERNAME=no-reply@sensumconstrucciones.com
-SMTP_PASSWORD=<mailbox password>
-SMTP_FROM_ADDRESS=no-reply@sensumconstrucciones.com
-SMTP_FROM_NAME="Sensum Construcciones"
 SMTP_TIMEOUT=15
 
-SUPPORT_EMAIL=it@gruposensum.com
-
-# Monitoring: owner account (sees Monitoreo) and critical-error alerts
+# Owner account (users, Monitoreo, Informe mensual, Correo) and alerts
 OWNER_EMAIL=it@gruposensum.com
 ALERTS_ENABLED=true
-ALERT_EMAIL=it@gruposensum.com
 ALERT_COOLDOWN_MINUTES=60
 ALERT_DAILY_MAX=20
+ALERT_LOGIN_FAILURES=10
+ALERT_ERROR_SPIKE=25
 
 SESSION_IDLE_MINUTES=60
 SESSION_ABSOLUTE_HOURS=12
@@ -183,19 +179,41 @@ automatically on the first request (or with `php ~/sensum-cms/bin/console migrat
 if you have Terminal/SSH). Access control = the file's location outside the web
 root plus `700`/`600` permissions — there are no database credentials to leak.
 
-## 7. E-mail (SMTP) and deliverability
+## 7. E-mail, contact form and captcha (configured in the panel)
 
-**Sending mailbox.** cPanel → **Email Accounts** → Create
-`no-reply@sensumconstrucciones.com` with a strong password. Then click
-**Connect Devices** next to it: "Mail Client Manual Settings" shows the exact
-outgoing server, port and security. Typical Namecheap shared-hosting values:
+**Mailboxes** (cPanel → Email Accounts / Forwarders) — recommended set:
 
-| Setting | Value |
-|---|---|
-| `SMTP_HOST` | the server shown under *Outgoing Server* (e.g. `mail.sensumconstrucciones.com` or the server hostname like `serverXXX.web-hosting.com` — prefer the hostname if the mail certificate doesn't match the domain) |
-| `SMTP_PORT` / `SMTP_ENCRYPTION` | `465` / `ssl` (or `587` / `tls`) |
-| `SMTP_USERNAME` | the full address |
-| `SMTP_PASSWORD` | the mailbox password |
+| Address | Create as | Purpose |
+|---|---|---|
+| `contacto@` | mailbox (keep if it exists) | receives contact-form leads |
+| `notificaciones@` | mailbox, strong password | the panel's SMTP sending account (invitations, resets, problem reports, monthly report, alerts; also the contact form with the recommended method) |
+| `formulario@` | forwarder → `contacto@` | visible sender of contact-form messages |
+| `soporte@` | forwarder → it@gruposensum.com | Reply-To of notices and reports |
+| `postmaster@`, `abuse@` | forwarders → it@gruposensum.com | RFC 2142 role addresses |
+| `dmarc@` | mailbox | DMARC aggregate reports |
+
+Minimum: `contacto@` + `notificaciones@`.
+
+Click **Connect Devices** next to `notificaciones@`: "Mail Client Manual Settings"
+shows the outgoing server, port and security (typically `mail.sensumconstrucciones.com`
+or the server hostname like `serverXXX.web-hosting.com`, port `465` SSL).
+
+**Panel → Administración → Correo** (owner only; saving asks for the password again
+and e-mails a security notice to the owner):
+
+* *Cuenta de envío del panel*: sender `notificaciones@`, replies to `soporte@`,
+  server/port/security (the **"Completar con los datos de Namecheap"** button fills
+  `mail.<domain>`, `465`, `SSL`), username = full address, mailbox password (stored
+  encrypted with libsodium/AES-GCM, key derived from the app key; never shown again).
+* *Formulario de contacto*: receivers (up to 3, e.g. `contacto@`), sender
+  `formulario@`, method **SMTP (recommended)** or the hosting's `mail()`.
+* *Adónde llegan los avisos*: problem reports and automatic alerts → it@gruposensum.com.
+* *Protección contra spam (captcha)*: the built-in invisible captcha is always on.
+  Optional **Cloudflare Turnstile**: dash.cloudflare.com → Turnstile → Add widget
+  (domain `sensumconstrucciones.com` + `www.`, mode *Managed*), paste the Site Key and
+  Secret Key, save — the site is republished automatically. The public CSP in
+  `public_html/.htaccess` already allows `https://challenges.cloudflare.com`.
+* Use **Enviar correo de prueba** / **Enviar mensaje de prueba** to confirm delivery.
 
 If the company uses another provider (Google Workspace, Microsoft 365,
 Namecheap Private Email…), use that provider's SMTP host/port and an app
@@ -203,10 +221,10 @@ password or dedicated mailbox instead.
 
 **Deliverability.** cPanel → **Email Deliverability** → `sensumconstrucciones.com`:
 install/repair the suggested **SPF** and **DKIM** records, and add a **DMARC**
-record (`_dmarc` TXT, e.g. `v=DMARC1; p=quarantine; rua=mailto:it@gruposensum.com`).
+record (`_dmarc` TXT, e.g. `v=DMARC1; p=quarantine; rua=mailto:dmarc@sensumconstrucciones.com`).
 Without these, invitations, resets and support reports may land in spam.
 
-**Support reports** go to `SUPPORT_EMAIL` (**it@gruposensum.com**). Make sure that
+**Support reports** go to the panel's *Reportes de problemas* address (**it@gruposensum.com**). Make sure that
 mailbox accepts mail from `sensumconstrucciones.com` (whitelist the sender if it
 uses aggressive filtering).
 
@@ -380,7 +398,17 @@ the admin API stops. Then disable accounts / reset passwords and restore.
   automática* shows the time of the last run.
 * **Critical-error alerts:** Monitoreo → *Alertas por correo* → **Enviar correo de
   prueba** (or `php ~/sensum-cms/bin/console alert:test`). Check that it arrives at
-  it@gruposensum.com and is not in spam; whitelist `no-reply@sensumconstrucciones.com`.
+  it@gruposensum.com and is not in spam; whitelist `notificaciones@sensumconstrucciones.com`.
+* **Automatic alerts** (Monitoreo → *Alertas automáticas*, each can be switched
+  off): critical errors (immediately), site-file integrity (each check; the release
+  ships `sensum-cms/release-manifest.json`, cPanel-generated `.htaccess` blocks are
+  ignored; accept intended changes in Monitoreo → *Archivos del sitio* or with
+  `bin/console integrity:accept`), sign-in attack (≥ `ALERT_LOGIN_FAILURES`/hour,
+  max every 6 h), new-device sign-in (to the person), HTTPS certificate (21/7/1 days),
+  backup older than 48 h, scheduler stopped > 2 h (detected from `/api/health`),
+  low disk, error spike (≥ `ALERT_ERROR_SPIKE`/hour), weekly digest (Mondays 08:00),
+  monthly security review (1st, 08:00), monthly-report reminder (day 6+), and
+  e-mail settings changed (always on).
 * **Errors:** Monitoreo → *Registro de errores* (server, panel and — if
   `PUBLIC_ERROR_REPORTING=true` — public-site errors; critical ones are e-mailed).
 * **Analytics (optional):** see `docs/CONTENT_MANAGER.md` §9 — requires a privacy

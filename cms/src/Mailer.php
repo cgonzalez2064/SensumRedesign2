@@ -17,8 +17,23 @@ use PHPMailer\PHPMailer\PHPMailer;
  */
 final class Mailer
 {
-    public function __construct(private Config $config, private Logger $logger, private string $outbox)
+    /** @param (\Closure():array)|null $settings effective SMTP settings (owner's panel values over .env), see MailSettings */
+    public function __construct(private Config $config, private Logger $logger, private string $outbox, private ?\Closure $settings = null)
     {
+    }
+
+    /** @return array{host:string,port:int,encryption:string,username:string,password:string,fromAddress:string,fromName:string,replyTo:string} */
+    private function smtp(): array
+    {
+        if ($this->settings) {
+            return ($this->settings)();
+        }
+        return [
+            'host' => $this->config->string('SMTP_HOST'), 'port' => $this->config->int('SMTP_PORT', 587, 1, 65535),
+            'encryption' => strtolower($this->config->string('SMTP_ENCRYPTION', 'tls')), 'username' => $this->config->string('SMTP_USERNAME'),
+            'password' => $this->config->string('SMTP_PASSWORD'), 'fromAddress' => $this->config->string('SMTP_FROM_ADDRESS', 'no-reply@sensumconstrucciones.com'),
+            'fromName' => $this->config->string('SMTP_FROM_NAME', 'Sensum Construcciones'), 'replyTo' => '',
+        ];
     }
 
     public function driver(): string
@@ -33,17 +48,12 @@ final class Mailer
         return match ($this->driver()) {
             'log' => true,
             'disabled' => false,
-            default => $this->config->string('SMTP_HOST') !== '' && filter_var($this->fromAddress(), FILTER_VALIDATE_EMAIL) !== false,
+            default => $this->smtp()['host'] !== '' && filter_var($this->smtp()['fromAddress'], FILTER_VALIDATE_EMAIL) !== false,
         };
     }
 
-    private function fromAddress(): string
-    {
-        return $this->config->string('SMTP_FROM_ADDRESS', 'no-reply@sensumconstrucciones.com');
-    }
-
     /**
-     * @param array{to:string|list<string>, subject:string, text:string, html?:string, replyTo?:array{0:string,1:string}, cc?:list<string>, attachments?:list<array{path:string,name:string,mime:string}>, embedded?:list<array{path:string,cid:string,name:string,mime:string}>} $m
+     * @param array{to:string|list<string>, from?:array{0:string,1:string}, subject:string, text:string, html?:string, replyTo?:array{0:string,1:string}, cc?:list<string>, attachments?:list<array{path:string,name:string,mime:string}>, embedded?:list<array{path:string,cid:string,name:string,mime:string}>} $m
      */
     public function send(array $m): bool
     {
@@ -65,7 +75,9 @@ final class Mailer
             $mail->XMailer = ' ';
             // PHPMailer validates addresses and encodes headers, which closes
             // e-mail header injection; subjects are also stripped of CR/LF below.
-            $mail->setFrom($this->fromAddress(), self::oneLine($this->config->string('SMTP_FROM_NAME', 'Sensum Construcciones')), false);
+            $smtp = $this->smtp();
+            // A message may use its own sender (the contact form does); otherwise the configured account.
+            $mail->setFrom($m['from'][0] ?? $smtp['fromAddress'], self::oneLine($m['from'][1] ?? $smtp['fromName']), false);
             foreach ($to as $address) {
                 $mail->addAddress($address);
             }
@@ -76,6 +88,8 @@ final class Mailer
             }
             if (!empty($m['replyTo']) && filter_var($m['replyTo'][0], FILTER_VALIDATE_EMAIL)) {
                 $mail->addReplyTo($m['replyTo'][0], self::oneLine($m['replyTo'][1]));
+            } elseif ($smtp['replyTo'] !== '' && filter_var($smtp['replyTo'], FILTER_VALIDATE_EMAIL)) {
+                $mail->addReplyTo($smtp['replyTo']); // where replies to the panel's notifications go
             }
             $mail->Subject = self::oneLine($m['subject']);
             if (!empty($m['html'])) {
@@ -103,16 +117,15 @@ final class Mailer
             }
 
             $mail->isSMTP();
-            $mail->Host = $this->config->string('SMTP_HOST');
-            $mail->Port = $this->config->int('SMTP_PORT', 587, 1, 65535);
+            $mail->Host = $smtp['host'];
+            $mail->Port = max(1, min(65535, $smtp['port']));
             $mail->Timeout = $this->config->int('SMTP_TIMEOUT', 15, 3, 60);
-            $user = $this->config->string('SMTP_USERNAME');
-            if ($user !== '') {
+            if ($smtp['username'] !== '') {
                 $mail->SMTPAuth = true;
-                $mail->Username = $user;
-                $mail->Password = $this->config->string('SMTP_PASSWORD');
+                $mail->Username = $smtp['username'];
+                $mail->Password = $smtp['password'];
             }
-            $enc = strtolower($this->config->string('SMTP_ENCRYPTION', 'tls'));
+            $enc = $smtp['encryption'];
             if ($enc === 'ssl' || $enc === 'smtps') {
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
             } elseif ($enc === 'tls' || $enc === 'starttls') {

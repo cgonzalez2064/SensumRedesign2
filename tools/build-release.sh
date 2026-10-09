@@ -45,9 +45,28 @@ cp cms/storage/.htaccess "$OUT/sensum-cms/storage/.htaccess"
 rm -f "$OUT/sensum-cms/composer.lock.bak"
 echo "$COMMIT" > "$OUT/sensum-cms/BUILD"
 
+# ---- integrity manifest: hashes of the public files, so the scheduled check can
+# report files changed, added or removed on the server (Watchdog "integrity") ----
+php -r '
+require $argv[1] . "/sensum-cms/src/Watchdog.php";
+$root = $argv[1] . "/public_html";
+$files = [];
+$it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
+foreach ($it as $f) {
+    $p = substr($f->getPathname(), strlen($root) + 1);
+    if ($f->isFile() && !in_array($p, ["index.html", "404.html", "privacy-notice.html"], true)
+        && (!str_starts_with($p, "assets/uploads/") || $f->getFilename() === ".htaccess")) {
+        $files[$p] = Sensum\Cms\Watchdog::fileHash($f->getPathname());
+    }
+}
+ksort($files);
+file_put_contents($argv[1] . "/sensum-cms/release-manifest.json", json_encode(["createdAt" => time(), "commit" => $argv[2], "files" => $files], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+' "$OUT" "$COMMIT"
+
 # ---- sanity checks ----
 for f in "$OUT/public_html/index.html" "$OUT/public_html/api/index.php" "$OUT/public_html/admin/index.html" \
-         "$OUT/sensum-cms/bootstrap.php" "$OUT/sensum-cms/vendor/autoload.php" "$OUT/sensum-cms/templates/index.html.tpl"; do
+         "$OUT/sensum-cms/bootstrap.php" "$OUT/sensum-cms/vendor/autoload.php" "$OUT/sensum-cms/templates/index.html.tpl" \
+         "$OUT/sensum-cms/release-manifest.json"; do
   [ -f "$f" ] || { echo "Missing $f" >&2; exit 1; }
 done
 BAD="$(find "$OUT" \( -name '.env' -o -name '*.sqlite' -o -name 'node_modules' -o -name 'router.php' -o -name 'LOCAL-TEST-*' \); find "$OUT/public_html" -name '*.md')"

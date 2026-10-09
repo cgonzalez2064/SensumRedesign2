@@ -33,7 +33,7 @@ final class Emails
     private function action(string $to, string $lang, string $prefix, array $vars, string $link, ?string $ignoreKey = null): array
     {
         $s = $this->strings($lang);
-        $vars += ['support' => $this->app->config->supportEmail()];
+        $vars += ['support' => $this->app->mailSettings()->supportEmail()];
         $greeting = self::fill($s['greeting'], $vars);
         $intro = self::fill($s["{$prefix}.intro"], $vars);
         $action = self::fill($s["{$prefix}.action"], $vars);
@@ -61,7 +61,7 @@ final class Emails
     public function passwordChanged(array $user): array
     {
         $s = $this->strings($user['lang']);
-        $vars = ['name' => $user['name'], 'date' => date('d/m/Y H:i'), 'support' => $this->app->config->supportEmail()];
+        $vars = ['name' => $user['name'], 'date' => date('d/m/Y H:i'), 'support' => $this->app->mailSettings()->supportEmail()];
         $lines = [self::fill($s['greeting'], $vars), self::fill($s['changed.intro'], $vars), $s['changed.sessions'], self::fill($s['changed.notyou'], $vars)];
         $text = implode("\n\n", $lines) . "\n\n— {$s['brand']} · {$s['product']}\n{$s['footer']}\n";
         $html = implode('', array_map(fn ($l) => '<p>' . self::esc($l) . '</p>', $lines));

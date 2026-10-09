@@ -33,7 +33,7 @@ final class Alerts
 
     public function recipient(): string
     {
-        return $this->app->config->string('ALERT_EMAIL', $this->app->config->supportEmail());
+        return $this->app->mailSettings()->alertEmail();
     }
 
     public function cooldownMinutes(): int
@@ -49,7 +49,7 @@ final class Alerts
     /** Called by ErrorLog for each critical entry. */
     public function queue(?int $logId, array $entry): void
     {
-        if (!$this->enabled()) {
+        if (!$this->enabled() || !$this->app->watchdog()->enabled('critical_errors')) {
             $this->app->errors()->setAlert($logId, 'off');
             return;
         }

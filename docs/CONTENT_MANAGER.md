@@ -88,6 +88,9 @@ sensum-cms/                          (PRIVATE — outside public_html)
 | Dashboard | Site status, last publish, sync check + republish (admins), recent activity, monitoring status; diagnostics and recent errors for the owner |
 | Monitoring (owner) | Error log with filters and details, key figures (24 h / 7 d / 30 d), most frequent errors, system details, e-mail alerts for critical errors + test e-mail (§9a) |
 | Monthly report (owner) | Short plain-language site-health and visibility report for clients; recipients (owner always copied), preview, test, send, history; reminder after day 5 (§9b) |
+| E-mail settings (owner) | Panel's SMTP sending account (+ Reply-To), contact-form receivers/sender/method, problem-report and alert recipients, optional Cloudflare Turnstile keys; password re-check, secrets encrypted at rest, security notice, test buttons; `EMAIL_SETTINGS_LOCKED` for .env-only setups |
+| Contact-form captcha | Built-in invisible proof-of-work captcha (always on, no keys) + optional Cloudflare Turnstile; counts of messages and blocked spam in the weekly summary |
+| Automatic alerts (owner) | 12 rules with their own periods and de-duplication (critical errors, file integrity, sign-in attack, new device, certificate, backup, scheduler, disk, error spike, weekly digest, monthly security review, report reminder), on/off per rule; file-integrity check with "accept" (password) |
 | Users (owner) | Invite, change access type, disable/enable, delete (§2b) |
 | Interface | Spanish by default, English optional; light/dark/system theme; responsive from 320 px phones to large monitors; reduced-motion aware |
 
@@ -206,6 +209,9 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 | `POST /api/setup` | public, one-time | first admin with `SETUP_TOKEN` |
 | `GET /api/dashboard` | user | dashboard data (admins get activity; the owner also gets diagnostics and errors) |
 | `GET /api/monitor/summary` · `GET /api/monitor/errors?severity=&source=&days=&q=&page=` · `POST /api/monitor/test-alert` | owner | Monitoring page, error log, test alert |
+| `PUT /api/monitor/alerts` · `GET /api/monitor/integrity` · `POST /api/monitor/integrity/accept` | owner | automatic-alert toggles; site-file findings; accept current files (password) |
+| `GET`/`PUT /api/settings/email` · `POST /api/settings/email/test` | owner | e-mail settings (PUT needs `currentPassword`), test e-mails (`target`: `panel` / `contact`) |
+| `GET /assets/contact-handler.php?challenge=1` | public | signed single-use captcha challenge for the contact form |
 | `POST /api/site/republish` | admin | regenerate pages |
 | `GET /api/content` · `PUT /api/content/{section}` | user | read/save a section (optimistic `version`) |
 | `POST /api/content/translate` | user | machine-translate field text ES⇄EN for review (saves nothing; off without `DEEPL_API_KEY`) |
@@ -387,8 +393,11 @@ gzipped SDK on every page — heavier than needed here), Google Analytics 4
 
 ## 10. Configuration (`.env`)
 
-All keys are documented in `.env.example`. Required in production: `APP_URL`,
-`SMTP_*`. Common: `SUPPORT_EMAIL` (default `it@gruposensum.com`),
+All keys are documented in `.env.example`. Required in production: `APP_ENV`,
+`APP_URL`, `OWNER_EMAIL`. E-mail (`SMTP_*`, `SUPPORT_EMAIL`, `ALERT_EMAIL`,
+`CONTACT_*`, `TURNSTILE_*`) is normally set by the owner in the panel (panel values
+win; `.env` is the fallback; `EMAIL_SETTINGS_LOCKED=true` = .env only). Alerts:
+`ALERT_LOGIN_FAILURES`, `ALERT_ERROR_SPIKE`. Common: `SUPPORT_EMAIL` (default `it@gruposensum.com`),
 `SESSION_IDLE_MINUTES`, `SESSION_ABSOLUTE_HOURS`, `INVITE_TTL_HOURS`,
 `RESET_TTL_MINUTES`, `UPLOAD_MAX_MB`, `PUBLIC_ERROR_REPORTING`,
 `CF_WEB_ANALYTICS_TOKEN`, `DEEPL_API_KEY` + `TRANSLATE_DAILY_CHAR_LIMIT`
@@ -396,15 +405,16 @@ All keys are documented in `.env.example`. Required in production: `APP_URL`,
 `ALERT_COOLDOWN_MINUTES`, `ALERT_DAILY_MAX`, `ERROR_LOG_DAYS`, `DISK_WARN_MB`
 (monitoring), `PAGESPEED_ENABLED`, `PAGESPEED_API_KEY` (monthly report), `SETUP_TOKEN` (remove after first use), `PUBLIC_DIR`
 (only if the folders aren't side by side), `APP_KEY` (optional; otherwise
-generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`
-(ignored unless `APP_ENV=development`).
+generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`,
+`PAGESPEED_API_URL`, `TURNSTILE_VERIFY_URL` (ignored in production).
 
 ## 11. Command line (`php sensum-cms/bin/console …`)
 
 `check` · `migrate` · `create-admin` · `publish` · `render <dir>` ·
 `mail:test <email>` · `translate:test` (checks the DeepL key, shows usage) ·
-`monitor` (scheduled check, cron) · `alert:test` ·
-`reports:retry` · `backup` (consistent DB copy, keeps 14)
+`monitor` (scheduled check + automatic alerts, cron) · `alert:test` ·
+`reports:retry` · `backup` (consistent DB copy, keeps 14) ·
+`integrity:accept` (record the current public files as expected)
 
 ## 12. Logs, backups and recovery
 

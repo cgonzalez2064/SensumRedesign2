@@ -190,6 +190,7 @@ final class Auth
         $this->app->db()->run('UPDATE users SET last_login_at = ? WHERE id = ?', [time(), $user['id']]);
         $session = $this->startSession($req, (int) $user['id']);
         $this->app->activity((int) $user['id'], 'login', '', [], $ip);
+        $this->app->watchdog()->onLogin($user, $req->userAgent(), $ip);
         return ['user' => $user, 'csrf' => $session['csrf']];
     }
 

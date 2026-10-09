@@ -45,7 +45,8 @@ test('templates contain no leftover hard-coded contact details', () => {
 
 test('the dev router serves the same CSP as the production .htaccess', () => {
   const root = readFileSync(join(ROOT, '.htaccess'), 'utf8').match(/Header always set Content-Security-Policy "(.*)"/)[1];
-  assert.match(root, /script-src 'self';/);
+  assert.match(root, /script-src 'self' https:\/\/challenges\.cloudflare\.com;/, 'only the Turnstile captcha may add scripts');
+  assert.match(root, /frame-src https:\/\/challenges\.cloudflare\.com;/);
   assert.doesNotMatch(root, /unsafe-inline|unsafe-eval/);
   const admin = readFileSync(join(ROOT, 'admin/.htaccess'), 'utf8').match(/Header always set Content-Security-Policy "(.*)"/)[1];
   assert.doesNotMatch(admin, /unsafe-inline|unsafe-eval|https:/);

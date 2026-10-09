@@ -659,6 +659,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .form-note a{ color: var(--gray-text-2); text-decoration:underline; }
 .form-fallback{ font-size:.85rem; color: var(--gray-text); margin-top:.6rem; }
 .form-fallback a{ color: var(--brand-orange); font-weight:600; }
+/* Captcha note (anti-spam check runs in the background — assets/main.js) */
+.form-captcha{ display:flex; align-items:center; gap:.4rem; font-size:.8rem; color: var(--gray-mid); margin-top:.7rem; }
+.form-captcha-icon{ width:14px; height:14px; flex:none; }
+.form-captcha[data-state="ok"]{ color:#1e7e34; }
+.form-captcha[data-state="error"]{ color:#b3261e; }
+.form-turnstile:not(:empty){ margin:.2rem 0 .9rem; }
 .form-status{ margin-top:1rem; font-size:.9rem; font-weight:600; display:none; }
 .form-status.show{ display:block; }
 .form-status.ok{ color:#1e7e34; }

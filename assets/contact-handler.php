@@ -17,14 +17,29 @@
  *    shipping a client-side "CSRF token" that would just be a hardcoded
  *    secret sitting in publicly-readable JS (security theater, not real
  *    protection), this endpoint relies on: a same-origin Origin/Referer
- *    allowlist (below), per-client rate limiting, a honeypot field, and
- *    a minimum-completion-time check. If a login/session system is ever
+ *    allowlist (below), per-client rate limiting, a honeypot field,
+ *    a minimum-completion-time check and a captcha. If a login/session system is ever
  *    added to this site, switch to real server-issued, per-session CSRF
  *    tokens at that point.
- *  - Mail delivery: uses PHP's built-in mail(), which works out of the
- *    box on Namecheap shared hosting. For better deliverability, see
- *    the "SMTP upgrade hook" section below and DEPLOY.md — SPF/DKIM/
- *    DMARC records must exist for the sending domain either way.
+ *  - Mail delivery: when the Content Manager is installed next to the
+ *    site and the owner has saved the contact-form settings (panel →
+ *    Administración → Correo), it decides recipients, sender and whether
+ *    to use its SMTP account. Otherwise this script uses PHP's built-in
+ *    mail() with the values below (works out of the box on Namecheap).
+ *    SPF/DKIM/DMARC records must exist for the sending domain either way.
+ *  - Captcha (anti-spam), two layers:
+ *      1. Built-in, always on, no account or keys: an invisible
+ *         proof-of-work challenge. The page asks this script for a
+ *         signed, single-use challenge (GET ?challenge=1), the browser
+ *         finds the matching number in the background while the visitor
+ *         types, and the answer is checked here (signature, expiry,
+ *         solution, never reused).
+ *      2. Optional Cloudflare Turnstile: when the owner saves a site key
+ *         and secret key in the panel (Administración → Correo), the
+ *         page shows Turnstile too and its token is verified with
+ *         Cloudflare before the message is sent.
+ *    Without JavaScript the form cannot pass the captcha; the visitor is
+ *    told to use WhatsApp/phone instead (the form already shows them).
  */
 
 // ------------------------------------------------------------
@@ -52,11 +67,40 @@ const ALLOWED_SERVICES = [
     'Mantenimiento preventivo',
     'Otro',
 ];
-const ALLOWED_FIELDS = ['name', 'phone', 'email', 'service', 'message', 'website', 'loaded_at'];
+const ALLOWED_FIELDS = ['name', 'phone', 'email', 'service', 'message', 'website', 'loaded_at', 'captcha', 'cf-turnstile-response'];
+// Built-in captcha: the browser tries up to this many numbers (about half on
+// average): well under a second on a computer, 1–3 s on a phone, done in
+// the background while the visitor types.
+const CAPTCHA_MAX_NUMBER = 250000;
+const CAPTCHA_TTL_S = 1800;       // a challenge is valid for 30 minutes
 const MAX_REQUEST_BYTES = 51200; // 50 KB — generous for a text-only form, well under abuse territory
 const MIN_COMPLETION_MS = 3000;  // real users take at least a few seconds to fill this out
 const RATE_LIMIT_WINDOW_S = 600; // 10 minutes
 const RATE_LIMIT_MAX = 5;        // max submissions per client hash per window
+
+/**
+ * The Content Manager installed next to this site, if any (same lookup as
+ * api/index.php). Optional: the form works the same without it.
+ */
+function sensumCmsApp() {
+    static $app = false;
+    if ($app !== false) {
+        return $app;
+    }
+    $app = null;
+    foreach ([(string) getenv('SENSUM_CMS_DIR'), dirname(__DIR__, 2) . '/sensum-cms', dirname(__DIR__) . '/cms'] as $dir) {
+        if ($dir !== '' && is_file($dir . '/bootstrap.php') && is_file($dir . '/vendor/autoload.php')) {
+            try {
+                $app = require $dir . '/bootstrap.php';
+            } catch (\Throwable $e) {
+                error_log('[sensum-contact] cms_unavailable');
+                $app = null;
+            }
+            break;
+        }
+    }
+    return $app;
+}
 
 // ------------------------------------------------------------
 // Never leak server internals into the response — errors are logged
@@ -118,6 +162,12 @@ function respond($httpStatus, $ok, $payload = []) {
 // ------------------------------------------------------------
 // Method + content-type checks
 // ------------------------------------------------------------
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && isset($_GET['challenge'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    header('X-Robots-Tag: noindex');
+    echo json_encode(captchaChallenge());
+    exit;
+}
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     respond(405, false, ['error' => 'method_not_allowed']);
 }
@@ -141,14 +191,29 @@ if ($contentLength > MAX_REQUEST_BYTES) {
 // Origin / Referer allowlist (same-origin policy for this public,
 // unauthenticated form — see the CSRF note above).
 // ------------------------------------------------------------
+function allowedOrigins() {
+    $origins = ALLOWED_ORIGINS;
+    // The Content Manager's own address (APP_URL) is also this site — e.g. a
+    // local copy at http://127.0.0.1:8080 during testing.
+    $app = sensumCmsApp();
+    if ($app) {
+        try {
+            $origins = array_values(array_unique(array_merge($origins, $app->config->allowedOrigins())));
+        } catch (\Throwable $e) {
+            // keep the built-in list
+        }
+    }
+    return $origins;
+}
+
 function originAllowed() {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     if ($origin !== '') {
-        return in_array(rtrim($origin, '/'), ALLOWED_ORIGINS, true);
+        return in_array(rtrim($origin, '/'), allowedOrigins(), true);
     }
     $referer = $_SERVER['HTTP_REFERER'] ?? '';
     if ($referer !== '') {
-        foreach (ALLOWED_ORIGINS as $allowed) {
+        foreach (allowedOrigins() as $allowed) {
             if (stripos($referer, $allowed . '/') === 0 || $referer === $allowed) {
                 return true;
             }
@@ -199,6 +264,112 @@ function rateLimitDir() {
         @file_put_contents($denyFile, "Require all denied\n");
     }
     return is_dir($fallback) ? $fallback : sys_get_temp_dir();
+}
+
+// ------------------------------------------------------------
+// Built-in captcha (proof of work)
+// ------------------------------------------------------------
+/** Secret that signs challenges: from the Content Manager when installed, otherwise a private key file. */
+function captchaKey() {
+    static $key = null;
+    if ($key !== null) {
+        return $key;
+    }
+    $app = sensumCmsApp();
+    if ($app) {
+        try {
+            return $key = hash_hmac('sha256', 'contact-captcha', $app->key());
+        } catch (\Throwable $e) {
+            // fall back to the key file
+        }
+    }
+    $file = rateLimitDir() . '/captcha.key';
+    if (!is_file($file)) {
+        $tmp = $file . '.' . bin2hex(random_bytes(4));
+        @file_put_contents($tmp, bin2hex(random_bytes(32)));
+        @chmod($tmp, 0600);
+        if (!@rename($tmp, $file)) {
+            @unlink($tmp);
+        }
+    }
+    $stored = is_file($file) ? trim((string) @file_get_contents($file)) : '';
+    if (strlen($stored) < 32) {
+        // Storage not writable: a per-process key still works for one request
+        // pair only on the same worker, so prefer failing closed and logging.
+        error_log('[sensum-contact] captcha_key_unavailable');
+        $stored = hash('sha256', __FILE__ . php_uname() . (string) @filemtime(__FILE__));
+    }
+    return $key = $stored;
+}
+
+/** A signed, expiring challenge: the browser must find `number` with sha256(salt . number) === challenge. */
+function captchaChallenge() {
+    $salt = bin2hex(random_bytes(12)) . '?expires=' . (time() + CAPTCHA_TTL_S);
+    $challenge = hash('sha256', $salt . random_int(0, CAPTCHA_MAX_NUMBER));
+    return [
+        'algorithm' => 'SHA-256',
+        'challenge' => $challenge,
+        'maxnumber' => CAPTCHA_MAX_NUMBER,
+        'salt' => $salt,
+        'signature' => hash_hmac('sha256', $challenge, captchaKey()),
+    ];
+}
+
+/** Checks the browser's answer: signed by us, not expired, correct, and never used before. */
+function captchaValid($payload) {
+    if (!is_string($payload) || $payload === '' || strlen($payload) > 1024) {
+        return false;
+    }
+    $data = json_decode((string) base64_decode($payload, true), true);
+    if (!is_array($data)) {
+        return false;
+    }
+    foreach (['algorithm', 'challenge', 'salt', 'signature'] as $k) {
+        if (!isset($data[$k]) || !is_string($data[$k])) {
+            return false;
+        }
+    }
+    $number = $data['number'] ?? null;
+    if ($data['algorithm'] !== 'SHA-256' || !is_int($number) || $number < 0 || $number > CAPTCHA_MAX_NUMBER) {
+        return false;
+    }
+    if (!preg_match('/^[0-9a-f]{24}\?expires=(\d{10})$/', $data['salt'], $m)) {
+        return false;
+    }
+    $expires = (int) $m[1];
+    if ($expires < time() || $expires > time() + CAPTCHA_TTL_S + 60) {
+        return false;
+    }
+    if (!hash_equals(hash_hmac('sha256', $data['challenge'], captchaKey()), $data['signature'])
+        || !hash_equals($data['challenge'], hash('sha256', $data['salt'] . $number))) {
+        return false;
+    }
+    return captchaFirstUse($data['challenge'], $expires);
+}
+
+/** Single use: remembers solved challenges until they expire. */
+function captchaFirstUse($challenge, $expires) {
+    $file = rateLimitDir() . '/captcha-used.json';
+    $fh = @fopen($file, 'c+');
+    if (!$fh) {
+        error_log('[sensum-contact] captcha_store_unavailable');
+        return true; // cannot remember answers: signature + expiry still apply
+    }
+    flock($fh, LOCK_EX);
+    $used = json_decode((string) stream_get_contents($fh), true);
+    $used = is_array($used) ? $used : [];
+    $now = time();
+    $used = array_filter($used, function ($exp) use ($now) { return is_int($exp) && $exp >= $now; });
+    $first = !isset($used[$challenge]);
+    if ($first) {
+        $used[$challenge] = $expires;
+        ftruncate($fh, 0);
+        rewind($fh);
+        fwrite($fh, json_encode($used));
+    }
+    flock($fh, LOCK_UN);
+    fclose($fh);
+    return $first;
 }
 
 function clientHash() {
@@ -293,8 +464,21 @@ function utf8Len($s) {
 
 // Honeypot: real users never see or fill this field. If it has a value,
 // silently pretend success so bots don't learn the check exists.
+/** Counts blocked spam / sent messages in the Content Manager (weekly summary). */
+function countContact($what) {
+    $app = sensumCmsApp();
+    if ($app) {
+        try {
+            $app->contactForm()->count($what);
+        } catch (\Throwable $e) {
+            // statistics only
+        }
+    }
+}
+
 $honeypot = field('website');
 if ($honeypot !== '' && utf8Len($honeypot) <= 200) {
+    countContact('blocked');
     respond(200, true);
 }
 
@@ -307,7 +491,30 @@ $loadedAtRaw = $_POST['loaded_at'] ?? '';
 if ($loadedAtRaw !== '' && ctype_digit((string) $loadedAtRaw)) {
     $elapsedMs = (microtime(true) * 1000) - (float) $loadedAtRaw;
     if ($elapsedMs < MIN_COMPLETION_MS) {
+        countContact('blocked');
         respond(200, true);
+    }
+}
+
+// Captcha. A real visitor's browser solves it in the background; a request
+// without a valid answer is refused (status 400, error "captcha_failed",
+// so the page can ask the visitor to try again).
+if (!captchaValid($_POST['captcha'] ?? '')) {
+    error_log('[sensum-contact] captcha_failed');
+    countContact('blocked');
+    respond(400, false, ['error' => 'captcha_failed']);
+}
+$cmsApp = sensumCmsApp();
+if ($cmsApp) {
+    try {
+        $turnstile = $cmsApp->contactForm()->verifyTurnstile((string) ($_POST['cf-turnstile-response'] ?? ''), (string) ($_SERVER['REMOTE_ADDR'] ?? ''));
+    } catch (\Throwable $e) {
+        $turnstile = null; // the built-in captcha already passed
+    }
+    if ($turnstile === false) {
+        error_log('[sensum-contact] turnstile_failed');
+        countContact('blocked');
+        respond(400, false, ['error' => 'captcha_failed']);
     }
 }
 
@@ -371,6 +578,24 @@ $headers = "From: " . SITE_NAME . " <" . FROM_EMAIL . ">\r\n"
 // to set this file up on the live server, and for the SPF/DKIM/DMARC
 // records the sending domain needs either way.
 // ------------------------------------------------------------
+$sent = null;
+// Content Manager settings first (owner → Administración → Correo).
+if ($cmsApp) {
+    try {
+        $sent = $cmsApp->contactForm()->deliver(['name' => $name, 'phone' => $phone, 'email' => $email, 'service' => $service, 'message' => $message]);
+    } catch (\Throwable $e) {
+        error_log('[sensum-contact] cms_delivery_threw');
+        $sent = null;
+    }
+}
+if ($sent === true) {
+    countContact('sent');
+    respond(200, true);
+}
+if ($sent === false) {
+    error_log('[sensum-contact] mail_send_failed');
+    respond(500, false, ['error' => 'send_failed']);
+}
 $sent = false;
 $smtpConfigPath = dirname(__DIR__, 2) . '/sensum-mail-config.php';
 if (is_file($smtpConfigPath)) {

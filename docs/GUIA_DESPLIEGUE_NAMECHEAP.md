@@ -9,8 +9,13 @@ Tiempo estimado: 1 a 2 horas la primera vez. No necesitas conocimientos de
 programación; sí acceso a **cPanel** y a la cuenta de **Namecheap**.
 
 > **Nunca envíes contraseñas por correo ni por chat** (tampoco a soporte). Las
-> contraseñas y claves solo se escriben en el archivo `.env` del servidor (paso 9)
-> y en un gestor de contraseñas.
+> contraseñas y claves solo se escriben en el panel (**Administración → Correo**, donde
+> se guardan cifradas), en el archivo `.env` del servidor (paso 9) y en un gestor de
+> contraseñas.
+
+**Novedad:** el correo (cuenta de envío, formulario de contacto, destino de reportes y
+alertas) y el captcha del formulario **se configuran desde el panel**, no en archivos.
+El `.env` queda con 5 líneas obligatorias.
 
 ---
 
@@ -21,7 +26,7 @@ programación; sí acceso a **cPanel** y a la cuenta de **Namecheap**.
 ├── public_html/                    ← lo que ve el público (sitio web)
 │   ├── index.html, 404.html, privacy-notice.html   ← páginas (las regenera el panel)
 │   ├── assets/                     ← estilos, scripts, imágenes del diseño
-│   │   ├── contact-handler.php     ← formulario de contacto (envía con mail() de PHP)
+│   │   ├── contact-handler.php     ← formulario de contacto (captcha + envío según el panel)
 │   │   └── uploads/                ← FOTOS y PDF que se suben desde el panel
 │   ├── admin/                      ← el panel: https://sensumconstrucciones.com/admin/
 │   └── api/index.php               ← única puerta de entrada al panel
@@ -45,7 +50,7 @@ carpeta `uploads` y la base de datos.
 (SQLite). **No hay que crear nada en cPanel → MySQL Databases**: no hay usuario ni
 contraseña de base de datos que configurar. Se crea y se actualiza sola la primera
 vez que alguien entra al panel. Para respaldarla basta con copiar ese archivo (o
-usar el comando de respaldo del paso 15).
+usar el comando de respaldo del paso 16).
 
 ---
 
@@ -55,12 +60,13 @@ usar el comando de respaldo del paso 15).
 |---|---|---|
 | Acceso a cPanel | Namecheap → Dashboard → Hosting List → **Go to cPanel** | Todo el proceso |
 | Usuario de cPanel (aparece arriba a la derecha en cPanel) | cPanel | Rutas como `/home/USUARIO/` |
-| Nombre del servidor de correo | cPanel → Email Accounts → **Connect Devices** (o el correo de bienvenida de Namecheap, sección *Account Information*) | `SMTP_HOST` |
-| Contraseña nueva para `no-reply@sensumconstrucciones.com` | La creas en el paso 6 (usa un gestor de contraseñas) | Envío de correos del panel |
-| Buzón que recibe el formulario de contacto | Hoy: `contacto@sensumconstrucciones.com` | Que los mensajes de clientes lleguen |
+| Nombre del servidor de correo | cPanel → Email Accounts → **Connect Devices** (o el correo de bienvenida de Namecheap, sección *Account Information*) | Panel → Correo → Servidor |
+| Contraseña nueva para `notificaciones@sensumconstrucciones.com` | La creas en el paso 6 (usa un gestor de contraseñas) | Cuenta de envío del panel |
+| Buzón que recibe el formulario de contacto | `contacto@sensumconstrucciones.com` | Que los mensajes de clientes lleguen |
 | Correo de soporte | `it@gruposensum.com` | Reportes, alertas, recordatorios y cuenta propietaria |
+| (Opcional, recomendado) Cuenta gratuita de Cloudflare | https://dash.cloudflare.com (paso 13.3) | Captcha Turnstile en el formulario |
 | (Opcional) Clave de DeepL API Free | https://www.deepl.com/pro-api | Traducción automática ES ⇄ EN |
-| (Opcional) Clave de Google PageSpeed | Google Cloud Console (paso 17) | «Visibilidad en Google» del informe mensual |
+| (Opcional) Clave de Google PageSpeed | Google Cloud Console (paso 18) | «Visibilidad en Google» del informe mensual |
 | (Opcional) Cuenta gratuita de Better Stack | https://betterstack.com | Aviso si el sitio deja de responder |
 
 El dominio debe apuntar al hosting de Namecheap (DNS de Namecheap hosting), o el
@@ -74,7 +80,7 @@ certificado HTTPS no se podrá emitir.
 2. Selecciona todo → **Compress** → *Zip Archive* → descarga el zip a tu computadora.
 3. Opcional y recomendado: cPanel → **Backup** → *Download a Full Account Backup*.
 
-Si algo sale mal, con ese zip vuelves al sitio anterior en minutos (paso 21).
+Si algo sale mal, con ese zip vuelves al sitio anterior en minutos (paso 22).
 
 ---
 
@@ -91,7 +97,7 @@ Se crea `dist/release-AAAAMMDD-xxxxxxx.zip` con dos carpetas: `public_html` y
 necesitas Composer ni Git en el servidor**.
 
 > Las fotos que subiste en tu panel local **no** van en el paquete (viven en tu
-> base de datos local). En producción se vuelven a subir desde el panel (paso 14).
+> base de datos local). En producción se vuelven a subir desde el panel (paso 16).
 
 ---
 
@@ -136,32 +142,43 @@ Comprobación rápida: deben existir `/home/USUARIO/sensum-cms/bootstrap.php`,
 
 ## 6. Correo electrónico (lo necesario para que TODO envíe y reciba)
 
-El sitio envía correos de dos formas distintas:
+Todo se configura después desde el panel (**Administración → Correo**, paso 13). Aquí
+solo creas los correos en cPanel.
 
-| Qué envía | Cómo | Desde | Hacia |
+| Qué envía | Desde (remitente) | Hacia | Respuestas van a |
 |---|---|---|---|
-| **Formulario de contacto** del sitio público | función `mail()` de PHP del hosting | `no-reply@sensumconstrucciones.com` | `contacto@sensumconstrucciones.com` |
-| **Panel**: invitaciones, contraseñas, «Reportar un problema», alertas de errores críticos, informe mensual, recordatorios | SMTP con usuario y contraseña (PHPMailer) | `no-reply@sensumconstrucciones.com` | Según el caso (soporte: `it@gruposensum.com`) |
+| **Formulario de contacto** del sitio | `formulario@sensumconstrucciones.com` | `contacto@sensumconstrucciones.com` | Al visitante (responder = escribirle al cliente) |
+| **Panel**: invitaciones, contraseñas, «Reportar un problema», informe mensual, recordatorios | `notificaciones@sensumconstrucciones.com` | Según el caso | `soporte@sensumconstrucciones.com` |
+| **Alertas automáticas** y errores críticos | `notificaciones@sensumconstrucciones.com` | `it@gruposensum.com` | `soporte@sensumconstrucciones.com` |
 
-### 6.1 Crear el buzón que envía: `no-reply@sensumconstrucciones.com`
+### 6.1 Correos recomendados para `@sensumconstrucciones.com`
 
-1. cPanel → **Email Accounts** → **+ Create**.
-2. Usuario: `no-reply`, dominio `sensumconstrucciones.com`, contraseña larga generada
-   (guárdala en tu gestor de contraseñas).
-3. En la lista, junto al buzón, clic en **Connect Devices** → *Mail Client Manual
-   Settings*. Anota:
-   - **Outgoing Server** (servidor SMTP). Suele ser `mail.sensumconstrucciones.com`
-     o el nombre del servidor (por ejemplo `server123.web-hosting.com`). Si el
-     certificado del correo no coincide con tu dominio, usa el nombre del servidor.
-   - **SMTP Port:** `465` (SSL). Alternativa: `587` (TLS).
+cPanel → **Email Accounts** (buzones) y cPanel → **Forwarders** (reenvíos):
 
-### 6.2 El buzón que recibe el formulario: `contacto@sensumconstrucciones.com`
+| Correo | Crear como | Para qué | Dónde se usa en el panel |
+|---|---|---|---|
+| `contacto@` | **Buzón** (si ya existe, déjalo) | Recibe los mensajes del formulario y lo que escriben los clientes. Lo atiende ventas / atención al cliente. | Correo → «Recibe los mensajes» |
+| `notificaciones@` | **Buzón** con contraseña larga | **Cuenta de envío** del panel (SMTP). Envía invitaciones, contraseñas, reportes, informe mensual, alertas y, con el método recomendado, también el formulario. | Correo → Cuenta de envío del panel |
+| `formulario@` | **Reenvío** → `contacto@` | Remitente visible de los mensajes del formulario: permite filtrarlos en la bandeja. Si algún rebote llega, termina en `contacto@`. | Correo → «Correo que envía los mensajes» |
+| `soporte@` | **Reenvío** → `it@gruposensum.com` (o buzón propio) | Si alguien responde un aviso o el informe mensual, la respuesta llega a soporte. | Correo → «Las respuestas llegan a» |
+| `postmaster@` y `abuse@` | **Reenvío** → `it@gruposensum.com` | Direcciones estándar: otros proveedores avisan aquí de rebotes, bloqueos o spam. | — |
+| `dmarc@` | **Buzón** (sin revisar a diario) | Recibe los reportes automáticos DMARC (paso 6.3) sin llenar el correo de IT. | — |
 
-- Si ya existe (en este hosting u otro proveedor), no hay nada que hacer.
-- Si no existe: créalo en **Email Accounts**, o crea un **Forwarder** (cPanel →
-  Forwarders) para reenviarlo a quien atienda a los clientes.
-- Si algún día quieres otro destino, cambia `TO_EMAIL` en
-  `public_html/assets/contact-handler.php` (línea 33).
+Al crear `notificaciones@`: en la lista, junto al buzón, clic en **Connect Devices** →
+*Mail Client Manual Settings* y anota el **Outgoing Server** (suele ser
+`mail.sensumconstrucciones.com` o el nombre del servidor, por ejemplo
+`server123.web-hosting.com`) y el puerto **465 (SSL)**. Si el certificado del correo no
+coincide con tu dominio, usa el nombre del servidor.
+
+> Si ya tenías `no-reply@sensumconstrucciones.com`, puedes usarlo en lugar de
+> `notificaciones@`; recomendamos `notificaciones@` + `soporte@` porque las respuestas
+> de los clientes a un informe no se pierden.
+
+### 6.2 Mínimo indispensable
+
+Si prefieres crear lo menos posible: **`contacto@`** (buzón) y **`notificaciones@`**
+(buzón). En el panel usa `notificaciones@` también como remitente del formulario y deja
+vacío «Las respuestas llegan a» (entonces van a `it@gruposensum.com`).
 
 ### 6.3 Que los correos no caigan en spam (muy importante)
 
@@ -171,11 +188,11 @@ cPanel → **Email Deliverability** → `sensumconstrucciones.com`:
    the suggested record**.
 2. **DMARC** (cPanel → Zone Editor → *+ Add Record* → TXT):
    - Nombre: `_dmarc.sensumconstrucciones.com`
-   - Valor: `v=DMARC1; p=quarantine; rua=mailto:it@gruposensum.com`
+   - Valor: `v=DMARC1; p=quarantine; rua=mailto:dmarc@sensumconstrucciones.com`
 3. Espera de 15 minutos a unas horas a que se propague.
 
 `it@gruposensum.com` es de otro dominio: pide a quien administra ese correo que
-**acepte o marque como seguro** a `no-reply@sensumconstrucciones.com`.
+**acepte o marque como seguro** a `notificaciones@sensumconstrucciones.com`.
 
 ### 6.4 Límites de Namecheap (Stellar Plus)
 
@@ -232,23 +249,19 @@ APP_TIMEZONE=America/Guatemala
 # --- Cuenta propietaria (gestiona usuarios, Monitoreo e Informe mensual) ---
 OWNER_EMAIL=it@gruposensum.com
 
-# --- Correo (valores del paso 6.1) ---
+# --- Correo ---
+# La cuenta de envío, el formulario, los reportes y las alertas se configuran en el
+# panel → Administración → Correo (paso 13). No hace falta escribir aquí el SMTP.
 MAIL_DRIVER=smtp
-SMTP_HOST=<servidor de Connect Devices, ej. mail.sensumconstrucciones.com>
-SMTP_PORT=465
-SMTP_ENCRYPTION=ssl
-SMTP_USERNAME=no-reply@sensumconstrucciones.com
-SMTP_PASSWORD=<contraseña del buzón no-reply>
-SMTP_FROM_ADDRESS=no-reply@sensumconstrucciones.com
-SMTP_FROM_NAME="Sensum Construcciones"
 SMTP_TIMEOUT=15
 
-# --- Soporte y alertas ---
-SUPPORT_EMAIL=it@gruposensum.com
+# --- Alertas (destino y cuáles se envían: panel → Correo y Monitoreo) ---
 ALERTS_ENABLED=true
-ALERT_EMAIL=it@gruposensum.com
 ALERT_COOLDOWN_MINUTES=60
 ALERT_DAILY_MAX=20
+ALERT_LOGIN_FAILURES=10
+ALERT_ERROR_SPIKE=25
+DISK_WARN_MB=500
 
 # --- Opcionales (déjalos vacíos si aún no los tienes) ---
 DEEPL_API_KEY=
@@ -264,8 +277,14 @@ ERROR_LOG_DAYS=180
 PUBLIC_ERROR_REPORTING=false
 ```
 
-Guarda y pon el permiso del archivo en **600**. Si usas el puerto 587, cambia
-`SMTP_PORT=587` y `SMTP_ENCRYPTION=tls`.
+Guarda y pon el permiso del archivo en **600**.
+
+> **Alternativa (opcional):** si prefieres que el correo no se pueda cambiar desde el
+> panel, escribe en `.env` los valores `SMTP_HOST`, `SMTP_PORT`, `SMTP_ENCRYPTION`,
+> `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_ADDRESS`, `SMTP_REPLY_TO`,
+> `SUPPORT_EMAIL`, `ALERT_EMAIL`, `CONTACT_TO`, `CONTACT_FROM_ADDRESS`,
+> `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` y agrega `EMAIL_SETTINGS_LOCKED=true`.
+> La página Correo queda en solo lectura.
 
 Comprueba la instalación: abre `https://sensumconstrucciones.com/api/health`. Debe
 mostrar `"status":"ok"`. (Si dice `service_unavailable`, revisa el paso 5.)
@@ -274,12 +293,12 @@ mostrar `"status":"ok"`. (Si dice `service_unavailable`, revisa el paso 5.)
 
 ## 10. Activar la Terminal de cPanel (una sola vez)
 
-Los pasos 11, 12 y 15 son más fáciles con la Terminal:
+Los pasos 11, 12 y 16 son más fáciles con la Terminal:
 
 1. cPanel → **Manage Shell** (sección *Exclusive for Namecheap Customers*) →
    activa **SSH Access**.
 2. Aparece **Terminal** en la sección *Advanced* de cPanel. Ábrela.
-3. Averigua la ruta exacta de PHP (la usarás en el paso 15):
+3. Averigua la ruta exacta de PHP (la usarás en el paso 16):
    ```bash
    which php
    ```
@@ -326,7 +345,62 @@ php ~/sensum-cms/bin/console publish
 
 ---
 
-## 13. Crear los usuarios del equipo
+## 13. Configurar el correo y el captcha en el panel
+
+Hazlo **antes de invitar usuarios** (las invitaciones salen por correo). Panel →
+**Administración → Correo** (solo la cuenta propietaria lo ve). Al guardar, el panel
+pide tu contraseña otra vez y te envía un aviso de seguridad por correo.
+
+### 13.1 Cuenta de envío del panel
+
+| Campo | Valor |
+|---|---|
+| Correo remitente | `notificaciones@sensumconstrucciones.com` |
+| Nombre del remitente | `Sensum Construcciones` |
+| Las respuestas llegan a | `soporte@sensumconstrucciones.com` |
+| Servidor / Puerto / Seguridad | Botón **«Completar con los datos de Namecheap»** (`mail.sensumconstrucciones.com`, `465`, `SSL`) o lo que anotaste en el paso 6.1 |
+| Usuario | `notificaciones@sensumconstrucciones.com` |
+| Contraseña | La del buzón `notificaciones@` (se guarda cifrada; nunca se vuelve a mostrar) |
+
+### 13.2 Formulario de contacto y destinatarios
+
+| Campo | Valor |
+|---|---|
+| Recibe los mensajes | `contacto@sensumconstrucciones.com` (hasta 3, separados por coma) |
+| Correo que envía los mensajes | `formulario@sensumconstrucciones.com` |
+| Nombre del remitente | `Sitio web Sensum` |
+| Cómo se envía | **Con la cuenta de envío del panel (recomendado)** |
+| Reportes de problemas | `it@gruposensum.com` |
+| Alertas automáticas y errores críticos | `it@gruposensum.com` |
+
+Pulsa **Guardar configuración** y luego **Enviar correo de prueba** y **Enviar mensaje
+de prueba**: deben llegar a `it@gruposensum.com` y a `contacto@` (revisa spam).
+
+### 13.3 Captcha del formulario (protección contra spam)
+
+- **Captcha integrado: siempre activo, no requiere nada.** El navegador del visitante
+  resuelve una verificación invisible (prueba de trabajo firmada por el servidor, de un
+  solo uso y con vencimiento de 30 minutos) mientras escribe. Se suma al campo trampa,
+  al tiempo mínimo de llenado y al límite de 5 envíos cada 10 minutos por visitante.
+- **Cloudflare Turnstile (opcional, recomendado):** agrega la detección de robots de
+  Cloudflare. Es gratis, no muestra imágenes y solo pide un clic si algo parece
+  sospechoso. **No necesitas mover el dominio a Cloudflare.**
+  1. Crea una cuenta en https://dash.cloudflare.com → **Turnstile** → **Add widget**.
+  2. Nombre `Sitio Sensum`, dominio `sensumconstrucciones.com` (agrega también
+     `www.sensumconstrucciones.com`), modo **Managed** → *Create*.
+  3. Copia la **Site Key** y la **Secret Key** en panel → Correo → *Protección contra
+     spam (captcha)* → **Guardar configuración**. El sitio se vuelve a publicar solo.
+  4. Para desactivarlo: borra la Site Key y guarda.
+  5. Si Cloudflare no responde, el formulario sigue funcionando con el captcha
+     integrado y Monitoreo lo registra. Si la Secret Key es incorrecta, también sigue
+     funcionando y llega una alerta para corregirla.
+- Si activas Turnstile, menciona en el Aviso de Privacidad que el formulario usa
+  Cloudflare Turnstile para prevenir spam (Cloudflare procesa datos técnicos del
+  navegador).
+
+---
+
+## 14. Crear los usuarios del equipo
 
 Solo la cuenta propietaria puede crear y modificar usuarios.
 
@@ -349,7 +423,7 @@ Solo la cuenta propietaria puede crear y modificar usuarios.
 
 ---
 
-## 14. Cargar las fotografías
+## 15. Cargar las fotografías
 
 Las fotos se suben desde el panel → **Fotos y archivos** (pestañas *Nosotros*,
 *Tipos de proyectos*, *Documentos*). Quedan en `public_html/assets/uploads/`.
@@ -361,7 +435,7 @@ en producción.
 
 ---
 
-## 15. Tareas programadas (Cron Jobs)
+## 16. Tareas programadas (Cron Jobs)
 
 cPanel → **Cron Jobs**. En *Cron Email* puedes dejar `it@gruposensum.com` (solo
 escribe si hay algún error). Agrega dos tareas, usando la ruta de PHP del paso 10:
@@ -375,9 +449,35 @@ Reemplaza `/usr/local/bin/php` por la ruta que mostró `which php` y `USUARIO` p
 usuario de cPanel. En el panel → **Monitoreo**, «Última revisión automática» debe
 mostrar la hora de la última ejecución después de unos minutos.
 
+### Alertas automáticas (llegan al correo de alertas del paso 13.2)
+
+La revisión automática envía estos avisos solo cuando hace falta, sin repetirlos.
+Cada uno se activa o desactiva en panel → **Monitoreo → Alertas automáticas**.
+
+| Alerta | Cuándo |
+|---|---|
+| Errores críticos | Al momento (máx. 1 por hora por el mismo error) |
+| Cambios en los archivos del sitio (archivos PHP nuevos, archivos raros entre las fotos, archivos modificados o borrados fuera del panel) | En cada revisión; recordatorio diario si sigue igual |
+| Intentos de acceso sospechosos (10+ contraseñas incorrectas en una hora) | Al detectarlo, máx. cada 6 h |
+| Inicio de sesión desde un dispositivo nuevo (a la persona que entró) | Al iniciar sesión |
+| Certificado HTTPS por vencer | 21, 7 y 1 día antes |
+| Respaldo atrasado (más de 48 h) | Una vez al día |
+| Revisión automática detenida (cron sin correr más de 2 h) | Máx. 1 por día |
+| Poco espacio en disco (menos de 500 MB) | Una vez al día |
+| Aumento inusual de errores (25+ en una hora) | Máx. cada 6 h |
+| Resumen técnico semanal (disponibilidad, errores, accesos, formulario y spam bloqueado, respaldos) | Lunes desde las 8:00 |
+| Revisión mensual de seguridad (cuentas inactivas, invitaciones, permisos, versión de PHP, respaldos, velocidad) | Día 1 de cada mes desde las 8:00 |
+| Recordatorio del informe mensual | Desde el día 6 si no se envió |
+| Cambio en la configuración de correo (siempre activo, a la cuenta propietaria) | Al guardar |
+
+La **primera revisión** guarda la lista de archivos del sitio como referencia (el
+paquete del paso 3 ya trae la suya: `sensum-cms/release-manifest.json`). Los cambios
+que cPanel hace por sí mismo en `.htaccess` (por ejemplo al cambiar la versión de PHP)
+se ignoran.
+
 ---
 
-## 16. Monitoreo externo (recomendado, gratis)
+## 17. Monitoreo externo (recomendado, gratis)
 
 El panel no puede avisarte si el servidor completo se cae. Para eso:
 
@@ -388,7 +488,7 @@ El panel no puede avisarte si el servidor completo se cae. Para eso:
 
 ---
 
-## 17. Informe mensual para clientes
+## 18. Informe mensual para clientes
 
 1. Panel → **Informe mensual** (solo la cuenta propietaria).
 2. **Destinatarios:** agrega los correos de tus clientes (máximo 20) → *Guardar
@@ -409,7 +509,7 @@ Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a
 
 ---
 
-## 18. Traducción automática (opcional)
+## 19. Traducción automática (opcional)
 
 1. Crea una cuenta **DeepL API Free** en https://www.deepl.com/pro-api (el plan API,
    no la app). Copia la clave (termina en `:fx`).
@@ -418,13 +518,15 @@ Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a
 
 ---
 
-## 19. Verificación final
+## 20. Verificación final
 
 - [ ] `https://sensumconstrucciones.com` se ve igual que antes, en celular y computadora; el botón EN funciona.
 - [ ] `https://sensumconstrucciones.com/api/health` → `"status":"ok"`.
-- [ ] **Formulario de contacto:** envía un mensaje de prueba desde el sitio → llega a `contacto@sensumconstrucciones.com`.
-- [ ] **Correo del panel:** en la Terminal `php ~/sensum-cms/bin/console mail:test it@gruposensum.com` → llega.
-- [ ] Inicias sesión en `/admin/` como it@gruposensum.com; ves Usuarios, Monitoreo e Informe mensual.
+- [ ] **Formulario de contacto:** envía un mensaje real desde el sitio (en celular y computadora). Bajo el botón aparece «Verificación anti-spam completa.» y el mensaje llega a `contacto@sensumconstrucciones.com` con remitente `formulario@`; al responderlo, la respuesta va al visitante.
+- [ ] (Si activaste Turnstile) el formulario sigue enviando y no muestra errores; en Cloudflare → Turnstile aparecen las verificaciones.
+- [ ] **Correo del panel:** panel → Correo → **Enviar correo de prueba** → llega a it@gruposensum.com.
+- [ ] Inicias sesión en `/admin/` como it@gruposensum.com; ves Usuarios, Monitoreo, Informe mensual y Correo.
+- [ ] Monitoreo → **Alertas automáticas**: las 12 activadas. **Archivos del sitio → Revisar ahora**: «Todo en orden».
 - [ ] **Reportar un problema** (botón arriba en el panel) → llega a it@gruposensum.com con el nuevo diseño.
 - [ ] **Monitoreo → Enviar correo de prueba** → llega la alerta de prueba.
 - [ ] **Informe mensual → Enviarme una prueba** → llega.
@@ -436,7 +538,7 @@ Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a
 
 ---
 
-## 20. Publicar actualizaciones más adelante
+## 21. Publicar actualizaciones más adelante
 
 1. Respalda (paso 2) y ejecuta `php ~/sensum-cms/bin/console backup`.
 2. Genera el nuevo paquete (paso 3) y súbelo/extráelo en `/home/USUARIO`.
@@ -444,6 +546,10 @@ Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a
    `public_html/assets/uploads/` (ahí están tu configuración, la base de datos y las fotos).
 4. Panel → **Volver a publicar el sitio** (o `bin/console publish`). Las
    actualizaciones de la base de datos se aplican solas.
+5. La revisión de archivos usa automáticamente la lista del nuevo paquete. Si alguna
+   vez cambias un archivo del sitio a mano (a propósito), confirma el cambio en panel →
+   **Monitoreo → Archivos del sitio → Revisar ahora → Marcar como esperados** (pide tu
+   contraseña) o con `php ~/sensum-cms/bin/console integrity:accept`.
 
 **Alternativa con Git (cPanel → Git Version Control):** cPanel puede clonar el
 repositorio de GitHub y desplegarlo con un archivo `.cpanel.yml`, pero entonces
@@ -453,7 +559,7 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
 
 ---
 
-## 21. Volver atrás (si algo sale mal)
+## 22. Volver atrás (si algo sale mal)
 
 - **Solo el sitio público:** sube y extrae el zip del paso 2 en `public_html`.
 - **La base de datos:** reemplaza `sensum-cms/storage/database.sqlite` por una copia
@@ -464,19 +570,22 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
 
 ---
 
-## 22. Solución de problemas
+## 23. Solución de problemas
 
 | Síntoma | Causa probable y solución |
 |---|---|
 | `/api/health` dice `service_unavailable` | Falta `sensum-cms/vendor` o la carpeta no está junto a `public_html`. Revisa el paso 5. |
 | No puedes iniciar sesión (te regresa al inicio) | Falta HTTPS (paso 8) o `APP_URL` no es exactamente `https://sensumconstrucciones.com`. |
 | «No pudimos verificar la solicitud por seguridad» | Entraste por `www.` o `http://`: usa `https://sensumconstrucciones.com/admin/`. |
-| Los correos del panel no llegan | `php ~/sensum-cms/bin/console mail:test it@gruposensum.com`. Si falla: revisa `SMTP_HOST`, puerto 465/ssl o 587/tls, usuario y contraseña. Monitoreo → Registro de errores muestra «No se pudo enviar un correo». |
+| Los correos del panel no llegan | Panel → Correo → **Enviar correo de prueba**. Si falla: revisa servidor, puerto 465/SSL o 587/STARTTLS, usuario (correo completo) y contraseña del buzón `notificaciones@`. Monitoreo → Registro de errores muestra «No se pudo enviar un correo». |
 | Los correos llegan a spam | Completa SPF, DKIM y DMARC (paso 6.3). |
-| El formulario de contacto no llega | Verifica que exista `contacto@sensumconstrucciones.com` (o el reenvío) y SPF/DKIM. |
+| El formulario de contacto no llega | Panel → Correo → **Enviar mensaje de prueba**. Verifica que exista `contacto@` y SPF/DKIM. Si el servidor rechaza el remitente `formulario@`, usa `notificaciones@` como «Correo que envía los mensajes». |
+| El visitante ve «No pudimos completar la verificación anti-spam» | Navegador muy antiguo o sin JavaScript: puede escribir por WhatsApp/teléfono (aparecen bajo el formulario). Si le pasa a todos: revisa que `assets/contact-handler.php` y `assets/main.js` sean los del último paquete y que `/home/USUARIO/sensum-rl-data` o `public_html/assets/.rl-data` se puedan escribir. |
+| Llega «Alerta de seguridad: cambios en los archivos del sitio» | Si nadie del equipo cambió archivos: cambia la contraseña de cPanel, borra los archivos desconocidos y vuelve a subir el paquete. Si fue un cambio tuyo: Monitoreo → Archivos del sitio → **Marcar como esperados**. |
+| Llegan correos de «Nuevo inicio de sesión» | Es normal la primera vez en cada navegador. Si no fuiste tú: cambia la contraseña y usa «Cerrar sesión en otros dispositivos». |
 | «Demasiados píxeles» o falla al subir fotos | Sube `memory_limit` a 256M (paso 4). |
 | «El archivo es demasiado grande» | `upload_max_filesize` 16M y `post_max_size` 20M (paso 4). |
-| «Última revisión automática: Nunca» | El cron no corre: revisa la ruta de PHP y el comando (paso 15). |
+| «Última revisión automática: Nunca» | El cron no corre: revisa la ruta de PHP y el comando (paso 16). |
 | Nadie ve «Usuarios» | Falta la cuenta propietaria o `OWNER_EMAIL` no coincide con su correo (paso 11). |
 
 Registro técnico: `sensum-cms/storage/logs/app-AAAA-MM.log` y, en el panel,

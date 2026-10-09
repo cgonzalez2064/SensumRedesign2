@@ -240,3 +240,37 @@ availability, Google score, updated content, security and support.
 
 If last month's report isn't sent in the **first 5 days of the month**, you get a
 **reminder** email (once) and a notice on **Home**.
+
+## 13. For the owner account: e-mail and the form's captcha
+
+In **Administration → E-mail** you decide who sends and who receives e-mail:
+
+* **Website contact form:** which addresses receive visitors' messages (up to 3),
+  which address appears as the sender and how they are sent. Replying to a
+  message goes straight to the visitor.
+* **Panel's sending account:** the address that sends invitations, passwords,
+  problem reports, the monthly report and alerts, and where replies go. The
+  **Fill in the Namecheap details** button fills the server, port and security.
+  The mailbox password is stored encrypted and never shown again (leave it empty
+  to keep it).
+* **Where notices go:** problem reports and automatic alerts.
+* **Spam protection (captcha):** the built-in captcha is always on and invisible to
+  visitors. Optionally turn on **Cloudflare Turnstile** by pasting its Site Key and
+  Secret Key (the steps are on the same page).
+
+**Save settings** asks for your password and e-mails you a security notice. Then use
+**Send a test e-mail** and **Send a test message** to confirm everything arrives
+(check the spam folder too).
+
+## 14. For the owner account: automatic alerts
+
+**Monitoring → Automatic alerts** lists the notices the system sends on its own
+(critical errors, changes to the site files, suspicious sign-in attempts, sign-ins
+from new devices, HTTPS certificate, backups, disk space, weekly summary, monthly
+security review and the report reminder), when each is sent and when it was last
+sent. Tick or untick each box to turn it on or off; it is saved at once.
+
+**Site files → Check now** compares the published files with the installed version.
+If you get a change alert and **don't** recognise the changes, don't accept them:
+tell technical support. If you made them, press **Mark as expected** (asks for your
+password).

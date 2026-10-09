@@ -253,3 +253,38 @@ disponibilidad, calificación de Google, contenido actualizado, seguridad y sopo
 
 Si el informe del mes anterior no se envía en los **primeros 5 días del mes**, te
 llega un **recordatorio** por correo (una sola vez) y un aviso en **Inicio**.
+
+## 13. Para la cuenta propietaria: correo y captcha del formulario
+
+En **Administración → Correo** decides quién envía y quién recibe los correos:
+
+* **Formulario de contacto del sitio:** a qué correos llegan los mensajes de los
+  visitantes (hasta 3), qué correo aparece como remitente y cómo se envían.
+  Al responder un mensaje, la respuesta va directo al visitante.
+* **Cuenta de envío del panel:** el correo desde el que salen invitaciones,
+  contraseñas, reportes de problemas, el informe mensual y las alertas, y adónde
+  llegan las respuestas. El botón **Completar con los datos de Namecheap** llena el
+  servidor, el puerto y la seguridad. La contraseña del buzón se guarda cifrada y
+  no se vuelve a mostrar (déjala vacía para conservarla).
+* **Adónde llegan los avisos:** reportes de problemas y alertas automáticas.
+* **Protección contra spam (captcha):** el captcha integrado está siempre activo y
+  es invisible para los visitantes. Opcionalmente puedes activar **Cloudflare
+  Turnstile** pegando su Site Key y Secret Key (los pasos están en la misma página).
+
+Al pulsar **Guardar configuración** se te pide tu contraseña y recibes un aviso de
+seguridad por correo. Después usa **Enviar correo de prueba** y **Enviar mensaje de
+prueba** para confirmar que todo llega (revisa también la carpeta de spam).
+
+## 14. Para la cuenta propietaria: alertas automáticas
+
+En **Monitoreo → Alertas automáticas** ves los avisos que el sistema envía solo
+(errores críticos, cambios en los archivos del sitio, intentos de acceso
+sospechosos, inicios de sesión desde dispositivos nuevos, certificado HTTPS,
+respaldos, espacio en disco, resumen semanal, revisión mensual de seguridad y
+recordatorio del informe), cuándo se envía cada uno y cuándo fue el último envío.
+Marca o desmarca cada casilla para activarlo o desactivarlo; se guarda al instante.
+
+**Archivos del sitio → Revisar ahora** compara los archivos publicados con la
+versión instalada. Si recibes una alerta de cambios y **no** los reconoces, no los
+aceptes: avisa a soporte técnico. Si los hiciste tú, pulsa **Marcar como esperados**
+(te pide tu contraseña).

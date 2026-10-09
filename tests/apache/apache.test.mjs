@@ -25,7 +25,7 @@ test('public site headers come from .htaccess (security + caching)', { skip }, a
   const r = await get('/');
   assert.equal(r.status, 200);
   const csp = r.headers.get('content-security-policy');
-  assert.match(csp, /^default-src 'self'; script-src 'self'; style-src 'self' https:\/\/fonts\.googleapis\.com/);
+  assert.match(csp, /^default-src 'self'; script-src 'self' https:\/\/challenges\.cloudflare\.com; style-src 'self' https:\/\/fonts\.googleapis\.com/);
   for (const [h, v] of [['x-frame-options', 'DENY'], ['x-content-type-options', 'nosniff'], ['referrer-policy', 'strict-origin-when-cross-origin'], ['cross-origin-opener-policy', 'same-origin']]) assert.equal(r.headers.get(h), v, h);
   assert.match(r.headers.get('strict-transport-security'), /max-age=63072000/);
   assert.equal(r.headers.get('cache-control'), 'public, max-age=0, must-revalidate');

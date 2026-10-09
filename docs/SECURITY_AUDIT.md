@@ -194,7 +194,7 @@ Re-run on commit `c8e709c` (and again for the final release):
 2. `APP_ENV=production`, correct `APP_URL=https://sensumconstrucciones.com`.
 3. `sensum-cms/` **outside** `public_html`; `.env` permissions 600; storage 700.
 4. Remove `SETUP_TOKEN` from `.env` after creating the first administrator.
-5. Use a dedicated SMTP mailbox (e.g. `no-reply@sensumconstrucciones.com`) with a
+5. Use a dedicated SMTP mailbox (e.g. `notificaciones@sensumconstrucciones.com`) with a
    unique password; publish SPF, DKIM and DMARC (cPanel → Email Deliverability).
 6. PHP 8.2+ in cPanel with `pdo_sqlite`, `gd`, `fileinfo`, `mbstring`, `exif`,
    `intl`; `memory_limit` 256M, `upload_max_filesize` 16M, `post_max_size` 20M,
@@ -260,3 +260,26 @@ monitor covers that. PHPStan level 6: 0 errors after the change.
 
 PHPStan was not re-run for this change (the analysis tool copy used earlier was
 removed from the temporary folder); all API (117) and browser (74) tests pass.
+
+## 10. Change review — owner e-mail settings, contact-form captcha, automatic alerts
+
+| Area | Design | Verified by |
+|---|---|---|
+| E-mail settings page | Owner-only routes (`GET/PUT /api/settings/email`, `POST …/test`). Saving re-checks the owner's password (throttled with password changes, failures logged), is logged, and e-mails a security notice to the owner address with the new settings. `EMAIL_SETTINGS_LOCKED=true` makes it read-only (409). | `13-email-alerts` |
+| Secrets at rest | SMTP password and Turnstile secret encrypted (libsodium secretbox, AES-256-GCM fallback) with a key derived from the app key; never returned to the browser, never logged; an empty field keeps the stored value. | `13-email-alerts`, `14-captcha` |
+| Header injection | All addresses validated (ASCII, ≤ 120, `FILTER_VALIDATE_EMAIL`), names reject control characters and `<>`, SMTP host strict hostname pattern, port range, encryption allow-list; PHPMailer builds the headers. | `13-email-alerts` |
+| Contact form delivery | The handler validates first; the CMS only formats (all visitor text HTML-escaped) and sends with the panel's SMTP account or `mail()` (`-f` only for plain addresses). Visitor only in Reply-To; sender fixed by the owner. | `13-email-alerts` (XSS payload in name/message) |
+| Built-in captcha | Proof of work: HMAC-SHA256-signed challenge (key derived from the app key, or a 0600 key file when standalone), 30-minute expiry inside the signed hash, max 250 000, strict payload parsing, single use (flock-protected store of solved challenges until expiry). Runs after the origin check, rate limit, honeypot and timing checks. | `14-captcha` (missing, malformed, oversized, wrong/out-of-range/string number, forged signature, altered expiry, other algorithm, self-made challenge, replay) |
+| Cloudflare Turnstile | Optional second layer; server-side `siteverify` with secret, remote IP and idempotency key; hostname must be the site's; built-in captcha still required. Cloudflare unreachable or our secret rejected → fail open to the built-in captcha and log for the owner (availability of leads over a second layer). Test endpoint override honoured only outside production. CSP widened only to `https://challenges.cloudflare.com` (script/frame); the script is loaded lazily and only when enabled. | `14-captcha`, `00-static` |
+| Automatic alerts | Owner-only toggles (`PUT /api/monitor/alerts`, allow-listed rule names and booleans). De-duplication state in the database; each rule has a minimum period. New-device notice uses only browser family + OS (no fingerprinting data stored; the IP is shown to the account holder, stored only as a keyed pseudonym in the activity log). | `13-email-alerts` |
+| File integrity | SHA-256 of public files vs the release manifest (`release-manifest.json`, built by `tools/build-release.sh`) or the owner-accepted state (trust on first use when no manifest). Flags modified/missing files, new executable/config files (`.php`, `.phtml`, `.phar`, `.htaccess`, `.user.ini`…), unexpected files among uploads (name pattern), and published pages that differ from the saved content. cPanel-generated `.htaccess` blocks are ignored. Accepting needs the owner's password and is logged with the findings. | `13-email-alerts` |
+
+Accepted limitations: proof of work raises the cost of automated submissions but a
+determined attacker running a full browser can still pay it — that is what the
+optional Turnstile layer, the rate limit and the honeypot are for. Visitors without
+JavaScript can no longer use the form (they are pointed to WhatsApp/phone, already
+shown under the form). Integrity checks run from the scheduled task, so an attacker
+with write access to `sensum-cms/` could also alter the manifest — the check is
+meant to catch web-root tampering (the usual shared-hosting compromise), not a full
+account takeover.
+

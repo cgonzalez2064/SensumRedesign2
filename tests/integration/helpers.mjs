@@ -152,3 +152,16 @@ export function linkToken(text, kind) {
   return m ? m[1] : null;
 }
 export const unique = (prefix) => `${prefix}.${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}@example.test`;
+
+// ------------------------------------------------------------------ contact-form captcha
+/** Does what assets/main.js does in the browser: gets a challenge and finds the number. */
+export async function solveCaptcha(base) {
+  const { createHash } = await import('node:crypto');
+  const c = await (await fetch(base + '/assets/contact-handler.php?challenge=1', { headers: { Accept: 'application/json' } })).json();
+  for (let n = 0; n <= c.maxnumber; n++) {
+    if (createHash('sha256').update(c.salt + n).digest('hex') === c.challenge) {
+      return Buffer.from(JSON.stringify({ algorithm: c.algorithm, challenge: c.challenge, number: n, salt: c.salt, signature: c.signature })).toString('base64');
+    }
+  }
+  throw new Error('captcha not solved');
+}

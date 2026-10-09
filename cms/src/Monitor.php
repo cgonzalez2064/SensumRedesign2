@@ -211,6 +211,9 @@ final class Monitor
         $out[] = 'Google PageSpeed: ' . $this->app->pageSpeed()->refreshIfStale();
         $out[] = 'Monthly report reminder: ' . ($report->maybeRemind() ? 'sent to the owner' : 'not needed');
         $this->app->settings()->set('monitor_last_run', (string) time());
+        foreach ($this->app->watchdog()->run() as $line) {
+            $out[] = 'Alert ' . $line;
+        }
         return $out;
     }
 

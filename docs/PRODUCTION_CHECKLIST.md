@@ -31,7 +31,12 @@ Release: `release-________-_______` · Deployed by: __________ · Date: ________
 - [ ] `display_errors` Off (debug mode disabled); `APP_ENV=production`
 - [ ] `sensum-cms/` uploaded **outside** `public_html`; hidden `.htaccess` files present
 - [ ] Permissions: storage `700`, `.env` `600`, no `777` anywhere
-- [ ] `.env` filled (`APP_URL=https://sensumconstrucciones.com`, SMTP, `SUPPORT_EMAIL=it@gruposensum.com`)
+- [ ] `.env` filled (`APP_ENV=production`, `APP_URL=https://sensumconstrucciones.com`, `OWNER_EMAIL=it@gruposensum.com`, `MAIL_DRIVER=smtp`)
+- [ ] Mailboxes created: `contacto@`, `notificaciones@` (+ recommended forwarders `formulario@`, `soporte@`, `postmaster@`, `abuse@`, mailbox `dmarc@`)
+- [ ] Panel → **Correo** saved (sending account, contact form, report/alert recipients); both test e-mails received
+- [ ] Contact form sent from the live site on a phone and a computer: captcha note shows «Verificación anti-spam completa.», message arrives at `contacto@`
+- [ ] (Recommended) Cloudflare Turnstile keys saved in panel → Correo; form still sends
+- [ ] Monitoring → Automatic alerts reviewed (all on); Site files → Check now → «Todo en orden»
 - [ ] HTTPS enabled (AutoSSL valid, `http://` and `www` redirect to `https://sensumconstrucciones.com`)
 - [ ] Database configured (`/api/health` → all `ok`; dashboard diagnostics green)
 - [ ] First administrator created as **it@gruposensum.com** (the owner, `OWNER_EMAIL`); `SETUP_TOKEN` removed from `.env`

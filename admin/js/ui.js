@@ -95,6 +95,33 @@ export function confirmDialog({ title, body, confirmLabel, danger = false, cance
   });
 }
 
+/**
+ * Asks for the person's password again before a sensitive change.
+ * Resolves with the password, or null if cancelled.
+ */
+export function askPassword({ title, lead, confirmLabel }) {
+  return new Promise((resolve) => {
+    let done = false;
+    const pw = passwordField({ label: t('common.yourPassword'), autocomplete: 'current-password', required: true });
+    const submit = () => {
+      if (!pw.input.value) { pw.setError(fieldErrorText('required')); pw.input.focus(); return; }
+      done = true;
+      resolve(pw.input.value);
+      dlg.close();
+    };
+    const dlg = openDialog({
+      title, lead, labelledIcon: 'shield-lock',
+      body: h('form', { onsubmit: (e) => { e.preventDefault(); submit(); } }, pw.wrap),
+      onClose: () => { if (!done) resolve(null); },
+      actions: [
+        { label: t('common.cancel'), onClick: (b, close) => close() },
+        { label: confirmLabel, variant: 'primary', icon: 'check-lg', onClick: () => submit() },
+      ],
+    });
+    setTimeout(() => pw.input.focus(), 50);
+  });
+}
+
 // ---------------------------------------------------------------- buttons
 const busyContent = new WeakMap();
 /** Shows a spinner + label while an action runs; setBusy(btn, false) restores it. */

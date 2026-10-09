@@ -145,3 +145,26 @@ external edit.
 | Raise contrast of the orange "eyebrow" labels and the small header text on the privacy page | e.g. `--brand-orange` text → `#b84a00` on the light pill | Fixes the only axe "serious" findings on the public site (pre-existing, 9–10 nodes) | Slightly darker orange on labels | Low–medium (visible color change) |
 | Hide carousel arrows/dots when a project has a single photo | `.project-modal-slideshow.single .project-modal-nav{display:none}` | Cleaner modal for one-photo projects | None | Low |
 | Crawlable English page (`/en/`) | separate generated page + `hreflang` | English SEO | More pages to maintain | Medium |
+
+## Contact form: captcha and panel-managed delivery
+
+`assets/contact-handler.php` keeps its own checks (origin allow-list, size,
+fields, rate limit, honeypot, minimum time) and adds:
+
+* **Built-in captcha (always on):** `GET assets/contact-handler.php?challenge=1`
+  returns a signed, expiring challenge; `assets/main.js` solves it with Web Crypto
+  in the background (starting when the form is near the viewport or focused) and
+  sends the answer in the hidden `captcha` field. A missing/invalid/reused answer
+  returns `400 {"error":"captcha_failed"}`; the page then fetches a new challenge
+  and retries once on its own.
+* **Optional Cloudflare Turnstile:** when the owner saves keys in the panel, the
+  published page contains `<div id="formTurnstile" data-sitekey="…">` and `main.js`
+  loads Turnstile (explicit render, `interaction-only`). Its token travels as
+  `cf-turnstile-response` and is verified by the Content Manager. The public CSP
+  allows `https://challenges.cloudflare.com` for this only.
+* **Delivery:** when the Content Manager is installed, recipients, sender and method
+  come from panel → Administración → Correo; otherwise the constants at the top of
+  the handler and `mail()` are used.
+
+Asset cache version: `ASSET_VERSION = '4'` (`?v=4` in the committed pages).
+

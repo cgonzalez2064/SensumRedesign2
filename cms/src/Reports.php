@@ -340,7 +340,7 @@ final class Reports
             . 'Responde a este correo para escribirle directamente a ' . $e($r['reporter_name']) . '. No incluye contraseñas ni datos de sesión.';
         $layout = (new Emails($this->app))->branded('es', 'Reporte de soporte #' . (int) $r['id'], $typeLabel . ': ' . $r['title'] . ' — ' . $r['reporter_name'], $body, $footer);
         return [
-            'to' => $this->app->config->supportEmail(),
+            'to' => $this->app->mailSettings()->supportEmail(),
             'subject' => '[Sensum Website] ' . $typeLabel . ': ' . Mailer::oneLine($r['title'], 120),
             'text' => $text,
             'html' => $layout['html'],

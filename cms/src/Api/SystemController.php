@@ -15,6 +15,7 @@ final class SystemController extends Controller
     {
         $checks = Health::checks($this->app, false);
         $status = Health::summary($checks);
+        $this->app->watchdog()->checkScheduler();
         if ($status !== 'ok') {
             // Critical: logged and e-mailed to IT (throttled). An uptime monitor polling
             // this endpoint therefore also triggers alerts.

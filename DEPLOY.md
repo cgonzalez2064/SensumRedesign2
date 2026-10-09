@@ -135,7 +135,7 @@ web root — never inside it, and never committed to this repo):
    (the level above `public_html`), and rename it to
    `sensum-mail-config.php`.
 2. Fill in the real SMTP host/port/username/password for the mailbox you
-   want to send as (e.g. the `contacto@` or a dedicated `no-reply@`
+   want to send as (e.g. the `contacto@` or a dedicated `notificaciones@`
    mailbox created in cPanel → Email Accounts).
 3. That's it — `contact-handler.php` detects the file and uses it
    automatically on the next form submission. If anything about it fails,

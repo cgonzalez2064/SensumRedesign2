@@ -2,11 +2,83 @@
 import { h, icon, clear } from '../dom.js';
 import { t, fmtDate, fmtRelative, fmtBytes } from '../i18n.js';
 import { api } from '../api.js';
-import { pageHead, loading, loadError, button, setBusy, toast, errorText, emptyState, copyText } from '../ui.js';
+import { pageHead, loading, loadError, button, setBusy, toast, errorText, emptyState, copyText, askPassword, fieldErrorText } from '../ui.js';
 
 const SEVERITY_BADGE = { critical: 'badge-bad', error: 'badge-warn', warning: 'badge-info' };
 const SEVERITY_ICON = { critical: 'x-circle-fill', error: 'exclamation-triangle-fill', warning: 'info-circle-fill' };
 const ALERT_BADGE = { sent: 'badge-ok', failed: 'badge-bad', suppressed: 'badge', off: 'badge' };
+
+/** Automatic alerts, in the order shown, with how often each one can arrive. */
+const RULES = ['critical_errors', 'integrity', 'login_attack', 'new_device', 'certificate', 'backup', 'scheduler', 'disk_space', 'error_spike', 'weekly_digest', 'monthly_review', 'report_reminder'];
+
+/** Owner panel: turn each automatic alert on or off (saved at once). */
+function rulesCard(rules) {
+  const list = h('ul', { class: 'rule-list' }, RULES.map((r) => {
+    const id = 'rule-' + r;
+    const box = h('input', { type: 'checkbox', id, checked: rules.enabled[r] !== false || null, 'aria-describedby': id + '-d' });
+    box.addEventListener('change', async () => {
+      box.disabled = true;
+      try {
+        const res = await api.put('/monitor/alerts', { rules: { [r]: box.checked } });
+        rules.enabled = res.enabled;
+        toast(t(box.checked ? 'monitor.rules.turnedOn' : 'monitor.rules.turnedOff', { name: t('monitor.rules.' + r + '.name') }));
+      } catch (err) {
+        box.checked = !box.checked;
+        toast(errorText(err), { type: 'bad' });
+      }
+      box.disabled = false;
+    });
+    const last = rules.lastSent[r];
+    return h('li', { class: 'rule' }, box,
+      h('div', { class: 'grow' },
+        h('label', { for: id }, t('monitor.rules.' + r + '.name'), r === 'new_device' ? h('span', { class: 'badge badge-info', text: t('monitor.rules.toUser') }) : null),
+        h('div', { class: 'small muted', id: id + '-d', text: t('monitor.rules.' + r + '.desc') }),
+        h('div', { class: 'tiny muted', text: t('monitor.rules.when', { when: t('monitor.rules.' + r + '.when') }) + (last ? ' · ' + t('monitor.rules.last', { when: fmtRelative(last) }) : '') })));
+  }));
+  return h('section', { class: 'card', 'aria-labelledby': 'rules-title' },
+    h('div', { class: 'card-header' }, h('div', null, h('h2', { id: 'rules-title', text: t('monitor.rules.title') }), h('p', { text: t('monitor.rules.lead') }))),
+    list,
+    h('p', { class: 'tiny muted', text: t('monitor.rules.always') }));
+}
+
+/** Owner panel: files of the public site compared with the published version. */
+function integrityCard() {
+  const out = h('div', { 'aria-live': 'polite' });
+  const checkBtn = button(t('monitor.integrity.check'), { icon: 'shield-lock', small: true });
+  const show = (findings) => {
+    if (!findings.length) {
+      clear(out).append(h('p', { class: 'small ok-text' }, icon('check-circle-fill'), ' ', t('monitor.integrity.clean')));
+      return;
+    }
+    const accept = button(t('monitor.integrity.accept'), { small: true, icon: 'check-lg' });
+    accept.addEventListener('click', async () => {
+      const password = await askPassword({ title: t('monitor.integrity.acceptTitle'), lead: t('monitor.integrity.acceptLead'), confirmLabel: t('monitor.integrity.accept') });
+      if (password === null) return;
+      setBusy(accept, true);
+      try {
+        const r = await api.post('/monitor/integrity/accept', { currentPassword: password });
+        toast(t('monitor.integrity.accepted', { n: r.files }));
+        show(r.findings);
+      } catch (err) {
+        toast(err.code === 'validation' && err.fields.currentPassword ? fieldErrorText('current_password_wrong') : errorText(err), { type: 'bad' });
+        setBusy(accept, false);
+      }
+    });
+    clear(out).append(
+      h('p', { class: 'small warn-text' }, icon('exclamation-triangle-fill'), ' ', t('monitor.integrity.found', { n: findings.length })),
+      h('ul', { class: 'finding-list' }, findings.slice(0, 30).map((f) => h('li', { class: 'break' }, h('strong', { text: t('monitor.integrity.type.' + f.type) + ': ' }), h('code', { text: f.path })))),
+      h('p', { class: 'tiny muted', text: t('monitor.integrity.help') }),
+      accept);
+  };
+  checkBtn.addEventListener('click', async () => {
+    setBusy(checkBtn, true, t('monitor.integrity.checking'));
+    try { show((await api.get('/monitor/integrity')).findings); } catch (err) { toast(errorText(err), { type: 'bad' }); }
+    setBusy(checkBtn, false);
+  });
+  return h('section', { class: 'card', 'aria-labelledby': 'integ-title' },
+    h('div', { class: 'card-header' }, h('div', null, h('h2', { id: 'integ-title', text: t('monitor.integrity.title') }), h('p', { text: t('monitor.integrity.lead') }))),
+    h('div', null, checkBtn), out);
+}
 
 const eventLabel = (code) => {
   const label = t('monitor.events.' + code);
@@ -173,7 +245,7 @@ export async function render({ main, session }) {
       h('div', { class: 'code-line' }, h('code', { class: 'break', text: cron }), copyBtn),
       h('p', { class: 'tiny muted', text: t('monitor.setup.cronHint') }));
 
-    clear(body).append(tiles, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, logCard, activity), h('div', { class: 'stack-lg' }, checks, alerts, top, system, setup)));
+    clear(body).append(tiles, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, logCard, rulesCard(data.rules), activity), h('div', { class: 'stack-lg' }, checks, alerts, integrityCard(), top, system, setup)));
     loadLog();
   };
   refresh.addEventListener('click', () => { clear(body).append(loading()); load(); });

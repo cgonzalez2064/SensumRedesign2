@@ -11,7 +11,7 @@ final class ReportsController extends Controller
 {
     public function index(): never
     {
-        Response::ok(['reports' => (new Reports($this->app))->list($this->session), 'supportEmail' => $this->app->config->supportEmail()]);
+        Response::ok(['reports' => (new Reports($this->app))->list($this->session), 'supportEmail' => $this->app->mailSettings()->supportEmail()]);
     }
 
     public function create(): never

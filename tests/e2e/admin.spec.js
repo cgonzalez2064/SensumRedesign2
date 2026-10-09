@@ -15,6 +15,7 @@ const PAGES = [
   ['dashboard', '#/'], ['texts', '#/textos'], ['hero', '#/textos/hero'], ['faq', '#/textos/faq'], ['details', '#/contacto'],
   ['photos-about', '#/fotos/nosotros'], ['photos-projects', '#/fotos/proyectos'], ['documents', '#/fotos/documentos'],
   ['users', '#/usuarios'], ['reports', '#/reportes'], ['account', '#/cuenta'], ['help', '#/ayuda'], ['monitor', '#/monitoreo'], ['site-report', '#/informe'],
+  ['email', '#/correo'],
 ];
 
 /** Collects console errors, CSP violations, page errors and failed requests. */
@@ -207,8 +208,11 @@ test('Monitoring is shown only to the owner account', async ({ page }) => {
     await page.goto('about:blank'); // unload the panel so it starts signed out
     await login(page, user);
     await expect(page.locator('.nav a[href="#/monitoreo"]')).toHaveCount(0);
+    await expect(page.locator('.nav a[href="#/correo"]')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Errores recientes' })).toHaveCount(0);
     await page.goto('/admin/#/monitoreo');
+    await expect(page.locator('main h1')).toHaveText('No encontramos esta pantalla');
+    await page.goto('/admin/#/correo');
     await expect(page.locator('main h1')).toHaveText('No encontramos esta pantalla');
   }
 });

@@ -18,7 +18,7 @@ namespace Sensum\Cms;
 final class Publisher
 {
     /** Bump when assets/main.css or assets/main.js change (cache busting). */
-    public const ASSET_VERSION = '3';
+    public const ASSET_VERSION = '4';
     public const PAGES = ['index.html', '404.html', 'privacy-notice.html'];
     private const BACKUPS_KEPT = 30;
 
@@ -147,6 +147,10 @@ final class Publisher
         $vars['instagram_handle'] = self::e($val('contact.instagram_handle'));
         $fallback = $this->formFallback($office, $email, $wa);
         $vars['form_fallback_html'] = $fallback['es'];
+        // Optional Cloudflare Turnstile on the contact form (owner → Correo).
+        $turnstile = $this->app->mailSettings()->turnstile();
+        $flags['turnstile'] = $turnstile['siteKey'] !== '' && $turnstile['secret'] !== '';
+        $vars['turnstile_site_key'] = self::e($turnstile['siteKey']);
 
         // Structured data (JSON-LD) mirrors the visible content.
         $vars['ld:telephones'] = '[' . implode(', ', array_map(fn ($p) => self::ld(self::phoneLd($p)), array_values(array_filter([$office, $mobile])))) . ']';
