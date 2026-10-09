@@ -187,21 +187,21 @@ where you can also see your report history.
   the message (e.g. `A1B2C3`); it helps the technical team find the cause.
 * If you can't sign in to the panel, email it@gruposensum.com.
 
-## 10. For administrators: users
+## 10. For the owner account: users and access types
 
-Under **Users** (visible to administrators only):
-* **Invite user:** name, email, role and email language. The person receives a
-  link to create their password.
-  * **Administrator:** edits the website and manages users.
-  * **Editor:** edits text, photos and contact details.
-* Each user's menu: **Resend invitation**, **Change to administrator/editor**,
-  **Disable / Re-enable** (signs them out immediately) and **Delete user**.
-* You can't change your own role or disable yourself; there must always be at
-  least one administrator.
-* The technical-support account (it@gruposensum.com) is shown as **Owner**: no
-  other account can change its role, disable it or delete it.
-* On **Home** you'll see the website status, recent activity and, when needed,
-  the **Republish the website** button.
+Only the owner account (it@gruposensum.com) sees **Users** and can invite, change,
+disable or delete accounts.
+* **Invite user:** name, email, **access type** and email language. The person
+  receives a link to create their password.
+  * **Full content access:** text, contact details, photos, portfolio and site
+    status (activity and "Republish the website").
+  * **Content editor:** text, contact details, photos and portfolio.
+  * **Text only**, **Photos and portfolio only**, **Contact details only**.
+  * **Custom:** tick exactly what they can change.
+* Each person's "⋮" menu: **Resend invitation**, **Change access type** (applies right
+  away), **Disable / Re-enable** (signs them out) and **Delete user**.
+* Everyone only sees in the menu what they can change; **My account** shows "Your access".
+* The owner account can't be changed or deleted from the panel.
 
 ## 11. For the owner account (technical support): Monitoring
 
@@ -224,3 +224,19 @@ Only the **it@gruposensum.com** account sees **Monitoring** in the menu
 
 If you receive an alert: open Monitoring, search for the reference code from the
 e-mail and look at the technical details. If it was a one-off, nothing else is needed.
+
+## 12. For the owner account: monthly report for clients
+
+Under **Administration → Monthly report** you prepare a short, plain-language
+report about the site's health and visibility to share with your clients:
+availability, Google score, updated content, security and support.
+
+1. **Recipients:** add the email addresses (up to 20) and press **Save
+   recipients**. Your account is always copied. Choose the language (Spanish or English).
+2. Check the month's **Preview** (you can pick another month).
+3. Optionally write a **message for your clients**; it appears at the top of the report.
+4. **Send me a test** sends it only to you; **Send the {month} report** sends it to everyone.
+5. **History** shows what was sent.
+
+If last month's report isn't sent in the **first 5 days of the month**, you get a
+**reminder** email (once) and a notice on **Home**.

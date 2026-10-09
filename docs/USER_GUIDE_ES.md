@@ -199,21 +199,21 @@ Si el correo no se pudo enviar en ese momento, el panel te lo dirá: tu reporte
   encontrar la causa.
 * Si no puedes entrar al panel, escribe a it@gruposensum.com.
 
-## 10. Para administradores: usuarios
+## 10. Para la cuenta propietaria: usuarios y tipos de acceso
 
-En **Usuarios** (solo visible para administradores):
-* **Invitar usuario:** nombre, correo, rol e idioma de los correos. La persona
-  recibe un enlace para crear su contraseña.
-  * **Administrador:** edita el sitio y administra usuarios.
-  * **Editor:** edita textos, fotos y datos de contacto.
-* Menú de cada usuario: **Reenviar invitación**, **Cambiar a administrador/editor**,
-  **Desactivar / Reactivar** (cierra su sesión de inmediato) y **Eliminar usuario**.
-* No puedes cambiar tu propio rol ni desactivarte; siempre debe quedar al menos
-  un administrador.
-* La cuenta de soporte técnico (it@gruposensum.com) aparece como **Propietario**:
-  ninguna otra cuenta puede cambiarle el rol, desactivarla ni eliminarla.
-* En **Inicio** verás el estado del sitio, la actividad reciente y, si hace falta,
-  el botón **Volver a publicar el sitio**.
+Solo la cuenta propietaria (it@gruposensum.com) ve **Usuarios** y puede invitar,
+cambiar, desactivar o eliminar cuentas.
+* **Invitar usuario:** nombre, correo, **tipo de acceso** e idioma de los correos.
+  La persona recibe un enlace para crear su contraseña.
+  * **Acceso completo al contenido:** textos, datos de contacto, fotos, portafolio y
+    estado del sitio (actividad y «Volver a publicar el sitio»).
+  * **Editor de contenido:** textos, datos de contacto, fotos y portafolio.
+  * **Solo textos**, **Solo fotos y portafolio**, **Solo datos de contacto**.
+  * **Personalizado:** marca exactamente lo que puede cambiar.
+* Menú «⋮» de cada persona: **Reenviar invitación**, **Cambiar tipo de acceso** (se
+  aplica de inmediato), **Desactivar / Reactivar** (cierra su sesión) y **Eliminar usuario**.
+* Cada persona solo ve en el menú lo que puede cambiar; en **Mi cuenta** ve «Tu acceso».
+* La cuenta propietaria no se puede modificar ni eliminar desde el panel.
 
 ## 11. Para la cuenta propietaria (soporte técnico): Monitoreo
 
@@ -237,3 +237,19 @@ Solo la cuenta **it@gruposensum.com** ve **Monitoreo** en el menú
 
 Si recibes una alerta: abre Monitoreo, busca el código de referencia del correo
 y revisa los detalles técnicos. Si fue un fallo puntual, no hace falta hacer nada.
+
+## 12. Para la cuenta propietaria: informe mensual para clientes
+
+En **Administración → Informe mensual** preparas un informe breve, en lenguaje
+sencillo, sobre la salud y la visibilidad del sitio para compartir con tus clientes:
+disponibilidad, calificación de Google, contenido actualizado, seguridad y soporte.
+
+1. **Destinatarios:** agrega los correos (máximo 20) y pulsa **Guardar
+   destinatarios**. Tu cuenta va siempre en copia. Elige el idioma (español o inglés).
+2. Revisa la **Vista previa** del mes (puedes elegir otro mes).
+3. Si quieres, escribe un **mensaje para tus clientes**; aparece al inicio del informe.
+4. **Enviarme una prueba** te lo envía solo a ti; **Enviar informe de {mes}** lo envía a todos.
+5. El **Historial** muestra lo enviado.
+
+Si el informe del mes anterior no se envía en los **primeros 5 días del mes**, te
+llega un **recordatorio** por correo (una sola vez) y un aviso en **Inicio**.

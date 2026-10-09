@@ -245,3 +245,18 @@ Residual risk: an attacker who can trigger many *different* server errors is
 still capped at 20 alert e-mails per day (then entries are logged as
 "suppressed"). Alerts cannot report a full server outage — the external uptime
 monitor covers that. PHPStan level 6: 0 errors after the change.
+
+## 9. Change review — owner-only user management, access types, monthly report
+
+| Area | Design | Verified by |
+|---|---|---|
+| User management | All `/api/users*` routes use the `owner` guard (active account whose e-mail is `OWNER_EMAIL`). The legacy `role` column grants nothing; a former "admin" without the owner e-mail gets 403 | `04-users` (full-access account, legacy-admin role, editor: all 403) |
+| Access types | Permissions `texts`, `contact`, `photos`, `documents`, `site` checked on the server for every change: section saves (`details` → contact), translation, uploads/alt text/delete/reorder (by the item's slot), republish, dashboard activity. Allow-listed values, canonical order, at least one | `04-users` (each type allowed/refused per area; item-level checks; changes apply on the next request) |
+| Owner protection | The owner cannot be changed or deleted through the panel (not even by itself); disabling a user ends their sessions | `04-users` |
+| Monthly report | Owner-only API. Recipients validated (ASCII e-mail, ≤ 120 chars, ≤ 20, de-duplicated, owner excluded because always in Cc); header injection impossible (PHPMailer + validation). Report text is built from fixed strings and numbers; the optional note is plain text (control characters stripped, ≤ 600, HTML-escaped). Send limited to 10/hour; test sends go only to the owner | `12-site-report` |
+| Reminder | At most one per month, only after day 5, only if the site existed during that month; recorded in settings | `12-site-report` |
+| Outbound requests | Google PageSpeed (fixed Google host; test override honoured only in development; the API key is never logged) and the daily HTTPS-certificate check of the site's own host (TLS verified). Both fail soft | `12-site-report` |
+| E-mail images | Logo and screenshot preview embedded as attachments (`cid:`); no remote images or tracking | `12-site-report`, `07-reports` |
+
+PHPStan was not re-run for this change (the analysis tool copy used earlier was
+removed from the temporary folder); all API (117) and browser (74) tests pass.

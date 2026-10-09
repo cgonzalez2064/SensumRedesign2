@@ -1,7 +1,11 @@
 # Deploying to Namecheap (Stellar Plus) — website + Content Manager
 
-This guide matches the implementation on the `content-manager` branch. It
-replaces `DEPLOY.md` for this release (`DEPLOY.md` still documents the original
+> **Guía detallada en español:** [GUIA_DESPLIEGUE_NAMECHEAP.md](GUIA_DESPLIEGUE_NAMECHEAP.md)
+> — the step-by-step version for the team (database, e-mail for the contact form
+> and the panel, owner account, users and access types, photos, cron jobs,
+> monthly report, verification). This English guide stays as the technical reference.
+
+It replaces `DEPLOY.md` for this release (`DEPLOY.md` still documents the original
 static site's DNS, AutoSSL and contact-form details, referenced below).
 
 **What you deploy**
@@ -13,7 +17,9 @@ static site's DNS, AutoSSL and contact-form details, referenced below).
 ```
 
 `sensum-cms/` must be **next to** `public_html`, never inside it.
-No MySQL database, Node.js app, cron job or SSH is required (all optional).
+No MySQL database, Node.js app or Composer on the server is required. Two cron
+jobs are recommended (scheduled check every 15 min, daily database backup — see
+the Spanish guide §15); the cPanel Terminal (Manage Shell → SSH) makes setup easier.
 
 Estimated time: 60–90 minutes the first time.
 

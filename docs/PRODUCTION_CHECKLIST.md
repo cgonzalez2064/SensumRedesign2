@@ -67,6 +67,10 @@ Release: `release-________-_______` · Deployed by: __________ · Date: ________
 - [ ] Error monitoring tested (Monitoreo → *Registro de errores*, signed in as it@gruposensum.com; other admins don't see it)
 - [ ] Critical-error alerts tested (Monitoreo → *Enviar correo de prueba* arrives at it@gruposensum.com, not in spam)
 - [ ] Scheduled check configured (cPanel cron every 15 min: `bin/console monitor`; Monitoreo shows *Última revisión automática*)
+- [ ] Daily database backup cron configured (`bin/console backup`)
+- [ ] Team accounts invited by the owner with the right access type (Usuarios → Invitar usuario)
+- [ ] Monthly report: recipients saved, *Enviarme una prueba* received; optional `PAGESPEED_API_KEY` set
+- [ ] Contact form test message received at contacto@sensumconstrucciones.com
 - [ ] Uptime monitoring configured (Better Stack/UptimeRobot for the site and `/api/health`, SSL expiry alerts)
 - [ ] Health endpoint checked (`/api/health` → 200 `"status":"ok"`)
 - [ ] Logs reviewed (`sensum-cms/storage/logs/` — no secrets, no unexpected errors)

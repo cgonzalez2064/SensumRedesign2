@@ -7,7 +7,9 @@ change texts, photos, the portfolio PDF and contact details without touching
 code (with optional automatic Spanish ⇄ English translation through DeepL),
 and report problems to IT (it@gruposensum.com). The owner account
 (it@gruposensum.com) gets a Monitoring page with the full error log, and
-critical errors are e-mailed to IT automatically.
+critical errors are e-mailed to IT automatically. Only the owner manages users,
+each person gets an access type (what they may change), and the owner sends a
+short monthly site report to clients.
 
 The Content Manager is built *around* the approved site: it re-generates the
 same static pages from templates, byte-identical when nothing has changed. The
@@ -47,7 +49,8 @@ Node 20+ only for the automated tests. Full guide: [docs/LOCAL_SETUP.md](docs/LO
 | [docs/CONTENT_MANAGER.md](docs/CONTENT_MANAGER.md) | architecture decision, features, data model, API, security model, telemetry |
 | [docs/FRONTEND_INTEGRATION.md](docs/FRONTEND_INTEGRATION.md) | every public-site change, templates, how to keep developing the design |
 | [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md) | local installation, e-mail testing, automated tests |
-| [docs/NAMECHEAP_DEPLOYMENT.md](docs/NAMECHEAP_DEPLOYMENT.md) | production deployment on Namecheap Stellar Plus, backups, rollback |
+| [docs/GUIA_DESPLIEGUE_NAMECHEAP.md](docs/GUIA_DESPLIEGUE_NAMECHEAP.md) | **guía paso a paso en español** para publicar en Namecheap (cPanel): base de datos, correo, cuenta propietaria, usuarios, fotos, cron, informe mensual |
+| [docs/NAMECHEAP_DEPLOYMENT.md](docs/NAMECHEAP_DEPLOYMENT.md) | production deployment on Namecheap Stellar Plus, backups, rollback (technical reference) |
 | [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) | go-live checklist |
 | [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) | security audits 1 and 2, risks, recommendations |
 | [docs/TEST_REPORT.md](docs/TEST_REPORT.md) | local test passes 1 and 2 |
@@ -60,7 +63,7 @@ Earlier project notes (`NOTES.md`, `DEPLOY.md`, `CONTENT-APPROVAL.md`,
 
 ```bash
 npm --prefix tests ci
-npm --prefix tests test          # 105 API tests (each with a throwaway database)
+npm --prefix tests test          # 117 API tests (each with a throwaway database)
 npm --prefix tests run test:e2e  # Chrome + WebKit (iPhone), light/dark, accessibility scans
 ```
 

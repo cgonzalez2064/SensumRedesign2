@@ -9,8 +9,8 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 
 | Suite | Location | Size |
 |---|---|---|
-| API integration | `tests/integration/*.test.mjs` | 105 tests in 12 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation tests use a local DeepL stand-in |
-| Browser E2E | `tests/e2e/*.spec.js` | 30 specs × 3 browser profiles (90 runs, 21 skipped by design: phone-only, desktop-only or single-submission tests) |
+| API integration | `tests/integration/*.test.mjs` | 117 tests in 13 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
+| Browser E2E | `tests/e2e/*.spec.js` | 33 specs × 3 browser profiles (99 runs, 25 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
 | Production build | `tests/apache/apache.test.mjs` | 6 checks of the built release under Apache + PHP-FPM |
 
@@ -121,6 +121,22 @@ Full re-run: API **105/105**, browser **69 passed / 21 skipped**, PHPStan level 
 error forced under PHP-FPM — the visitor's error response returned in 10 ms and
 the alert e-mail was delivered afterwards (`fastcgi_finish_request`), logged with
 status "sent".
+
+## Change — owner-only users, access types, monthly report, new report e-mail
+
+| Suite | Added | Result |
+|---|---|---|
+| API (`04-users`, rewritten) | owner-only management; invitations with access types; validation of permissions; each access type allowed/refused per area (texts, contact, photos, documents, site); item-level photo checks; translation needs `texts`; changes apply on the next request; owner cannot be changed; invitation rate limit | 11/11 |
+| API (`12-site-report`) | owner-only; recipients validation; plain-language content from seeded figures (good vs attention, Spanish and English); scheduled check records availability, Google scores (stand-in) once a day; sending with To/Cc/Reply-To and embedded logo; test sends; reminder after day 5 once a month; SMTP failure recorded | 8/8 |
+| Browser (`access-report.spec.js`) | owner invites with "Solo fotos y portafolio" and changes to a custom set (axe on the dialog); a "Solo textos" account only sees and opens text; report page: preview, recipients (owner fixed), validation, test e-mail | passing |
+| Browser (`admin.spec.js`) | every-screen tour now includes *Informe mensual* (light/dark, 3 devices, axe, no overflow) | passing |
+
+Issues found while testing and fixed: added recipients rendered as
+"[object HTMLLIElement]" (array appended to the DOM); availability shown as
+"99,0 %" instead of "99 %"; report wording used "(s)" plurals — replaced by
+proper singular/plural.
+
+Full re-run: API **117/117**, browser **74 passed / 25 skipped**.
 
 ## Other audits
 

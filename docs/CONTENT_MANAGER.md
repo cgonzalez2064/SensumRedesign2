@@ -87,6 +87,8 @@ sensum-cms/                          (PRIVATE — outside public_html)
 | Support | "Reportar un problema" from every screen; history with delivery status and retry |
 | Dashboard | Site status, last publish, sync check + republish (admins), recent activity, monitoring status; diagnostics and recent errors for the owner |
 | Monitoring (owner) | Error log with filters and details, key figures (24 h / 7 d / 30 d), most frequent errors, system details, e-mail alerts for critical errors + test e-mail (§9a) |
+| Monthly report (owner) | Short plain-language site-health and visibility report for clients; recipients (owner always copied), preview, test, send, history; reminder after day 5 (§9b) |
+| Users (owner) | Invite, change access type, disable/enable, delete (§2b) |
 | Interface | Spanish by default, English optional; light/dark/system theme; responsive from 320 px phones to large monitors; reduced-motion aware |
 
 ### 2a. Automatic translation ES ⇄ EN
@@ -125,13 +127,33 @@ submitted text to improve its models; DeepL API **Pro** deletes it after
 translating. For website copy this is acceptable; switch to a Pro key (no code
 change) if that ever matters.
 
-**Owner account.** The administrator whose e-mail is `OWNER_EMAIL` (default
-**it@gruposensum.com**) is the owner: the only account that sees
-**Monitoreo** (error log, metrics, alerts) and the diagnostics/errors cards on
-the dashboard. Other administrators cannot demote, disable or delete it.
+### 2b. Owner account and access types
 
-**Roles.** *Administrador*: everything. *Editor*: texts, contact details,
-photos, documents, own account, reports — no user management or republish.
+**Owner account.** The active account whose e-mail is `OWNER_EMAIL` (default
+**it@gruposensum.com**) is the owner: the **only** account that manages users,
+sees **Monitoreo** and the diagnostics/errors cards on the dashboard, and sends
+the **Informe mensual**. Nobody can change or delete it from the panel (not even
+itself). Create it first (`bin/console create-admin --email=it@gruposensum.com`);
+`bin/console check` warns if it doesn't exist.
+
+**Access types.** Every other account has a set of permissions — what it may
+change. The server checks every change (`Auth::assertCan`); the panel only hides
+what an account cannot use.
+
+| Permission | Allows |
+|---|---|
+| `texts` | Textos del sitio (and automatic translation) |
+| `contact` | Datos de contacto |
+| `photos` | Photos: "Nosotros", project cards and galleries |
+| `documents` | The PDF portfolio |
+| `site` | Site status: recent activity and *Volver a publicar el sitio* |
+
+Ready-made types: *Acceso completo al contenido* (all five), *Editor de
+contenido* (all but `site`), *Solo textos*, *Solo fotos y portafolio*, *Solo
+datos de contacto* — or *Personalizado*. Everyone can manage their own account
+and send support reports. Existing accounts were migrated in `003_access.sql`
+(former administrators: all five; former editors: all but `site`). The old
+`role` column is kept only for compatibility; it grants nothing.
 
 ## 3. Editable content model
 
@@ -157,7 +179,9 @@ photos, documents, own account, reports — no user management or republish.
 
 | Table | Purpose |
 |---|---|
-| `users` | e-mail (unique, lower-case), name, role, status (invited/active/disabled), Argon2id/bcrypt hash, language, theme, timestamps |
+| `users` | e-mail (unique, lower-case), name, permissions (access type), status (invited/active/disabled), Argon2id/bcrypt hash, language, theme, timestamps |
+| `monitor_runs` | one row per scheduled check (ok / failed checks) — availability figure of the monthly report |
+| `site_reports` | monthly reports sent: month, when, by whom, recipients, language, status, figures |
 | `sessions` | SHA-256 of the session cookie, CSRF token, created/last-seen/expiry, pseudonymized IP, user agent |
 | `user_tokens` | SHA-256 of invitation/reset tokens, purpose, expiry, used-at |
 | `content` | key, language (`es`/`en`/`*`), value, who/when |
@@ -188,7 +212,8 @@ photos, documents, own account, reports — no user management or republish.
 | `GET /api/media` · `POST /api/media/{slot}/upload` · `PUT /api/media/{slot}/order` · `PUT`/`DELETE /api/media/item/{id}` | user | photos & PDF |
 | `PUT /api/account/profile` · `POST /api/account/password` · `POST /api/account/sessions/revoke-others` | user | own account |
 | `GET`/`POST /api/reports` · `POST /api/reports/{id}/retry` | user | support reports |
-| `GET`/`POST /api/users` · `POST /api/users/{id}/resend` · `PUT`/`DELETE /api/users/{id}` | admin | user management |
+| `GET`/`POST /api/users` · `POST /api/users/{id}/resend` · `PUT`/`DELETE /api/users/{id}` | owner | user management, access types |
+| `GET /api/site-report` · `GET /api/site-report/preview?period=&lang=` · `PUT /api/site-report/settings` · `POST /api/site-report/send` | owner | monthly client report |
 
 Errors are `{"ok":false,"error":"<code>","fields":{…}}`; the admin translates
 codes into friendly ES/EN text. Unexpected failures return only
@@ -318,6 +343,36 @@ entries older than `ERROR_LOG_DAYS`. Monitoreo shows when it last ran.
 can send an alert — that is what the external uptime monitor is for (Better
 Stack / UptimeRobot on the site and `/api/health`).
 
+### 9b. Monthly site report for clients
+
+Owner-only page **Informe mensual**. A short report in plain language (Spanish
+or English) for people who aren't technical:
+
+* Headline and status (*Todo en orden* / *Con observaciones*: any critical
+  incident, or availability below 99 %), one-paragraph summary.
+* Figures: availability (share of the month's scheduled checks that passed),
+  Google mobile speed score, content updates, security (HTTPS, blocked sign-in
+  attempts).
+* Sections: *Visibilidad en Google* (PageSpeed performance on phones and
+  computers, SEO, accessibility), *Contenido*, *Seguridad y respaldo* (HTTPS
+  certificate date, latest backup), *Soporte*. Sections without data are left
+  out rather than shown empty.
+* Optional message from the team; the branded e-mail embeds the logo (no remote
+  images) and replies go to the owner.
+
+Recipients: up to 20 (Namecheap allows 50 per message), validated and saved;
+the owner is always in Cc. *Enviarme una prueba* sends only to the owner and is
+not recorded. If last month's report hasn't been sent by the end of day 5, the
+owner gets one reminder e-mail (from the scheduled check, or when the owner
+opens the page), and the dashboard shows a warning. Months before the site was
+in use are skipped.
+
+Google PageSpeed scores are fetched by the scheduled check at most once a day,
+only when `APP_URL` is a public https address. `PAGESPEED_API_KEY` (free Google
+Cloud key restricted to the PageSpeed Insights API) is recommended — Google may
+refuse anonymous requests. `PAGESPEED_ENABLED=false` turns it off. The HTTPS
+certificate expiry is checked daily; under 3 weeks it is logged as a warning.
+
 **Turning on Cloudflare Web Analytics** (all three steps are required):
 1. Update `privacy-notice.html` §2 — it currently states the site uses no
    analytics (see `MEASUREMENT-PLAN.md`) — and republish. *(Legal text: get the
@@ -339,7 +394,7 @@ All keys are documented in `.env.example`. Required in production: `APP_URL`,
 `CF_WEB_ANALYTICS_TOKEN`, `DEEPL_API_KEY` + `TRANSLATE_DAILY_CHAR_LIMIT`
 (automatic translation), `OWNER_EMAIL`, `ALERTS_ENABLED`, `ALERT_EMAIL`,
 `ALERT_COOLDOWN_MINUTES`, `ALERT_DAILY_MAX`, `ERROR_LOG_DAYS`, `DISK_WARN_MB`
-(monitoring), `SETUP_TOKEN` (remove after first use), `PUBLIC_DIR`
+(monitoring), `PAGESPEED_ENABLED`, `PAGESPEED_API_KEY` (monthly report), `SETUP_TOKEN` (remove after first use), `PUBLIC_DIR`
 (only if the folders aren't side by side), `APP_KEY` (optional; otherwise
 generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`
 (ignored unless `APP_ENV=development`).
