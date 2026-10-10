@@ -427,7 +427,7 @@ final class Watchdog
         }
         $ver = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
         if (isset(self::PHP_SUPPORT_UNTIL[$ver])) {
-            $until = strtotime(self::PHP_SUPPORT_UNTIL[$ver]) ?: 0;
+            $until = (int) strtotime(self::PHP_SUPPORT_UNTIL[$ver]);
             $items[] = self::fill($s[$until < $now ? 'wd.review.phpEnded' : ($until < $now + 120 * 86400 ? 'wd.review.phpEnding' : 'wd.review.phpOk')], ['version' => $ver, 'date' => self::PHP_SUPPORT_UNTIL[$ver]]);
         }
         $lastContent = $db->value("SELECT MAX(created_at) FROM activity_log WHERE action IN ('content_updated','media_uploaded')");

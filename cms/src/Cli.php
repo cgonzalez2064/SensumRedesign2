@@ -287,7 +287,7 @@ final class Cli
             $from = 'new';
             foreach ($thread as $i => [$role, $kind, $body]) {
                 $at = $created + 1800 + $i * 60;
-                if ($i === 0 && $status !== 'new') {
+                if ($i === 0) { // samples with a conversation are never "new"
                     $db->run("INSERT INTO report_messages (report_id, user_id, author_name, author_role, kind, body, details, created_at) VALUES (?, ?, ?, 'support', 'event', '', ?, ?)",
                         [$id, $ownerId, $ownerName, json_encode(['action' => 'status', 'from' => $from, 'to' => $status]), $at - 30]);
                 }

@@ -19,5 +19,8 @@
         "optimize-autoloader": true,
         "sort-packages": true,
         "platform": { "php": "8.1.0" }
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1"
     }
 }

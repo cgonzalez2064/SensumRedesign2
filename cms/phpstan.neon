@@ -1,0 +1,16 @@
+# Static analysis of the Content Manager and the public PHP files (dev only;
+# not part of the release):  cms/vendor/bin/phpstan analyse -c cms/phpstan.neon
+parameters:
+    level: 6
+    phpVersion: 80100
+    paths:
+        - src
+        - bootstrap.php
+        - ../api/index.php
+        - ../assets/contact-handler.php
+    tmpDir: storage/phpstan-cache
+    ignoreErrors:
+        # Arrays are documented where their shape matters (API payloads, mail
+        # messages); requiring a value type on every internal array adds noise
+        # without finding bugs. Same policy as the earlier audits.
+        - identifier: missingType.iterableValue

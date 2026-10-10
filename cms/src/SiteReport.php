@@ -91,7 +91,7 @@ final class SiteReport
         }
         $allowed = [];
         for ($i = 0; $i <= 12; $i++) {
-            $allowed[] = date('Y-m', strtotime("first day of -{$i} month") ?: time());
+            $allowed[] = date('Y-m', (int) strtotime("first day of -{$i} month"));
         }
         if (!in_array($period, $allowed, true)) {
             throw ApiError::validation(['period' => 'invalid']);
@@ -104,7 +104,7 @@ final class SiteReport
     {
         $out = [];
         for ($i = 0; $i <= 12; $i++) {
-            $p = date('Y-m', strtotime("first day of -{$i} month") ?: time());
+            $p = date('Y-m', (int) strtotime("first day of -{$i} month"));
             $out[] = ['value' => $p, 'label' => $this->periodLabel($p, $lang)];
         }
         return $out;

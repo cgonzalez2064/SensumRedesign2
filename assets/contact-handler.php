@@ -84,7 +84,7 @@ const RATE_LIMIT_MAX = 5;        // max submissions per client hash per window
  * The Content Manager installed next to this site, if any (same lookup as
  * api/index.php). Optional: the form works the same without it.
  */
-function sensumCmsApp() {
+function sensumCmsApp(): ?\Sensum\Cms\App {
     static $app = false;
     if ($app !== false) {
         return $app;
@@ -125,12 +125,12 @@ header('X-Content-Type-Options: nosniff');
  * assets/main.js's fetch() call sends Accept: application/json. Serve
  * a small branded HTML page in the first case instead of raw JSON.
  */
-function wantsJson() {
+function wantsJson(): bool {
     $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
     return stripos($accept, 'application/json') !== false || empty($accept);
 }
 
-function respond($httpStatus, $ok, $payload = []) {
+function respond(int $httpStatus, bool $ok, array $payload = []): never {
     http_response_code($httpStatus);
     if (wantsJson()) {
         header('Content-Type: application/json; charset=utf-8');
@@ -193,7 +193,7 @@ if ($contentLength > MAX_REQUEST_BYTES) {
 // Origin / Referer allowlist (same-origin policy for this public,
 // unauthenticated form — see the CSRF note above).
 // ------------------------------------------------------------
-function allowedOrigins() {
+function allowedOrigins(): array {
     $origins = ALLOWED_ORIGINS;
     // The Content Manager's own address (APP_URL) is also this site — e.g. a
     // local copy at http://127.0.0.1:8080 during testing.
@@ -208,7 +208,7 @@ function allowedOrigins() {
     return $origins;
 }
 
-function originAllowed() {
+function originAllowed(): bool {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     if ($origin !== '') {
         return in_array(rtrim($origin, '/'), allowedOrigins(), true);
@@ -249,7 +249,7 @@ foreach ($_POST as $key => $value) {
 // client IP, never the raw IP, and pruned on every run so storage
 // never grows unbounded.
 // ------------------------------------------------------------
-function rateLimitDir() {
+function rateLimitDir(): string {
     // Prefer a directory outside the web root (one level above
     // public_html) when it exists and is writable.
     $outside = dirname(__DIR__, 2) . '/sensum-rl-data';
@@ -272,7 +272,7 @@ function rateLimitDir() {
 // Built-in captcha (proof of work)
 // ------------------------------------------------------------
 /** Secret that signs challenges: from the Content Manager when installed, otherwise a private key file. */
-function captchaKey() {
+function captchaKey(): string {
     static $key = null;
     if ($key !== null) {
         return $key;
@@ -305,7 +305,7 @@ function captchaKey() {
 }
 
 /** A signed, expiring challenge: the browser must find `number` with sha256(salt . number) === challenge. */
-function captchaChallenge() {
+function captchaChallenge(): array {
     $salt = bin2hex(random_bytes(12)) . '?expires=' . (time() + CAPTCHA_TTL_S);
     $challenge = hash('sha256', $salt . random_int(0, CAPTCHA_MAX_NUMBER));
     return [
@@ -318,7 +318,7 @@ function captchaChallenge() {
 }
 
 /** Checks the browser's answer: signed by us, not expired, correct, and never used before. */
-function captchaValid($payload) {
+function captchaValid(mixed $payload): bool {
     if (!is_string($payload) || $payload === '' || strlen($payload) > 1024) {
         return false;
     }
@@ -350,7 +350,7 @@ function captchaValid($payload) {
 }
 
 /** Single use: remembers solved challenges until they expire. */
-function captchaFirstUse($challenge, $expires) {
+function captchaFirstUse(string $challenge, int $expires): bool {
     $file = rateLimitDir() . '/captcha-used.json';
     $fh = @fopen($file, 'c+');
     if (!$fh) {
@@ -379,7 +379,7 @@ function captchaFirstUse($challenge, $expires) {
  * the option id (current pages) or the Spanish name (pages published
  * before options had ids).
  */
-function serviceLabel($value) {
+function serviceLabel(string $value): ?string {
     $app = sensumCmsApp();
     if ($app) {
         try {
@@ -395,14 +395,14 @@ function serviceLabel($value) {
     return in_array($value, ALLOWED_SERVICES, true) ? $value : null;
 }
 
-function clientHash() {
+function clientHash(): string {
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     // Not a cryptographic secret — just avoids storing raw IPs at rest.
     return hash('sha256', 'sensum-rl|' . $ip);
 }
 
 /** Returns true if this client is currently rate-limited. */
-function isRateLimited() {
+function isRateLimited(): bool {
     $dir = rateLimitDir();
     $file = $dir . '/' . clientHash() . '.json';
     $now = time();
@@ -444,7 +444,7 @@ if (isRateLimited()) {
 // ------------------------------------------------------------
 // Field extraction, normalization, length limits, validation
 // ------------------------------------------------------------
-function field($name) {
+function field(string $name): string {
     if (!isset($_POST[$name])) {
         return '';
     }
@@ -460,7 +460,7 @@ function field($name) {
     return $value;
 }
 
-function fieldMultiline($name) {
+function fieldMultiline(string $name): string {
     if (!isset($_POST[$name])) {
         return '';
     }
@@ -475,20 +475,20 @@ function fieldMultiline($name) {
     return trim(implode("\n", $lines));
 }
 
-function cleanHeaderValue($value) {
+function cleanHeaderValue(string $value): string {
     // Defense in depth against header injection, even though nothing
     // above should let \r or \n survive into these values.
-    return preg_replace('/[\r\n]+/', ' ', $value);
+    return preg_replace('/[\r\n]+/', ' ', $value) ?? '';
 }
 
-function utf8Len($s) {
+function utf8Len(string $s): int {
     return mb_strlen($s, 'UTF-8');
 }
 
 // Honeypot: real users never see or fill this field. If it has a value,
 // silently pretend success so bots don't learn the check exists.
 /** Counts blocked spam / sent messages in the Content Manager (weekly summary). */
-function countContact($what) {
+function countContact(string $what): void {
     $app = sensumCmsApp();
     if ($app) {
         try {
@@ -625,6 +625,7 @@ $smtpConfigPath = dirname(__DIR__, 2) . '/sensum-mail-config.php';
 if (is_file($smtpConfigPath)) {
     $smtpSend = null;
     include $smtpConfigPath; // expected to define a callable in $smtpSend
+    // @phpstan-ignore function.impossibleType ($smtpSend is assigned by the included file)
     if (is_callable($smtpSend)) {
         try {
             $sent = (bool) $smtpSend(TO_EMAIL, $subject, $body, FROM_EMAIL, SITE_NAME, $email, $name);
@@ -634,7 +635,7 @@ if (is_file($smtpConfigPath)) {
         }
     }
 }
-if (!$sent) {
+if (!$sent) { // @phpstan-ignore booleanNot.alwaysTrue (see the include above)
     $sent = @mail(TO_EMAIL, $subject, $body, $headers);
 }
 

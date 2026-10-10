@@ -57,7 +57,7 @@ final class Mailer
      */
     public function send(array $m): bool
     {
-        $to = array_values((array) $m['to']);
+        $to = (array) $m['to'];
         if (!$to || array_filter($to, fn ($a) => !filter_var($a, FILTER_VALIDATE_EMAIL))) {
             $this->logger->error('mail_invalid_recipient');
             return false;
