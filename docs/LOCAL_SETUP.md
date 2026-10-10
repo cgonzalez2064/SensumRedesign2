@@ -328,8 +328,9 @@ brew install httpd
 #    top of public_html/.htaccess (local http://127.0.0.1 would otherwise be redirected),
 #    and remove "; upgrade-insecure-requests" from its CSP line (WebKit/Safari would
 #    otherwise upgrade every asset to https://127.0.0.1 and nothing would load)
-# 3. create ~/sensum-apache/sensum-cms/.env with APP_ENV=development and
-#    APP_URL=http://127.0.0.1:8088 (+ the Mailpit SMTP values)
+# 3. create ~/sensum-apache/sensum-cms/.env with APP_ENV=development,
+#    APP_URL=http://127.0.0.1:8088, TWO_FACTOR_POLICY=none (the test signs in
+#    without an authenticator) and the Mailpit SMTP values
 # 4. start PHP-FPM on 127.0.0.1:9082 and Apache on 127.0.0.1:8088 with
 #    AllowOverride All and mod_rewrite/headers/expires/deflate enabled
 APACHE_BASE=http://127.0.0.1:8088 APACHE_HOME=~/sensum-apache node --test "tests/apache/*.test.mjs"

@@ -214,6 +214,7 @@ Full re-run: API **168/168**, browser **92 passed / 37 skipped** (skips by desig
 | Existing suites | Prospectos, one lead and Estadísticas in every-screen checks (3 devices × 2 themes, axe, no overflow); contact failure now keeps the lead and answers 200 (500 only when nothing could be stored); 8 demo profiles (`demo.ventas`); `leads` in the full access type; report KPI order; `sqlite3` reads in tests wait for the server's write lock | passing |
 | Visual regression | public site with `stats.js` added | 20/22 identical; the 2 privacy-notice states differ only by the new statistics/retention paragraphs (intended text change) |
 | Static analysis | PHPStan level 6 (now run with `--memory-limit=1G`) | 0 errors |
+| Production build on Apache | release `57ede71` (62 public + 245 private files, 1.1 MB zip; no PHPStan, no `phpstan.neon`) under Apache + PHP-FPM; `/api/collect` through the rewrite (204, foreign origin 403), `stats.js` served immutable | 6/6 |
 
 Full re-run: API **184/184**, browser **102 passed / 42 skipped**.
 
