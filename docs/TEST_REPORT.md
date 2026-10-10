@@ -289,6 +289,8 @@ Full re-run: API **203/203**, browser **135 passed / 51 skipped**; PHPStan 0 err
 | The logo block scrolled away with a long menu; 5 px taller than the top bar | sticky inside the menu, exactly the top bar's height |
 | Signing in with an English profile on a device in Spanish left the menu and top bar in Spanish | the frame is rebuilt when the language finishes loading |
 
+| Production build on Apache | release `11d9062` (68 public + 251 private files, 1.2 MB zip) under Apache + PHP-FPM; the new icon is served from the sprite | 6/6 |
+
 Full re-run: API **203/203**, browser **145 passed / 53 skipped**; PHPStan 0 errors.
 
 ## Other audits
