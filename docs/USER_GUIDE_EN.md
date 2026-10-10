@@ -45,6 +45,11 @@ In the menu with your name (top right):
 
 Your choice is remembered. You can also change it in **My account**.
 
+**The top stays in place.** When you scroll, the top bar (menu, logo, "Report an
+issue" and your name) stays put. On computers the logo and "Content Manager" also stay
+at the top of the side menu even when the menu is long; on phones and tablets the same
+happens inside the slide-out menu.
+
 ## 3. Editing text
 
 1. Go to **Website text**.
@@ -195,11 +200,12 @@ issue** (at the top of every panel screen; on phones it's the life-buoy icon).
 
 The report goes straight to the technical support team (it@gruposensum.com).
 
-**Follow-up:** each report has its own page under **Support requests** with its
-status (New, In progress, Waiting for information, Resolved, Closed) and the
-conversation with support. You get an e-mail when support replies, asks for more
-information or resolves it, and the menu shows a number next to "Support requests"
-when there's a new reply. To answer, write in **Your reply** and tap **Send
+**Follow-up:** the **Support** menu opens the **Help Center**. Under **My requests**
+each report has its own page with its status (New, In progress, Waiting for
+information, Resolved, Closed) and the conversation with support. The **New request**
+button opens the same form as "Report an issue". You get an e-mail when support
+replies, asks for more information or resolves it, and the menu shows a number next
+to "Support" when there's a new reply. To answer, write in **Your reply** and tap **Send
 reply**: if you were asked for information, or it was marked resolved but the
 problem persists, your reply moves it back to "In progress". Closed reports take
 no more replies (you can send a new one).
@@ -218,8 +224,8 @@ other forms are **never** sent.
 > **Don't include passwords or sensitive information in the report.**
 
 If the email couldn't be sent at that moment, the panel tells you: your report
-**is saved** and you can retry right away or later from **Support requests**,
-where you can also see your report history.
+**is saved** and you can retry right away or later from **Support** (Help Center),
+where you can also see your request history.
 
 ## 8. If a change doesn't appear on the website
 
@@ -366,10 +372,11 @@ password).
 correctly (SPF, DKIM, DMARC and MX: without them the site's e-mails land in spam or
 can be forged) and shows when the domain expires. It is also checked once a day.
 
-## 15. Managing support requests (owner account and "Technical support")
+## 15. Request management (owner account and "Technical support")
 
-Under **Support requests** the owner account —and anyone with the **Support request
-management** access ("Technical support" type)— sees **everyone's** requests:
+Under **Support** (Help Center) the owner account —and anyone with the **Support
+request management** access ("Technical support" type)— sees **everyone's** requests
+in **Request management**:
 
 * **Support overview** (at the top, can be folded away): choose 30, 90 or 365 days and
   see the **open**, **received** and **resolved** requests (with the average time to

@@ -90,7 +90,7 @@ test('owner: Monitoreo shows uptime, the daily chart and which checks failed', a
   await expect(page.locator('main h1')).toHaveText('Salud del sitio');
 });
 
-test('Soporte técnico: everyone\'s requests, the overview charts and no administration', async ({ page }) => {
+test('Soporte técnico: everyone\'s requests, the overview charts and no administration', async ({ page }, info) => {
   const errors = [];
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   await signIn(page, SUPPORT);
@@ -99,9 +99,15 @@ test('Soporte técnico: everyone\'s requests, the overview charts and no adminis
   for (const href of ['#/usuarios', '#/monitoreo', '#/textos', '#/prospectos', '#/correo']) expect(links).not.toContain(href);
 
   await page.goto('/admin/#/reportes');
-  await expect(page.locator('main h1')).toHaveText('Solicitudes de soporte');
+  await expect(page.locator('main h1')).toHaveText('Centro de Ayuda');
+  await expect(page.getByRole('heading', { name: 'Gestión de solicitudes' })).toBeVisible();
   await expect(page.getByText('La galería no abre en el celular')).toBeVisible(); // Elena's request
   const overview = page.locator('details.ticket-overview');
+  // Folded on phones so the list comes first; open on tablets and computers.
+  if (info.project.name === 'iphone-webkit') {
+    await expect(overview).not.toHaveAttribute('open', '');
+    await overview.locator(':scope > summary').click();
+  }
   await expect(overview).toHaveAttribute('open', '');
   await expect(overview.locator(':scope > summary')).toContainText('Panorama de soporte');
   await expect(overview.locator('.kpi', { hasText: 'Abiertas ahora' }).locator('.kpi-num')).toHaveText(/^\d+$/);
@@ -134,7 +140,8 @@ test('Soporte técnico: everyone\'s requests, the overview charts and no adminis
 test('a site administrator does not manage support: own requests only, no overview', async ({ page }) => {
   await signIn(page, OTHER_ADMIN);
   await page.goto('/admin/#/reportes');
-  await expect(page.locator('main h1')).toHaveText('Solicitudes de soporte');
+  await expect(page.locator('main h1')).toHaveText('Centro de Ayuda');
+  await expect(page.getByRole('heading', { name: 'Mis solicitudes' })).toBeVisible();
   await expect(page.locator('details.ticket-overview')).toHaveCount(0);
   await expect(page.getByText('La galería no abre en el celular')).toHaveCount(0);
 });

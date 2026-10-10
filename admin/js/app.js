@@ -338,7 +338,7 @@ function renderShell(activeNav, force = false) {
         navLink('/monitoreo', 'monitor', 'activity', active), navLink('/informe', 'siteReport', 'bar-chart', active),
         navLink('/correo', 'email', 'envelope', active), navLink('/traduccion', 'translation', 'translate', active), navLink('/seguridad', 'security', 'shield-lock', active)] : null,
       h('div', { class: 'nav-section', text: t('nav.groupSupport') }),
-      navLink('/reportes', 'reports', 'chat-square-text', active),
+      navLink('/reportes', 'reports', 'headset', active),
       navLink('/ayuda', 'help', 'question-circle', active),
       navLink('/cuenta', 'account', 'person-circle', active)),
     h('div', { class: 'sidebar-foot' },
@@ -501,7 +501,9 @@ async function boot() {
   onSessionExpired(relogin);
   // The policy changed while signed in: refresh the session and show the set-up screen.
   onTwoFactorRequired(async () => { await loadSession(); state.path = null; route(true); });
-  onLangChange(() => { state.path = null; route(true); });
+  // The new language's texts are loaded now: rebuild the frame (menu, top bar)
+  // too — it may have been drawn while they were still loading.
+  onLangChange(() => { state.shell = null; state.path = null; route(true); });
   window.addEventListener('online', () => { if (state.shell) state.shell.offline.hidden = true; });
   window.addEventListener('offline', () => { if (state.shell) state.shell.offline.hidden = false; });
   await loadSession();

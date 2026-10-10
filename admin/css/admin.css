@@ -287,7 +287,9 @@ button{ cursor:pointer; }
   overflow-y:auto; overscroll-behavior:contain;
 }
 .sidebar.open{ transform:none; }
-.sidebar-head{ display:flex; align-items:center; justify-content:space-between; padding:.75rem .75rem .75rem 1rem; border-bottom:1px solid var(--border); min-height:var(--topbar-h); }
+/* The logo block stays at the top while the menu scrolls under it (lined up with the top bar). */
+.sidebar-head{ position:sticky; top:0; z-index:2; flex:none; display:flex; align-items:center; justify-content:space-between; gap:.5rem; height:var(--topbar-h); padding:0 .75rem 0 1rem; border-bottom:1px solid var(--border); background:var(--surface); }
+.sidebar-head .brand small{ line-height:1.2; }
 .nav{ padding:.75rem; display:grid; gap:2px; }
 .nav a{
   display:flex; align-items:center; gap:.75rem; min-height:44px; padding:.55rem .75rem; border-radius:var(--r);
@@ -596,11 +598,12 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 .report-preview .kpi-num{ font-size:1.35rem; }
 .report-section h4{ margin:.4rem 0 .2rem; font-size:1rem; }
 .report-section ul{ margin:.2rem 0 0; padding-left:1.2rem; display:grid; gap:.25rem; }
-.chips{ list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:.4rem; }
-.chip{ display:inline-flex; align-items:center; gap:.35rem; padding:.3rem .35rem .3rem .7rem; border-radius:999px; background:var(--surface-2); border:1px solid var(--border); font-size:.88rem; max-width:100%; overflow-wrap:anywhere; }
-.chip-fixed{ padding-right:.7rem; background:var(--accent-soft); border-color:transparent; }
-.chip-x{ display:inline-grid; place-items:center; width:28px; height:28px; border:0; border-radius:50%; background:transparent; color:var(--text-2); cursor:pointer; flex:none; }
-.chip-x:hover, .chip-x:focus-visible{ background:var(--surface-3); color:var(--text); }
+/* Recipient tags (own names: .chip is the radio pill of the report dialog) */
+.tag-list{ list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:.4rem; }
+.tag{ display:inline-flex; align-items:center; gap:.35rem; padding:.3rem .35rem .3rem .7rem; border-radius:999px; background:var(--surface-2); border:1px solid var(--border); font-size:.88rem; max-width:100%; overflow-wrap:anywhere; }
+.tag-fixed{ padding-right:.7rem; background:var(--accent-soft); border-color:transparent; }
+.tag-x{ display:inline-grid; place-items:center; width:28px; height:28px; border:0; border-radius:50%; background:transparent; color:var(--text-2); cursor:pointer; flex:none; }
+.tag-x:hover, .tag-x:focus-visible{ background:var(--surface-3); color:var(--text); }
 .add-row{ display:flex; gap:.5rem; align-items:flex-end; flex-wrap:wrap; }
 .add-row .field{ flex:1 1 220px; margin:0; }
 
@@ -752,7 +755,7 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 /* Support tickets */
 .nav-badge{ margin-left:auto; min-width:22px; height:22px; padding:0 .4rem; border-radius:999px; background:var(--brand); color:var(--brand-ink); font-size:.75rem; font-weight:800; display:inline-grid; place-items:center; animation: pop-in var(--t) var(--ease) both; }
 .ticket-toolbar{ display:grid; gap:.75rem; }
-.filter-tabs{ display:flex; gap:.4rem; overflow-x:auto; padding-bottom:.15rem; scrollbar-width:thin; }
+.filter-tabs{ display:flex; flex-wrap:wrap; gap:.4rem; } /* wrap on phones: every filter stays visible */
 .filter-tab{ display:inline-flex; align-items:center; gap:.45rem; min-height:38px; padding:.35rem .8rem; border-radius:999px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-2); font-weight:600; font-size:.88rem; white-space:nowrap; transition: background-color var(--t-fast), color var(--t-fast), border-color var(--t-fast); }
 .filter-tab:hover{ color:var(--text); border-color:var(--text-3); }
 .filter-tab[aria-pressed="true"]{ background:var(--accent-soft); border-color:var(--brand); color:var(--accent); }

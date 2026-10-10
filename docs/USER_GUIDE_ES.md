@@ -45,6 +45,11 @@ En el menú con tu nombre (arriba a la derecha):
 
 Tu elección se recuerda. También puedes cambiarla en **Mi cuenta**.
 
+**La parte de arriba queda fija.** Al desplazarte, la barra superior (menú, logo,
+«Reportar un problema» y tu nombre) se queda en su lugar. En computadora, el logo y
+«Administrador de contenido» también se quedan arriba del menú lateral aunque el menú
+sea largo; en celular y tableta pasa lo mismo dentro del menú desplegable.
+
 ## 3. Cambiar textos
 
 1. Ve a **Textos del sitio**.
@@ -207,11 +212,12 @@ salvavidas).
 
 El reporte llega directamente al equipo de soporte técnico (it@gruposensum.com).
 
-**Seguimiento:** cada reporte tiene su página en **Solicitudes de soporte** con su
-estado (Nuevo, En progreso, Esperando información, Resuelto, Cerrado) y la
-conversación con soporte. Te llega un correo cuando soporte te responde, te pide
-más información o lo resuelve, y el menú muestra un número junto a «Solicitudes de
-soporte» cuando tienes una respuesta nueva. Para contestar, escribe en **Tu
+**Seguimiento:** en el menú **Soporte** se abre el **Centro de Ayuda**. Ahí, en **Mis
+solicitudes**, cada reporte tiene su página con su estado (Nuevo, En progreso,
+Esperando información, Resuelto, Cerrado) y la conversación con soporte. El botón
+**Nueva solicitud** abre el mismo formulario que «Reportar un problema». Te llega un
+correo cuando soporte te responde, te pide más información o lo resuelve, y el menú
+muestra un número junto a «Soporte» cuando tienes una respuesta nueva. Para contestar, escribe en **Tu
 respuesta** y toca **Enviar respuesta**: si te pidieron información o lo
 marcaron como resuelto pero el problema sigue, tu respuesta lo vuelve a poner
 «En progreso». Los reportes cerrados ya no reciben respuestas (puedes enviar uno
@@ -232,7 +238,7 @@ verla antes de enviar en «Ver la información técnica que se envía».
 
 Si el correo no se pudo enviar en ese momento, el panel te lo dirá: tu reporte
 **queda guardado** y puedes reintentar el envío ahí mismo o más tarde desde
-**Solicitudes de soporte**, donde también ves el historial de tus reportes.
+**Soporte** (Centro de Ayuda), donde también ves el historial de tus solicitudes.
 
 ## 8. Si un cambio no aparece en el sitio
 
@@ -385,11 +391,11 @@ aceptes: avisa a soporte técnico. Si los hiciste tú, pulsa **Marcar como esper
 configurado (SPF, DKIM, DMARC y MX: sin ellos los correos del sitio llegan a spam o
 pueden falsificarse) y muestra cuándo vence el dominio. Se revisa solo una vez al día.
 
-## 15. Gestión de solicitudes de soporte (cuenta propietaria y «Soporte técnico»)
+## 15. Gestión de solicitudes (cuenta propietaria y «Soporte técnico»)
 
-En **Solicitudes de soporte** la cuenta propietaria —y quien tenga el acceso **Gestión
-de solicitudes de soporte** (tipo «Soporte técnico»)— ve las solicitudes de **todas**
-las personas:
+En **Soporte** (Centro de Ayuda) la cuenta propietaria —y quien tenga el acceso
+**Gestión de solicitudes de soporte** (tipo «Soporte técnico»)— ve, en **Gestión de
+solicitudes**, las solicitudes de **todas** las personas:
 
 * **Panorama de soporte** (arriba, se puede plegar): elige 30, 90 o 365 días y ve las
   solicitudes **abiertas**, **recibidas** y **resueltas** (con el tiempo promedio de

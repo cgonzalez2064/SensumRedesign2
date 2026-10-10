@@ -315,7 +315,7 @@ Do these on the live site and tick them in `docs/PRODUCTION_CHECKLIST.md`:
     **it@gruposensum.com** with subject `[Sensum Website] …`.
 11. Report failure handling: temporarily set a wrong `SMTP_PASSWORD`, send a
     report → the panel says it was saved but not sent → restore the password →
-    **Solicitudes de soporte → Reintentar envío** → it arrives.
+    **Soporte (Centro de Ayuda) → Reintentar envío** → it arrives.
 12. Upload restrictions: try a `.svg` or a renamed text file → friendly refusal.
 13. Dashboard → *Diagnóstico técnico*: all green (the "Carpeta privada fuera del
     sitio público" check confirms the folder layout).

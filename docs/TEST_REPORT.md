@@ -10,7 +10,7 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 | Suite | Location | Size |
 |---|---|---|
 | API integration | `tests/integration/*.test.mjs` | 203 tests in 22 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
-| Browser E2E | `tests/e2e/*.spec.js` | 62 specs × 3 browser profiles (186 runs, 51 skipped by design: phone-only, desktop-only or single-submission tests) |
+| Browser E2E | `tests/e2e/*.spec.js` | 66 specs × 3 browser profiles (198 runs, 53 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
 | Production build | `tests/apache/apache.test.mjs` | 6 checks of the built release under Apache + PHP-FPM |
 
@@ -271,6 +271,25 @@ Full re-run: API **197/197**, browser **117 passed / 51 skipped**; PHPStan 0 err
 | Production build on Apache | release `3ab8a4a` (68 public + 251 private files, 1.2 MB zip) under Apache + PHP-FPM; migration `011_access_profiles` applied on first request; `/api/reports/analytics` and `/api/monitor/overview` refuse anonymous requests (401); the new admin views served | 6/6 |
 
 Full re-run: API **203/203**, browser **135 passed / 51 skipped**; PHPStan 0 errors.
+
+## Change — Centro de Ayuda (menu «Soporte»), fixed header, phone and tablet review
+
+| Suite | Added | Result |
+|---|---|---|
+| Browser (`help-center`, new) | menu «Soporte» with the headset icon; page «Centro de Ayuda»; «Mis solicitudes» for everyone, «Gestión de solicitudes» for managers; «Nueva solicitud» opens the request form; breadcrumb; axe; every status filter inside the screen on phones (they wrap), the overview folded on phones and open elsewhere, the person's choice remembered on the device; the top bar stays at the top while the page scrolls and the logo block stays at the top while the side menu (or the phone/tablet drawer) scrolls, both the same height; an English-profile account signing in on a Spanish device gets the whole frame in English | 10 passed, 2 skipped by design |
+| Existing suites | `profiles` (new titles, the overview opened first on phones), `access-report` (recipient tags renamed) | passing |
+
+**Phone and tablet review of the module** (320 and 390 px phones, 768 and 1024 px tablets, manager and reporter: list, one request, new-request form) — no horizontal overflow; found and fixed:
+
+| Issue | Fix |
+|---|---|
+| The request-type pills in the form showed a double border | `.chip` was defined twice (radio pill and recipient tag); the recipient tags now use `.tag` |
+| Status filters cut off at the right edge on phones | they wrap |
+| On phones the overview pushed the list ~1,500 px down | folded by default on phones (remembered per device) |
+| The logo block scrolled away with a long menu; 5 px taller than the top bar | sticky inside the menu, exactly the top bar's height |
+| Signing in with an English profile on a device in Spanish left the menu and top bar in Spanish | the frame is rebuilt when the language finishes loading |
+
+Full re-run: API **203/203**, browser **145 passed / 53 skipped**; PHPStan 0 errors.
 
 ## Other audits
 

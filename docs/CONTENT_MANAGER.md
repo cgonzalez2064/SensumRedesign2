@@ -98,7 +98,7 @@ so a slow screen can never write into the next one).
 | Monitoring (owner) | Uptime (24 h / 7 / 30 / 90 days), incidents with the checks that failed, interactive trend charts (daily uptime, response time, errors, sign-ins), error log with filters and details, key figures, most frequent errors, system details, e-mail alerts for critical errors + test e-mail (§9a, §9d) |
 | Salud del sitio (`monitor`) | Summary of Monitoring for the team: status, uptime, charts, incidents, error counts and key dates — no messages or settings (§9d) |
 | Monthly report (owner) | Short plain-language site-health and visibility report for clients; recipients (owner always copied), preview, test, send, history; reminder after day 5 (§9b) |
-| Support requests | Reports become requests: status (new, in progress, waiting for information, resolved, closed), priority, conversation; the owner and the `support` access edit, reply, add internal notes, ask for information, resolve/close/reopen with optional e-mail to the reporter, and see the *Panorama de soporte* charts (30/90/365 days); reporters follow and answer their own (an answer reopens); menu badge; screenshot viewer |
+| Support — *Centro de Ayuda* | Menu *Soporte* (headset icon) → *Centro de Ayuda*: *Nueva solicitud*, *Mis solicitudes* (everyone) and *Gestión de solicitudes* (managers). Reports become requests: status (new, in progress, waiting for information, resolved, closed), priority, conversation; the owner and the `support` access edit, reply, add internal notes, ask for information, resolve/close/reopen with optional e-mail to the reporter, and see the *Panorama de soporte* charts (30/90/365 days); reporters follow and answer their own (an answer reopens); menu badge; screenshot viewer |
 | Monthly report value | Support summary (received, resolved, average resolution time, resolved items, pending) and automatic maintenance (health checks, file-security scans, backups, certificate checks, Google measurements, blocked spam, notices) + messages received through the form |
 | Contact-form options | "Servicio de interés" list: add, rename (ES/EN), reorder, remove (up to 20), restore the approved options; published at once; stable ids so renaming never breaks open pages (access: contact details). The preview is a working replica of the site's form: phone / tablet / computer widths (scaled to fit), ES/EN, the list opens with unsaved options tagged *Nueva* / *Modificada*, and «Enviar mensaje» shows the site's validation messages without sending anything |
 | E-mail settings (owner) | Panel's SMTP sending account (+ Reply-To), contact-form receivers/sender/method, problem-report and alert recipients, optional Cloudflare Turnstile keys; password re-check, secrets encrypted at rest, security notice, test buttons; `EMAIL_SETTINGS_LOCKED` for .env-only setups |
@@ -350,7 +350,7 @@ admins can republish with one click (or `php bin/console publish`).
   `[Sensum Website] <Tipo>: <Título>`, Reply-To = reporter, plain text + escaped
   HTML, screenshot attached. HTTP 201 = sent, 202 = saved but not sent.
 * Failure handling: status `failed`, the text stays on screen, the user can
-  retry immediately or later from **Solicitudes de soporte**; admins see failures on
+  retry immediately or later from **Soporte** (Centro de Ayuda); admins see failures on
   the dashboard; `php bin/console reports:retry` resends all pending.
 * Abuse limits: 5 reports per 10 minutes and 20 per day per user; identical
   reports within 15 minutes are recognized as duplicates; retries 10 per 10 min.

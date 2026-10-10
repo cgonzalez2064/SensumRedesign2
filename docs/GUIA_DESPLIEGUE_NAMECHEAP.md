@@ -601,9 +601,9 @@ que **no hace falta banner de cookies**. Quien pide «No rastrear» no se cuenta
   asesoría legal antes de publicar; los párrafos de estadísticas y conservación ya
   describen el funcionamiento real.
 
-### 18.3 Solicitudes de soporte: tiempo de respuesta, satisfacción y gráficas
+### 18.3 Soporte (Centro de Ayuda): tiempo de respuesta, satisfacción y gráficas
 
-- Panel → **Solicitudes de soporte** (cuenta propietaria o personas con **Gestión de
+- Panel → menú **Soporte** → **Centro de Ayuda** (cuenta propietaria o personas con **Gestión de
   solicitudes de soporte**): arriba está el **Panorama de soporte** con el período
   (30, 90 o 365 días), las solicitudes **abiertas**, **recibidas** y **resueltas**
   (con el tiempo promedio de resolución), la **primera respuesta promedio**, el
@@ -684,7 +684,7 @@ también puedes comprobarla: `php ~/sensum-cms/bin/console translate:test`.
 - [ ] `https://sensumconstrucciones.com/api/health` → `"status":"ok"`.
 - [ ] **Formulario de contacto:** envía un mensaje real desde el sitio (en celular y computadora). Bajo el botón aparece «Verificación anti-spam completa.» y el mensaje llega a `contacto@sensumconstrucciones.com` con remitente `formulario@`; al responderlo, la respuesta va al visitante.
 - [ ] (Si activaste Turnstile) el formulario sigue enviando y no muestra errores; en Cloudflare → Turnstile aparecen las verificaciones.
-- [ ] **Solicitudes de soporte:** con otra cuenta envía un reporte de prueba; como it@gruposensum.com ábrelo, usa **Pedir más información** y luego **Marcar como resuelto**; la persona recibe ambos correos.
+- [ ] **Soporte (Centro de Ayuda):** con otra cuenta pulsa **Nueva solicitud** y envía una de prueba (aparece en **Mis solicitudes**); como it@gruposensum.com ábrelo, usa **Pedir más información** y luego **Marcar como resuelto**; la persona recibe ambos correos.
 - [ ] (Opcional) Panel → **Formulario de contacto**: ajusta las opciones de «Servicio de interés» a los servicios que ofreces hoy. La **vista previa** funciona como el sitio: cambia entre **Celular, Tableta y Computadora**, abre la lista (las opciones sin guardar dicen «Nueva» o «Modificada») y pulsa «Enviar mensaje» para ver los mensajes de error (no se envía nada). Luego **Guardar y publicar** y compruébalo en el sitio (español e inglés).
 - [ ] **Correo del panel:** panel → Correo → **Enviar correo de prueba** → llega a it@gruposensum.com.
 - [ ] Inicias sesión en `/admin/` como it@gruposensum.com; ves Usuarios, Monitoreo, Informe mensual y Correo.
@@ -702,7 +702,7 @@ también puedes comprobarla: `php ~/sensum-cms/bin/console translate:test`.
 - [ ] Después de enviar el mensaje de prueba del formulario: aparece en **Prospectos** (con el enlace «Prospecto #…» en el correo). Cámbialo a «Contactado» y agrega una nota.
 - [ ] Prospectos → **Conservación de datos** elegida; el aviso de privacidad (`/privacy-notice.html`) dice el mismo número de meses.
 - [ ] Abre el sitio en tu celular (sin «No rastrear») y toca el botón de WhatsApp: al rato, **Estadísticas** muestra la visita y el clic.
-- [ ] Solicitudes de soporte: objetivo de respuesta elegido; resuelve la solicitud de prueba y califícala con la otra cuenta; el **Panorama de soporte** la cuenta como resuelta.
+- [ ] Centro de Ayuda → **Gestión de solicitudes**: objetivo de respuesta elegido; resuelve la solicitud de prueba y califícala con la otra cuenta; el **Panorama de soporte** la cuenta como resuelta.
 - [ ] **Informe mensual → Descargar PDF** se abre bien; la prueba por correo trae el PDF adjunto.
 - [ ] Traducción → **Probar conexión** dice «La clave funciona». En Textos del sitio, escribe en español y mira cómo se llena el inglés (luego descarta el cambio).
 - [ ] Monitoreo → **Tendencias** muestra las gráficas (pasa el cursor para ver cada día) después de la primera hora de revisiones automáticas.
@@ -712,6 +712,7 @@ también puedes comprobarla: `php ~/sensum-cms/bin/console translate:test`.
 - [ ] Si alguien da soporte técnico: tipo de acceso «Soporte técnico» → ve todas las solicitudes y el **Panorama de soporte**; no ve Usuarios ni Monitoreo.
 - [ ] **Informe mensual → Vista previa**: «Seguridad» dice «Protegido» (con HTTPS y respaldo reciente); si dice «Requiere atención», la nota explica el motivo.
 - [ ] Usuarios → el **buscador** encuentra a una persona por nombre o correo.
+- [ ] En **celular y tableta**: al desplazarte, la barra de arriba (menú, logo) queda fija; al abrir el menú lateral y desplazarlo, el logo y «Administrador de contenido» se quedan arriba. En **Soporte** se ven todos los filtros sin cortarse.
 - [ ] Usuarios → **Ver como…**: revisa cada persona del equipo; su menú solo muestra lo que su tipo de acceso permite. Termina con **Volver a mi cuenta**.
 - [ ] Better Stack muestra ambos monitores en verde.
 

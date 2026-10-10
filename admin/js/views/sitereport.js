@@ -70,11 +70,11 @@ export async function render({ main }) {
       previewBox);
 
     // Recipients (owner always in copy) and language.
-    const chips = h('ul', { class: 'chips', 'aria-label': t('siteReport.recipientsTitle') });
+    const chips = h('ul', { class: 'tag-list', 'aria-label': t('siteReport.recipientsTitle') });
     const renderChips = () => {
-      fill(chips, h('li', { class: 'chip chip-fixed' }, icon('lock'), h('span', { text: data.ownerEmail }), h('span', { class: 'tiny muted', text: t('siteReport.alwaysCc') })),
-        ...recipients.map((r) => h('li', { class: 'chip' }, h('span', { text: r }),
-          h('button', { type: 'button', class: 'chip-x', 'aria-label': t('siteReport.removeRecipient', { email: r }), onclick: () => { recipients = recipients.filter((x) => x !== r); renderChips(); } }, icon('x-lg')))));
+      fill(chips, h('li', { class: 'tag tag-fixed' }, icon('lock'), h('span', { text: data.ownerEmail }), h('span', { class: 'tiny muted', text: t('siteReport.alwaysCc') })),
+        ...recipients.map((r) => h('li', { class: 'tag' }, h('span', { text: r }),
+          h('button', { type: 'button', class: 'tag-x', 'aria-label': t('siteReport.removeRecipient', { email: r }), onclick: () => { recipients = recipients.filter((x) => x !== r); renderChips(); } }, icon('x-lg')))));
     };
     renderChips();
     const add = textField({ label: t('siteReport.addLabel'), type: 'email', inputmode: 'email', autocomplete: 'off', placeholder: 'nombre@empresa.com' });

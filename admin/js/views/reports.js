@@ -1,5 +1,6 @@
 /**
- * Solicitudes de soporte — tickets.
+ * Centro de Ayuda (menu «Soporte») — support requests.
+ *  - «Mis solicitudes» / «Gestión de solicitudes» (managers).
  *  - Everyone: their own reports, their status and the conversation with IT;
  *    they can answer (which reopens a ticket waiting for information or resolved).
  *  - Owner (IT): every ticket, filters and search, and on each ticket: status
@@ -34,7 +35,7 @@ const priorityBadge = (p, always = false) => (p === 'normal' && !always ? null
 export async function render({ main, can }) {
   // Everyone's tickets for the owner and the "support" access; others see their own.
   const isOwner = can('support');
-  const newBtn = button(t('reports.new'), { variant: 'primary', icon: 'life-preserver', onClick: () => openReportDialog() });
+  const newBtn = button(t('reports.new'), { variant: 'primary', icon: 'plus-lg', onClick: () => openReportDialog() });
   main.append(pageHead({ title: t('reports.title'), lead: isOwner ? t('tickets.leadOwner') : t('reports.lead'), actions: [newBtn] }));
   const body = h('div', { class: 'stack' }, loading());
   main.append(body);
@@ -64,7 +65,7 @@ export async function render({ main, can }) {
     if (!data.reports.length) {
       fill(listBox, h('div', { class: 'card' }, q || (isOwner && filter !== 'all')
         ? emptyState('check2-circle', t('tickets.emptyFilterTitle'), t('tickets.emptyFilterBody'))
-        : emptyState('chat-square-text', t('reports.emptyTitle'), t('reports.emptyBody'), button(t('reports.new'), { icon: 'life-preserver', onClick: () => openReportDialog() }))));
+        : emptyState('headset', t('reports.emptyTitle'), t('reports.emptyBody'), button(t('reports.new'), { icon: 'plus-lg', onClick: () => openReportDialog() }))));
       return;
     }
     fill(listBox, h('ul', { class: 'ticket-list' }, data.reports.map((r) => h('li', null,
@@ -78,7 +79,10 @@ export async function render({ main, can }) {
   };
 
   const overview = isOwner ? overviewCard() : null;
-  fill(body, overview ? overview.el : null, isOwner ? h('div', { class: 'ticket-toolbar' }, tabs, h('div', { class: 'ticket-search' }, search)) : null, listBox);
+  // Managers: "Gestión de solicitudes" (everyone's); everyone else: "Mis solicitudes".
+  fill(body, overview ? overview.el : null, h('section', { class: 'stack', 'aria-labelledby': 'tk-list-title' },
+    h('h2', { class: 'section-title', id: 'tk-list-title', text: t(isOwner ? 'reports.manage' : 'reports.mine') }),
+    isOwner ? h('div', { class: 'ticket-toolbar' }, tabs, h('div', { class: 'ticket-search' }, search)) : null, listBox));
   listBox.append(loading());
   await load();
   return { destroy: () => { alive = false; clearTimeout(timer); if (overview) overview.destroy(); } };
@@ -140,10 +144,16 @@ function overviewCard() {
       h('p', { class: 'tiny muted', text: t('tickets.sla.note') }));
   };
   load();
-  const el = h('details', { class: 'card ticket-overview', open: true },
+  // Open on computers and tablets; folded on phones so the list comes first. The choice is remembered on this device.
+  let stored = null;
+  try { stored = localStorage.getItem('sensum_support_overview'); } catch (e) { /* storage unavailable */ }
+  const startOpen = stored ? stored === 'open' : !(window.matchMedia && window.matchMedia('(max-width: 719px)').matches);
+  const el = h('details', { class: 'card ticket-overview', open: startOpen || null },
     h('summary', { class: 'overview-summary' }, h('span', { class: 'icon-tile' }, icon('bar-chart')),
       h('span', { class: 'grow' }, h('strong', { text: t('tickets.charts.title') }), h('span', { class: 'small muted', text: t('tickets.charts.lead') })), icon('chevron-down', 'overview-chevron')),
     h('div', { class: 'stack' }, h('div', { class: 'row-between overview-controls' }, h('div', { class: 'row' }, h('label', { for: 'tk-sla', class: 'small', text: t('tickets.sla.targetLabel') }), target), range), box));
+  // Only the person's own choice is remembered (clicking or pressing Enter/Space on the title).
+  el.firstChild.addEventListener('click', () => setTimeout(() => { try { localStorage.setItem('sensum_support_overview', el.open ? 'open' : 'closed'); } catch (e) { /* storage unavailable */ } }));
   return { el, destroy: () => charts.forEach((c) => c.destroy()) };
 }
 
@@ -183,7 +193,7 @@ export async function detail({ main, params }) {
     const guidance = !canManage ? {
       waiting: alertBox('warn', t('tickets.guide.waitingTitle'), t('tickets.guide.waiting')),
       resolved: alertBox('ok', t('tickets.guide.resolvedTitle'), t('tickets.guide.resolved')),
-      closed: alertBox('info', t('tickets.guide.closedTitle'), t('tickets.guide.closed'), [button(t('reports.new'), { small: true, icon: 'life-preserver', onClick: () => openReportDialog() })]),
+      closed: alertBox('info', t('tickets.guide.closedTitle'), t('tickets.guide.closed'), [button(t('reports.new'), { small: true, icon: 'plus-lg', onClick: () => openReportDialog() })]),
       new: alertBox('info', null, t('tickets.guide.new')),
       in_progress: alertBox('info', null, t('tickets.guide.inProgress')),
     }[r.status] : null;

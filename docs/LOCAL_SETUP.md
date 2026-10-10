@@ -207,7 +207,7 @@ Use the button in the top bar. The report is stored and e-mailed to
 `SUPPORT_EMAIL`; locally it lands in Mailpit addressed to `it@gruposensum.com`.
 To test a delivery failure, stop Mailpit (`pkill mailpit`) and send a report:
 the panel says it was saved but not sent; restart Mailpit and use
-**Solicitudes de soporte → Reintentar envío** (or `php cms/bin/console reports:retry`).
+**Soporte → Centro de Ayuda → Reintentar envío** (or `php cms/bin/console reports:retry`).
 
 ### SMTP configuration
 Any SMTP server works through the `SMTP_*` values. Send a test message with the
