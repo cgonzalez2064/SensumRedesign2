@@ -273,7 +273,9 @@ Optional — run the build under real Apache + PHP-FPM (closest to the hosting):
 brew install httpd
 # 1. copy dist/release-*/public_html and sensum-cms into a folder, e.g. ~/sensum-apache/
 # 2. in that copy only, comment out the 3 lines of the HTTPS/canonical redirect at the
-#    top of public_html/.htaccess (local http://127.0.0.1 would otherwise be redirected)
+#    top of public_html/.htaccess (local http://127.0.0.1 would otherwise be redirected),
+#    and remove "; upgrade-insecure-requests" from its CSP line (WebKit/Safari would
+#    otherwise upgrade every asset to https://127.0.0.1 and nothing would load)
 # 3. create ~/sensum-apache/sensum-cms/.env with APP_ENV=development and
 #    APP_URL=http://127.0.0.1:8088 (+ the Mailpit SMTP values)
 # 4. start PHP-FPM on 127.0.0.1:9082 and Apache on 127.0.0.1:8088 with

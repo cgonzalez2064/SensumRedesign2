@@ -160,6 +160,14 @@ Entrance effects use only opacity/transform and are disabled with
 *reduce motion* (the browser suite runs with it so accessibility scans see the
 settled page).
 
+Production build (`release-20261009-130b052`, 52 public + 151 private files,
+820 KB zip, includes `release-manifest.json` with 49 hashed public files) under
+Apache 2.4.69 + PHP-FPM 8.2: `tests/apache` **6/6**; the live CSP allows only
+`https://challenges.cloudflare.com` beyond the site itself; `assets/.rl-data/`
+(captcha replay store) answers 403; the public contact form was sent from real
+Chrome and WebKit under that CSP, captcha solved in the background, message
+delivered.
+
 Public site: the only visual change is the one-line captcha note under the
 form's submit button (+31 px desktop, +52 px phones; screenshots reviewed in
 Chrome desktop and phone). The visual baselines in `tests/visual/baseline/`
