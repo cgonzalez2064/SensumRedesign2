@@ -313,6 +313,8 @@ Full re-run: API **204/204**, browser **148 passed / 53 skipped**; PHPStan 0 err
 | Browser (`welcome`, new) | the owner invites; the invitation link from Mailpit; on a fresh device the person creates the password and gets the welcome screen (Spanish and Automático preselected, no menu, axe, no horizontal overflow); English switches the screen at once keeping the focus; Dark applies at once; saving lands on the dashboard in English and dark, not shown again after reload; the welcome e-mail arrived with the access and help text | 6/6 (3 devices) |
 | Existing suites | new wording (*Nueva solicitud de soporte*, *Enviar solicitud*, *Ver la solicitud*, feminine statuses, e-mail subjects «fue resuelta», e-mail to IT «Enviada por»), seeded accounts marked as past the welcome | passing |
 
+| Production build on Apache | release `d9f8d0d` (68 public + 253 private files, 1.2 MB zip) under Apache + PHP-FPM; migration `013_welcome` applied on first request; the welcome endpoint refuses anonymous requests | 6/6 |
+
 Full re-run: API **209/209**, browser **154 passed / 53 skipped**; PHPStan 0 errors.
 
 ## Other audits
