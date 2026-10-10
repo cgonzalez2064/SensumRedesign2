@@ -211,7 +211,7 @@ export async function render({ main }) {
       previewBox,
       h('ul', { class: 'tips' }, ['tip1', 'tip2', 'tip3'].map((k) => h('li', null, icon('info-circle-fill'), h('span', { text: t('form.' + k) })))));
 
-    fill(body, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, editor), h('div', { class: 'stack-lg' }, preview)), saveRow);
+    fill(body, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, editor), h('div', { class: 'stack-lg svc-side' }, preview)), saveRow);
     renderList();
     changed();
   };

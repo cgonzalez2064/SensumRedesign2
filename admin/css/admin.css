@@ -685,7 +685,8 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 .tips{ list-style:none; margin:1rem 0 0; padding:0; display:grid; gap:.5rem; font-size:.86rem; color:var(--text-2); }
 .tips li{ display:flex; gap:.5rem; align-items:flex-start; }
 .tips .icon{ color:var(--info); margin-top:.15rem; flex:none; }
-@media (min-width: 1024px){ .svc-preview-card{ position:sticky; top:calc(var(--topbar-h) + 1rem); } }
+/* The preview column follows the list while scrolling (the column, not the card, is the grid item). */
+@media (min-width: 1024px){ .svc-side{ position:sticky; top:calc(var(--topbar-h) + 1rem); } }
 
 /* Sticky save bar for settings pages */
 .save-row{
