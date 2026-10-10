@@ -66,7 +66,7 @@ usar el comando de respaldo del paso 16).
 | Correo de soporte | `it@gruposensum.com` | Reportes, alertas, recordatorios y cuenta propietaria |
 | (Opcional, recomendado) Cuenta gratuita de Cloudflare | https://dash.cloudflare.com (paso 13.3) | Captcha Turnstile en el formulario |
 | (Opcional) Clave de DeepL API Free | https://www.deepl.com/pro-api | Traducción automática ES ⇄ EN |
-| (Opcional) Clave de Google PageSpeed | Google Cloud Console (paso 18) | «Visibilidad en Google» del informe mensual |
+| (Opcional) Clave de Google PageSpeed | Google Cloud Console (paso 19) | «Visibilidad en Google» del informe mensual |
 | (Opcional) Cuenta gratuita de Better Stack | https://betterstack.com | Aviso si el sitio deja de responder |
 
 El dominio debe apuntar al hosting de Namecheap (DNS de Namecheap hosting), o el
@@ -80,7 +80,7 @@ certificado HTTPS no se podrá emitir.
 2. Selecciona todo → **Compress** → *Zip Archive* → descarga el zip a tu computadora.
 3. Opcional y recomendado: cPanel → **Backup** → *Download a Full Account Backup*.
 
-Si algo sale mal, con ese zip vuelves al sitio anterior en minutos (paso 22).
+Si algo sale mal, con ese zip vuelves al sitio anterior en minutos (paso 23).
 
 ---
 
@@ -97,7 +97,7 @@ Se crea `dist/release-AAAAMMDD-xxxxxxx.zip` con dos carpetas: `public_html` y
 necesitas Composer ni Git en el servidor**.
 
 > Las fotos que subiste en tu panel local **no** van en el paquete (viven en tu
-> base de datos local). En producción se vuelven a subir desde el panel (paso 16).
+> base de datos local). En producción se vuelven a subir desde el panel (paso 15).
 
 ---
 
@@ -441,12 +441,16 @@ Solo la cuenta propietaria puede crear y modificar usuarios.
 
 | Tipo de acceso | Puede cambiar |
 |---|---|
-| Acceso completo al contenido | Textos, datos de contacto, fotos, portafolio y estado del sitio (actividad y volver a publicar) |
+| Acceso completo al contenido | Textos, datos de contacto, fotos, portafolio, estado del sitio, **Prospectos y Estadísticas** |
 | Editor de contenido | Textos, datos de contacto, fotos y portafolio |
 | Solo textos | Los textos del sitio (español e inglés) |
 | Solo fotos y portafolio | Fotos de «Nosotros» y proyectos, y el PDF |
 | Solo datos de contacto | Teléfonos, WhatsApp, correo, dirección, mapa, Instagram |
+| Ventas: prospectos | Solo **Prospectos** (mensajes del formulario) y **Estadísticas**; no cambia el sitio |
 | Personalizado | La combinación que elijas |
+
+> **Prospectos contiene datos personales** de quienes escriben por el formulario: dales
+> ese acceso solo a quienes atienden clientes (por ejemplo, ventas o gerencia).
 
 3. La persona recibe un correo para crear su contraseña (vence en 72 horas). Si el
    correo no sale, el panel te muestra el enlace para compartirlo por otro medio.
@@ -527,7 +531,46 @@ El panel no puede avisarte si el servidor completo se cae. Para eso:
 
 ---
 
-## 18. Informe mensual para clientes
+## 18. Prospectos, estadísticas y tickets: lo que le da valor al cliente
+
+### 18.1 Prospectos (mensajes del formulario)
+
+Desde la instalación, **cada mensaje del formulario de contacto queda guardado** en
+panel → **Prospectos**, además de llegar por correo. Si el correo de aviso falla, el
+mensaje no se pierde (aparece con un aviso amarillo).
+
+1. Panel → **Prospectos** → **Conservación de datos** (solo la cuenta propietaria):
+   elige cuánto tiempo se guardan los mensajes (**24 meses** recomendado). Después se
+   borran solos y el **aviso de privacidad** del sitio se actualiza automáticamente.
+2. Quien atiende clientes cambia el estado (Nuevo → Contactado → Cotizado → Ganado /
+   Perdido), anota el **monto** y agrega **notas**. Todo suma en el informe mensual.
+3. **Exportar CSV** abre en Excel o Google Sheets (protegido contra fórmulas maliciosas).
+
+### 18.2 Estadísticas de visitas (sin cookies)
+
+Vienen **activadas**: el sitio cuenta visitas, de dónde llegan (Google, Facebook…),
+celular o computadora, y los clics en WhatsApp, teléfono y correo. Se mide **en tu
+propio servidor**, sin Google Analytics, sin cookies y sin guardar direcciones IP, así
+que **no hace falta banner de cookies**. Quien pide «No rastrear» no se cuenta.
+
+- Panel → **Estadísticas** → *Estadísticas y privacidad*: se pueden desactivar; al
+  cambiarlo, el sitio se vuelve a publicar y el aviso de privacidad se ajusta solo.
+- Las cifras son algo menores que las de otras herramientas (no cuentan robots ni
+  navegadores que piden privacidad): es lo esperado.
+- El aviso de privacidad mantiene los **[PLACEHOLDER]** legales que debe revisar
+  asesoría legal antes de publicar; los párrafos de estadísticas y conservación ya
+  describen el funcionamiento real.
+
+### 18.3 Tickets de soporte: tiempo de respuesta y satisfacción
+
+- Panel → **Reportes de soporte** (cuenta propietaria): arriba ves la **primera
+  respuesta promedio**, el **% dentro del objetivo** y la **satisfacción**. Elige el
+  objetivo (recomendado **24 h**; 8 h si el contrato lo promete).
+- Cuando marcas un ticket como **resuelto**, la persona puede **calificar de 1 a 5**.
+  Una calificación de 1–2 marca el ticket como no leído para que lo revises.
+- Los tickets resueltos sin respuesta se **cierran solos a los 7 días** (tarea programada).
+
+## 19. Informe mensual para clientes
 
 1. Panel → **Informe mensual** (solo la cuenta propietaria).
 2. **Destinatarios:** agrega los correos de tus clientes (máximo 20) → *Guardar
@@ -535,6 +578,13 @@ El panel no puede avisarte si el servidor completo se cae. Para eso:
 3. **Enviarme una prueba** para verlo en tu correo; luego **Enviar informe de {mes}**.
 4. Si el informe del mes anterior no se envía en los **primeros 5 días del mes**, la
    cuenta propietaria recibe un **recordatorio** por correo (una vez por mes).
+5. El correo lleva **la versión en PDF adjunta** (lista para imprimir o reenviar) y
+   compara cada cifra con el **mes anterior** (▲ verde si mejoró, ▼ rojo si empeoró).
+   También puedes **Descargar PDF** desde la página del informe.
+6. El informe ahora incluye **Visitas y contactos** (visitas, de dónde llegan, clics en
+   WhatsApp, mensajes recibidos, servicios más pedidos, cotizados y ganados con su
+   monto) y, en Soporte, el **tiempo de primera respuesta** y la **satisfacción**.
+   Solo aparece lo que tiene datos.
 
 Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a 100):
 
@@ -548,7 +598,7 @@ Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a
 
 ---
 
-## 19. Traducción automática (opcional)
+## 20. Traducción automática (opcional)
 
 1. Crea una cuenta **DeepL API Free** en https://www.deepl.com/pro-api (el plan API,
    no la app). Copia la clave (termina en `:fx`).
@@ -557,7 +607,7 @@ Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a
 
 ---
 
-## 20. Verificación final
+## 21. Verificación final
 
 - [ ] `https://sensumconstrucciones.com` se ve igual que antes, en celular y computadora; el botón EN funciona.
 - [ ] `https://sensumconstrucciones.com/api/health` → `"status":"ok"`.
@@ -578,11 +628,16 @@ Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a
 - [ ] Cambias un texto, lo ves en el sitio (recarga con Ctrl+F5) y lo restauras.
 - [ ] Subes una foto de proyecto y aparece en la tarjeta.
 - [ ] Monitoreo → «Última revisión automática» muestra una hora reciente (cron funcionando).
+- [ ] Después de enviar el mensaje de prueba del formulario: aparece en **Prospectos** (con el enlace «Prospecto #…» en el correo). Cámbialo a «Contactado» y agrega una nota.
+- [ ] Prospectos → **Conservación de datos** elegida; el aviso de privacidad (`/privacy-notice.html`) dice el mismo número de meses.
+- [ ] Abre el sitio en tu celular (sin «No rastrear») y toca el botón de WhatsApp: al rato, **Estadísticas** muestra la visita y el clic.
+- [ ] Reportes de soporte: objetivo de respuesta elegido; resuelve el ticket de prueba y califícalo con la otra cuenta.
+- [ ] **Informe mensual → Descargar PDF** se abre bien; la prueba por correo trae el PDF adjunto.
 - [ ] Better Stack muestra ambos monitores en verde.
 
 ---
 
-## 21. Publicar actualizaciones más adelante
+## 22. Publicar actualizaciones más adelante
 
 1. Respalda (paso 2) y ejecuta `php ~/sensum-cms/bin/console backup`.
 2. Genera el nuevo paquete (paso 3) y súbelo/extráelo en `/home/USUARIO`.
@@ -603,7 +658,7 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
 
 ---
 
-## 22. Volver atrás (si algo sale mal)
+## 23. Volver atrás (si algo sale mal)
 
 - **Solo el sitio público:** sube y extrae el zip del paso 2 en `public_html`.
 - **La base de datos:** reemplaza `sensum-cms/storage/database.sqlite` por una copia
@@ -618,7 +673,7 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
 
 ---
 
-## 23. Solución de problemas
+## 24. Solución de problemas
 
 | Síntoma | Causa probable y solución |
 |---|---|
@@ -632,6 +687,9 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
 | Llega «Alerta de seguridad: cambios en los archivos del sitio» | Si nadie del equipo cambió archivos: cambia la contraseña de cPanel, borra los archivos desconocidos y vuelve a subir el paquete. Si fue un cambio tuyo: Monitoreo → Archivos del sitio → **Marcar como esperados**. |
 | Perdí el celular de la verificación en dos pasos | Entra con un **código de recuperación** («Usar un código de recuperación»). Sin códigos: otra persona propietaria no existe, así que usa la Terminal: `php ~/sensum-cms/bin/console 2fa:reset it@gruposensum.com`. A otras personas se la restablece la cuenta propietaria en Seguridad. |
 | No llega el respaldo cifrado | Puede ser muy grande para el correo: desactiva «Incluir fotos» (la base de datos sigue incluida) o usa «Descargar respaldo completo». Revisa también la carpeta de spam del correo de destino. |
+| Estadísticas en cero o muy bajas | Revisa que estén activadas (Estadísticas → *Estadísticas y privacidad*) y que el sitio se haya publicado después. No se cuentan robots, navegadores con «No rastrear» ni, a veces, quienes usan bloqueadores de anuncios: es lo esperado. |
+| Un mensaje del formulario no llegó por correo | Búscalo en **Prospectos** (queda guardado aunque el correo falle; aparece con aviso amarillo). Luego revisa panel → Correo → *Enviar correo de prueba*. |
+| Alguien pide que borremos sus datos | Prospectos → abre su mensaje → **Eliminar** (borra mensaje, notas e historial). |
 | Monitoreo → Correo y dominio muestra un problema | cPanel → **Email Deliverability** → *Repair* (SPF/DKIM). Para DMARC, paso 6.3. |
 | Llegan correos de «Nuevo inicio de sesión» | Es normal la primera vez en cada navegador. Si no fuiste tú: cambia la contraseña y usa «Cerrar sesión en otros dispositivos». |
 | «Demasiados píxeles» o falla al subir fotos | Sube `memory_limit` a 256M (paso 4). |

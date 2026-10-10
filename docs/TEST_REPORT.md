@@ -9,8 +9,8 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 
 | Suite | Location | Size |
 |---|---|---|
-| API integration | `tests/integration/*.test.mjs` | 168 tests in 18 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
-| Browser E2E | `tests/e2e/*.spec.js` | 43 specs × 3 browser profiles (129 runs, 37 skipped by design: phone-only, desktop-only or single-submission tests) |
+| API integration | `tests/integration/*.test.mjs` | 184 tests in 19 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
+| Browser E2E | `tests/e2e/*.spec.js` | 48 specs × 3 browser profiles (144 runs, 42 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
 | Production build | `tests/apache/apache.test.mjs` | 6 checks of the built release under Apache + PHP-FPM |
 
@@ -205,6 +205,18 @@ Full re-run: API **158/158**, browser **87 passed / 33 skipped**.
 
 Full re-run: API **168/168**, browser **92 passed / 37 skipped** (skips by design: phone-only, desktop-only or single-submission tests).
 
+## Change — value for the client: leads, visit statistics, service levels, report trends and PDF
+
+| Suite | Added | Result |
+|---|---|---|
+| API (`18-value`) | every contact-form message stored (language, notified flag) and linked from the e-mail; unknown fields still refused; `leads` access only (403 for others, owner-only settings); read marking, unread badge; status/amount validation and history; notes kept as typed; filters, literal search, service filter; CSV with BOM, header, filtering and formula neutralisation; retention (allow-listed, privacy notice republished, old leads purged by `monitor`); deletion with pseudonymised log; 200/day cap; visits counted per day without cookies (views, visitors once per day, sources from a fixed list, utm, device, language, clicks), hashes only, no IP or URLs stored; bots/headless/previews, DNT, GPC, prefetch, junk and other origins ignored (403 for foreign origin); daily salt rotation deletes old markers; statistics endpoint with previous period; owner switch removes/adds the script and changes the privacy text; ticket first response (notes excluded), rating rules (reporter only, resolved only, 1–5 integer, once, low rating flagged), response target, auto-close after 7 days; report trends (+50 % vs. previous month, ES/EN), visits-and-contacts section, won amount, first-response and satisfaction lines; PDF download parsed (structure, xref offset, text, escaped note, Windows-1252 accents), owner only, attached to the e-mail and the temporary file removed | 16/16 |
+| Browser (`value`) | sales account sees only Prospectos/Estadísticas; filters, search, warning badge, CSV download, contact links (wa.me with 502), status + amount + note with history, axe; statistics page (30 daily bars, sources, funnel, won amount, period switch, no owner switch for sales); public page sends one beacon per view and per WhatsApp click (no cookies, no storage); reporter rates with stars (validation, a11y), IT sees the rating and the service-level strip; report preview trends and PDF download | 10 passed, 5 skipped by design |
+| Existing suites | Prospectos, one lead and Estadísticas in every-screen checks (3 devices × 2 themes, axe, no overflow); contact failure now keeps the lead and answers 200 (500 only when nothing could be stored); 8 demo profiles (`demo.ventas`); `leads` in the full access type; report KPI order; `sqlite3` reads in tests wait for the server's write lock | passing |
+| Visual regression | public site with `stats.js` added | 20/22 identical; the 2 privacy-notice states differ only by the new statistics/retention paragraphs (intended text change) |
+| Static analysis | PHPStan level 6 (now run with `--memory-limit=1G`) | 0 errors |
+
+Full re-run: API **184/184**, browser **102 passed / 42 skipped**.
+
 ## Other audits
 
 | Audit | Result |
@@ -215,7 +227,7 @@ Full re-run: API **168/168**, browser **92 passed / 37 skipped** (skips by desig
 | Accessibility — admin | axe-core WCAG 2.1 AA on 12 screens + drawer + dialog, light and dark, 3 devices: no serious/critical violations; keyboard navigation, focus management, reduced motion and 44 px targets reviewed |
 | Accessibility — public | identical before/after; pre-existing contrast findings on the approved orange labels reported as an optional recommendation |
 | Performance | Lighthouse before/after: equal (desktop 99, mobile 84–85 locally with network throttling); +7 KB (main.js/css additions), no extra requests; with photos the LCP stays the hero heading (photos lazy, responsive `srcset`). Outliers were traced to slow Google Fonts responses (affects the approved site equally). Fonts are now self-hosted (no requests to Google; the two Latin files are preloaded). |
-| Visual regression | 22/22 identical to `main` (desktop 1440/1280, tablet 768, phones 390/320, ES and EN, modal, menu, form errors, FAQ, privacy, 404) |
+| Visual regression | 20/22 identical to `main` (desktop 1440/1280, tablet 768, phones 390/320, ES and EN, modal, menu, form errors, FAQ, 404); the 2 privacy-notice states differ only by the paragraphs that now describe the built-in statistics and the retention period |
 | Production build | `tools/build-release.sh` → 48 public files + 133 private files (≈ 700 KB zip), no secrets/dev files; verified under Apache |
 
 ## How to re-run

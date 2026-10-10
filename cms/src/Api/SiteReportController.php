@@ -41,6 +41,26 @@ final class SiteReportController extends Controller
         Response::ok(['report' => $r->build($r->validPeriod($this->req->query('period')), in_array($lang, ['es', 'en'], true) ? $lang : $r->settings()['lang'])]);
     }
 
+    /** The report as a PDF download (same content as the e-mail; the optional note included). */
+    public function pdf(): never
+    {
+        if (!$this->app->rateLimiter()->hit('site_report_pdf', (string) $this->uid(), 30, 3600)) {
+            throw new ApiError(429, 'too_many_attempts');
+        }
+        $r = $this->report();
+        $period = $r->validPeriod($this->str('period'));
+        $lang = in_array($this->str('lang'), ['es', 'en'], true) ? $this->str('lang') : $r->settings()['lang'];
+        $note = mb_substr(trim(str_replace("\r", '', $this->str('note'))), 0, SiteReport::NOTE_MAX);
+        $pdf = $r->pdf($r->build($period, $lang), (string) preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\x{202A}-\x{202E}\x{2066}-\x{2069}]/u', '', $note));
+        header('Content-Type: application/pdf');
+        header('Content-Length: ' . strlen($pdf));
+        header('Content-Disposition: attachment; filename="' . $r->pdfName($period, $lang) . '"');
+        header('Cache-Control: no-store');
+        header('X-Content-Type-Options: nosniff');
+        echo $pdf;
+        exit;
+    }
+
     public function settings(): never
     {
         $saved = $this->report()->saveSettings($this->req->raw('recipients'), $this->str('lang'));

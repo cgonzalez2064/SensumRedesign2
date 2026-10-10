@@ -211,6 +211,10 @@ marcaron como resuelto pero el problema sigue, tu respuesta lo vuelve a poner
 «En progreso». Los reportes cerrados ya no reciben respuestas (puedes enviar uno
 nuevo).
 
+**Califica la atención:** cuando soporte marca tu reporte como resuelto, en su página
+aparece **¿Cómo te atendimos?**: elige de 1 a 5 estrellas y, si quieres, deja un
+comentario. Si no respondes, el reporte se cierra solo a los 7 días.
+
 **Qué información técnica se envía automáticamente:** navegador y versión,
 sistema operativo, tipo de dispositivo, tamaño de la ventana y de la pantalla,
 idioma y tema del panel, zona horaria, conexión, la pantalla del panel donde
@@ -299,6 +303,12 @@ disponibilidad, calificación de Google, contenido actualizado, seguridad y sopo
 Si el informe del mes anterior no se envía en los **primeros 5 días del mes**, te
 llega un **recordatorio** por correo (una sola vez) y un aviso en **Inicio**.
 
+El informe compara cada cifra con el **mes anterior** (▲ en verde si mejoró, ▼ en
+rojo si empeoró), incluye **Visitas y contactos** (visitas, de dónde llegan, clics en
+WhatsApp y teléfono, mensajes del formulario y su seguimiento) y, en Soporte, el
+**tiempo de primera respuesta** y la **satisfacción**. El correo lleva la **versión
+en PDF** adjunta; también puedes usar **Descargar PDF** para imprimirlo o compartirlo.
+
 ## 13. Para la cuenta propietaria: correo y captcha del formulario
 
 En **Administración → Correo** decides quién envía y quién recibe los correos:
@@ -365,6 +375,11 @@ resueltos, tiempo promedio, pendientes) y de las tareas automáticas de
 mantenimiento (revisiones, análisis de seguridad, respaldos, certificado, Google,
 spam bloqueado, avisos).
 
+**Nivel de servicio:** arriba de la lista ves la **primera respuesta promedio** de
+los últimos 30 días, el **% dentro del objetivo** (elige 4, 8, 24, 48 o 72 horas) y la
+**satisfacción** promedio de las calificaciones. Las notas internas no cuentan como
+respuesta. Una calificación de 1 o 2 estrellas marca el ticket como no leído.
+
 ## 16. Para la cuenta propietaria: Seguridad
 
 En **Administración → Seguridad**:
@@ -382,3 +397,36 @@ En **Administración → Seguridad**:
   configurar la próxima vez que entre.
 
 Todos los cambios piden tu contraseña y quedan registrados.
+
+## 17. Prospectos: los mensajes del formulario de contacto
+
+Visible para la cuenta propietaria y para quienes tienen el acceso **Prospectos y
+estadísticas** (por ejemplo, el tipo «Ventas»).
+
+* Cada mensaje del formulario del sitio queda aquí, **aunque el correo de aviso
+  falle** (en ese caso aparece con un aviso amarillo). El menú muestra cuántos
+  mensajes nadie ha abierto todavía.
+* **Filtros** por estado (En curso, Nuevos, Contactados, Cotizados, Ganados,
+  Perdidos, Todos), por **servicio**, y **búsqueda** por nombre, correo, teléfono,
+  texto o número (`#12`).
+* En cada mensaje: botones para **responder por correo**, **escribir por WhatsApp**
+  o **llamar**; el **estado** y el **monto** cotizado o ganado (en quetzales, sin
+  decimales); y **notas** de seguimiento («Llamé el martes…»). Cada cambio queda en el
+  historial con quién y cuándo.
+* **Exportar CSV** descarga la lista filtrada para Excel o Google Sheets.
+* **Eliminar** borra el mensaje y sus notas; úsalo si la persona pide que borremos
+  sus datos.
+* La cuenta propietaria elige en **Conservación de datos** cuánto tiempo se guardan
+  los mensajes (6, 12, 24 o 36 meses); después se borran solos.
+
+## 18. Estadísticas de visitas
+
+* **Visitas**, **clics para contactar** (WhatsApp, teléfono y correo), **mensajes
+  del formulario** y **tasa de contacto**, comparados con el período anterior.
+* **Visitas por día** (gráfica), **de dónde llegan** (Google, Facebook, acceso
+  directo…), **dispositivos** e idioma, **acciones** en el sitio (mapa, portafolio,
+  redes) y el camino **del mensaje al proyecto** (contactados, cotizados, ganados).
+* Elige el período arriba: últimos 30 días o un mes completo.
+* Se mide en el propio sitio, **sin cookies** y sin guardar direcciones IP; quien pide
+  «No rastrear» y los robots no se cuentan, por eso las cifras son algo menores que las
+  de otras herramientas. La cuenta propietaria puede desactivarlas.

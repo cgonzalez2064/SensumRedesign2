@@ -158,13 +158,22 @@ test('the public contact form is delivered with the panel settings', async () =>
   assert.ok((await waitForMail(contactTo, 3)).some((mm) => /^\[Prueba\]/.test(mm.Subject)));
 });
 
-test('if the contact form cannot be sent, the visitor gets an error and the owner sees it in the log', async () => {
+test('if the contact e-mail cannot be sent, the message is still saved in Prospectos and the owner sees the failure', async () => {
   // The hosting's mail() is unavailable in tests (sendmail_path=/usr/bin/false).
   assert.equal((await owner.put('/api/settings/email', settings({ contact: { method: 'mail' } }))).status, 200);
+  const before = Number(s.sql('SELECT COUNT(*) FROM leads'));
   const r = await submitContact();
-  assert.equal(r.status, 500);
-  assert.equal(r.data.error, 'send_failed');
+  assert.equal(r.status, 200, 'the visitor is told it was received: it is stored');
+  assert.equal(Number(s.sql('SELECT COUNT(*) FROM leads')), before + 1);
+  assert.equal(s.sql('SELECT notified FROM leads ORDER BY id DESC LIMIT 1'), '0', 'marked as not e-mailed');
   assert.ok(Number(s.sql("SELECT COUNT(*) FROM error_log WHERE event = 'contact_form_failed'")) >= 1);
+  // Without the Content Manager database the visitor still gets the error (nothing was kept).
+  s.sql('ALTER TABLE leads RENAME TO leads_off');
+  try {
+    const r2 = await submitContact();
+    assert.equal(r2.status, 500);
+    assert.equal(r2.data.error, 'send_failed');
+  } finally { s.sql('ALTER TABLE leads_off RENAME TO leads'); }
   assert.equal((await owner.put('/api/settings/email', settings())).status, 200);
 });
 

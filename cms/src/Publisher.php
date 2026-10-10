@@ -18,7 +18,7 @@ namespace Sensum\Cms;
 final class Publisher
 {
     /** Bump when assets/main.css or assets/main.js change (cache busting). */
-    public const ASSET_VERSION = '4';
+    public const ASSET_VERSION = '5';
     public const PAGES = ['index.html', '404.html', 'privacy-notice.html'];
     private const BACKUPS_KEPT = 30;
 
@@ -286,6 +286,7 @@ final class Publisher
             : '';
 
         $vars['extra_scripts'] = $this->extraScripts();
+        $vars += $this->privacyTexts();
         return [$vars, $flags];
     }
 
@@ -317,10 +318,39 @@ final class Publisher
         ];
     }
 
-    /** Optional telemetry, switched on only through the server's .env file. */
+    /** Privacy-notice paragraphs that follow the owner's settings (statistics, how long messages are kept). */
+    private function privacyTexts(): array
+    {
+        $stats = $this->app->analytics()->enabled()
+            ? 'Este sitio no utiliza cookies ni herramientas de rastreo de
+      terceros. Para saber cuántas personas lo visitan, el propio sitio
+      cuenta las visitas de forma anónima y guarda solo totales por día:
+      páginas vistas, desde qué tipo de sitio llegaste (por ejemplo,
+      Google o Facebook), tipo de dispositivo, idioma y clics en WhatsApp,
+      teléfono o correo. No guardamos tu dirección IP ni ningún
+      identificador que permita reconocerte de un día a otro. Si tu
+      navegador tiene activada la opción «No rastrear» (Do Not Track) o
+      Global Privacy Control, tu visita no se cuenta.'
+            : 'Este sitio no utiliza cookies de análisis ni herramientas de
+      rastreo. Si en el futuro se incorpora alguna herramienta de
+      medición, esta sección se actualizará antes de activarla.';
+        $months = $this->app->leads()->retentionMonths();
+        return [
+            'privacy_stats' => $stats,
+            'privacy_retention' => 'Conservamos la información de tu mensaje el tiempo necesario para
+      atender tu solicitud y dar seguimiento a tu proyecto, y como máximo
+      ' . $months . ' meses; después se elimina automáticamente. Puedes pedirnos que
+      la eliminemos antes por los medios de contacto indicados abajo.',
+        ];
+    }
+
+    /** Visit statistics (owner's setting in the panel) and optional telemetry (.env). */
     private function extraScripts(): string
     {
         $out = [];
+        if ($this->app->analytics()->enabled()) {
+            $out[] = '<script src="assets/stats.js?v=' . self::ASSET_VERSION . '" defer></script>';
+        }
         if ($this->app->config->bool('PUBLIC_ERROR_REPORTING')) {
             $out[] = '<script src="assets/error-reporter.js?v=' . self::ASSET_VERSION . '" defer></script>';
         }

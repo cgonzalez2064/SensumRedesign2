@@ -63,7 +63,8 @@ export async function startServer({ port, smtpDown = false, env = {}, reuseDir =
     public: (p = '') => join(dir, 'public', p),
     readPublic: (p) => readFileSync(join(dir, 'public', p), 'utf8'),
     exists: (p) => existsSync(join(dir, p)),
-    sql: (q) => execFileSync('sqlite3', [join(dir, 'storage', 'database.sqlite'), q]).toString().trim(),
+    // .timeout: wait for the server's write lock instead of failing with "database is locked".
+    sql: (q) => execFileSync('sqlite3', ['-cmd', '.timeout 5000', join(dir, 'storage', 'database.sqlite'), q]).toString().trim(),
     async stop({ keep = false } = {}) { proc.kill(); await sleep(150); if (!keep) rmSync(dir, { recursive: true, force: true }); },
   };
 }

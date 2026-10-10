@@ -230,6 +230,16 @@ final class App
         return new DomainHealth($this);
     }
 
+    public function leads(): Leads
+    {
+        return new Leads($this);
+    }
+
+    public function analytics(): Analytics
+    {
+        return new Analytics($this);
+    }
+
     /** Monthly counts of automatic maintenance (for the client report). */
     public function maintenanceLog(): MaintenanceLog
     {

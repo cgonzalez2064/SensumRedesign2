@@ -65,11 +65,7 @@
       el contenido del mensaje que nos envíes.
     </p>
     <p>
-      Este sitio no utiliza cookies de análisis ni herramientas de
-      rastreo de manera predeterminada. Si en el futuro se incorpora
-      alguna herramienta de analítica o medición, esta sección se
-      actualizará antes de activarla, junto con el mecanismo de
-      consentimiento correspondiente.
+      {{privacy_stats}}
     </p>
 
     <h2>3. Finalidad del tratamiento</h2>
@@ -96,9 +92,10 @@
 
     <h2>5. Con quién compartimos tus datos</h2>
     <p>
-      Tu mensaje se envía directamente a la casilla de correo interna de
-      Sensum Construcciones. No compartimos tus datos con terceros para
-      fines de mercadeo.
+      Tu mensaje se envía a la casilla de correo interna de Sensum
+      Construcciones y se guarda en el panel de administración del sitio,
+      al que solo acceden personas autorizadas de la empresa. No
+      compartimos tus datos con terceros para fines de mercadeo.
     </p>
     <p class="legal-placeholder">
       <strong>[PLACEHOLDER:]</strong> confirmar si se utiliza algún
@@ -108,8 +105,7 @@
 
     <h2>6. Tiempo de conservación</h2>
     <p>
-      Conservamos la información de tu mensaje el tiempo necesario para
-      atender tu solicitud y dar seguimiento a tu proyecto.
+      {{privacy_retention}}
     </p>
     <p>
       Los datos técnicos mínimos utilizados para evitar el uso abusivo

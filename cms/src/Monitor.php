@@ -221,6 +221,14 @@ final class Monitor
             $this->app->logger()->warning('domain_check_failed', ['type' => get_class($e)]);
             $out[] = 'Domain and e-mail DNS: failed';
         }
+        try {
+            $out[] = 'Resolved tickets closed after ' . Tickets::AUTO_CLOSE_DAYS . ' days: ' . (new Tickets($this->app))->autoClose();
+            $out[] = 'Leads past the retention period removed: ' . $this->app->leads()->purge();
+            $this->app->analytics()->purge();
+        } catch (\Throwable $e) {
+            $this->app->logger()->warning('housekeeping_failed', ['type' => get_class($e)]);
+            $out[] = 'Tickets / leads housekeeping: failed';
+        }
         $out[] = 'Monthly report reminder: ' . ($report->maybeRemind() ? 'sent to the owner' : 'not needed');
         $this->app->settings()->set('monitor_last_run', (string) time());
         foreach ($this->app->watchdog()->run() as $line) {

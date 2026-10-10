@@ -205,11 +205,12 @@ final class Cli
 
     /** Demo accounts, one per access profile (development only). id => [name, permissions, status] */
     private const DEMO_USERS = [
-        'demo.completo' => ['Demo Acceso Completo', ['texts', 'contact', 'photos', 'documents', 'site'], 'active', 'Acceso completo al contenido'],
+        'demo.completo' => ['Demo Acceso Completo', ['texts', 'contact', 'photos', 'documents', 'site', 'leads'], 'active', 'Acceso completo al contenido'],
         'demo.editor' => ['Demo Editor de Contenido', ['texts', 'contact', 'photos', 'documents'], 'active', 'Editor de contenido'],
         'demo.textos' => ['Demo Solo Textos', ['texts'], 'active', 'Solo textos'],
         'demo.fotos' => ['Demo Solo Fotos', ['photos', 'documents'], 'active', 'Solo fotos y portafolio'],
         'demo.contacto' => ['Demo Solo Contacto', ['contact'], 'active', 'Solo datos de contacto y formulario'],
+        'demo.ventas' => ['Demo Ventas', ['leads'], 'active', 'Ventas: prospectos y estadísticas'],
         'demo.personalizado' => ['Demo Personalizado', ['texts', 'photos'], 'active', 'Personalizado: textos + fotos'],
         'demo.desactivado' => ['Demo Cuenta Desactivada', ['texts'], 'disabled', 'Desactivada (no puede entrar)'],
     ];

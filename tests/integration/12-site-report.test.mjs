@@ -154,10 +154,9 @@ test('the scheduled check records availability, Google scores and the certificat
   await cliAsync(s, ['monitor']);
   assert.equal(psiCalls, 2, 'scores are refreshed at most once a day');
   const r = (await owner.get('/api/site-report/preview?period=' + prev)).data.report;
-  assert.equal(r.kpis[1].label, 'Velocidad en celulares');
-  assert.equal(r.kpis[1].value, '86/100');
-  assert.equal(r.sections[0].title, 'Visibilidad en Google');
-  assert.ok(r.sections[0].items.includes('Velocidad en computadoras: 99/100 (excelente)'));
+  assert.equal(r.kpis.find((k) => k.label === 'Velocidad en celulares').value, '86/100');
+  const visibility = r.sections.find((x) => x.title === 'Visibilidad en Google');
+  assert.ok(visibility.items.includes('Velocidad en computadoras: 99/100 (excelente)'));
 });
 
 test('sending: recipients in To, the owner in Cc, branded e-mail, history recorded', async () => {

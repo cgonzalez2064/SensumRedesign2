@@ -202,6 +202,8 @@ final class SiteReport
         $maintenance = $this->app->maintenanceLog()->month($period);
         $maintenance['alerts'] += $count("SELECT COUNT(*) FROM error_log WHERE created_at >= ? AND created_at < ? AND alert = 'sent'");
         $tls = $this->app->settings()->getJson('tls_expiry');
+        $visits = $this->app->analytics()->summary($start, $end);
+        unset($visits['days']);
         return [
             'checks' => (int) ($runs['n'] ?? 0),
             'availability' => (int) ($runs['n'] ?? 0) > 0 ? round(100 * (int) $runs['ok'] / (int) $runs['n'], 1) : null,
@@ -220,7 +222,49 @@ final class SiteReport
             'tickets' => $tickets,
             'contact' => $contact,
             'maintenance' => $maintenance,
+            'leads' => $this->app->leads()->stats($start, $end),
+            'visits' => $visits,
+            'service' => (new Tickets($this->app))->serviceLevels($start, $end),
         ];
+    }
+
+    /**
+     * Change against the previous month for a KPI: direction, a short text
+     * ("+15 % vs. agosto") and whether it is good news (null = neutral).
+     * Null when there is nothing to compare with.
+     */
+    private function trend(float|int|null $now, float|int|null $before, string $lang, string $prevMonth, ?bool $higherIsBetter = true, bool $points = false): ?array
+    {
+        if ($now === null || $before === null || (!$points && $before == 0)) {
+            return null;
+        }
+        $s = $this->strings($lang);
+        if ($points) {
+            $diff = round((float) $now - (float) $before, 1);
+            $change = self::number(abs($diff), $lang, fmod(abs($diff), 1.0) === 0.0 ? 0 : 1) . ' ' . $s['sr.trend.points'];
+        } else {
+            $diff = (float) round(100 * ((float) $now - (float) $before) / (float) $before);
+            $change = self::number(abs($diff), $lang) . ($lang === 'en' ? '%' : ' %');
+        }
+        if ($diff == 0) {
+            return ['dir' => 'flat', 'text' => self::fill($s['sr.trend.same'], ['month' => $prevMonth]), 'good' => null];
+        }
+        return [
+            'dir' => $diff > 0 ? 'up' : 'down',
+            'text' => self::fill($s['sr.trend.vs'], ['change' => ($diff > 0 ? '+' : '-') . $change, 'month' => $prevMonth]),
+            'good' => $higherIsBetter === null ? null : ($diff > 0) === $higherIsBetter,
+        ];
+    }
+
+    /** "A, B y C" in the report's language. */
+    private static function listJoin(array $items, string $and): string
+    {
+        $items = array_values($items);
+        if (count($items) < 2) {
+            return (string) ($items[0] ?? '');
+        }
+        $last = array_pop($items);
+        return implode(', ', $items) . ' ' . $and . ' ' . $last;
     }
 
     /**
@@ -232,6 +276,14 @@ final class SiteReport
         $s = $this->strings($lang);
         $f = $this->figures($period);
         $month = $this->periodLabel($period, $lang);
+        // The month before, to compare (trend arrows).
+        $prevPeriod = date('Y-m', strtotime($period . '-01 -1 month') ?: time());
+        $p = $this->figures($prevPeriod);
+        $prevMonth = $s['sr.months'][(int) substr($prevPeriod, 5, 2) - 1];
+        $trend = fn ($now, $before, ?bool $higherIsBetter = true, bool $points = false) => $this->trend($now, $before, $lang, $prevMonth, $higherIsBetter, $points);
+        $leadsNow = $f['leads']['received'] ?: $f['contact']['sent'];
+        $leadsBefore = $p['leads']['received'] ?: $p['contact']['sent'];
+        $visitors = (int) $f['visits']['visitors'];
         $good = $f['incidents'] === 0 && ($f['availability'] === null || $f['availability'] >= 99);
         // "99 %" for whole numbers, "99,8 %" otherwise.
         $pct = $f['availability'] !== null ? self::number($f['availability'], $lang, fmod($f['availability'], 1.0) === 0.0 ? 0 : 1) : null;
@@ -257,22 +309,82 @@ final class SiteReport
         if ($f['tickets']['resolved'] > 0) {
             $summary .= ' ' . self::plural($s['sr.summary.resolved'], $f['tickets']['resolved']);
         }
+        if ($visitors > 0) {
+            $summary .= ' ' . ($leadsNow > 0
+                ? self::fill($s['sr.summary.visitsLeads'], ['visits' => self::plural($s['sr.summary.visitsPart'], $visitors, ['count' => self::number($visitors, $lang)]), 'leads' => self::plural($s['sr.summary.leadsPart'], $leadsNow)])
+                : self::fill($s['sr.summary.visitsOnly'], ['visits' => self::plural($s['sr.summary.visitsPart'], $visitors, ['count' => self::number($visitors, $lang)])]));
+        }
 
         $kpis = [];
         if ($pct !== null) {
-            $kpis[] = ['label' => $s['sr.kpi.availability'], 'value' => $pct . ($lang === 'en' ? '%' : ' %'), 'note' => self::fill($s['sr.kpi.availabilityNote'], ['n' => self::number($f['checks'], $lang)])];
+            $kpis[] = ['label' => $s['sr.kpi.availability'], 'value' => $pct . ($lang === 'en' ? '%' : ' %'), 'note' => self::fill($s['sr.kpi.availabilityNote'], ['n' => self::number($f['checks'], $lang)]),
+                'trend' => $trend($f['availability'], $p['availability'], true, true)];
+        }
+        if ($visitors > 0) {
+            $kpis[] = ['label' => $s['sr.kpi.visits'], 'value' => self::number($visitors, $lang), 'note' => self::plural($s['sr.kpi.visitsNote'], (int) $f['visits']['views'], ['count' => self::number((int) $f['visits']['views'], $lang)]),
+                'trend' => $p['visits']['visitors'] > 0 ? $trend($visitors, (int) $p['visits']['visitors']) : null];
+        }
+        if ($leadsNow > 0 || $leadsBefore > 0) {
+            $clicks = (int) $f['visits']['contacts'];
+            $kpis[] = ['label' => $s['sr.kpi.leads'], 'value' => self::number($leadsNow, $lang), 'note' => $clicks > 0 ? self::plural($s['sr.kpi.leadsClicks'], $clicks) : $s['sr.kpi.leadsNote'],
+                'trend' => $trend($leadsNow, $leadsBefore)];
         }
         if ($f['pagespeed']) {
-            $kpis[] = ['label' => $s['sr.kpi.google'], 'value' => $f['pagespeed']['mobile']['performance'] . '/100', 'note' => $this->grade((int) $f['pagespeed']['mobile']['performance'], $lang)];
+            $kpis[] = ['label' => $s['sr.kpi.google'], 'value' => $f['pagespeed']['mobile']['performance'] . '/100', 'note' => $this->grade((int) $f['pagespeed']['mobile']['performance'], $lang), 'trend' => null];
         }
-        $kpis[] = ['label' => $s['sr.kpi.updates'], 'value' => (string) $changes, 'note' => $s['sr.kpi.updatesNote']];
-        if ($f['contact']['sent'] > 0) {
-            $kpis[] = ['label' => $s['sr.kpi.leads'], 'value' => self::number($f['contact']['sent'], $lang), 'note' => $s['sr.kpi.leadsNote']];
-        }
+        $prevChanges = $p['textChanges'] + $p['photos'] + $p['portfolio'];
+        $kpis[] = ['label' => $s['sr.kpi.updates'], 'value' => (string) $changes, 'note' => $s['sr.kpi.updatesNote'], 'trend' => $trend($changes, $prevChanges, null)];
         $kpis[] = ['label' => $s['sr.kpi.security'], 'value' => $f['https'] ? $s['sr.kpi.secure'] : $s['sr.kpi.review'], 'note' => $f['blocked'] > 0
-            ? self::plural($s['sr.kpi.blocked'], $f['blocked']) : $s['sr.kpi.noThreats']];
+            ? self::plural($s['sr.kpi.blocked'], $f['blocked']) : $s['sr.kpi.noThreats'], 'trend' => null];
 
         $sections = [];
+        // Visits and contacts: what the site brought in this month.
+        $reach = [];
+        if ($visitors > 0) {
+            $t = $p['visits']['visitors'] > 0 ? $trend($visitors, (int) $p['visits']['visitors']) : null;
+            $reach[] = self::fill($s['sr.visits.total'], ['visits' => self::plural($s['sr.summary.visitsPart'], $visitors, ['count' => self::number($visitors, $lang)]),
+                'views' => self::number((int) $f['visits']['views'], $lang)]) . ($t ? ' (' . $t['text'] . ')' : '') . '.';
+            $total = array_sum($f['visits']['sources']);
+            $top = array_slice($f['visits']['sources'], 0, 3, true);
+            if ($total > 0 && $top) {
+                $reach[] = self::fill($s['sr.visits.sources'], ['list' => self::listJoin(array_map(fn ($k, $n) => ($s['sr.source.' . $k] ?? $k) . ' (' . self::number(round(100 * $n / $total), $lang) . ($lang === 'en' ? '%' : ' %') . ')', array_keys($top), $top), $s['sr.and'])]);
+            }
+            $devices = array_sum($f['visits']['devices']);
+            if ($devices > 0) {
+                $reach[] = self::fill($s['sr.visits.mobile'], ['pct' => self::number(round(100 * ($f['visits']['devices']['mobile'] ?? 0) / $devices), $lang)]);
+            }
+        }
+        $ck = $f['visits']['clicks'];
+        $contactClicks = array_filter(['whatsapp' => $ck['whatsapp'], 'phone' => $ck['phone'], 'email' => $ck['email']]);
+        if ($contactClicks) {
+            $reach[] = self::fill($s['sr.visits.clicks'], ['list' => self::listJoin(array_map(fn ($k, $n) => self::plural($s['sr.click.' . $k], $n), array_keys($contactClicks), $contactClicks), $s['sr.and'])]);
+        }
+        $interest = array_filter(['map' => $ck['map'], 'portfolio' => $ck['portfolio'], 'social' => $ck['social']]);
+        if ($interest) {
+            $reach[] = self::fill($s['sr.visits.interest'], ['list' => self::listJoin(array_map(fn ($k, $n) => self::plural($s['sr.click.' . $k], $n), array_keys($interest), $interest), $s['sr.and'])]);
+        }
+        $ld = $f['leads'];
+        if ($leadsNow > 0) {
+            $t = $trend($leadsNow, $leadsBefore);
+            $reach[] = self::plural($s['sr.leads.received'], $leadsNow) . ($t ? ' (' . $t['text'] . ')' : '') . '.';
+            $services = array_slice(array_filter($ld['byService'], fn ($k) => $k !== '', ARRAY_FILTER_USE_KEY), 0, 3, true);
+            if ($services) {
+                $reach[] = self::fill($s['sr.leads.services'], ['list' => self::listJoin(array_map(fn ($k, $n) => $k . ' (' . $n . ')', array_keys($services), $services), $s['sr.and'])]);
+            }
+            $follow = array_filter(['contacted' => $ld['contacted'], 'quoted' => $ld['quoted'], 'won' => $ld['won']]);
+            if ($follow) {
+                $reach[] = self::fill($s['sr.leads.followUp'], ['list' => self::listJoin(array_map(fn ($k, $n) => self::plural($s['sr.leads.' . $k], $n), array_keys($follow), $follow), $s['sr.and'])]);
+            }
+            if ($ld['wonAmount'] > 0) {
+                $reach[] = self::fill($s['sr.leads.wonAmount'], ['amount' => 'Q ' . self::number($ld['wonAmount'], $lang)]);
+            }
+            if ($ld['avgResponseHours'] !== null) {
+                $reach[] = self::fill($s['sr.leads.response'], ['time' => $this->duration((int) round($ld['avgResponseHours']), $lang)]);
+            }
+        }
+        if ($reach) {
+            $sections[] = ['title' => $s['sr.sec.reach'], 'intro' => $visitors > 0 ? $s['sr.sec.reachIntro'] : null, 'items' => $reach];
+        }
         if ($f['pagespeed']) {
             $p = $f['pagespeed'];
             $line = fn (string $key, int $score) => self::fill($s[$key], ['score' => $score, 'grade' => mb_strtolower($this->grade($score, $lang))]);
@@ -329,6 +441,14 @@ final class SiteReport
             if ($tk['avgHours'] !== null) {
                 $support[] = self::fill($s['sr.support.avg'], ['time' => $this->duration($tk['avgHours'], $lang)]);
             }
+            $sv = $f['service'];
+            if ($sv['avgFirstResponseHours'] !== null) {
+                $support[] = self::fill($s['sr.support.firstResponse'], ['time' => $this->duration((int) round($sv['avgFirstResponseHours']), $lang),
+                    'pct' => (string) $sv['withinTarget'], 'target' => $this->duration($sv['targetHours'], $lang)]);
+            }
+            if ($sv['ratings'] > 0) {
+                $support[] = self::plural($s['sr.support.rating'], $sv['ratings'], ['avg' => self::number((float) $sv['ratingAvg'], $lang, 1)]);
+            }
             foreach ($tk['resolvedTitles'] as $title) {
                 $support[] = self::fill($s['sr.support.done'], ['title' => $title]);
             }
@@ -351,6 +471,7 @@ final class SiteReport
             $m['pagespeed'] > 0 ? self::plural($s['sr.auto.pagespeed'], $m['pagespeed']) : null,
             $m['dns'] > 0 ? self::plural($s['sr.auto.dns'], $m['dns']) : null,
             $f['contact']['blocked'] > 0 ? self::plural($s['sr.auto.spam'], $f['contact']['blocked']) : null,
+            $f['service']['autoClosed'] > 0 ? self::plural($s['sr.auto.autoClosed'], $f['service']['autoClosed']) : null,
             $m['alerts'] > 0 ? self::plural($s['sr.auto.alerts'], $m['alerts']) : null,
         ]));
         if ($auto) {
@@ -369,13 +490,20 @@ final class SiteReport
             'sections' => $sections,
             'siteUrl' => $this->app->config->appUrl(),
             'subject' => self::fill($s['sr.subject'], ['month' => $month]),
+            'previousPeriod' => $prevPeriod,
             'figures' => $f,
         ];
     }
 
     // ------------------------------------------------------------------ e-mail
 
-    public function email(array $r, array $to, array $cc, string $note, bool $test): array
+    /** Green when the change is good news, red when it is not, grey when neutral. */
+    private static function trendColor(array $t): string
+    {
+        return $t['good'] === null ? '#5f6368' : ($t['good'] ? '#1a7f45' : '#b42318');
+    }
+
+    public function email(array $r, array $to, array $cc, string $note, bool $test, bool $withPdf = false): array
     {
         $s = $this->strings($r['lang']);
         $e = fn (string $v) => Emails::esc($v);
@@ -387,7 +515,10 @@ final class SiteReport
                 . '<td valign="top" width="50%" style="padding:6px"><div style="background:#f7f7f9;border-radius:14px;padding:16px">'
                 . '<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7a7a82">' . $e($k['label']) . '</div>'
                 . '<div style="font-size:26px;font-weight:800;color:#1c1c1c;margin-top:4px;line-height:1.15">' . $e($k['value']) . '</div>'
-                . '<div style="font-size:13px;color:#5f6368;margin-top:2px">' . $e($k['note']) . '</div></div></td>';
+                . '<div style="font-size:13px;color:#5f6368;margin-top:2px">' . $e($k['note']) . '</div>'
+                . (!empty($k['trend']) ? '<div style="font-size:12px;font-weight:700;margin-top:6px;color:' . self::trendColor($k['trend']) . '">'
+                    . ['up' => '&#9650;', 'down' => '&#9660;', 'flat' => '='][$k['trend']['dir']] . ' ' . $e($k['trend']['text']) . '</div>' : '')
+                . '</div></td>';
         }
         $sectionsHtml = '';
         foreach ($r['sections'] as $sec) {
@@ -410,6 +541,7 @@ final class SiteReport
                 . '<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#a15c00;margin-bottom:4px">' . $e($s['sr.noteTitle']) . '</div>' . $e($note) . '</div>' : '')
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px -6px 0"><tr>' . $kpiCells . '</tr></table>'
             . $sectionsHtml
+            . ($withPdf ? '<p style="margin:22px 0 0;font-size:13px;color:#7a7a82">&#128206; ' . $e($s['sr.pdf.attached']) . '</p>' : '')
             . Emails::cta($s['sr.cta'], $r['siteUrl'] . '/');
         $footer = $e(self::fill($s['sr.footer'], ['email' => $this->ownerEmail()]));
         $layout = (new Emails($this->app))->branded($r['lang'], $s['sr.tag'], $r['summary'], $body, $footer);
@@ -420,7 +552,7 @@ final class SiteReport
         }
         $text .= "\n";
         foreach ($r['kpis'] as $k) {
-            $text .= "{$k['label']}: {$k['value']} ({$k['note']})\n";
+            $text .= "{$k['label']}: {$k['value']} ({$k['note']}" . (!empty($k['trend']) ? '; ' . $k['trend']['text'] : '') . ")\n";
         }
         foreach ($r['sections'] as $sec) {
             $text .= "\n{$sec['title']}\n" . implode('', array_map(fn ($i) => "- {$i}\n", $sec['items']));
@@ -436,6 +568,139 @@ final class SiteReport
             'replyTo' => [$this->ownerEmail(), $s['sr.replyName']],
             'embedded' => $layout['embedded'],
         ];
+    }
+
+    // ------------------------------------------------------------------ PDF
+
+    /** The report as a printable PDF (Letter), same content as the e-mail. */
+    public function pdf(array $r, string $note = ''): string
+    {
+        $s = $this->strings($r['lang']);
+        $doc = new Pdf($s['sr.pdf.title'] . ' — ' . $r['periodLabel']);
+        $m = 48.0;                          // margins
+        $w = Pdf::WIDTH - 2 * $m;            // content width
+        $bottom = Pdf::HEIGHT - 64;          // last usable baseline before the footer
+        $y = 0.0;
+        $newPage = function (bool $first = false) use ($doc, $m, $s, $r, &$y) {
+            $doc->addPage();
+            if ($first) {
+                $doc->rect(0, 0, Pdf::WIDTH, 104, '#1c1c1c');
+                $logo = $doc->image($this->app->root('resources/email-logo.png'), $m, 30, 44, '#1c1c1c');
+                $x = $logo > 0 ? $m + 58 : $m;
+                $doc->text($x, 52, 'Sensum Construcciones', 18, '#ffffff', true);
+                $doc->text($x, 72, $s['sr.pdf.title'] . ' · ' . $r['periodLabel'], 11, '#d0d0d6');
+                $y = 140;
+            } else {
+                $doc->text($m, 44, 'Sensum Construcciones · ' . $s['sr.pdf.title'] . ' · ' . $r['periodLabel'], 9, '#7a7a82', true);
+                $doc->line($m, 54, Pdf::WIDTH - $m, 54);
+                $y = 84;
+            }
+        };
+        $need = function (float $h) use (&$y, $bottom, $newPage) {
+            if ($y + $h > $bottom) {
+                $newPage();
+            }
+        };
+        $newPage(true);
+
+        // Title, status and summary.
+        $doc->text($m, $y, mb_strtoupper(self::fill($s['sr.eyebrow'], ['month' => $r['periodLabel']])), 9, '#c25500', true);
+        $y = $doc->paragraph($m, $y + 26, $w, $r['headline'], 20, '#1c1c1c', true, 1.25) + 4;
+        [$pillBg, $pillFg] = $r['status'] === 'good' ? ['#e8f6ee', '#1a7f45'] : ['#fff4e0', '#a15c00'];
+        $pillW = $doc->width($r['statusLabel'], 9, true) + 22;
+        $doc->rect($m, $y - 12, $pillW, 20, $pillBg, null, 10);
+        $doc->text($m + 11, $y + 2, $r['statusLabel'], 9, $pillFg, true);
+        $y = $doc->paragraph($m, $y + 32, $w, $r['summary'], 11.5, '#2b2b31', false, 1.5) + 4;
+        if ($note !== '') {
+            $lines = $doc->wrap($note, $w - 30, 10.5);
+            $h = 34 + count($lines) * 15;
+            $need($h);
+            $doc->rect($m, $y, $w, $h, '#fff8f1', null, 8);
+            $doc->rect($m, $y, 4, $h, '#f6740a');
+            $doc->text($m + 16, $y + 18, mb_strtoupper($s['sr.noteTitle']), 8, '#a15c00', true);
+            $ly = $y + 34;
+            foreach ($lines as $line) {
+                $doc->text($m + 16, $ly, $line, 10.5, '#2b2b31');
+                $ly += 15;
+            }
+            $y += $h + 10;
+        }
+
+        // KPI cards, three per row.
+        $gap = 12.0;
+        $cw = ($w - 2 * $gap) / 3;
+        $ch = 96.0;
+        $y += 8;
+        foreach (array_chunk($r['kpis'], 3) as $row) {
+            $need($ch + $gap);
+            foreach ($row as $i => $k) {
+                $x = $m + $i * ($cw + $gap);
+                $doc->rect($x, $y, $cw, $ch, '#f7f7f9', '#e8e8ec', 10);
+                $doc->text($x + 12, $y + 20, mb_strtoupper($k['label']), 7.5, '#7a7a82', true);
+                $doc->text($x + 12, $y + 46, $k['value'], 21, '#1c1c1c', true);
+                $noteLines = array_slice($doc->wrap($k['note'], $cw - 24, 8.5), 0, 2);
+                $ny = $y + 62;
+                foreach ($noteLines as $line) {
+                    $doc->text($x + 12, $ny, $line, 8.5, '#5f6368');
+                    $ny += 11;
+                }
+                if (!empty($k['trend'])) {
+                    $color = self::trendColor($k['trend']);
+                    $ty = $y + $ch - 10;
+                    if ($k['trend']['dir'] === 'flat') {
+                        $doc->text($x + 12, $ty, '=', 9, $color, true);
+                    } else {
+                        $doc->triangle($x + 16, $ty - 3, 7, $k['trend']['dir'] === 'up', $color);
+                    }
+                    $doc->text($x + 24, $ty, $k['trend']['text'], 8.5, $color, true);
+                }
+            }
+            $y += $ch + $gap;
+        }
+
+        // Sections with bullet points.
+        foreach ($r['sections'] as $sec) {
+            $need(64);
+            $y += 24;
+            $doc->text($m, $y, $sec['title'], 13, '#1c1c1c', true);
+            $y += 8;
+            if ($sec['intro']) {
+                $y = $doc->paragraph($m, $y + 12, $w, $sec['intro'], 9, '#7a7a82', false, 1.4) - 4;
+            }
+            $y += 8;
+            foreach ($sec['items'] as $item) {
+                $lines = $doc->wrap($item, $w - 16, 10.5);
+                $need(count($lines) * 15 + 4);
+                $doc->circle($m + 3, $y + 8, 2.4, '#f6740a');
+                foreach ($lines as $line) {
+                    $y += 15;
+                    $doc->text($m + 14, $y - 3, $line, 10.5, '#2b2b31');
+                }
+                $y += 4;
+            }
+        }
+        $need(40);
+        $y += 22;
+        $doc->text($m, $y, self::fill($s['sr.pdf.generated'], ['date' => $this->date(time(), $r['lang'])]), 8.5, '#7a7a82');
+
+        // Footer on every page: site address (link) and "page n of N".
+        $total = $doc->pageCount();
+        $site = (string) preg_replace('#^https?://#', '', $r['siteUrl']);
+        for ($n = 1; $n <= $total; $n++) {
+            $doc->onPage($n, function (Pdf $d) use ($n, $total, $m, $s, $site, $r) {
+                $fy = Pdf::HEIGHT - 36;
+                $d->line($m, $fy - 14, Pdf::WIDTH - $m, $fy - 14);
+                $d->text($m, $fy, $site, 8.5, '#c25500', true);
+                $d->link($m, $fy - 10, $d->width($site, 8.5, true), 14, $r['siteUrl'] . '/');
+                $d->text(Pdf::WIDTH - $m, $fy, self::fill($s['sr.pdf.page'], ['n' => $n, 'total' => $total]), 8.5, '#7a7a82', false, 'right');
+            });
+        }
+        return $doc->output();
+    }
+
+    public function pdfName(string $period, string $lang): string
+    {
+        return self::fill($this->strings($lang)['sr.pdf.file'], ['period' => $period]);
     }
 
     /**
@@ -454,7 +719,23 @@ final class SiteReport
         } else {
             [$to, $cc] = [$settings['recipients'], [$owner]];
         }
-        $sent = $this->app->mailer()->send($this->email($report, $to, $cc, $note, $test));
+        // The PDF version goes along as an attachment (printing, sharing with the team).
+        $pdfPath = null;
+        try {
+            $pdfPath = $this->app->storageDir('tmp') . '/report-' . bin2hex(random_bytes(6)) . '.pdf';
+            file_put_contents($pdfPath, $this->pdf($report, $note));
+        } catch (\Throwable $e) {
+            $this->app->logger()->warning('report_pdf_failed', ['type' => get_class($e)]);
+            $pdfPath = null;
+        }
+        $mail = $this->email($report, $to, $cc, $note, $test, $pdfPath !== null);
+        if ($pdfPath !== null) {
+            $mail['attachments'] = [['path' => $pdfPath, 'name' => $this->pdfName($period, $report['lang']), 'mime' => 'application/pdf']];
+        }
+        $sent = $this->app->mailer()->send($mail);
+        if ($pdfPath !== null) {
+            @unlink($pdfPath);
+        }
         if (!$test) {
             $this->app->db()->insert(
                 'INSERT INTO site_reports (period, sent_at, sent_by, recipients, lang, status, summary) VALUES (?, ?, ?, ?, ?, ?, ?)',

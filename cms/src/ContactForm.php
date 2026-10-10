@@ -21,23 +21,24 @@ final class ContactForm
 
     /**
      * @param array{name:string,phone:string,email:string,service:string,message:string} $lead already validated
+     * @param int|null $leadId the message as stored in "Prospectos" (linked from the e-mail)
      * @return bool|null null = not configured in the panel (use the handler's defaults)
      */
-    public function deliver(array $lead): ?bool
+    public function deliver(array $lead, ?int $leadId = null): ?bool
     {
         $c = $this->app->mailSettings()->contact();
         if (!$c['configured']) {
             return null;
         }
-        $ok = $this->send($this->message($lead, $c), $c);
+        $ok = $this->send($this->message($lead, $c, $leadId), $c);
         if (!$ok) {
-            $this->app->logger()->error('contact_form_failed', ['message' => 'Contact form e-mail could not be sent', 'method' => $c['method']]);
+            $this->app->logger()->error('contact_form_failed', ['message' => 'Contact form e-mail could not be sent' . ($leadId ? ' (the message is saved in Prospectos #' . $leadId . ')' : ''), 'method' => $c['method']]);
         }
         return $ok;
     }
 
     /** @param array{to:list<string>,fromAddress:string,fromName:string,method:string} $c */
-    public function message(array $lead, array $c): array
+    public function message(array $lead, array $c, ?int $leadId = null): array
     {
         $e = fn (string $v) => Emails::esc($v);
         $subject = 'Nuevo contacto desde Sensum Construcciones: ' . Mailer::oneLine($lead['name'], 80);
@@ -57,7 +58,9 @@ final class ContactForm
             . $detail('Correo', '<a href="mailto:' . $e($lead['email']) . '" style="color:#c25500;text-decoration:none">' . $e($lead['email']) . '</a>')
             . $detail('Teléfono', $tel !== '' ? '<a href="tel:' . $e($tel) . '" style="color:#c25500;text-decoration:none">' . $e($lead['phone']) . '</a>' : '—')
             . '</tr></table>'
-            . Emails::cta('Responder a ' . $first, $reply);
+            . Emails::cta('Responder a ' . $first, $reply)
+            . ($leadId ? '<p style="margin:16px 0 0;font-size:13px;color:#7a7a82">También quedó guardado en el panel, donde puedes anotar el seguimiento: '
+                . '<a href="' . $e($this->app->config->appUrl() . '/admin/#/prospectos/' . $leadId) . '" style="color:#c25500">Prospecto #' . $leadId . '</a></p>' : '');
         $layout = (new Emails($this->app))->branded('es', 'Formulario de contacto', $lead['service'] . ' — ' . mb_substr($lead['message'], 0, 90), $body,
             'Mensaje enviado desde el formulario de contacto de sensumconstrucciones.com. Responde a este correo para escribirle directamente a ' . $e($lead['name']) . '.');
         return [

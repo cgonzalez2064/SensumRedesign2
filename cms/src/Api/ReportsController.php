@@ -23,7 +23,7 @@ final class ReportsController extends Controller
     public function index(): never
     {
         $list = $this->tickets()->list((array) $this->session, $this->req->query('status') ?: 'open', $this->req->query('q'));
-        Response::ok($list + ['supportEmail' => $this->app->mailSettings()->supportEmail(), 'canManage' => $this->isOwner()]);
+        Response::ok($list + ['supportEmail' => $this->app->mailSettings()->supportEmail(), 'canManage' => $this->isOwner(), 'slaHours' => $this->isOwner() ? $this->tickets()->slaHours() : null]);
     }
 
     public function badge(): never
@@ -52,6 +52,25 @@ final class ReportsController extends Controller
     {
         $in = $this->req->json();
         Response::ok($this->tickets()->addMessage((array) $this->session, $id, $this->str('body'), ($in['internal'] ?? false) === true, ($in['notify'] ?? true) === true));
+    }
+
+    /** The reporter rates the help on a resolved ticket (1–5, optional comment). */
+    public function rate(int $id): never
+    {
+        $in = $this->req->json();
+        Response::ok($this->tickets()->rate((array) $this->session, $id, $in['rating'] ?? null, $this->str('comment')));
+    }
+
+    /** Owner: response-time target used in the figures and the monthly report. */
+    public function settings(): never
+    {
+        if (!$this->isOwner()) {
+            throw new ApiError(403, 'forbidden');
+        }
+        $in = $this->req->json();
+        $hours = $this->tickets()->setSlaHours($in['slaHours'] ?? null);
+        $this->app->activity($this->uid(), 'ticket_settings_changed', '', ['slaHours' => $hours], $this->req->ip());
+        Response::ok(['slaHours' => $hours]);
     }
 
     /** The screenshot sent with a ticket (its author or the owner). */

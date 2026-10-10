@@ -23,6 +23,10 @@ final class Tickets
     public const OPEN = ['new', 'in_progress', 'waiting'];
     public const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
     public const FILTERS = ['open', 'new', 'in_progress', 'waiting', 'resolved', 'closed', 'all'];
+    /** Response-time targets the owner can choose (hours). */
+    public const SLA_HOURS = [4, 8, 24, 48, 72];
+    /** Resolved tickets without an answer from the reporter close on their own after this many days. */
+    public const AUTO_CLOSE_DAYS = 7;
     private const MAX_MESSAGE = 4000;
 
     public function __construct(private App $app)
@@ -98,7 +102,9 @@ final class Tickets
         $counts['open'] = $counts['new'] + $counts['in_progress'] + $counts['waiting'];
         $counts['all'] = array_sum(array_intersect_key($counts, array_flip(self::STATUSES)));
         $counts['unread'] = (int) $db->value('SELECT COUNT(*) FROM support_reports WHERE owner_unread = 1');
-        return ['reports' => array_map(fn ($r) => $this->present($r, true), $db->all($sql, $params)), 'counts' => $counts, 'filter' => $filter];
+        $since = time() - 30 * 86400;
+        return ['reports' => array_map(fn ($r) => $this->present($r, true), $db->all($sql, $params)), 'counts' => $counts, 'filter' => $filter,
+            'service' => $this->serviceLevels($since, time() + 1)];
     }
 
     /** Number shown next to "Reportes de soporte" in the menu. */
@@ -147,7 +153,9 @@ final class Tickets
             $out['context'] = json_decode((string) $r['context'], true) ?: [];
             $out['emailAttempts'] = (int) $r['email_attempts'];
         }
-        return ['report' => $out, 'messages' => $messages, 'canManage' => $owner, 'canReply' => $r['status'] !== 'closed' && ($owner || $mine)];
+        return ['report' => $out, 'messages' => $messages, 'canManage' => $owner, 'canReply' => $r['status'] !== 'closed' && ($owner || $mine),
+            'canRate' => $mine && !$owner && in_array($r['status'], ['resolved', 'closed'], true) && $r['rating'] === null,
+            'slaHours' => $owner ? $this->slaHours() : null];
     }
 
     public function present(array $r, bool $forOwner): array
@@ -158,7 +166,101 @@ final class Tickets
             'updatedAt' => (int) ($r['updated_at'] ?? $r['created_at']),
             'resolvedAt' => isset($r['resolved_at']) ? (int) $r['resolved_at'] : null,
             'unread' => (bool) ($forOwner ? ($r['owner_unread'] ?? 0) : ($r['reporter_unread'] ?? 0)),
+            'firstResponseAt' => isset($r['first_response_at']) ? (int) $r['first_response_at'] : null,
+            'rating' => isset($r['rating']) ? (int) $r['rating'] : null,
+            'ratingComment' => isset($r['rating']) ? (string) ($r['rating_comment'] ?? '') : null,
+            'closedAuto' => (bool) ($r['closed_auto'] ?? 0),
         ];
+    }
+
+    // ------------------------------------------------------------------ service levels
+
+    /** The person who reported it rates the help (1–5) once the ticket is resolved or closed. */
+    public function rate(array $session, int $id, mixed $rating, string $comment): array
+    {
+        $r = $this->visible($session, $id);
+        if ((int) $r['user_id'] !== (int) $session['uid']) {
+            throw new ApiError(403, 'forbidden'); // only the reporter rates (not IT)
+        }
+        if (!in_array($r['status'], ['resolved', 'closed'], true)) {
+            throw new ApiError(409, 'ticket_not_resolved');
+        }
+        if ($r['rating'] !== null) {
+            throw new ApiError(409, 'already_rated');
+        }
+        if (!is_int($rating) || $rating < 1 || $rating > 5) {
+            throw ApiError::validation(['rating' => 'invalid']);
+        }
+        $comment = self::multiline($comment);
+        if (mb_strlen($comment) > 500) {
+            throw ApiError::validation(['comment' => 'too_long']);
+        }
+        $this->app->db()->run('UPDATE support_reports SET rating = ?, rating_comment = ?, rated_at = ?, owner_unread = CASE WHEN ? <= 2 THEN 1 ELSE owner_unread END WHERE id = ?',
+            [$rating, $comment, time(), $rating, $id]);
+        $this->app->activity((int) $session['uid'], 'ticket_rated', (string) $id, ['rating' => $rating], null);
+        return $this->detail($session, $id);
+    }
+
+    public function slaHours(): int
+    {
+        $h = (int) $this->app->settings()->get('ticket_sla_hours', '24');
+        return in_array($h, self::SLA_HOURS, true) ? $h : 24;
+    }
+
+    public function setSlaHours(mixed $hours): int
+    {
+        if (!is_int($hours) || !in_array($hours, self::SLA_HOURS, true)) {
+            throw ApiError::validation(['slaHours' => 'invalid']);
+        }
+        $this->app->settings()->set('ticket_sla_hours', (string) $hours);
+        return $hours;
+    }
+
+    /**
+     * Scheduled check: resolved tickets the reporter did not answer for
+     * AUTO_CLOSE_DAYS days are closed. Returns how many.
+     */
+    public function autoClose(?int $now = null): int
+    {
+        $now ??= time();
+        $db = $this->app->db();
+        $rows = $db->all("SELECT id FROM support_reports WHERE status = 'resolved' AND resolved_at IS NOT NULL AND resolved_at <= ?", [$now - self::AUTO_CLOSE_DAYS * 86400]);
+        foreach ($rows as $row) {
+            $db->transaction(function () use ($db, $row, $now) {
+                $db->run("UPDATE support_reports SET status = 'closed', closed_auto = 1, updated_at = ? WHERE id = ? AND status = 'resolved'", [$now, $row['id']]);
+                $db->insert('INSERT INTO report_messages (report_id, user_id, author_name, author_role, kind, body, details, created_at) VALUES (?, NULL, ?, ?, ?, ?, ?, ?)',
+                    [$row['id'], 'Sistema', 'support', 'event', '', json_encode(['action' => 'status', 'from' => 'resolved', 'to' => 'closed', 'auto' => true]), $now]);
+            });
+        }
+        return count($rows);
+    }
+
+    /**
+     * Service figures for a period: first-response time against the target,
+     * satisfaction, tickets closed on their own.
+     * @return array{answered:int,avgFirstResponseHours:?float,withinTarget:?int,targetHours:int,ratings:int,ratingAvg:?float,autoClosed:int}
+     */
+    public function serviceLevels(int $start, int $end): array
+    {
+        $db = $this->app->db();
+        $target = $this->slaHours();
+        $out = ['answered' => 0, 'avgFirstResponseHours' => null, 'withinTarget' => null, 'targetHours' => $target, 'ratings' => 0, 'ratingAvg' => null, 'autoClosed' => 0];
+        try {
+            $rows = $db->all('SELECT first_response_at - created_at AS secs FROM support_reports WHERE created_at >= ? AND created_at < ? AND first_response_at IS NOT NULL', [$start, $end]);
+            if ($rows) {
+                $secs = array_map(fn ($r) => max(0, (int) $r['secs']), $rows);
+                $out['answered'] = count($secs);
+                $out['avgFirstResponseHours'] = round(array_sum($secs) / count($secs) / 3600, 1);
+                $out['withinTarget'] = (int) round(100 * count(array_filter($secs, fn ($s) => $s <= $target * 3600)) / count($secs));
+            }
+            $rating = $db->one('SELECT COUNT(*) AS n, AVG(rating) AS avg FROM support_reports WHERE rated_at >= ? AND rated_at < ?', [$start, $end]);
+            $out['ratings'] = (int) ($rating['n'] ?? 0);
+            $out['ratingAvg'] = $out['ratings'] > 0 ? round((float) $rating['avg'], 1) : null;
+            $out['autoClosed'] = (int) $db->value('SELECT COUNT(*) FROM support_reports WHERE closed_auto = 1 AND updated_at >= ? AND updated_at < ?', [$start, $end]);
+        } catch (\Throwable) {
+            // older database
+        }
+        return $out;
     }
 
     /** Path of the screenshot sent with the ticket (owner or the reporter). */
@@ -262,8 +364,8 @@ final class Tickets
         $eventId = null;
         $this->app->db()->transaction(function () use ($r, $id, $status, $message, $session, $now, &$messageId, &$eventId) {
             $this->app->db()->run(
-                'UPDATE support_reports SET status = ?, updated_at = ?, resolved_at = ?, reporter_unread = 1 WHERE id = ?',
-                [$status, $now, $status === 'resolved' ? $now : ($status === 'closed' ? $r['resolved_at'] : null), $id]
+                'UPDATE support_reports SET status = ?, updated_at = ?, resolved_at = ?, reporter_unread = 1, first_response_at = COALESCE(first_response_at, ?) WHERE id = ?',
+                [$status, $now, $status === 'resolved' ? $now : ($status === 'closed' ? $r['resolved_at'] : null), $now, $id]
             );
             if ($status !== $r['status']) {
                 $eventId = $this->event($id, $session, ['action' => 'status', 'from' => $r['status'], 'to' => $status]);
@@ -322,10 +424,11 @@ final class Tickets
                 $this->event($id, $session, ['action' => 'status', 'from' => $r['status'], 'to' => $newStatus], $role);
             }
             $messageId = $this->insertMessage($id, $session, $role, $internal ? 'note' : 'message', $body);
+            $answered = $role === 'support' && !$internal;
             $this->app->db()->run(
-                'UPDATE support_reports SET status = ?, updated_at = ?, resolved_at = ?, owner_unread = ?, reporter_unread = ? WHERE id = ?',
+                'UPDATE support_reports SET status = ?, updated_at = ?, resolved_at = ?, owner_unread = ?, reporter_unread = ?, first_response_at = CASE WHEN ? THEN COALESCE(first_response_at, ?) ELSE first_response_at END WHERE id = ?',
                 [$newStatus, $now, in_array($newStatus, ['resolved', 'closed'], true) ? $r['resolved_at'] : null,
-                    $role === 'reporter' ? 1 : (int) $r['owner_unread'], ($role === 'support' && !$internal) ? 1 : (int) $r['reporter_unread'], $id]
+                    $role === 'reporter' ? 1 : (int) $r['owner_unread'], $answered ? 1 : (int) $r['reporter_unread'], $answered ? 1 : 0, $now, $id]
             );
         });
         $this->app->activity((int) $session['uid'], $internal ? 'ticket_note' : 'ticket_reply', (string) $id, [], null);

@@ -28,6 +28,8 @@ const V = {
   email: lazy(() => import('./views/email.js')),
   security: lazy(() => import('./views/security.js')),
   form: lazy(() => import('./views/form.js')),
+  leads: lazy(() => import('./views/leads.js')),
+  stats: lazy(() => import('./views/stats.js')),
 };
 const loadReport = lazy(() => import('./report.js'));
 const openReportDialog = (...args) => loadReport().then((m) => m.openReportDialog(...args));
@@ -49,6 +51,9 @@ const PRIVATE = [
   { re: /^\/contacto$/, mod: V.content, fn: 'details', nav: 'details', perm: ['contact'] },
   { re: /^\/formulario$/, mod: V.form, fn: 'render', nav: 'form', perm: ['contact'] },
   { re: /^\/fotos(?:\/(nosotros|proyectos|documentos))?$/, mod: V.media, fn: 'render', nav: 'media', perm: ['photos', 'documents'] },
+  { re: /^\/prospectos$/, mod: V.leads, fn: 'render', nav: 'leads', perm: ['leads'] },
+  { re: /^\/prospectos\/([1-9][0-9]{0,8})$/, mod: V.leads, fn: 'detail', nav: 'leads', perm: ['leads'] },
+  { re: /^\/estadisticas$/, mod: V.stats, fn: 'render', nav: 'stats', perm: ['leads'] },
   { re: /^\/usuarios$/, mod: V.users, fn: 'render', nav: 'users', owner: true },
   { re: /^\/monitoreo$/, mod: V.monitor, fn: 'render', nav: 'monitor', owner: true },
   { re: /^\/informe$/, mod: V.siteReport, fn: 'render', nav: 'siteReport', owner: true },
@@ -182,7 +187,7 @@ function navLink(path, key, ic, active) {
   const route = PRIVATE.find((r) => r.nav === key);
   const prefetch = () => { if (route) route.mod().catch(() => {}); };
   return h('a', { href: '#' + path, 'data-nav': key, 'aria-current': active === key ? 'page' : null, onclick: closeNav, onpointerenter: prefetch, onfocus: prefetch },
-    icon(ic), h('span', { text: t('nav.' + key) }), key === 'reports' ? h('span', { class: 'nav-badge', hidden: true }) : null);
+    icon(ic), h('span', { text: t('nav.' + key) }), key === 'reports' || key === 'leads' ? h('span', { class: 'nav-badge', hidden: true }) : null);
 }
 
 /**
@@ -202,7 +207,21 @@ export async function refreshReportsBadge(force = true) {
   el.textContent = n > 99 ? '99+' : String(n);
   el.setAttribute('aria-label', t(state.session && state.session.user.owner ? 'tickets.badgeOwner' : 'tickets.badgeReporter', { n }));
 }
-window.addEventListener('focus', () => refreshReportsBadge(false));
+window.addEventListener('focus', () => { refreshReportsBadge(false); refreshLeadsBadge(false); });
+
+/** Number next to "Prospectos": contact-form messages nobody has opened yet. */
+let leadsBadgeAt = 0;
+export async function refreshLeadsBadge(force = true) {
+  if (!state.shell || !userCan('leads') || (!force && Date.now() - leadsBadgeAt < 30000)) return;
+  leadsBadgeAt = Date.now();
+  let n = 0;
+  try { n = (await api.get('/leads/badge')).count; } catch (e) { return; }
+  const el = state.shell && state.shell.sidebar.querySelector('.nav a[data-nav="leads"] .nav-badge');
+  if (!el) return;
+  el.hidden = !n;
+  el.textContent = n > 99 ? '99+' : String(n);
+  el.setAttribute('aria-label', t('leads.badge', { n }));
+}
 
 function closeNav() {
   if (!state.shell) return;
@@ -278,11 +297,13 @@ function renderShell(activeNav, force = false) {
       h('button', { class: 'btn btn-ghost btn-icon close-nav', type: 'button', 'aria-label': t('app.closeMenu'), onclick: () => { closeNav(); openBtn.focus(); } }, icon('x-lg'))),
     h('nav', { class: 'nav', 'aria-label': t('nav.main') },
       navLink('/', 'dashboard', 'house', active),
-      h('div', { class: 'nav-section', text: t('nav.groupSite') }),
+      ['texts', 'photos', 'documents', 'contact'].some((p) => can(user, p)) ? h('div', { class: 'nav-section', text: t('nav.groupSite') }) : null,
       can(user, 'texts') ? navLink('/textos', 'content', 'pencil-square', active) : null,
       can(user, 'photos') || can(user, 'documents') ? navLink('/fotos', 'media', 'images', active) : null,
       can(user, 'contact') ? navLink('/contacto', 'details', 'telephone', active) : null,
       can(user, 'contact') ? navLink('/formulario', 'form', 'card-text', active) : null,
+      can(user, 'leads') ? [h('div', { class: 'nav-section', text: t('nav.groupClients') }), navLink('/prospectos', 'leads', 'inbox', active),
+        navLink('/estadisticas', 'stats', 'graph-up', active)] : null,
       user.owner ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active),
         navLink('/monitoreo', 'monitor', 'activity', active), navLink('/informe', 'siteReport', 'bar-chart', active),
         navLink('/correo', 'email', 'envelope', active), navLink('/seguridad', 'security', 'shield-lock', active)] : null,
@@ -304,6 +325,7 @@ function renderShell(activeNav, force = false) {
     h('div', { class: 'app' }, sidebar, topbar, h('div', null, offline, main)), scrim);
   state.shell = { main, sidebar, scrim, openBtn, active, offline, key };
   refreshReportsBadge();
+  refreshLeadsBadge();
   return main;
 }
 

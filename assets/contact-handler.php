@@ -69,7 +69,7 @@ const ALLOWED_SERVICES = [
     'maintenance' => 'Mantenimiento preventivo',
     'other' => 'Otro',
 ];
-const ALLOWED_FIELDS = ['name', 'phone', 'email', 'service', 'message', 'website', 'loaded_at', 'captcha', 'cf-turnstile-response'];
+const ALLOWED_FIELDS = ['name', 'phone', 'email', 'service', 'message', 'website', 'loaded_at', 'captcha', 'cf-turnstile-response', 'lang'];
 // Built-in captcha: the browser tries up to this many numbers (about half on
 // average): well under a second on a computer, 1–3 s on a phone, done in
 // the background while the visitor types.
@@ -602,23 +602,46 @@ $headers = "From: " . SITE_NAME . " <" . FROM_EMAIL . ">\r\n"
 // to set this file up on the live server, and for the SPF/DKIM/DMARC
 // records the sending domain needs either way.
 // ------------------------------------------------------------
+$lead = ['name' => $name, 'phone' => $phone, 'email' => $email, 'service' => $service, 'message' => $message];
+// Every message is kept in the Content Manager ("Prospectos") before it is
+// e-mailed, so a failed e-mail no longer loses it.
+$leadId = null;
+if ($cmsApp) {
+    try {
+        $leadId = $cmsApp->leads()->capture($lead, ($_POST['lang'] ?? '') === 'en' ? 'en' : 'es');
+    } catch (\Throwable $e) {
+        error_log('[sensum-contact] lead_store_failed');
+    }
+}
+/** The e-mail went out (or the message is safely stored): the visitor sees "sent". */
+function finish(?\Sensum\Cms\App $app, ?int $leadId, bool $sent): never {
+    if ($app && $leadId) {
+        try {
+            $app->leads()->markNotified($leadId, $sent);
+        } catch (\Throwable $e) {
+            // the lead is stored either way
+        }
+    }
+    if ($sent || $leadId) {
+        countContact('sent');
+        respond(200, true);
+    }
+    error_log('[sensum-contact] mail_send_failed');
+    respond(500, false, ['error' => 'send_failed']);
+}
+
 $sent = null;
 // Content Manager settings first (owner → Administración → Correo).
 if ($cmsApp) {
     try {
-        $sent = $cmsApp->contactForm()->deliver(['name' => $name, 'phone' => $phone, 'email' => $email, 'service' => $service, 'message' => $message]);
+        $sent = $cmsApp->contactForm()->deliver($lead, $leadId);
     } catch (\Throwable $e) {
         error_log('[sensum-contact] cms_delivery_threw');
         $sent = null;
     }
 }
-if ($sent === true) {
-    countContact('sent');
-    respond(200, true);
-}
-if ($sent === false) {
-    error_log('[sensum-contact] mail_send_failed');
-    respond(500, false, ['error' => 'send_failed']);
+if ($sent !== null) {
+    finish($cmsApp, $leadId, $sent);
 }
 $sent = false;
 $smtpConfigPath = dirname(__DIR__, 2) . '/sensum-mail-config.php';
@@ -639,11 +662,6 @@ if (!$sent) { // @phpstan-ignore booleanNot.alwaysTrue (see the include above)
     $sent = @mail(TO_EMAIL, $subject, $body, $headers);
 }
 
-if ($sent) {
-    respond(200, true);
-}
-
-// Operational failure — log only that sending failed, never the
-// message content or the visitor's personal data.
-error_log('[sensum-contact] mail_send_failed');
-respond(500, false, ['error' => 'send_failed']);
+// Operational failure is logged in finish() — only that sending failed,
+// never the message content or the visitor's personal data.
+finish($cmsApp, $leadId, (bool) $sent);

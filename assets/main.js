@@ -1229,10 +1229,12 @@
       var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
       var timeoutId = controller ? setTimeout(function(){ controller.abort(); }, 15000) : null;
 
+      var formData = new FormData(form);
+      formData.append('lang', currentLang === 'en' ? 'en' : 'es'); /* reply in the visitor's language */
       fetch('assets/contact-handler.php', {
         method: 'POST',
         headers: { 'Accept': 'application/json' },
-        body: new FormData(form),
+        body: formData,
         signal: controller ? controller.signal : undefined
       })
         .then(function(res){

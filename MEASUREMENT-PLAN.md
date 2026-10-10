@@ -1,9 +1,17 @@
-# Measurement plan (no analytics installed)
+# Measurement plan
 
-No analytics or marketing tags are installed on this site as delivered.
-This document is a plan for what to measure and how, for whenever the
-business decides it wants that visibility — it is intentionally not
-implemented yet, so nothing collects data about visitors by default.
+> **Update (Content Manager):** the first part of this plan is now implemented
+> as the site's own, cookie-free statistics — page views, daily visitors,
+> sources, device, language and clicks on WhatsApp, phone, e-mail, map, social
+> links and the PDF portfolio (`assets/stats.js` → `/api/collect`, totals per
+> day only, no IP or cookies, Do Not Track / GPC respected). Contact-form
+> submissions are counted from the stored leads (Prospectos). See
+> `docs/CONTENT_MANAGER.md` §9 and §9c. The privacy notice describes it and
+> changes automatically if the owner turns it off. CTA, language-toggle and
+> FAQ events below are still not measured. No third-party or marketing tags
+> are installed.
+
+The rest of this document is the original plan, kept for reference.
 
 ## What's worth measuring
 

@@ -61,7 +61,7 @@ async function raw(method, path, body, { timeout = 30000, auth = true } = {}) {
 export async function download(path, body = {}) {
   const res = await fetch(BASE + path, {
     method: 'POST', credentials: 'same-origin', cache: 'no-store',
-    headers: { Accept: 'application/zip, application/json', 'Content-Type': 'application/json', ...(csrf ? { 'X-CSRF-Token': csrf } : {}) },
+    headers: { Accept: 'application/zip, application/pdf, text/csv, application/json', 'Content-Type': 'application/json', ...(csrf ? { 'X-CSRF-Token': csrf } : {}) },
     body: JSON.stringify(body),
   });
   if (!res.ok) {

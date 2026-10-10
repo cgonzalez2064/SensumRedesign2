@@ -114,7 +114,8 @@ php cms/bin/console demo-users --reports
 ```
 
 Creates or resets `demo.completo`, `demo.editor`, `demo.textos`, `demo.fotos`,
-`demo.contacto`, `demo.personalizado` and `demo.desactivado` (`@example.test`),
+`demo.contacto`, `demo.ventas` (Prospectos and Estadísticas only), `demo.personalizado`
+and `demo.desactivado` (`@example.test`),
 each with a fresh random password, and writes them to
 `cms/storage/LOCAL-TEST-USERS.txt` (git-ignored, `0600`, blocked from the web).
 `--reports` also adds four sample support tickets in different states. Run it again
@@ -254,6 +255,13 @@ To see a real critical alert, make the publish folder read-only
 "Ocurrió un error inesperado" with a code), restore it (`chmod 755 …`), then
 check Mailpit and Monitoreo → *Registro de errores*.
 
+### Leads and visit statistics
+Send the site's contact form locally: the message appears in **Prospectos** (and in
+Mailpit). Statistics count your local visits too, except from automated browsers
+(`navigator.webdriver`, "HeadlessChrome") and when the browser sends Do Not Track /
+Global Privacy Control — turn those off to see your own visits. The monthly report's
+PDF downloads from **Informe mensual → Descargar PDF**.
+
 ### Telemetry
 Off by default. To try public-site error reporting locally set
 `PUBLIC_ERROR_REPORTING=true` in `cms/.env`, then republish
@@ -275,7 +283,7 @@ Mailpit must be running for the e-mail tests (`mailpit &`).
 
 | Suite | Command | What it covers |
 |---|---|---|
-| Static analysis | `cms/vendor/bin/phpstan analyse -c cms/phpstan.neon` | PHPStan level 6 over the CMS, the API entry point and the contact-form handler — must report 0 errors |
+| Static analysis | `cms/vendor/bin/phpstan analyse -c cms/phpstan.neon --memory-limit=1G` | PHPStan level 6 over the CMS, the API entry point and the contact-form handler — must report 0 errors |
 | API integration | `npm --prefix tests test` | auth, two-step sign-in, sessions, CSRF, passwords, invitations, content, automatic translation, uploads, reports, telemetry, monitoring and alerts, off-server backups, domain/e-mail checks, access types, monthly report, failure handling. Each file starts its own server with a throwaway database. |
 | Browser E2E | `npm --prefix tests run test:e2e` | every admin screen in light/dark on desktop Chrome, tablet and iPhone (WebKit) with accessibility scans; automatic translation; owner-only Monitoring; public site with managed content; content stress test; existing site behavior |
 | Visual regression | see below | the public site against the approved screenshots |

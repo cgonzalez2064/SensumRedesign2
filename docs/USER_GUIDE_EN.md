@@ -199,6 +199,10 @@ reply**: if you were asked for information, or it was marked resolved but the
 problem persists, your reply moves it back to "In progress". Closed reports take
 no more replies (you can send a new one).
 
+**Rate the help:** when support marks your report as resolved, its page shows **How
+did we do?**: choose 1 to 5 stars and, if you like, leave a comment. Without a reply,
+the report closes on its own after 7 days.
+
 **Technical information sent automatically:** browser and version, operating
 system, device type, window and screen size, panel language and theme, time zone,
 connection status, the panel screen you were on, the system version, date and
@@ -283,6 +287,12 @@ availability, Google score, updated content, security and support.
 If last month's report isn't sent in the **first 5 days of the month**, you get a
 **reminder** email (once) and a notice on **Home**.
 
+The report compares each figure with the **previous month** (▲ in green when it
+improved, ▼ in red when it got worse), includes **Visits and contacts** (visits,
+where they come from, WhatsApp and phone clicks, contact-form messages and their
+follow-up) and, under Support, the **first-answer time** and **satisfaction**. The
+e-mail carries the **PDF version** attached; **Download PDF** lets you print or share it.
+
 ## 13. For the owner account: e-mail and the form's captcha
 
 In **Administration → E-mail** you decide who sends and who receives e-mail:
@@ -346,6 +356,11 @@ The **monthly report** includes a summary of the month's tickets (received,
 resolved, average time, pending) and of the automatic maintenance (checks,
 security scans, backups, certificate, Google, blocked spam, notices).
 
+**Service level:** above the list you see the average **first answer** of the last
+30 days, the **% within target** (choose 4, 8, 24, 48 or 72 hours) and the average
+**satisfaction** from ratings. Internal notes don't count as an answer. A 1- or
+2-star rating marks the ticket as unread.
+
 ## 16. For the owner account: Security
 
 In **Administration → Security**:
@@ -361,3 +376,34 @@ In **Administration → Security**:
   **Reset** next to their name: they set it up again at their next sign-in.
 
 Every change asks for your password and is logged.
+
+## 17. Leads: the contact-form messages
+
+Visible to the owner account and to people with the **Leads and statistics** access
+(for example the "Sales" type).
+
+* Every message from the site's form is kept here, **even if the e-mail notice fails**
+  (it then shows a yellow warning). The menu shows how many nobody has opened yet.
+* **Filters** by status (Active, New, Contacted, Quoted, Won, Lost, All), by
+  **service**, and **search** by name, e-mail, phone, text or number (`#12`).
+* On each message: buttons to **reply by e-mail**, **message on WhatsApp** or
+  **call**; the **status** and the quoted or won **amount** (quetzales, no decimals);
+  and follow-up **notes** ("Called on Tuesday…"). Every change is kept in the history
+  with who and when.
+* **Export CSV** downloads the filtered list for Excel or Google Sheets.
+* **Delete** removes the message and its notes; use it when the person asks us to
+  delete their data.
+* The owner account chooses in **Data retention** how long messages are kept (6, 12,
+  24 or 36 months); after that they are deleted automatically.
+
+## 18. Visit statistics
+
+* **Visits**, **clicks to get in touch** (WhatsApp, phone and e-mail), **contact-form
+  messages** and **contact rate**, compared with the previous period.
+* **Visits per day** (chart), **where visitors come from** (Google, Facebook, direct…),
+  **devices** and language, **actions** on the site (map, portfolio, social media) and
+  the path **from message to project** (contacted, quoted, won).
+* Choose the period at the top: last 30 days or a full month.
+* Measured on the site itself, **without cookies** and without storing IP addresses;
+  people asking "Do Not Track" and robots are not counted, so figures are somewhat
+  lower than other tools show. The owner account can turn them off.

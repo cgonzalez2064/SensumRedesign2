@@ -197,6 +197,10 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 | `users` | e-mail (unique, lower-case), name, permissions (access type), status (invited/active/disabled), Argon2id/bcrypt hash, language, theme, timestamps; encrypted TOTP secret (active and pending), enabled date, last used step (`007_two_factor.sql`) |
 | `recovery_codes` | keyed HMAC of each two-step recovery code, used-at |
 | `login_challenges` | SHA-256 of the 5-minute token between the password and the code, attempts |
+| `leads` | contact-form messages: name, e-mail, phone, service, message, language, status, amount, notified, unread, created/updated/contacted/closed (`008_value.sql`) |
+| `lead_notes` | notes and history events (status, amount) of each lead, author, time |
+| `analytics_daily` | visit statistics, one row per day × metric × value (view/visitor/source/device/lang/click) — totals only |
+| `analytics_seen` | today's unique-visitor hashes (random daily salt + IP + browser); deleted when the day changes |
 | `monitor_runs` | one row per scheduled check (ok / failed checks) — availability figure of the monthly report |
 | `site_reports` | monthly reports sent: month, when, by whom, recipients, language, status, figures |
 | `sessions` | SHA-256 of the session cookie, CSRF token, created/last-seen/expiry, pseudonymized IP, user agent |
@@ -239,6 +243,13 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 | `GET /api/account/2fa` · `POST /api/account/2fa/setup` · `/enable` · `/recovery-codes` · `/disable` | user | own two-step sign-in: setup (password → secret + QR), enable (code → recovery codes), new codes and disable (password + code). The only routes open to an account that must still enrol |
 | `GET /api/reports?status=&q=` · `POST /api/reports` · `POST /api/reports/{id}/retry` · `GET /api/reports/badge` | user | tickets (owner: all, filters, search; others: own) |
 | `GET /api/reports/{id}` · `POST /api/reports/{id}/messages` · `GET /api/reports/{id}/screenshot` | user (own) / owner | ticket, conversation (owner: `internal` notes), screenshot |
+| `POST /api/reports/{id}/rating` | reporter | rate a resolved/closed ticket once: `rating` 1–5, optional `comment` (≤ 500) |
+| `PUT /api/reports/settings` | owner | response-time target `slaHours` (4, 8, 24, 48, 72) |
+| `GET /api/leads?status=&q=&service=` · `GET /api/leads/badge` · `GET`/`PUT`/`DELETE /api/leads/{id}` · `POST /api/leads/{id}/notes` · `POST /api/leads/export` | `leads` | Prospectos: list with counts, unread badge, one lead (marks read), status/amount, notes, delete, CSV |
+| `PUT /api/leads/settings` | owner | retention `retention` (6, 12, 24, 36 months); republishes the privacy notice |
+| `GET /api/stats?period=30d|YYYY-MM` · `PUT /api/stats/settings` | `leads` · owner | visit statistics with the previous period; on/off (`enabled`, republishes) |
+| `POST /api/collect` | public, origin-checked | visit/click beacon from `assets/stats.js`; always 204 |
+| `POST /api/site-report/pdf` | owner | the report as a PDF (`period`, `lang`, optional `note`) |
 | `PUT /api/reports/{id}` · `POST /api/reports/{id}/status` | owner | edit fields/priority; status with optional `message` and `notify` |
 | `GET`/`POST /api/users` · `POST /api/users/{id}/resend` · `PUT`/`DELETE /api/users/{id}` | owner | user management, access types |
 | `GET /api/site-report` · `GET /api/site-report/preview?period=&lang=` · `PUT /api/site-report/settings` · `POST /api/site-report/send` | owner | monthly client report |
@@ -327,6 +338,7 @@ site and the panel work normally (tested with blocked requests).
 | Monitoring page | status, key figures (24 h / 7 d / 30 d), most frequent errors, system details, alert settings + test e-mail, setup help | on (owner) |
 | Scheduled check | `bin/console monitor` from cron every 15 min (§9a) | set up at deployment |
 | Public JS errors | `PUBLIC_ERROR_REPORTING=true` adds `assets/error-reporter.js` (≤3 reports/page, message + file:line + path only, no cookies) | **off** |
+| First-party visit statistics | `assets/stats.js` → `POST /api/collect`: daily totals only (views per page, visitors, source from a fixed list, device, language, clicks on WhatsApp/phone/e-mail/map/social/portfolio). No cookies or storage, no IP stored; one visitor per day via a hash with a random salt that is replaced (and the markers deleted) every day; DNT/GPC, `navigator.webdriver`, prefetch and bot user agents ignored; 120 events/IP/hour, 50 000/day. Page **Estadísticas** (owner + "leads" access); owner switch republishes the pages and the privacy-notice paragraph (§9c) | **on** |
 | Visitor analytics + Core Web Vitals (LCP, CLS, INP, TTFB) | Cloudflare Web Analytics: free, cookieless, no DNS change required. Set `CF_WEB_ANALYTICS_TOKEN` and republish | **off** |
 | Uptime + SSL expiry | external — Better Stack free plan (10 monitors, 3-min checks, SSL/domain expiry) or UptimeRobot free (50 monitors, 5-min, no SSL alerts on free) | set up at deployment |
 
@@ -391,6 +403,15 @@ or English) for people who aren't technical:
   out rather than shown empty.
 * Optional message from the team; the branded e-mail embeds the logo (no remote
   images) and replies go to the owner.
+* Comparison with the previous month on each figure (`trend`: direction, text,
+  good/bad/neutral — green ▲ / red ▼ in the e-mail, PDF and preview).
+* *Visitas y contactos* (first-party statistics and Prospectos: visits, sources,
+  share from phones, contact clicks, messages by service, follow-up, won amount,
+  time to first contact) and service levels under *Soporte* (first-response time
+  against the owner's target, satisfaction 1–5) plus tickets closed automatically.
+* **PDF version** (`cms/src/Pdf.php`, a ~300-line writer with the standard
+  Helvetica fonts and Windows-1252 text — no external library): attached to every
+  sent report and downloadable from the page (`POST /api/site-report/pdf`).
 
 Recipients: up to 20 (Namecheap allows 50 per message), validated and saved;
 the owner is always in Cc. *Enviarme una prueba* sends only to the owner and is
@@ -405,10 +426,28 @@ Cloud key restricted to the PageSpeed Insights API) is recommended — Google ma
 refuse anonymous requests. `PAGESPEED_ENABLED=false` turns it off. The HTTPS
 certificate expiry is checked daily; under 3 weeks it is logged as a warning.
 
+### 9c. Prospectos (leads), statistics and service levels
+
+* **Leads.** `assets/contact-handler.php` stores every validated message
+  (`Leads::capture`, max 200/day) **before** e-mailing it; the e-mail links to
+  `/admin/#/prospectos/{id}`. If the e-mail fails but the lead was stored, the
+  visitor still gets "sent" and the lead shows `notified = 0`. Status
+  new → contacted → quoted → won/lost (first move records `contacted_at`, won/lost
+  `closed_at`), whole-quetzal amount, notes and a history of every change. CSV
+  export is UTF-8 with BOM and formula-safe (cells starting with `= + - @` tab/CR get
+  an apostrophe). Retention 6/12/24/36 months (owner; default 24): the scheduled
+  check deletes older leads and the privacy notice states the period. Access: owner
+  and the `leads` permission (access type "Ventas").
+* **Tickets.** `first_response_at` = first public answer or status change by IT
+  (notes don't count); the reporter rates resolved tickets once (1–5 + comment; 1–2
+  marks it unread for IT); resolved tickets close automatically after 7 days
+  (`closed_auto`). The owner sets the response target (4/8/24/48/72 h).
+
 **Turning on Cloudflare Web Analytics** (all three steps are required):
-1. Update `privacy-notice.html` §2 — it currently states the site uses no
-   analytics (see `MEASUREMENT-PLAN.md`) — and republish. *(Legal text: get the
-   owner's approval first.)*
+1. Update the privacy notice §2 (`cms/templates/privacy-notice.html.tpl`) — it
+   describes only the site's own statistics — to name Cloudflare as a third party,
+   and republish. *(Legal text: get the owner's approval first.)* The built-in
+   statistics (§9c) usually make this unnecessary.
 2. Add `https://static.cloudflareinsights.com` to `script-src` and
    `https://cloudflareinsights.com` to `connect-src` in the root `.htaccess` CSP.
 3. Put the token in `.env` (`CF_WEB_ANALYTICS_TOKEN=…`) and republish.
@@ -442,6 +481,7 @@ generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`,
 `reports:retry` · `backup` (consistent DB copy, keeps 14) ·
 `integrity:accept` (record the current public files as expected) ·
 `2fa:reset <email>` (turn off an account's two-step sign-in when it is locked out) ·
+`monitor` also closes resolved tickets after 7 days and deletes leads past retention ·
 `demo-users [--reports]` (local demo accounts per access profile; refused in production)
 
 ## 12. Logs, backups and recovery

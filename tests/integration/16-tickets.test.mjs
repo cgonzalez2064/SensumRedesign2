@@ -199,19 +199,20 @@ test('the screenshot is shown only to the reporter and IT, as an image with safe
 
 test('demo accounts: one per access profile, passwords only in a private local file', async () => {
   const out = s.cli(['demo-users', '--reports']);
-  assert.match(out, /Demo accounts ready \(7\)/);
+  assert.match(out, /Demo accounts ready \(8\)/);
   assert.match(out, /Sample tickets: 4/);
   const { readFileSync, statSync } = await import('node:fs');
   const file = s.storage('LOCAL-TEST-USERS.txt');
   assert.equal(statSync(file).mode & 0o777, 0o600);
   const creds = Object.fromEntries(readFileSync(file, 'utf8').split('\n').map((l) => l.match(/(demo\.[a-z]+@example\.test)\s+(\S+)/)).filter(Boolean).map((m) => [m[1], m[2]]));
-  assert.equal(Object.keys(creds).length, 7);
+  assert.equal(Object.keys(creds).length, 8);
   const perms = Object.fromEntries(s.sql("SELECT email || '=' || permissions || '=' || status FROM users WHERE email LIKE 'demo.%'").split('\n').map((l) => { const [e, p, st] = l.split('='); return [e, `${p}|${st}`]; }));
   assert.equal(perms['demo.textos@example.test'], 'texts|active');
   assert.equal(perms['demo.fotos@example.test'], 'photos,documents|active');
   assert.equal(perms['demo.contacto@example.test'], 'contact|active');
   assert.equal(perms['demo.personalizado@example.test'], 'texts,photos|active');
-  assert.equal(perms['demo.completo@example.test'], 'texts,contact,photos,documents,site|active');
+  assert.equal(perms['demo.completo@example.test'], 'texts,contact,photos,documents,site,leads|active');
+  assert.equal(perms['demo.ventas@example.test'], 'leads|active');
   assert.equal(perms['demo.desactivado@example.test'], 'texts|disabled');
   const c = new Client(s.base);
   assert.equal((await c.login('demo.contacto@example.test', creds['demo.contacto@example.test'])).status, 200);

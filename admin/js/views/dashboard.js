@@ -42,6 +42,7 @@ export async function render({ main, session, isOwner, can }) {
       can('texts') ? quick('#/textos', 'pencil-square', 'content') : null,
       can('photos') || can('documents') ? quick('#/fotos', 'images', 'media') : null,
       can('contact') ? quick('#/contacto', 'telephone', 'details') : null,
+      can('leads') ? quick('#/prospectos', 'inbox', 'leads') : null,
       quick(data.site.url + '/', 'box-arrow-up-right', 'site', true)));
 
     // Website status.

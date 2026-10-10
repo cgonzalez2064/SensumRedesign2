@@ -9,13 +9,14 @@ import { EDITOR, OTHER_ADMIN } from './global-setup.mjs';
 
 const SCREENS = join(import.meta.dirname, '.artifacts', 'screens');
 mkdirSync(SCREENS, { recursive: true });
-const sql = (q) => execFileSync('sqlite3', [join(process.env.E2E_STORAGE, 'database.sqlite'), q]).toString().trim();
+const sql = (q) => execFileSync('sqlite3', ['-cmd', '.timeout 5000', join(process.env.E2E_STORAGE, 'database.sqlite'), q]).toString().trim();
 
 const PAGES = [
   ['dashboard', '#/'], ['texts', '#/textos'], ['hero', '#/textos/hero'], ['faq', '#/textos/faq'], ['details', '#/contacto'],
   ['photos-about', '#/fotos/nosotros'], ['photos-projects', '#/fotos/proyectos'], ['documents', '#/fotos/documentos'],
   ['users', '#/usuarios'], ['reports', '#/reportes'], ['account', '#/cuenta'], ['help', '#/ayuda'], ['monitor', '#/monitoreo'], ['site-report', '#/informe'],
   ['email', '#/correo'], ['form', '#/formulario'], ['ticket', '#/reportes/1'], ['security', '#/seguridad'],
+  ['leads', '#/prospectos'], ['lead', '#/prospectos/2'], ['stats', '#/estadisticas'],
 ];
 
 /** Collects console errors, CSP violations, page errors and failed requests. */

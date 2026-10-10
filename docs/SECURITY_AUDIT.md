@@ -316,3 +316,22 @@ compromised device or a real-time phishing proxy (WebAuthn would; not supported 
 the hosting's PHP stack without extra libraries). E-mail is the delivery channel for
 the off-server backup, so very large photo libraries exceed mailbox limits — the
 backup then omits photos and says so, and the full download remains available.
+
+## 13. Change review — leads inbox, visit statistics, ticket service levels, report PDF
+
+| Area | Design | Verified by |
+|---|---|---|
+| Leads (personal data) | Visible only to the owner and accounts with the `leads` permission (403 otherwise; demo and access type "Ventas"). Stored after the handler's validation, captcha, honeypot, timing and rate limit; control and bidi characters removed; 200 per day at most (a spam wave cannot fill the database). Retention 6–36 months enforced by the scheduled check and stated in the privacy notice; per-lead deletion (data-subject requests) is logged with a pseudonym, not the address. | `18-value` |
+| Lead output | The panel renders every field with `textContent`; the notification e-mail escapes all values and links to the panel (sign-in required, no token). CSV export: UTF-8 BOM, RFC 4180 quoting, and cells starting with `=`, `+`, `-`, `@`, tab or CR prefixed with `'` (CSV/formula injection). Export rate-limited (30/h) and logged. | `18-value`, `value.spec` |
+| Lead input | Status allow-listed; amount integer 0–999 999 999 (strings, negatives, floats out of range, arrays refused); notes ≤ 2000, search parameterised with escaped `LIKE` wildcards; `lang` from the form reduced to `es`/`en` and added to the handler's field allow-list (any other unknown field still refused). | `18-value` |
+| Visit statistics (privacy) | No cookies, no storage, no IP stored, no per-visitor rows: daily totals per fixed dimension. Daily uniques via `sha256(random daily salt ‖ IP ‖ UA)` truncated; the salt and all markers are replaced/deleted when the day changes, so visitors cannot be linked across days. Referrers reduced to a fixed list of sources (never stored as URLs); `utm_source` mapped to the same list. DNT / Sec-GPC / prefetch requests and `navigator.webdriver` send or count nothing. | `18-value`, `value.spec` (no cookies, no storage) |
+| Visit statistics (abuse) | Public endpoint, but origin-checked (403 for other sites), body parsed strictly (malformed → ignored), bot/headless/preview user agents ignored, 120 events per IP per hour and 50 000 per day; always answers 204 so it reveals nothing. Worst case: inflated counts, never data exposure. Same-origin only — CSP `connect-src 'self'` unchanged. | `18-value` |
+| Ticket ratings and service levels | Only the reporter rates (403 for IT and others), only resolved/closed tickets (409), once (409), integer 1–5, comment ≤ 500. Auto-close only touches `resolved` tickets older than 7 days, recorded as a system event. Response target allow-listed (owner only). | `18-value`, `value.spec` |
+| Report PDF | Own minimal writer (`Pdf.php`): standard fonts only (no font files parsed), every string converted to Windows-1252 and escaped (`\`, `(`, `)`), link annotations only for `http(s)` URLs without delimiters, images only the bundled logo re-encoded through GD. Owner-only download (rate-limited); the attachment is written to a private temporary file and deleted after sending. | `18-value` (parses the PDF, escaped note, xref offset) |
+
+Accepted limitations: statistics can be inflated by someone scripting a real browser
+with a forged user agent (bounded by the per-IP and daily caps) — they are marketing
+figures, not billing data. Visitors with ad blockers may not be counted. Lead
+retention deletes by age regardless of status; export the CSV first if a longer
+archive is needed.
+

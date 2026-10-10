@@ -7,7 +7,7 @@
  *    replies and internal notes.
  */
 import { h, icon, fill, initials } from '../dom.js';
-import { t, fmtDate, fmtRelative } from '../i18n.js';
+import { t, fmtDate, fmtRelative, getLang } from '../i18n.js';
 import { api } from '../api.js';
 import { pageHead, loading, loadError, emptyState, toast, errorText, setBusy, button, openDialog, textField, fieldErrorText, alertBox, cardHead } from '../ui.js';
 import { openReportDialog } from '../report.js';
@@ -18,6 +18,11 @@ const STATUS_BADGE = { new: 'badge-brand', in_progress: 'badge-info', waiting: '
 const STATUS_ICON = { new: 'bell', in_progress: 'arrow-repeat', waiting: 'hourglass-split', resolved: 'check-circle-fill', closed: 'lock' };
 const PRIORITY_BADGE = { low: '', normal: '', high: 'badge-warn', urgent: 'badge-bad' };
 const FILTERS = ['open', 'new', 'in_progress', 'waiting', 'resolved', 'closed', 'all'];
+
+/** "menos de 1 h", "2,5 h", "3 días" — response times. */
+const dec = (n) => new Intl.NumberFormat(getLang() === 'en' ? 'en-US' : 'es-GT', { maximumFractionDigits: 1 }).format(n);
+const hours = (x) => (x < 1 ? t('tickets.sla.underHour') : x < 48 ? t('tickets.sla.hours', { n: dec(x) }) : t('tickets.sla.days', { n: Math.round(x / 24) }));
+const stars = (n, label) => h('span', { class: 'stars', role: 'img', 'aria-label': label }, [1, 2, 3, 4, 5].map((i) => icon('star-fill', i <= n ? 'on' : 'off')));
 
 const statusBadge = (s) => h('span', { class: ['badge', STATUS_BADGE[s]] }, icon(STATUS_ICON[s]), t('tickets.status.' + s));
 const priorityBadge = (p, always = false) => (p === 'normal' && !always ? null
@@ -39,6 +44,7 @@ export async function render({ main, isOwner }) {
   search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { q = search.value.trim(); load(); }, 300); });
   const tabs = h('div', { class: 'filter-tabs', role: 'group', 'aria-label': t('tickets.filterLabel') });
   const listBox = h('div', { 'aria-live': 'polite' });
+  const slaBox = h('div');
 
   const load = async () => {
     let data;
@@ -53,6 +59,7 @@ export async function render({ main, isOwner }) {
         onclick: () => { filter = f; load(); },
       }, t('tickets.filter.' + f), h('span', { class: 'count', text: String(data.counts[f] ?? 0) }))));
     }
+    if (isOwner && data.service) fill(slaBox, slaStrip(data.service, data.slaHours, load));
     if (!data.reports.length) {
       fill(listBox, h('div', { class: 'card' }, q || (isOwner && filter !== 'all')
         ? emptyState('check2-circle', t('tickets.emptyFilterTitle'), t('tickets.emptyFilterBody'))
@@ -65,11 +72,11 @@ export async function render({ main, isOwner }) {
         h('span', { class: 'grow ticket-main' },
           h('span', { class: 'ticket-title' }, r.unread ? h('span', { class: 'unread-dot', title: t(isOwner ? 'tickets.unreadOwner' : 'tickets.unreadReporter') }, h('span', { class: 'sr-only', text: t(isOwner ? 'tickets.unreadOwner' : 'tickets.unreadReporter') })) : null, h('span', { class: 'break', text: r.title })),
           h('span', { class: 'tiny muted', text: ['#' + r.id, isOwner ? r.reporterName : null, t('report.types.' + r.type), t('tickets.updated', { when: fmtRelative(r.updatedAt) })].filter(Boolean).join(' · ') })),
-        h('span', { class: 'ticket-badges' }, isOwner ? priorityBadge(r.priority) : null, statusBadge(r.status)),
+        h('span', { class: 'ticket-badges' }, isOwner && r.rating !== null ? stars(r.rating, t('tickets.rating.aria', { n: r.rating })) : null, isOwner ? priorityBadge(r.priority) : null, statusBadge(r.status)),
         icon('chevron-right', 'ticket-chevron'))))));
   };
 
-  fill(body, isOwner ? h('div', { class: 'ticket-toolbar' }, tabs, h('div', { class: 'ticket-search' }, search)) : null, listBox);
+  fill(body, isOwner ? h('div', { class: 'ticket-toolbar' }, tabs, h('div', { class: 'ticket-search' }, search)) : null, slaBox, listBox);
   listBox.append(loading());
   await load();
   return { destroy: () => { alive = false; clearTimeout(timer); } };
@@ -95,7 +102,7 @@ export async function detail({ main, params, isOwner }) {
     refreshReportsBadge();
   };
 
-  const draw = ({ report: r, messages, canManage, canReply }) => {
+  const draw = ({ report: r, messages, canManage, canReply, canRate }) => {
     const h1 = main.querySelector('.page-head h1');
     h1.textContent = r.title;
     document.title = '#' + r.id + ' ' + r.title + ' · ' + t('app.name');
@@ -104,7 +111,8 @@ export async function detail({ main, params, isOwner }) {
     const summary = h('div', { class: 'ticket-summary' },
       statusBadge(r.status), priorityBadge(r.priority, canManage),
       h('span', { class: 'badge' }, icon(TYPE_ICON[r.type] || 'three-dots'), t('report.types.' + r.type)),
-      h('span', { class: 'tiny muted', text: [t('report.areas.' + r.area), t('tickets.created', { when: fmtDate(r.createdAt) })].join(' · ') }));
+      h('span', { class: 'tiny muted', text: [t('report.areas.' + r.area), t('tickets.created', { when: fmtDate(r.createdAt) }),
+        canManage && r.firstResponseAt ? t('tickets.sla.firstResponse', { time: hours((r.firstResponseAt - r.createdAt) / 3600) }) : null].filter(Boolean).join(' · ') }));
 
     // Status guidance for the person who reported it.
     const guidance = !canManage ? {
@@ -189,7 +197,14 @@ export async function detail({ main, params, isOwner }) {
           statusBadge(s), h('span', { class: 'small muted', text: t('tickets.statesHelp.' + s) }))))));
     }
 
-    fill(body, h('div', { class: 'stack-lg' }, summary, guidance,
+    const rating = canRate ? rateCard(id, r, (res) => { draw(res); refreshReportsBadge(); })
+      : r.rating !== null ? h('section', { class: 'card', 'aria-labelledby': 'tk-rated' },
+        cardHead({ id: 'tk-rated', icon: 'star-fill', title: t(canManage ? 'tickets.rating.ownerTitle' : 'tickets.rating.yourTitle', { name: r.reporterName.split(' ')[0] }) }),
+        stars(r.rating, t('tickets.rating.aria', { n: r.rating })),
+        r.ratingComment ? h('p', { class: 'small', text: r.ratingComment }) : null) : null;
+    if (canManage && rating) side.unshift(rating);
+
+    fill(body, h('div', { class: 'stack-lg' }, summary, guidance, canManage ? null : rating,
       h('div', { class: 'dash-grid' },
         h('div', { class: 'stack-lg' }, original, h('section', { class: 'card', 'aria-labelledby': 'tk-conv' }, cardHead({ id: 'tk-conv', icon: 'chat-square-text', title: t('tickets.conversation') }), timeline), composer),
         h('div', { class: 'stack-lg ticket-side' }, side))));
@@ -208,7 +223,8 @@ function timelineItem(m, canManage) {
     const d = m.details || {};
     // People who reported something see "Soporte técnico", not who in IT did it.
     const who = m.role === 'support' && !canManage ? t('tickets.support') : m.author;
-    const text = d.action === 'status'
+    const text = d.auto ? t('tickets.event.autoClosed')
+      : d.action === 'status'
       ? t('tickets.event.status', { name: who, from: t('tickets.status.' + d.from), to: t('tickets.status.' + d.to) })
       : d.action === 'edit' ? t('tickets.event.edit', { name: who, fields: Object.keys(d.fields || {}).map((f) => t('tickets.field.' + f)).join(', ') }) : '';
     return h('li', { class: 'timeline-event' }, icon(d.action === 'status' ? STATUS_ICON[d.to] || 'arrow-repeat' : 'pencil'), h('span', { class: 'small', text }), when);
@@ -324,3 +340,44 @@ function editDialog(r, done) {
   });
 }
 
+/** The person who reported it rates the help once the ticket is resolved. */
+function rateCard(id, r, done) {
+  let value = 0;
+  const btns = [1, 2, 3, 4, 5].map((n) => h('button', { type: 'button', class: 'star-btn', 'aria-pressed': 'false', 'aria-label': t('tickets.rating.choose', { n }),
+    onclick: () => { value = n; btns.forEach((b, i) => { b.setAttribute('aria-pressed', String(i < n)); }); hint.textContent = t('tickets.rating.scale.' + n); } }, icon('star-fill')));
+  const hint = h('span', { class: 'small muted', 'aria-live': 'polite', text: t('tickets.rating.pick') });
+  const comment = textField({ label: t('tickets.rating.comment'), multiline: true, rows: 2, max: 500, optionalTag: true });
+  const send = button(t('tickets.rating.send'), { variant: 'primary', icon: 'send' });
+  send.addEventListener('click', async () => {
+    if (!value) { hint.textContent = t('tickets.rating.pickFirst'); btns[0].focus(); return; }
+    setBusy(send, true, t('report.sending'));
+    try { const res = await api.post('/reports/' + id + '/rating', { rating: value, comment: comment.input.value.trim() }); toast(t('tickets.rating.thanks')); done(res); return; }
+    catch (err) {
+      if (err.code === 'validation' && err.fields.comment) comment.setError(fieldErrorText(err.fields.comment, { max: 500 }));
+      else toast(errorText(err), { type: 'bad' });
+    }
+    setBusy(send, false);
+  });
+  return h('section', { class: 'card rate-card', 'aria-labelledby': 'tk-rate' },
+    cardHead({ id: 'tk-rate', icon: 'star-fill', title: t('tickets.rating.title'), lead: t('tickets.rating.lead') }),
+    h('div', { class: 'row', role: 'group', 'aria-label': t('tickets.rating.title') }, h('div', { class: 'star-group' }, btns), hint),
+    comment.wrap, h('div', { class: 'row-between' }, h('span'), send));
+}
+
+/** Owner: response time and satisfaction of the last 30 days, and the response target. */
+function slaStrip(sv, target, reload) {
+  const sel = h('select', { class: 'select select-sm', id: 'tk-sla', 'aria-label': t('tickets.sla.targetLabel') }, [4, 8, 24, 48, 72].map((n) => h('option', { value: String(n), selected: n === target || null, text: t('tickets.sla.target', { time: hours(n) }) })));
+  sel.addEventListener('change', async () => {
+    sel.disabled = true;
+    try { await api.put('/reports/settings', { slaHours: Number(sel.value) }); toast(t('tickets.sla.saved')); reload(); } catch (err) { toast(errorText(err), { type: 'bad' }); sel.disabled = false; }
+  });
+  return h('section', { class: 'sla-strip', 'aria-label': t('tickets.sla.title') },
+    h('div', { class: 'sla-item' }, h('span', { class: 'kpi-label', text: t('tickets.sla.avgFirst') }),
+      h('strong', { text: sv.avgFirstResponseHours === null ? '—' : hours(sv.avgFirstResponseHours) })),
+    h('div', { class: 'sla-item' }, h('span', { class: 'kpi-label', text: t('tickets.sla.within') }),
+      h('strong', { text: sv.withinTarget === null ? '—' : sv.withinTarget + (getLang() === 'en' ? '%' : ' %') }), sel),
+    h('div', { class: 'sla-item' }, h('span', { class: 'kpi-label', text: t('tickets.sla.satisfaction') }),
+      sv.ratings ? h('span', { class: 'row' }, stars(Math.round(sv.ratingAvg), t('tickets.rating.avgAria', { avg: sv.ratingAvg })), h('strong', { text: dec(sv.ratingAvg) + '/5' }), h('span', { class: 'tiny muted', text: '(' + sv.ratings + ')' }))
+        : h('span', { class: 'small muted', text: t('tickets.sla.noRatings') })),
+    h('p', { class: 'tiny muted sla-note', text: t('tickets.sla.note') }));
+}

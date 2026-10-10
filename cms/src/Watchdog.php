@@ -476,7 +476,8 @@ final class Watchdog
             $s['wd.week.logins'] => (int) ($act['login'] ?? 0) . ' / ' . ((int) ($act['login_failed'] ?? 0) + (int) ($act['login_throttled'] ?? 0)),
             $s['wd.week.content'] => (int) ($act['content_updated'] ?? 0) . ' / ' . (int) ($act['media_uploaded'] ?? 0),
             $s['wd.week.reports'] => (string) (int) ($act['report_submitted'] ?? 0),
-            $s['wd.week.contact'] => self::fill($s['wd.week.contactValue'], $this->app->contactForm()->stats($since)),
+            $s['wd.week.contact'] => self::fill($s['wd.week.contactValue'], $this->app->contactForm()->stats($since))
+                . (($unread = $this->leadsUnread()) > 0 ? ' · ' . self::plural($s['wd.week.leads'], $unread) : ''),
             $s['wd.week.backup'] => $backups ? date('Y-m-d H:i', max(array_map('filemtime', $backups))) : $s['wd.week.noBackup'],
             $s['wd.week.cert'] => isset($tls['validTo']) && $tls['validTo'] ? self::fill($s['wd.week.certDays'], ['days' => (int) floor(((int) $tls['validTo'] - $now) / 86400)]) : $s['wd.none'],
             $s['wd.week.domain'] => ($dh = $this->app->domainHealth()->latest()) && !empty($dh['expiry']['validTo'])
@@ -484,6 +485,11 @@ final class Watchdog
                 : $s['wd.none'],
             $s['wd.week.report'] => $report['sentAt'] ? $s['wd.week.reportSent'] : $s['wd.week.reportPending'],
         ];
+        if ($this->app->analytics()->enabled()) {
+            $v = $this->app->analytics()->summary($since, $now + 1);
+            $facts = array_slice($facts, 0, 7, true) + [$s['wd.week.visitsTitle'] => self::plural($s['wd.week.visits'], $v['visitors'], ['count' => $v['visitors']])
+                . ($v['contacts'] > 0 ? ' · ' . self::plural($s['wd.week.clicks'], $v['contacts']) : '')] + array_slice($facts, 7, null, true);
+        }
         $top = $db->all('SELECT event, message, COUNT(*) AS n FROM error_log WHERE created_at > ? GROUP BY fingerprint ORDER BY n DESC LIMIT 3', [$since]);
         $this->state();
         $this->state['week'] = $week;
@@ -495,6 +501,15 @@ final class Watchdog
             'cta' => [$s['wd.cta.monitor'], 'monitoreo'], 'severity' => 'info', 'tag' => $s['wd.tag.digest'],
         ], $now);
         return 'sent';
+    }
+
+    private function leadsUnread(): int
+    {
+        try {
+            return $this->app->leads()->badge();
+        } catch (\Throwable) {
+            return 0;
+        }
     }
 
     public function monthlyReview(int $now): string
@@ -725,6 +740,13 @@ final class Watchdog
     private function strings(?string $lang = null): array
     {
         return require $this->app->root('lang/' . (($lang ?? $this->ownerLang()) === 'en' ? 'en' : 'es') . '.php');
+    }
+
+    /** "visita|visitas": singular or plural by $n, then fills {n} and $vars. */
+    private static function plural(string $s, int $n, array $vars = []): string
+    {
+        $forms = explode('|', $s);
+        return self::fill($forms[$n === 1 || count($forms) === 1 ? 0 : 1], ['n' => $n] + $vars);
     }
 
     private static function fill(string $s, array $vars): string

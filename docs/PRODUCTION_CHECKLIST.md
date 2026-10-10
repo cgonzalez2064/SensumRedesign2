@@ -68,7 +68,10 @@ Release: `release-________-_______` · Deployed by: __________ · Date: ________
 
 ## D. Monitoring and operations
 
-- [ ] Analytics tested — or consciously left off (default; needs privacy-notice update + CSP change)
+- [ ] Visit statistics (built in, cookie-free, on by default) show a visit and a WhatsApp click from a phone — or consciously turned off in Estadísticas (the privacy notice follows either way)
+- [ ] Prospectos: the contact-form test message appears there; retention period chosen and stated in the privacy notice; access given only to people who handle clients
+- [ ] Tickets: response-time target chosen; a resolved test ticket can be rated
+- [ ] Monthly report test e-mail arrives with the PDF attached
 - [ ] Error monitoring tested (Monitoreo → *Registro de errores*, signed in as it@gruposensum.com; other admins don't see it)
 - [ ] Critical-error alerts tested (Monitoreo → *Enviar correo de prueba* arrives at it@gruposensum.com, not in spam)
 - [ ] Scheduled check configured (cPanel cron every 15 min: `bin/console monitor`; Monitoreo shows *Última revisión automática*)

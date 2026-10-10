@@ -411,8 +411,10 @@ the admin API stops. Then disable accounts / reset passwords and restore.
   e-mail settings changed (always on).
 * **Errors:** Monitoreo → *Registro de errores* (server, panel and — if
   `PUBLIC_ERROR_REPORTING=true` — public-site errors; critical ones are e-mailed).
-* **Analytics (optional):** see `docs/CONTENT_MANAGER.md` §9 — requires a privacy
-  notice update and a CSP change first.
+* **Visit statistics:** built in and cookie-free (panel → Estadísticas; owner can
+  turn them off). Leads from the contact form: panel → Prospectos (retention chosen
+  by the owner). See `docs/CONTENT_MANAGER.md` §9 and §9c. Cloudflare Web Analytics
+  remains optional (needs a privacy-notice update and a CSP change).
 * **Logs:** `sensum-cms/storage/logs/` (application) and cPanel → *Errors* /
   *Raw Access* (server).
 

@@ -1,7 +1,7 @@
 /** Informe mensual — a short site-health report for clients (owner account only). */
 import { h, icon, clear, fill } from '../dom.js';
 import { t, fmtDate } from '../i18n.js';
-import { api } from '../api.js';
+import { api, download, saveBlob } from '../api.js';
 import { pageHead, loading, loadError, button, setBusy, toast, errorText, alertBox, confirmDialog, textField, cardHead } from '../ui.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -20,7 +20,9 @@ function preview(r) {
     h('span', { class: ['badge', r.status === 'good' ? 'badge-ok' : 'badge-warn'] }, icon(r.status === 'good' ? 'check-circle-fill' : 'exclamation-triangle-fill'), r.statusLabel),
     h('p', { class: 'report-summary', text: r.summary }),
     h('div', { class: 'kpi-grid' }, r.kpis.map((k) => h('div', { class: 'kpi' },
-      h('span', { class: 'kpi-label', text: k.label }), h('span', { class: 'kpi-num', text: k.value }), h('span', { class: 'kpi-label', text: k.note })))),
+      h('span', { class: 'kpi-label', text: k.label }), h('span', { class: 'kpi-num', text: k.value }), h('span', { class: 'kpi-label', text: k.note }),
+      k.trend ? h('span', { class: ['trend', k.trend.good === null ? '' : k.trend.good ? 'trend-good' : 'trend-bad'] },
+        h('span', { 'aria-hidden': 'true', text: { up: '▲ ', down: '▼ ', flat: '= ' }[k.trend.dir] }), k.trend.text) : null))),
     r.sections.map((s) => h('div', { class: 'report-section' },
       h('h4', { text: s.title }), s.intro ? h('p', { class: 'small muted', text: s.intro }) : null,
       h('ul', null, s.items.map((i) => h('li', { text: i }))))));
@@ -140,10 +142,18 @@ export async function render({ main }) {
         await load();
       } catch (err) { setBusy(sendBtn, false); toast(errorText(err), { type: 'bad' }); }
     });
+    const pdfBtn = button(t('siteReport.pdf'), { icon: 'file-earmark-pdf', small: true });
+    pdfBtn.addEventListener('click', async () => {
+      setBusy(pdfBtn, true, t('siteReport.pdfPreparing'));
+      try { const f = await download('/site-report/pdf', { period, note: note.value, lang: data.settings.lang }); saveBlob(f.blob, f.filename); toast(t('siteReport.pdfDone')); }
+      catch (err) { toast(errorText(err), { type: 'bad' }); }
+      setBusy(pdfBtn, false);
+    });
     const sendCard = card('sr-send', t('siteReport.sendTitle'),
       h('label', { class: 'field' }, h('span', { class: 'label', text: t('siteReport.noteLabel') }), note,
         h('span', { class: 'hint', text: t('siteReport.noteHint') })),
-      h('div', { class: 'row' }, sendBtn, testBtn));
+      h('div', { class: 'row' }, sendBtn, testBtn, pdfBtn),
+      h('p', { class: 'tiny muted', text: t('siteReport.pdfHint') }));
 
     // History.
     const history = card('sr-hist', t('siteReport.historyTitle'), data.history.length
