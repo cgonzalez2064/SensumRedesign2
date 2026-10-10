@@ -925,6 +925,20 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 .chart-cards{ display:grid; gap:1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
 @media (forced-colors: active){ .chart-line{ stroke:CanvasText; } .chart-bar{ fill:CanvasText; } .chart-swatch{ background:CanvasText; } }
 
+/* ---------- "Ver como" bar (owner viewing the panel as someone else) ---------- */
+.viewas-bar{ position:sticky; top:var(--topbar-h); z-index:20; display:flex; flex-wrap:wrap; align-items:center; gap:.6rem .9rem; padding:.65rem clamp(1rem, 3vw, 2rem);
+  background:var(--info-soft); color:var(--text); border-bottom:2px solid var(--info); box-shadow:var(--shadow-1); animation: rise-in 240ms var(--ease) both; }
+.viewas-icon{ width:34px; height:34px; border-radius:10px; display:grid; place-items:center; flex:none; background:var(--info); color:#fff; }
+.viewas-icon .icon{ width:18px; height:18px; }
+:root[data-theme="dark"] .viewas-icon{ color:#0b1530; }
+.viewas-bar .viewas-text{ flex:1 1 220px; display:flex; flex-wrap:wrap; align-items:baseline; gap:.15rem .6rem; min-width:0; }
+.viewas-text strong{ font-size:.95rem; }
+.viewas-meta, .viewas-left{ font-size:.82rem; color:var(--text-2); }
+.viewas-left{ font-variant-numeric: tabular-nums; }
+.viewas-actions{ display:flex; gap:.5rem; flex-wrap:wrap; flex:none; margin-left:auto; }
+html.viewing-as .topbar{ box-shadow: inset 0 -2px 0 var(--info); }
+@media (max-width: 560px){ .viewas-bar{ padding:.55rem 1rem; } .viewas-icon{ width:30px; height:30px; } .viewas-actions{ width:100%; margin-left:0; } .viewas-actions .btn{ flex:1 1 auto; } }
+
 @media (prefers-reduced-motion: reduce){
   *, *::before, *::after{ animation-duration:1ms !important; animation-delay:0s !important; animation-iteration-count:1 !important; transition-duration:1ms !important; scroll-behavior:auto !important; }
   .skeleton{ animation:none; }

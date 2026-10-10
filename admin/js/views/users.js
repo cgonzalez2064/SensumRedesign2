@@ -4,12 +4,16 @@ import { t, fmtRelative, fmtDate } from '../i18n.js';
 import { api } from '../api.js';
 import { pageHead, loading, loadError, textField, alertBox, toast, errorText, fieldErrorText, openDialog, confirmDialog, setBusy, button, dropdown, copyText } from '../ui.js';
 import { accessPicker, accessLabel } from '../access.js';
+import { viewAs, pickViewAs } from '../viewas.js';
+import { reloadSession } from '../app.js';
 
 const STATUS_BADGE = { active: 'badge-ok', invited: 'badge-warn', disabled: 'badge' };
 
 export async function render({ main }) {
   const add = button(t('users.invite'), { variant: 'primary', icon: 'person-plus' });
-  main.append(pageHead({ title: t('users.title'), lead: t('users.lead'), actions: [add] }));
+  // "Ver como": check what each access type sees (read-only).
+  const viewBtn = button(t('viewAs.pick'), { icon: 'eye', onClick: () => pickViewAs({ onDone: () => reloadSession('/') }) });
+  main.append(pageHead({ title: t('users.title'), lead: t('users.lead'), actions: [viewBtn, add] }));
   const body = h('div', null, loading());
   main.append(body);
 
@@ -29,6 +33,7 @@ export async function render({ main }) {
       const trigger = h('button', { type: 'button', class: 'btn btn-ghost btn-icon btn-sm', 'aria-label': t('users.actionsFor', { name: u.name }) }, icon('three-dots-vertical'));
       if (u.isSelf) return h('span', { class: 'badge badge-brand', text: t('users.you') });
       return dropdown(trigger, (close) => [
+        u.status !== 'disabled' && !u.isOwner ? menuItem('eye', t('viewAs.menu'), async () => { close(); if (await viewAs(u, { active: false })) reloadSession('/'); }) : null,
         u.status === 'invited' ? menuItem('send', t('users.resend'), () => { close(); resend(u); }) : null,
         menuItem('shield-lock', t('access.change'), () => { close(); changeAccess(u); }),
         u.status === 'disabled' ? menuItem('check2-circle', t('users.enable'), () => { close(); update(u, { status: 'active' }); })

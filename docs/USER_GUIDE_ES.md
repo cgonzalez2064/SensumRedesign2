@@ -462,3 +462,17 @@ ver si funciona y cuánto se ha usado en el mes. La clave se guarda cifrada y no
 vuelve a mostrar; los cambios piden tu contraseña. Con la traducción activada, al
 escribir en un idioma se llena el otro en Textos del sitio, opciones del formulario de
 contacto y descripciones de fotos.
+
+## 21. Para la cuenta propietaria: «Ver como» (validar accesos)
+
+En **Usuarios → Ver como…** (o en el menú «⋮» de una persona → *Ver el panel como esta
+persona*) eliges una cuenta y, después de confirmar tu contraseña, ves el panel
+**exactamente como lo ve esa persona**: su menú, sus pantallas y sus datos.
+
+* Arriba aparece una barra azul: *Viendo el panel como …*, su tipo de acceso, «solo
+  lectura» y el tiempo que queda (30 minutos).
+* **Cambiar de persona** pasa a otra cuenta sin volver a pedir la contraseña.
+* **Volver a mi cuenta** termina y te regresa a Usuarios.
+* Es **solo lectura**: si intentas guardar, el panel avisa que no se guardan cambios.
+  Tampoco marca nada como leído en la cuenta de esa persona.
+* Cada inicio, cambio y fin queda registrado en la actividad.

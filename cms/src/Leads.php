@@ -92,7 +92,7 @@ final class Leads
     public function detail(int $id): array
     {
         $lead = $this->find($id);
-        if ((int) $lead['unread'] === 1) {
+        if ((int) $lead['unread'] === 1 && !$this->app->viewOnly()) {
             $this->app->db()->run('UPDATE leads SET unread = 0 WHERE id = ?', [$id]);
             $lead['unread'] = 0;
         }

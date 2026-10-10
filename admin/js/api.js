@@ -19,6 +19,12 @@ export class ApiError extends Error {
 }
 
 let twoFactorHandler = null;
+let viewAsExpected = null;
+let viewAsHandler = null;
+/** The account the panel is showing ("Ver como"), 0 when it is the person's own. */
+export const setViewAsExpected = (id) => { viewAsExpected = id; };
+/** Called when an answer shows "Ver como" started, changed or ended (e.g. it expired). */
+export const onViewAsChanged = (fn) => { viewAsHandler = fn; };
 export const setCsrf = (token) => { csrf = token || null; };
 export const onSessionExpired = (fn) => { reloginHandler = fn; };
 /** Called when the server says this account must set up two-step sign-in first. */
@@ -47,6 +53,8 @@ async function raw(method, path, body, { timeout = 30000, auth = true } = {}) {
   } finally {
     clearTimeout(timer);
   }
+  const va = res.headers.get('X-View-As');
+  if (va !== null && viewAsExpected !== null && Number(va) !== viewAsExpected && viewAsHandler) viewAsHandler();
   const data = await parse(res);
   if (res.ok && data && data.ok !== false) return { status: res.status, data };
   const code = (data && data.error) || (res.status >= 500 ? 'service_unavailable' : 'unknown');

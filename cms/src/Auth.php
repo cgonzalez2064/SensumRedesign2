@@ -112,7 +112,100 @@ final class Auth
         if ($now - (int) $row['last_seen_at'] >= 60) {
             $db->run('UPDATE sessions SET last_seen_at = ? WHERE id_hash = ?', [$now, $row['id_hash']]);
         }
+        if (($row['view_as_user_id'] ?? null) !== null) {
+            $row = $this->applyViewAs($row, $now);
+        }
         return $this->session = $row;
+    }
+
+    // ------------------------------------------------------------------
+    // "Ver como" — the owner sees the panel as another account (read-only)
+    // ------------------------------------------------------------------
+
+    public const VIEW_AS_MINUTES = 30;
+
+    /**
+     * Owner session showing another account: the identity fields become the
+     * viewed account's (so every permission check, menu and list is theirs),
+     * the language and theme stay the owner's, and impersonator_* keep who is
+     * really there. Expired, or the account can no longer be viewed: back to
+     * the owner.
+     */
+    private function applyViewAs(array $row, int $now): array
+    {
+        $target = null;
+        if ((int) $row['view_as_until'] > $now && $this->isOwner($row)) {
+            $target = $this->app->db()->one(
+                "SELECT id AS uid, email, name, role, status, last_login_at, permissions, totp_enabled_at FROM users WHERE id = ? AND status IN ('active', 'invited')",
+                [(int) $row['view_as_user_id']]
+            );
+            if ($target && ($this->isOwner($target + ['status' => 'active']) || (int) $target['uid'] === (int) $row['uid'])) {
+                $target = null;
+            }
+        }
+        if (!$target) {
+            $this->app->db()->run('UPDATE sessions SET view_as_user_id = NULL, view_as_until = NULL WHERE id_hash = ?', [$row['id_hash']]);
+            $this->app->activity((int) $row['uid'], 'view_as_ended', (string) $row['view_as_user_id'], ['reason' => 'expired']);
+            $row['view_as_user_id'] = null;
+            $row['view_as_until'] = null;
+            return $row;
+        }
+        return array_merge($row, $target, [
+            'impersonator_uid' => (int) $row['uid'],
+            'impersonator_name' => (string) $row['name'],
+            'impersonator_email' => (string) $row['email'],
+        ]);
+    }
+
+    /** Whether this request is the owner viewing the panel as someone else. */
+    public function viewingAs(?array $session): bool
+    {
+        return $session !== null && isset($session['impersonator_uid']);
+    }
+
+    /** The real person behind the session (the owner while "viendo como"). */
+    public function realUserId(array $session): int
+    {
+        return (int) ($session['impersonator_uid'] ?? $session['uid']);
+    }
+
+    /** Owner (really): may start or switch "Ver como". */
+    public function canViewAs(array $session): bool
+    {
+        return $this->viewingAs($session)
+            ? strtolower((string) $session['impersonator_email']) === $this->app->config->ownerEmail()
+            : $this->isOwner($session);
+    }
+
+    /** Accounts the owner can view as: active or invited, never the owner. */
+    public function viewAsCandidates(): array
+    {
+        $out = [];
+        foreach ($this->app->db()->all("SELECT * FROM users WHERE status IN ('active', 'invited') ORDER BY name COLLATE NOCASE") as $u) {
+            if (!$this->isOwner($u + ['status' => 'active'])) {
+                $out[] = ['id' => (int) $u['id'], 'name' => (string) $u['name'], 'email' => (string) $u['email'], 'status' => (string) $u['status'], 'permissions' => Users::permissionsOf($u)];
+            }
+        }
+        return $out;
+    }
+
+    /** Starts or switches "Ver como" on this session. */
+    public function setViewAs(array $session, int $targetId): array
+    {
+        $ids = array_column($this->viewAsCandidates(), 'id');
+        if (!in_array($targetId, $ids, true)) {
+            throw ApiError::validation(['userId' => 'invalid']);
+        }
+        $until = time() + self::VIEW_AS_MINUTES * 60;
+        $this->app->db()->run('UPDATE sessions SET view_as_user_id = ?, view_as_until = ? WHERE id_hash = ?', [$targetId, $until, $session['id_hash']]);
+        $this->resolved = false;
+        return ['userId' => $targetId, 'until' => $until];
+    }
+
+    public function stopViewAs(array $session): void
+    {
+        $this->app->db()->run('UPDATE sessions SET view_as_user_id = NULL, view_as_until = NULL WHERE id_hash = ?', [$session['id_hash']]);
+        $this->resolved = false;
     }
 
     /** Guard for protected endpoints: authenticated + origin + CSRF (+ role). */

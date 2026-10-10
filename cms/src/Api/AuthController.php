@@ -13,9 +13,18 @@ final class AuthController extends Controller
 {
     private function sessionPayload(array $user, ?string $csrf): array
     {
+        $auth = $this->app->auth();
+        $public = $auth->publicUser($user);
+        $viewAs = null;
+        if ($auth->viewingAs($user)) {
+            $public['twoFactorRequired'] = false; // their two-step setup is not the owner's to do
+            $viewAs = ['by' => (string) $user['impersonator_name'], 'until' => (int) $user['view_as_until'], 'status' => (string) $user['status'],
+                'accessType' => \Sensum\Cms\Users::accessTypeOf($public['permissions'])];
+        }
         return [
             'authenticated' => true,
-            'user' => $this->app->auth()->publicUser($user),
+            'user' => $public,
+            'viewAs' => $viewAs,
             'csrf' => $csrf,
             'app' => [
                 'version' => $this->app->version(),

@@ -207,7 +207,7 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 | `analytics_seen` | today's unique-visitor hashes (random daily salt + IP + browser); deleted when the day changes |
 | `monitor_runs` | one row per scheduled check (ok / failed checks; home-page `response_ms` and `http_status`, `009_monitor_lite.sql`) — availability and the response-time chart |
 | `site_reports` | monthly reports sent: month, when, by whom, recipients, language, status, figures |
-| `sessions` | SHA-256 of the session cookie, CSRF token, created/last-seen/expiry, pseudonymized IP, user agent |
+| `sessions` | SHA-256 of the session cookie, CSRF token, created/last-seen/expiry, pseudonymized IP, user agent; `view_as_user_id`/`view_as_until` while the owner views as someone (`010_view_as.sql`) |
 | `user_tokens` | SHA-256 of invitation/reset tokens, purpose, expiry, used-at |
 | `content` | key, language (`es`/`en`/`*`), value, who/when |
 | `media` | slot, position, server-generated file base, extension, size, generated widths, alt ES/EN, sanitized original name, soft-delete date |
@@ -259,6 +259,7 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 | `POST /api/site-report/pdf` | owner | the report as a PDF (`period`, `lang`, optional `note`) |
 | `PUT /api/reports/{id}` · `POST /api/reports/{id}/status` | owner | edit fields/priority; status with optional `message` and `notify` |
 | `GET`/`POST /api/users` · `POST /api/users/{id}/resend` · `PUT`/`DELETE /api/users/{id}` | owner | user management, access types |
+| `GET /api/view-as` · `POST /api/view-as` · `POST /api/view-as/switch` · `POST /api/view-as/stop` | owner (really) | "Ver como": candidates (active/invited, never the owner); start with `userId` + `currentPassword`; switch without password while active; stop. While active the session answers as that account, read-only (`403 view_only` for any change except switch/stop and the leads CSV), with `X-View-As: <id>` (0 otherwise) so the panel notices changes |
 | `GET /api/site-report` · `GET /api/site-report/preview?period=&lang=` · `PUT /api/site-report/settings` · `POST /api/site-report/send` | owner | monthly client report |
 
 Errors are `{"ok":false,"error":"<code>","fields":{…}}`; the admin translates

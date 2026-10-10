@@ -85,6 +85,8 @@ export default {
     reload: 'Recargar',
   },
   errors: {
+    view_only: 'Estás viendo el panel como otra persona: no se guardan cambios. Vuelve a tu cuenta para editar.',
+    view_as_inactive: 'Primero elige a quién ver (Usuarios → Ver como).',
     already_rated: 'Ya calificaste este reporte. ¡Gracias!',
     ticket_not_resolved: 'Podrás calificar la atención cuando el reporte esté resuelto.',
     network: 'No pudimos conectar con el servidor. Revisa tu conexión a internet e intenta de nuevo.',
@@ -276,6 +278,7 @@ export default {
       report_email_failed: 'no se pudo enviar un reporte', publish_manual: 'volvió a publicar el sitio', login_throttled: 'intentos de acceso bloqueados',
       two_factor_enabled: 'activó la verificación en dos pasos', two_factor_disabled: 'desactivó la verificación en dos pasos', two_factor_reset: 'restableció una verificación en dos pasos', login_2fa_failed: 'código de verificación incorrecto', security_policy_changed: 'cambió la política de seguridad', backup_settings_changed: 'cambió el respaldo fuera del servidor', backup_downloaded: 'descargó un respaldo', offsite_backup_sent: 'respaldo enviado fuera del servidor', offsite_backup_failed: 'falló el respaldo fuera del servidor',
       contact_services_updated: 'cambió las opciones del formulario',
+      view_as_started: 'empezó a ver el panel como otra persona', view_as_switched: 'cambió de persona en «Ver como»', view_as_ended: 'terminó «Ver como»',
       translation_settings_changed: 'cambió la traducción automática',
       lead_updated: 'actualizó un prospecto', lead_deleted: 'eliminó un prospecto', leads_exported: 'exportó los prospectos', leads_settings_changed: 'cambió la conservación de prospectos', stats_settings_changed: 'cambió las estadísticas de visitas', ticket_rated: 'calificó la atención de un reporte', ticket_settings_changed: 'cambió el tiempo de respuesta objetivo',
       email_settings_changed: 'cambió la configuración de correo', alert_rules_changed: 'cambió las alertas automáticas', integrity_accepted: 'aceptó cambios en los archivos del sitio', email_test: 'envió un correo de prueba',
@@ -1120,6 +1123,15 @@ export default {
     how2: 'Crea la cuenta con el correo de la empresa; pide una tarjeta solo para verificar, el plan gratuito no cobra.',
     how3: 'En tu cuenta abre «API Keys» y copia la clave (termina en «:fx»).',
     how4: 'Pégala arriba, guarda y pulsa «Probar conexión».',
+  },
+  viewAs: {
+    pick: 'Ver como…', menu: 'Ver el panel como esta persona',
+    pickTitle: 'Ver el panel como otra persona', switchTitle: 'Cambiar a otra persona',
+    pickLead: 'Verás exactamente los menús, pantallas y datos que esa persona ve según su tipo de acceso. Es solo lectura: no se guarda ningún cambio y termina sola en 30 minutos.',
+    view: 'Ver como', viewAria: 'Ver el panel como {name}', current: 'Viendo ahora', invited: 'invitación pendiente', none: 'Todavía no hay otras cuentas.',
+    confirmTitle: 'Ver el panel como {name}', confirmLead: 'Confirma con tu contraseña. Después podrás cambiar de persona o volver a tu cuenta sin escribirla de nuevo; termina sola en {minutes} minutos.',
+    start: 'Ver como', region: 'Modo «Ver como»', as: 'Viendo el panel como {name}', readOnly: 'solo lectura', left: 'quedan {n} min',
+    switch: 'Cambiar de persona', back: 'Volver a mi cuenta', changed: 'La vista cambió; el panel se volvió a cargar.',
   },
   notFound: {
     title: 'No encontramos esta pantalla',

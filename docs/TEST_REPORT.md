@@ -9,8 +9,8 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 
 | Suite | Location | Size |
 |---|---|---|
-| API integration | `tests/integration/*.test.mjs` | 191 tests in 20 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
-| Browser E2E | `tests/e2e/*.spec.js` | 54 specs × 3 browser profiles (162 runs, 49 skipped by design: phone-only, desktop-only or single-submission tests) |
+| API integration | `tests/integration/*.test.mjs` | 197 tests in 21 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
+| Browser E2E | `tests/e2e/*.spec.js` | 56 specs × 3 browser profiles (168 runs, 51 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
 | Production build | `tests/apache/apache.test.mjs` | 6 checks of the built release under Apache + PHP-FPM |
 
@@ -231,6 +231,15 @@ Full re-run: API **184/184**, browser **102 passed / 42 skipped**.
 | Production build on Apache | release `38a73ec` (67 public + 248 private files, 1.1 MB zip) under Apache + PHP-FPM; the scheduled check times the home page through Apache (HTTP 200); `/api/monitor/series` refuses anonymous requests (401); `admin/js/charts.js` served | 6/6 |
 
 Full re-run: API **191/191**, browser **113 passed / 49 skipped**; PHPStan 0 errors.
+
+## Change — "Ver como" (the owner views the panel as another account)
+
+| Suite | Added | Result |
+|---|---|---|
+| API (`20-view-as`) | owner only (403 for others); candidates are active/invited non-owner accounts; wrong password 422; owner, disabled, unknown or non-numeric target 422; viewing as a texts-only account: session shows that account (permissions, access type, "by", 30-minute limit), owner-only routes 403, `X-View-As` header; every change refused with `view_only` (content, report, password) and nothing stored; their ticket stays unread; switching without password; leads stay unread, CSV allowed, lead change refused; invited account viewable; going back restores the owner (`X-View-As: 0`), switch then 409; log `started → switched → switched → ended` without the password; the viewed person's own session untouched; expiry and disabling the target drop back to the owner (logged as expired); signing out ends the owner session | 6/6 |
+| Browser (`view-as`) | Usuarios → *Ver como…* lists accounts (never the owner), password, the person's dashboard and menu with the blue bar (access type, "solo lectura", minutes left), axe, no horizontal overflow on 3 devices; saving explains it is read-only and stores nothing; switching to the sales account from the bar shows Prospectos/Estadísticas and opening a lead leaves it unread; *Volver a mi cuenta* returns to Usuarios; log order; the row menu entry; an expired view is noticed and the panel reloads as the owner | 4 passed, 2 skipped by design |
+
+Full re-run: API **197/197**, browser **117 passed / 51 skipped**; PHPStan 0 errors.
 
 ## Other audits
 

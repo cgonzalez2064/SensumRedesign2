@@ -37,6 +37,10 @@ final class Kernel
         ['POST', '/api/setup', AuthController::class, 'setup', 'public'],
 
         ['GET', '/api/dashboard', SystemController::class, 'dashboard', 'user'],
+        ['GET', '/api/view-as', ViewAsController::class, 'index', 'user'],
+        ['POST', '/api/view-as', ViewAsController::class, 'start', 'user'],
+        ['POST', '/api/view-as/switch', ViewAsController::class, 'switch', 'user'],
+        ['POST', '/api/view-as/stop', ViewAsController::class, 'stop', 'user'],
         ['GET', '/api/monitor/summary', MonitorController::class, 'summary', 'owner'],
         ['GET', '/api/monitor/overview', MonitorController::class, 'overview', 'user'],
         ['GET', '/api/monitor/series', MonitorController::class, 'series', 'user'],
@@ -114,6 +118,9 @@ final class Kernel
         ['DELETE', '/api/users/{id}', UsersController::class, 'delete', 'owner'],
     ];
 
+    /** Requests other than GET allowed while "viendo como": switching/leaving, and read-only downloads. */
+    private const VIEW_AS_WRITES = ['/api/view-as/switch', '/api/view-as/stop', '/api/leads/export'];
+
     private ?int $uid = null;
 
     public function __construct(private App $app)
@@ -134,8 +141,16 @@ final class Kernel
             } else {
                 $session = $this->app->auth()->require($req, $guard === 'user' ? null : $guard);
                 $this->uid = (int) $session['uid'];
-                // Covered by the two-step policy but not set up yet: only the set-up endpoints.
-                if (!str_starts_with($req->path, '/api/account/2fa') && $this->app->twoFactor()->mustEnroll($session)) {
+                // Lets the panel notice when "Ver como" started, changed or ended elsewhere.
+                header('X-View-As: ' . ($this->app->auth()->viewingAs($session) ? (int) $session['uid'] : 0));
+                if ($this->app->auth()->viewingAs($session)) {
+                    // "Ver como": the panel answers as that account, read-only.
+                    $this->app->setViewOnly(true);
+                    if ($req->method !== 'GET' && !in_array($req->path, self::VIEW_AS_WRITES, true)) {
+                        throw new ApiError(403, 'view_only');
+                    }
+                } elseif (!str_starts_with($req->path, '/api/account/2fa') && $this->app->twoFactor()->mustEnroll($session)) {
+                    // Covered by the two-step policy but not set up yet: only the set-up endpoints.
                     throw new ApiError(403, 'two_factor_setup_required');
                 }
             }

@@ -5,11 +5,12 @@
 import { h, icon, clear, initials, fill } from './dom.js';
 import { t, setLang, getLang, onLangChange, i18nReady } from './i18n.js';
 import { initTheme, setThemePref, getThemePref } from './theme.js';
-import { api, setCsrf, onSessionExpired, onTwoFactorRequired } from './api.js';
+import { api, setCsrf, onSessionExpired, onTwoFactorRequired, setViewAsExpected, onViewAsChanged } from './api.js';
 import { toast, openDialog, confirmDialog, dropdown, segmented, passwordField, textField, setBusy, errorText, alertBox, loading, button } from './ui.js';
 import { initTelemetry } from './telemetry.js';
 import { can } from './access.js';
 import { codeField } from './twofactor.js';
+import { viewAsBar } from './viewas.js';
 
 // Screens are loaded when first opened (and prefetched when the pointer or
 // focus reaches their menu link), so the panel starts with only the shell.
@@ -91,14 +92,37 @@ async function loadSession() {
 }
 
 export function setSession(data) {
-  state.session = { user: data.user, app: data.app || (state.session && state.session.app) || {} };
+  state.session = { user: data.user, viewAs: data.viewAs || null, app: data.app || (state.session && state.session.app) || {} };
   setCsrf(data.csrf);
+  setViewAsExpected(data.viewAs ? data.user.id : 0);
+  document.documentElement.classList.toggle('viewing-as', !!data.viewAs);
   // First sign-in on this device: adopt the profile's language/theme.
   try {
     if (!localStorage.getItem('sensum_admin_lang') && data.user.lang) setLang(data.user.lang);
     if (!localStorage.getItem('sensum_admin_theme') && data.user.theme) setThemePref(data.user.theme);
   } catch (e) { /* storage unavailable */ }
 }
+
+/**
+ * Reloads who is signed in (after starting, switching or leaving "Ver como",
+ * or when it expired) and opens `path` (default: the current screen).
+ */
+let reloading = null;
+export function reloadSession(path) {
+  reloading = reloading || (async () => {
+    await loadSession();
+    state.shell = null;
+    state.path = null;
+    if (!state.session) navigate('/ingresar');
+    else if (path && currentPath() !== path) navigate(path);
+    else route(true);
+  })().finally(() => { reloading = null; });
+  return reloading;
+}
+onViewAsChanged(() => {
+  toast(t('viewAs.changed'), { type: 'info' });
+  reloadSession('/');
+});
 
 export function updateUser(user) {
   if (state.session) state.session.user = user;
@@ -249,7 +273,7 @@ function renderShell(activeNav, force = false) {
   const app = document.getElementById('app');
   const user = state.session.user;
   const active = activeNav ?? (state.shell && state.shell.active);
-  const key = [getLang(), user.id, user.name, user.owner, (user.permissions || []).join(','), state.session.app && state.session.app.version].join('|');
+  const key = [getLang(), user.id, user.name, user.owner, (user.permissions || []).join(','), state.session.app && state.session.app.version, state.session.viewAs ? state.session.viewAs.until : 0].join('|');
   if (!force && state.shell && state.shell.key === key && app.contains(state.shell.main)) {
     state.shell.active = active;
     state.shell.sidebar.querySelectorAll('.nav a[data-nav]').forEach((a) => {
@@ -327,7 +351,7 @@ function renderShell(activeNav, force = false) {
   sidebar.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sidebar.classList.contains('open')) { closeNav(); openBtn.focus(); } });
 
   fill(app, h('a', { class: 'skip-link', href: '#main', onclick: (e) => { e.preventDefault(); state.shell.main.focus(); } }, t('app.skip')),
-    h('div', { class: 'app' }, sidebar, topbar, h('div', null, offline, main)), scrim);
+    h('div', { class: 'app' }, sidebar, topbar, h('div', null, state.session.viewAs ? viewAsBar(state.session, reloadSession) : null, offline, main)), scrim);
   state.shell = { main, sidebar, scrim, openBtn, active, offline, key };
   refreshReportsBadge();
   refreshLeadsBadge();

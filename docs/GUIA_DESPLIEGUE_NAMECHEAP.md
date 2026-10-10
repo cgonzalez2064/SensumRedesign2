@@ -463,6 +463,12 @@ Solo la cuenta propietaria puede crear y modificar usuarios.
    correo no sale, el panel te muestra el enlace para compartirlo por otro medio.
 4. Para cambiar el acceso después: menú «⋮» de la persona → **Cambiar tipo de
    acceso**. Se aplica de inmediato.
+5. **Comprueba lo que ve cada persona con «Ver como…»** (arriba en Usuarios, o en el
+   menú «⋮» de cada persona): pide tu contraseña una vez y muestra el panel exactamente
+   como lo ve esa cuenta. Una barra azul arriba permite **Cambiar de persona** (sin
+   volver a escribir la contraseña) o **Volver a mi cuenta**. Es **solo lectura** (no
+   se guarda nada ni se marca nada como leído en su cuenta), queda registrado y termina
+   sola a los 30 minutos.
 
 ---
 
@@ -660,6 +666,7 @@ también puedes comprobarla: `php ~/sensum-cms/bin/console translate:test`.
 - [ ] Traducción → **Probar conexión** dice «La clave funciona». En Textos del sitio, escribe en español y mira cómo se llena el inglés (luego descarta el cambio).
 - [ ] Monitoreo → **Tendencias** muestra las gráficas (pasa el cursor para ver cada día) después de la primera hora de revisiones automáticas.
 - [ ] Una persona con «Acceso completo» (o con *Monitoreo del sitio (resumen)*) ve **Monitoreo del sitio** en su menú, sin el registro de errores.
+- [ ] Usuarios → **Ver como…**: revisa cada persona del equipo; su menú solo muestra lo que su tipo de acceso permite. Termina con **Volver a mi cuenta**.
 - [ ] Better Stack muestra ambos monitores en verde.
 
 ---

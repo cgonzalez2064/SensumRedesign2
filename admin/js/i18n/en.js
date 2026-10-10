@@ -84,6 +84,8 @@ export default {
     reload: 'Reload',
   },
   errors: {
+    view_only: "You're viewing the panel as someone else: changes are not saved. Go back to your account to edit.",
+    view_as_inactive: 'First choose whom to view as (Users → View as).',
     already_rated: 'You already rated this report. Thank you!',
     ticket_not_resolved: 'You can rate the help once the report is resolved.',
     network: "We couldn't reach the server. Check your internet connection and try again.",
@@ -275,6 +277,7 @@ export default {
       report_email_failed: "a report couldn't be sent", publish_manual: 'republished the website', login_throttled: 'sign-in attempts blocked',
       two_factor_enabled: 'turned on two-step sign-in', two_factor_disabled: 'turned off two-step sign-in', two_factor_reset: 'reset a two-step sign-in', login_2fa_failed: 'wrong verification code', security_policy_changed: 'changed the security policy', backup_settings_changed: 'changed the off-server backup', backup_downloaded: 'downloaded a backup', offsite_backup_sent: 'off-server backup sent', offsite_backup_failed: 'off-server backup failed',
       contact_services_updated: 'changed the form options',
+      view_as_started: 'started viewing the panel as someone else', view_as_switched: 'switched person in "View as"', view_as_ended: 'ended "View as"',
       translation_settings_changed: 'changed automatic translation',
       lead_updated: 'updated a lead', lead_deleted: 'deleted a lead', leads_exported: 'exported the leads', leads_settings_changed: 'changed how long leads are kept', stats_settings_changed: 'changed the visit statistics', ticket_rated: 'rated the help on a report', ticket_settings_changed: 'changed the response-time target',
       email_settings_changed: 'changed the e-mail settings', alert_rules_changed: 'changed the automatic alerts', integrity_accepted: 'accepted changes to the site files', email_test: 'sent a test e-mail',
@@ -1119,6 +1122,15 @@ export default {
     how2: 'Create the account with the company e-mail; a card is requested only for verification, the free plan is not charged.',
     how3: 'In your account open "API Keys" and copy the key (it ends in ":fx").',
     how4: 'Paste it above, save and press "Test connection".',
+  },
+  viewAs: {
+    pick: 'View as…', menu: 'View the panel as this person',
+    pickTitle: 'View the panel as someone else', switchTitle: 'Switch to someone else',
+    pickLead: 'You will see exactly the menus, screens and data that person sees with their access type. It is read-only: nothing is saved, and it ends by itself after 30 minutes.',
+    view: 'View as', viewAria: 'View the panel as {name}', current: 'Viewing now', invited: 'invitation pending', none: 'There are no other accounts yet.',
+    confirmTitle: 'View the panel as {name}', confirmLead: 'Confirm with your password. Afterwards you can switch person or go back to your account without typing it again; it ends by itself after {minutes} minutes.',
+    start: 'View as', region: '"View as" mode', as: 'Viewing the panel as {name}', readOnly: 'read-only', left: '{n} min left',
+    switch: 'Switch person', back: 'Back to my account', changed: 'The view changed; the panel was reloaded.',
   },
   notFound: {
     title: "We couldn't find this screen",

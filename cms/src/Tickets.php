@@ -121,11 +121,13 @@ final class Tickets
         $r = $this->visible($session, $id);
         $owner = $this->isOwner($session);
         $mine = (int) $r['user_id'] === (int) $session['uid'];
-        if ($owner && (int) $r['owner_unread'] === 1) {
+        // "Ver como" changes nothing for the person, not even what they have read.
+        $markRead = !$this->app->viewOnly();
+        if ($markRead && $owner && (int) $r['owner_unread'] === 1) {
             $this->app->db()->run('UPDATE support_reports SET owner_unread = 0 WHERE id = ?', [$id]);
             $r['owner_unread'] = 0;
         }
-        if ($mine && (int) $r['reporter_unread'] === 1) {
+        if ($markRead && $mine && (int) $r['reporter_unread'] === 1) {
             $this->app->db()->run('UPDATE support_reports SET reporter_unread = 0 WHERE id = ?', [$id]);
             $r['reporter_unread'] = 0;
         }

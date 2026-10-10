@@ -345,3 +345,13 @@ archive is needed.
 | DeepL key in the panel | Owner-only, password re-check, logged without the key; encrypted at rest (libsodium secretbox / AES-GCM, purpose-separated key); responses show only the plan and the last 6 characters; format validated; removing it or switching off disables translation for everyone. The translate endpoint now also serves plain labels, but only to accounts that edit bilingual content (texts/contact/photos/documents; site-text items with a field key still need the texts access) and within the existing per-user and daily character limits; HTML still refused. | `19-monitor-translation`, `translate.spec` |
 | UI regression guard | Every-screen browser checks now assert that each icon tile and avatar is centred and square (caught the e-mail overview tiles offset by 9 px). | `admin.spec` |
 
+## 15. Change review — "Ver como" (owner views the panel as another account)
+
+| Area | Design | Verified by |
+|---|---|---|
+| Who | Only the owner (checked on the real person behind the session, also while viewing). Candidates: active or invited accounts, never the owner itself or disabled accounts; anything else 422. | `20-view-as` |
+| Starting | Re-check of the owner's password (shared throttling with password changes), rate-limited (60/h), logged `view_as_started`. Switching needs an active view (409 otherwise) and is logged; leaving and expiry are logged. Passwords never logged. | `20-view-as`, `view-as.spec` |
+| Read-only | While viewing, the Kernel refuses every non-GET request (`403 view_only`) except switch/stop and the read-only leads CSV — no content, account, ticket, lead or password change can be made in someone else's name. GET side effects are suppressed too (ticket and lead "unread" markers stay as they were). The viewed person's own sessions are untouched. | `20-view-as`, `view-as.spec` |
+| Identity | The owner's session (same cookie, CSRF token and expiry) carries the viewed account id and a 30-minute limit; permission checks, menus and lists use the viewed account, so owner-only routes answer 403 while viewing. Expired, disabled or deleted targets drop back to the owner automatically; signing out ends the owner session. Two-step enrolment is never forced on the owner for the viewed account. | `20-view-as` |
+| Transparency | A bar on every screen states who is being viewed, the access type, "solo lectura" and the time left; the panel reloads when the server says the view changed (`X-View-As` header). | `view-as.spec` |
+

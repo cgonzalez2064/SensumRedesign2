@@ -91,6 +91,17 @@ final class Users
     }
 
     /** @return list<string> */
+    /** Key of the ready-made access type with exactly these permissions, or 'custom'. */
+    public static function accessTypeOf(array $permissions): string
+    {
+        foreach (self::ACCESS_TYPES as $key => $perms) {
+            if (count($perms) === count($permissions) && !array_diff($perms, $permissions)) {
+                return $key;
+            }
+        }
+        return 'custom';
+    }
+
     public static function permissionsOf(array $u): array
     {
         return array_values(array_intersect(self::PERMISSIONS, explode(',', (string) ($u['permissions'] ?? ''))));

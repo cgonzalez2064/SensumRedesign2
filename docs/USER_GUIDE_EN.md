@@ -438,3 +438,17 @@ In **Administration → Translation** you paste the **DeepL API Free** key (free
 check it works and see this month's usage. The key is stored encrypted and never
 shown again; changes ask for your password. With translation on, typing in one
 language fills the other in Website text, contact-form options and photo descriptions.
+
+## 21. For the owner account: "View as" (checking access)
+
+In **Users → View as…** (or a person's "⋮" menu → *View the panel as this person*) you
+choose an account and, after confirming your password, see the panel **exactly as that
+person sees it**: their menu, screens and data.
+
+* A blue bar at the top shows *Viewing the panel as …*, their access type, "read-only"
+  and the time left (30 minutes).
+* **Switch person** moves to another account without asking for the password again.
+* **Back to my account** ends it and takes you back to Users.
+* It is **read-only**: trying to save shows that changes are not saved. Nothing is
+  marked as read in that person's account either.
+* Every start, switch and end is logged in the activity.

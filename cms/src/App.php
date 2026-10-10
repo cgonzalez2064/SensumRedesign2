@@ -17,6 +17,8 @@ final class App
 
     private static ?self $instance = null;
     private ?Db $db = null;
+    /** This request is the owner "viendo como" someone: nothing may change on their behalf (not even read markers). */
+    private bool $viewOnly = false;
     private ?Logger $logger = null;
     private ?Mailer $mailer = null;
     private ?RateLimiter $rateLimiter = null;
@@ -228,6 +230,16 @@ final class App
     public function domainHealth(): DomainHealth
     {
         return new DomainHealth($this);
+    }
+
+    public function viewOnly(): bool
+    {
+        return $this->viewOnly;
+    }
+
+    public function setViewOnly(bool $on): void
+    {
+        $this->viewOnly = $on;
     }
 
     public function translationSettings(): TranslationSettings
