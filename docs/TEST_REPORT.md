@@ -228,6 +228,8 @@ Full re-run: API **184/184**, browser **102 passed / 42 skipped**.
 | Browser (`translate`, extended) | contact-form options: Spanish fills English, Undo, the English written by hand is kept, saving waits for the translation; photo descriptions fill the same way; Traducción page shows the key source without revealing it and tests it (usage) | passing |
 | Existing suites | photo editors may translate plain labels (503 while off) but not site texts (403); `check` wording; severity filter located by id (charts also mention "gravedad"); charts redraw outside the ResizeObserver callback (WebKit warning) | passing |
 
+| Production build on Apache | release `38a73ec` (67 public + 248 private files, 1.1 MB zip) under Apache + PHP-FPM; the scheduled check times the home page through Apache (HTTP 200); `/api/monitor/series` refuses anonymous requests (401); `admin/js/charts.js` served | 6/6 |
+
 Full re-run: API **191/191**, browser **113 passed / 49 skipped**; PHPStan 0 errors.
 
 ## Other audits

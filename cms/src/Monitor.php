@@ -257,7 +257,7 @@ final class Monitor
         $body = curl_exec($ch);
         $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         $time = (float) curl_getinfo($ch, CURLINFO_TOTAL_TIME);
-        return $body === false || $status === 0 ? [null, null] : [(int) round($time * 1000), $status];
+        return $body === false || $status === 0 ? [null, null] : [max(1, (int) round($time * 1000)), $status];
     }
 
     /**
