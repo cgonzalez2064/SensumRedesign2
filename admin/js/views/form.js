@@ -6,12 +6,14 @@
 import { h, icon, fill } from '../dom.js';
 import { t, tp } from '../i18n.js';
 import { api } from '../api.js';
-import { pageHead, loading, loadError, button, setBusy, toast, errorText, fieldErrorText, textField, segmented, cardHead } from '../ui.js';
+import { pageHead, loading, loadError, button, setBusy, toast, errorText, fieldErrorText, textField, segmented, cardHead, alertBox } from '../ui.js';
+import { autoTranslatePair } from '../autotranslate.js';
 
 let uid = 0;
 const key = () => 'n' + (++uid);
 
-export async function render({ main }) {
+export async function render({ main, session }) {
+  const translate = !!(session.app && session.app.translation);
   main.append(pageHead({ title: t('form.title'), lead: t('form.lead') }));
   const body = h('div', { class: 'stack-lg' }, loading());
   main.append(body);
@@ -26,7 +28,8 @@ export async function render({ main }) {
 
   const draw = (data) => {
     // Working copy: each row keeps the saved id (new rows have none yet).
-    let rows = data.items.map((it) => ({ key: key(), id: it.id, es: it.es, en: it.en }));
+    let rows = data.items.map((it) => ({ key: key(), id: it.id, es: it.es, en: it.en, saved: { es: it.es, en: it.en }, tr: {} }));
+    let pairs = [];
     const initial = JSON.stringify(rows.map(({ id, es, en }) => ({ id, es, en })));
     const current = () => rows.map(({ id, es, en }) => ({ id, es: es.trim(), en: en.trim() }));
     dirty = () => JSON.stringify(rows.map(({ id, es, en }) => ({ id, es, en }))) !== initial;
@@ -54,6 +57,7 @@ export async function render({ main }) {
     };
 
     const renderList = (focus) => {
+      pairs = [];
       fill(list, rows.map((r, i) => {
         const es = textField({ label: t('form.es'), langTag: 'ES', value: r.es, maxlength: data.maxLabel, spellcheck: true, lang: 'es' });
         const en = textField({ label: t('form.en'), langTag: 'EN', value: r.en, maxlength: data.maxLabel, optionalTag: true, placeholder: r.es || '', lang: 'en' });
@@ -67,6 +71,7 @@ export async function render({ main }) {
           changed();
         });
         en.input.addEventListener('input', () => { r.en = en.input.value; changed(); });
+        if (translate) pairs.push(autoTranslatePair({ es, en, saved: r.saved || { es: '', en: '' }, memory: r.tr || (r.tr = {}) }));
         if (errors[`items.${i}.es`]) es.setError(fieldErrorText(errors[`items.${i}.es`], { max: data.maxLabel }));
         if (errors[`items.${i}.en`]) en.setError(fieldErrorText(errors[`items.${i}.en`], { max: data.maxLabel }));
         const name = r.es.trim() || t('form.unnamed');
@@ -184,6 +189,12 @@ export async function render({ main }) {
     };
 
     saveBtn.addEventListener('click', async () => {
+      if (pairs.length) {
+        // Save what the person is about to see: finish translations still in progress first.
+        setBusy(saveBtn, true, t('content.autoTr.finishing'));
+        await Promise.allSettled(pairs.map((p) => p.settle()));
+        setBusy(saveBtn, false);
+      }
       if (showErrors(check())) return;
       setBusy(saveBtn, true, t('email.saving'));
       try {
@@ -203,6 +214,7 @@ export async function render({ main }) {
 
     const editor = h('section', { class: 'card', 'aria-labelledby': 'svc-title' },
       cardHead({ id: 'svc-title', icon: 'card-text', title: t('form.servicesTitle'), lead: t('form.servicesLead'), badge: countBadge }),
+      translate ? alertBox('info', null, t('content.autoTr.intro')) : null,
       list, live,
       h('div', { class: 'card-foot' }, resetBtn, addBtn));
     const preview = h('section', { class: 'card svc-preview-card', 'aria-labelledby': 'svc-prev' },

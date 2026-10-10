@@ -30,6 +30,8 @@ const V = {
   form: lazy(() => import('./views/form.js')),
   leads: lazy(() => import('./views/leads.js')),
   stats: lazy(() => import('./views/stats.js')),
+  status: lazy(() => import('./views/status.js')),
+  translation: lazy(() => import('./views/translation.js')),
 };
 const loadReport = lazy(() => import('./report.js'));
 const openReportDialog = (...args) => loadReport().then((m) => m.openReportDialog(...args));
@@ -56,6 +58,8 @@ const PRIVATE = [
   { re: /^\/estadisticas$/, mod: V.stats, fn: 'render', nav: 'stats', perm: ['leads'] },
   { re: /^\/usuarios$/, mod: V.users, fn: 'render', nav: 'users', owner: true },
   { re: /^\/monitoreo$/, mod: V.monitor, fn: 'render', nav: 'monitor', owner: true },
+  { re: /^\/monitoreo-basico$/, mod: V.status, fn: 'render', nav: 'status', perm: ['monitor'] },
+  { re: /^\/traduccion$/, mod: V.translation, fn: 'render', nav: 'translation', owner: true },
   { re: /^\/informe$/, mod: V.siteReport, fn: 'render', nav: 'siteReport', owner: true },
   { re: /^\/correo$/, mod: V.email, fn: 'render', nav: 'email', owner: true },
   { re: /^\/seguridad$/, mod: V.security, fn: 'render', nav: 'security', owner: true },
@@ -304,9 +308,10 @@ function renderShell(activeNav, force = false) {
       can(user, 'contact') ? navLink('/formulario', 'form', 'card-text', active) : null,
       can(user, 'leads') ? [h('div', { class: 'nav-section', text: t('nav.groupClients') }), navLink('/prospectos', 'leads', 'inbox', active),
         navLink('/estadisticas', 'stats', 'graph-up', active)] : null,
+      !user.owner && can(user, 'monitor') ? [h('div', { class: 'nav-section', text: t('nav.groupStatus') }), navLink('/monitoreo-basico', 'status', 'activity', active)] : null,
       user.owner ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active),
         navLink('/monitoreo', 'monitor', 'activity', active), navLink('/informe', 'siteReport', 'bar-chart', active),
-        navLink('/correo', 'email', 'envelope', active), navLink('/seguridad', 'security', 'shield-lock', active)] : null,
+        navLink('/correo', 'email', 'envelope', active), navLink('/traduccion', 'translation', 'translate', active), navLink('/seguridad', 'security', 'shield-lock', active)] : null,
       h('div', { class: 'nav-section', text: t('nav.groupSupport') }),
       navLink('/reportes', 'reports', 'chat-square-text', active),
       navLink('/ayuda', 'help', 'question-circle', active),

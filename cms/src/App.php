@@ -230,6 +230,11 @@ final class App
         return new DomainHealth($this);
     }
 
+    public function translationSettings(): TranslationSettings
+    {
+        return new TranslationSettings($this);
+    }
+
     public function leads(): Leads
     {
         return new Leads($this);
@@ -295,7 +300,8 @@ final class App
 
     public function translator(): Translator
     {
-        return $this->translator ??= new Translator($this->config, $this->logger());
+        return $this->translator ??= new Translator($this->config, $this->logger(),
+            fn (): string => $this->translationSettings()->panelKey(), fn (): bool => $this->translationSettings()->enabled());
     }
 
     public function activity(?int $userId, string $action, string $target = '', array $details = [], ?string $ip = null): void

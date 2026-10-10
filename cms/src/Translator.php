@@ -7,8 +7,8 @@ use Sensum\Cms\Content\Validator;
 
 /**
  * Machine translation of website text between Spanish and English through
- * the DeepL API. Optional: without DEEPL_API_KEY the admin simply doesn't
- * offer automatic translation.
+ * the DeepL API. Optional: without a key (panel → Traducción, or
+ * DEEPL_API_KEY in .env) the admin simply doesn't offer automatic translation.
  *
  * Only the text being edited is sent (never names, e-mails or settings), to a
  * fixed DeepL host chosen by the key type (":fx" keys = DeepL API Free).
@@ -26,13 +26,23 @@ final class Translator
     private const TARGET = ['es' => 'ES-419', 'en' => 'EN-US'];
     private const CONTEXT = 'Website of Sensum Construcciones, a construction and remodeling company in Guatemala City.';
 
-    public function __construct(private Config $config, private Logger $logger)
+    /**
+     * @param (\Closure():string)|null $panelKey key saved in the panel (wins over .env)
+     * @param (\Closure():bool)|null $panelEnabled the owner's on/off switch
+     */
+    public function __construct(private Config $config, private Logger $logger, private ?\Closure $panelKey = null, private ?\Closure $panelEnabled = null)
     {
     }
 
     public function isEnabled(): bool
     {
-        return $this->key() !== '';
+        return $this->key() !== '' && ($this->panelEnabled === null || ($this->panelEnabled)());
+    }
+
+    /** The key in use (panel first, then .env) — never logged or sent to the browser. */
+    public function currentKey(): string
+    {
+        return $this->key();
     }
 
     /** "DeepL API Free" / "DeepL API Pro" — for diagnostics. */
@@ -43,7 +53,8 @@ final class Translator
 
     private function key(): string
     {
-        return trim($this->config->string('DEEPL_API_KEY'));
+        $panel = $this->panelKey !== null ? trim(($this->panelKey)()) : '';
+        return $panel !== '' ? $panel : trim($this->config->string('DEEPL_API_KEY'));
     }
 
     private function baseUrl(): string

@@ -88,7 +88,9 @@ test('statistics: visits per day, sources, clicks and the path from message to p
   await page.goto('/admin/#/estadisticas');
   await expect(page.locator('main h1')).toHaveText('Estadísticas');
   await expect(page.locator('.kpi').first().locator('.kpi-num')).toHaveText(/^\d[\d,.]*$/);
-  await expect(page.locator('svg.day-chart rect')).toHaveCount(30);
+  const daily = page.locator('section', { has: page.getByRole('heading', { name: 'Visitas por día' }) });
+  await expect(daily.locator('.chart-line')).toHaveCount(2);
+  await expect(daily.locator('.chart-data tbody tr')).toHaveCount(30);
   await expect(page.getByRole('heading', { name: 'De dónde llegan' })).toBeVisible();
   await expect(page.locator('.bar-list').first()).toContainText('Google');
   await expect(page.locator('.funnel')).toContainText('mensajes recibidos');

@@ -9,8 +9,8 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 
 | Suite | Location | Size |
 |---|---|---|
-| API integration | `tests/integration/*.test.mjs` | 184 tests in 19 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
-| Browser E2E | `tests/e2e/*.spec.js` | 48 specs × 3 browser profiles (144 runs, 42 skipped by design: phone-only, desktop-only or single-submission tests) |
+| API integration | `tests/integration/*.test.mjs` | 191 tests in 20 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
+| Browser E2E | `tests/e2e/*.spec.js` | 54 specs × 3 browser profiles (162 runs, 49 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
 | Production build | `tests/apache/apache.test.mjs` | 6 checks of the built release under Apache + PHP-FPM |
 
@@ -217,6 +217,18 @@ Full re-run: API **168/168**, browser **92 passed / 37 skipped** (skips by desig
 | Production build on Apache | release `57ede71` (62 public + 245 private files, 1.1 MB zip; no PHPStan, no `phpstan.neon`) under Apache + PHP-FPM; `/api/collect` through the rewrite (204, foreign origin 403), `stats.js` served immutable | 6/6 |
 
 Full re-run: API **184/184**, browser **102 passed / 42 skipped**.
+
+## Change — icon alignment, monitoring charts, summary monitoring access, translation from the panel
+
+| Suite | Added | Result |
+|---|---|---|
+| Browser (every screen) | new check: every icon tile and avatar centred and square on all screens and the report dialog (3 devices × 2 themes) — it reproduced the reported e-mail overview offset (9 px) before the CSS fix; Monitoreo del sitio and Traducción added to the screen list | passing |
+| API (`19-monitor-translation`) | scheduled check times the home page (HTTP status and ms stored, not counted as downtime); daily series (checks, availability, average response of measured runs, errors by severity, owner-only sign-ins; 7/30/90 days, other values → 30) in the site's time zone; summary endpoint only for the `monitor` access, counts and dates only (no messages/references), status ok → attention after a critical error, full Monitoring still 403; `monitor` in full access and custom choices; translation settings owner-only, password, format check, key encrypted and never returned or logged, connection test with usage and a sample, session flag for editors; plain-label translation for photo editors, site-text keys still need `texts`, HTML refused, no-edit accounts 403; switching off / removing the key disables it | 7/7 |
+| Browser (`monitoring`) | owner trends: three charts, failed-check marker, hover/tap tooltip, keyboard End/← and live region, Escape, legend toggle, 7-day range (7 table rows), axe, no console errors; an administrator sees the summary page (status, 4 figures, two charts, no sign-ins/error log/technical text), axe; the owner adds "Monitoreo del sitio (resumen)" to a texts-only account through *Personalizado* and it appears in their menu | 5 passed, 2 skipped by design |
+| Browser (`translate`, extended) | contact-form options: Spanish fills English, Undo, the English written by hand is kept, saving waits for the translation; photo descriptions fill the same way; Traducción page shows the key source without revealing it and tests it (usage) | passing |
+| Existing suites | photo editors may translate plain labels (503 while off) but not site texts (403); `check` wording; severity filter located by id (charts also mention "gravedad"); charts redraw outside the ResizeObserver callback (WebKit warning) | passing |
+
+Full re-run: API **191/191**, browser **113 passed / 49 skipped**; PHPStan 0 errors.
 
 ## Other audits
 

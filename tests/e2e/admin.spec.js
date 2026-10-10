@@ -17,6 +17,7 @@ const PAGES = [
   ['users', '#/usuarios'], ['reports', '#/reportes'], ['account', '#/cuenta'], ['help', '#/ayuda'], ['monitor', '#/monitoreo'], ['site-report', '#/informe'],
   ['email', '#/correo'], ['form', '#/formulario'], ['ticket', '#/reportes/1'], ['security', '#/seguridad'],
   ['leads', '#/prospectos'], ['lead', '#/prospectos/2'], ['stats', '#/estadisticas'],
+  ['status', '#/monitoreo-basico'], ['translation', '#/traduccion'],
 ];
 
 /** Collects console errors, CSP violations, page errors and failed requests. */
@@ -58,6 +59,31 @@ async function expectNoOverflow(page, what) {
   expect(sw, `${what}: horizontal overflow`).toBeLessThanOrEqual(iw);
 }
 
+/**
+ * Icon tiles and avatars: the icon (or the initials) sits in the middle of its
+ * square, which stays square. Catches broad text rules ("… span { display:block }")
+ * that override the tile's own centering.
+ */
+async function expectAlignedIcons(page, what) {
+  const off = await page.evaluate(() => {
+    const bad = [];
+    for (const el of document.querySelectorAll('.icon-tile, .avatar')) {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !el.checkVisibility()) continue;
+      const svg = el.querySelector('svg');
+      let c;
+      if (svg) c = svg.getBoundingClientRect();
+      else { const range = document.createRange(); range.selectNodeContents(el); c = range.getBoundingClientRect(); }
+      if (!c.width) continue;
+      const dx = Math.abs((c.left + c.width / 2) - (r.left + r.width / 2));
+      const dy = Math.abs((c.top + c.height / 2) - (r.top + r.height / 2));
+      if (dx > 1.5 || dy > 2 || Math.abs(r.width - r.height) > 1) bad.push(`${el.className} "${el.textContent.trim()}" in ${el.parentElement.className}: dx=${dx.toFixed(1)} dy=${dy.toFixed(1)} ${r.width.toFixed(0)}x${r.height.toFixed(0)}`);
+    }
+    return bad;
+  });
+  expect(off, `${what}: icons not centred in their tiles`).toEqual([]);
+}
+
 async function axe(page, what) {
   const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
   const serious = r.violations.filter((v) => ['serious', 'critical'].includes(v.impact));
@@ -73,6 +99,7 @@ for (const theme of ['light', 'dark']) {
       await expect(page.locator('h1')).toBeVisible();
       await page.waitForTimeout(250);
       await expectNoOverflow(page, slug);
+      await expectAlignedIcons(page, slug);
       await axe(page, slug);
       await shot(page, join(SCREENS, `${info.project.name}-${theme}-${slug}.png`), { fullPage: true });
     }
@@ -89,6 +116,7 @@ for (const theme of ['light', 'dark']) {
       await expect(page.locator('.page-loading')).toHaveCount(0);
       await page.waitForTimeout(200);
       await expectNoOverflow(page, slug);
+      await expectAlignedIcons(page, slug);
       await axe(page, slug);
       await shot(page, join(SCREENS, `${info.project.name}-${theme}-${slug}.png`), { fullPage: true });
     }
@@ -106,6 +134,7 @@ for (const theme of ['light', 'dark']) {
     await expect(page.getByRole('dialog', { name: /Reportar un problema/ })).toBeVisible();
     await page.waitForTimeout(400);
     await axe(page, 'report dialog');
+    await expectAlignedIcons(page, 'report dialog');
     await expectNoOverflow(page, 'report dialog');
     await shot(page, join(SCREENS, `${info.project.name}-${theme}-report-dialog.png`));
     await page.keyboard.press('Escape');
@@ -199,7 +228,7 @@ test('Monitoring is shown only to the owner account', async ({ page }) => {
   await expect(log.getByText('RuntimeException: publish_write_failed')).toBeVisible();
   await log.locator('.log-item').first().getByText('Detalles técnicos').click();
   await expect(log.getByText('Publisher.php:372')).toBeVisible();
-  await page.getByLabel('Gravedad').selectOption('warning');
+  await page.locator('#log-sev').selectOption('warning'); // the severity filter (charts also mention "gravedad")
   await expect(log.locator('.log-item')).toHaveCount(1);
   await expect(log.getByText('Las páginas publicadas cambiaron fuera del panel')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Enviar correo de prueba' })).toBeVisible();

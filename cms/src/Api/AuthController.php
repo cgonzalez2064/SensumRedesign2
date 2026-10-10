@@ -21,6 +21,8 @@ final class AuthController extends Controller
                 'version' => $this->app->version(),
                 'siteUrl' => $this->app->config->appUrl(),
                 'idleMinutes' => $this->app->config->int('SESSION_IDLE_MINUTES', 60, 5, 24 * 60),
+                // Automatic ES ⇄ EN translation available in the editors (texts, form options, photo descriptions).
+                'translation' => $this->app->translator()->isEnabled(),
             ],
         ];
     }

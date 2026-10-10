@@ -179,8 +179,10 @@ final class Monitor
         $this->reportHealth($checks);
         $failed = array_keys(array_filter($checks, fn ($c) => !$c['ok'] && empty($c['optional'])));
         $out[] = $failed ? 'Health: DEGRADED (' . implode(', ', $failed) . ')' : 'Health: ok';
+        [$ms, $status] = $this->measureHome();
+        $out[] = 'Home page: ' . ($ms !== null ? "HTTP {$status} in {$ms} ms" : 'not reachable from the server (not counted)');
         // Each run counts toward the monthly report's availability figure.
-        $this->app->db()->run('INSERT INTO monitor_runs (created_at, ok, failed) VALUES (?, ?, ?)', [time(), $failed ? 0 : 1, implode(',', $failed)]);
+        $this->app->db()->run('INSERT INTO monitor_runs (created_at, ok, failed, response_ms, http_status) VALUES (?, ?, ?, ?, ?)', [time(), $failed ? 0 : 1, implode(',', $failed), $ms, $status]);
         if (random_int(1, 20) === 1) {
             $this->app->db()->run('DELETE FROM monitor_runs WHERE created_at < ?', [time() - 400 * 86400]);
         }
@@ -235,6 +237,105 @@ final class Monitor
             $out[] = 'Alert ' . $line;
         }
         return $out;
+    }
+
+    /**
+     * Time to load the public home page (APP_URL), as the chart's response
+     * time. Informational: some hostings cannot reach their own domain from
+     * cron, so a failure here never counts as downtime.
+     * @return array{0:int|null,1:int|null} [milliseconds, HTTP status]
+     */
+    private function measureHome(): array
+    {
+        $url = $this->app->config->appUrl() . '/';
+        if (!function_exists('curl_init') || !preg_match('#^https?://#', $url)) {
+            return [null, null];
+        }
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => false, CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => 10,
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP, CURLOPT_USERAGENT => 'SensumContentManager/1.0 (scheduled check)', CURLOPT_HTTPHEADER => ['Cache-Control: no-cache']]);
+        $body = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        $time = (float) curl_getinfo($ch, CURLINFO_TOTAL_TIME);
+        return $body === false || $status === 0 ? [null, null] : [(int) round($time * 1000), $status];
+    }
+
+    /**
+     * Daily figures for the Monitoring charts, oldest first, in the site's time
+     * zone: scheduled checks and availability, average response time, errors by
+     * severity and (owner only) sign-ins.
+     * @return array{days:list<array<string,mixed>>,from:string,to:string}
+     */
+    public function series(int $days, bool $security, ?int $now = null): array
+    {
+        $now ??= time();
+        $start = (int) strtotime('today', $now) - ($days - 1) * 86400;
+        $offset = (int) date('Z', $now); // fixed for Guatemala (no daylight saving)
+        $db = $this->app->db();
+        $out = [];
+        for ($i = 0; $i < $days; $i++) {
+            $d = date('Y-m-d', $start + $i * 86400 + 43200);
+            $out[$d] = ['day' => $d, 'checks' => 0, 'ok' => 0, 'availability' => null, 'responseMs' => null, 'critical' => 0, 'error' => 0, 'warning' => 0] + ($security ? ['logins' => 0, 'loginsFailed' => 0] : []);
+        }
+        $dayOf = fn (string $col) => "date(({$col} + {$offset}), 'unixepoch')";
+        foreach ($db->all('SELECT ' . $dayOf('created_at') . ' AS d, COUNT(*) AS n, SUM(ok) AS ok, AVG(response_ms) AS ms FROM monitor_runs WHERE created_at >= ? GROUP BY d', [$start]) as $r) {
+            if (isset($out[$r['d']])) {
+                $out[$r['d']]['checks'] = (int) $r['n'];
+                $out[$r['d']]['ok'] = (int) $r['ok'];
+                $out[$r['d']]['availability'] = (int) $r['n'] > 0 ? round(100 * (int) $r['ok'] / (int) $r['n'], 1) : null;
+                $out[$r['d']]['responseMs'] = $r['ms'] !== null ? (int) round((float) $r['ms']) : null;
+            }
+        }
+        foreach ($db->all('SELECT ' . $dayOf('created_at') . " AS d, severity, COUNT(*) AS n FROM error_log WHERE created_at >= ? GROUP BY d, severity", [$start]) as $r) {
+            if (isset($out[$r['d']]) && in_array($r['severity'], ['critical', 'error', 'warning'], true)) {
+                $out[$r['d']][$r['severity']] = (int) $r['n'];
+            }
+        }
+        if ($security) {
+            foreach ($db->all('SELECT ' . $dayOf('created_at') . " AS d, action, COUNT(*) AS n FROM activity_log WHERE created_at >= ? AND action IN ('login', 'login_failed', 'login_throttled') GROUP BY d, action", [$start]) as $r) {
+                if (isset($out[$r['d']])) {
+                    $out[$r['d']][$r['action'] === 'login' ? 'logins' : 'loginsFailed'] += (int) $r['n'];
+                }
+            }
+        }
+        return ['days' => array_values($out), 'from' => date('Y-m-d', $start), 'to' => date('Y-m-d', $now)];
+    }
+
+    /**
+     * The summary version of Monitoring for the "monitor" access: is the site
+     * working, availability, speed, error counts and key dates. No error
+     * messages, settings or server details.
+     */
+    public function overview(?int $now = null): array
+    {
+        $now ??= time();
+        $db = $this->app->db();
+        $checks = Health::checks($this->app, false);
+        $failing = array_keys(array_filter($checks, fn ($c) => !$c['ok'] && empty($c['optional'])));
+        $runs30 = $db->one('SELECT COUNT(*) AS n, SUM(ok) AS ok FROM monitor_runs WHERE created_at > ?', [$now - 30 * 86400]);
+        $sev = array_column($db->all('SELECT severity, COUNT(*) AS n FROM error_log WHERE created_at > ? GROUP BY severity', [$now - 7 * 86400]), 'n', 'severity');
+        $backups = glob($this->app->storage('backups/db') . '/database-*.sqlite') ?: [];
+        $tls = $this->app->settings()->getJson('tls_expiry');
+        $dh = $this->app->domainHealth()->latest();
+        $ob = $this->app->offsiteBackup()->settings();
+        $psi = $this->app->pageSpeed()->latest();
+        return [
+            'status' => $failing ? 'degraded' : ((int) $db->value("SELECT COUNT(*) FROM error_log WHERE severity = 'critical' AND created_at > ?", [$now - 86400]) > 0 ? 'attention' : 'ok'),
+            'failingChecks' => count($failing),
+            'availability30' => (int) ($runs30['n'] ?? 0) > 0 ? round(100 * (int) $runs30['ok'] / (int) $runs30['n'], 2) : null,
+            'checks30' => (int) ($runs30['n'] ?? 0),
+            'responseMs7' => ($ms = $db->value('SELECT AVG(response_ms) FROM monitor_runs WHERE created_at > ? AND response_ms IS NOT NULL', [$now - 7 * 86400])) !== null ? (int) round((float) $ms) : null,
+            'lastCheckAt' => ((int) $this->app->settings()->get('monitor_last_run', '0')) ?: null,
+            'errors7' => ['critical' => (int) ($sev['critical'] ?? 0), 'error' => (int) ($sev['error'] ?? 0), 'warning' => (int) ($sev['warning'] ?? 0)],
+            'inSync' => $this->siteInSync(),
+            'lastPublishedAt' => ((int) $this->app->settings()->get('last_published_at', '0')) ?: null,
+            'certificateUntil' => isset($tls['validTo']) ? (int) $tls['validTo'] : null,
+            'domainUntil' => isset($dh['expiry']['validTo']) ? (int) $dh['expiry']['validTo'] : null,
+            'emailDomainOk' => isset($dh['checkedAt']) ? !array_diff((array) ($dh['problems'] ?? []), ['expiry']) : null,
+            'lastBackupAt' => $backups ? max(array_map('filemtime', $backups)) : null,
+            'offsiteBackupAt' => !empty($ob['enabled']) && !empty($ob['lastSentAt']) && ($ob['lastStatus'] ?? '') !== 'failed' ? (int) $ob['lastSentAt'] : null,
+            'pagespeedMobile' => isset($psi['mobile']['performance'], $psi['fetchedAt']) && $now - (int) $psi['fetchedAt'] < 45 * 86400 ? (int) $psi['mobile']['performance'] : null,
+        ];
     }
 
     private function recentlyLogged(string $event, string $message, int $seconds): bool

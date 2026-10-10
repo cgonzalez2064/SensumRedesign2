@@ -335,3 +335,13 @@ figures, not billing data. Visitors with ad blockers may not be counted. Lead
 retention deletes by age regardless of status; export the CSV first if a longer
 archive is needed.
 
+## 14. Change review — trend charts, summary monitoring access, translation key in the panel, icon alignment
+
+| Area | Design | Verified by |
+|---|---|---|
+| Summary monitoring (`monitor` access) | New permission in the allow-list (owner always has it; part of *full*; assignable in custom access). `/api/monitor/overview` and `/series` return counts, percentages and dates only; sign-in figures only for the owner; the full Monitoring, error log, integrity and settings stay owner-only (403). | `19-monitor-translation`, `monitoring.spec` |
+| Response-time probe | Outgoing GET only to the configured `APP_URL` (no user input), HTTP/HTTPS only, no redirects followed, 5 s connect / 10 s total, body discarded. Failure is recorded as "no measurement", never as downtime or an alert. | `19-monitor-translation` |
+| Charts | Built with DOM/SVG APIs only (text via `textContent`), no `innerHTML`, no inline style attributes (CSSOM for sizes/positions), so the admin CSP is unchanged. | every-screen checks (3 devices × 2 themes, no console/CSP errors) |
+| DeepL key in the panel | Owner-only, password re-check, logged without the key; encrypted at rest (libsodium secretbox / AES-GCM, purpose-separated key); responses show only the plan and the last 6 characters; format validated; removing it or switching off disables translation for everyone. The translate endpoint now also serves plain labels, but only to accounts that edit bilingual content (texts/contact/photos/documents; site-text items with a field key still need the texts access) and within the existing per-user and daily character limits; HTML still refused. | `19-monitor-translation`, `translate.spec` |
+| UI regression guard | Every-screen browser checks now assert that each icon tile and avatar is centred and square (caught the e-mail overview tiles offset by 9 px). | `admin.spec` |
+

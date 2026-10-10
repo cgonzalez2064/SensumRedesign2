@@ -3,6 +3,7 @@ import { h, icon, clear, fill } from '../dom.js';
 import { t, tp, fmtDate, fmtRelative, fmtBytes } from '../i18n.js';
 import { api } from '../api.js';
 import { pageHead, loading, loadError, button, setBusy, toast, errorText, emptyState, copyText, askPassword, fieldErrorText, switchInput, cardHead } from '../ui.js';
+import { trendsCard } from '../monitorCharts.js';
 
 const SEVERITY_BADGE = { critical: 'badge-bad', error: 'badge-warn', warning: 'badge-info' };
 const SEVERITY_ICON = { critical: 'x-circle-fill', error: 'exclamation-triangle-fill', warning: 'info-circle-fill' };
@@ -132,7 +133,9 @@ function kv(rows, tight = false) {
 
 export async function render({ main, session }) {
   const refresh = button(t('monitor.refresh'), { icon: 'arrow-repeat', small: true });
-  main.append(pageHead({ title: t('monitor.title'), lead: t('monitor.lead', { email: session.user.email }), actions: [refresh] }));
+  const lite = h('a', { class: 'btn btn-sm btn-ghost', href: '#/monitoreo-basico', title: t('monitor.liteHint') }, t('monitor.liteLink'));
+  main.append(pageHead({ title: t('monitor.title'), lead: t('monitor.lead', { email: session.user.email }), actions: [lite, refresh] }));
+  let trends = null;
   const body = h('div', { class: 'stack-lg' }, loading());
   main.append(body);
   const filters = { severity: '', source: '', days: '30', q: '', page: 1 };
@@ -278,10 +281,12 @@ export async function render({ main, session }) {
       h('div', { class: 'code-line' }, h('code', { class: 'break', text: cron }), copyBtn),
       h('p', { class: 'tiny muted', text: t('monitor.setup.cronHint') }));
 
-    fill(body, tiles, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, logCard, rulesCard(data.rules), activity), h('div', { class: 'stack-lg' }, checks, alerts, domainCard(data.domain), integrityCard(), top, system, setup)));
+    if (trends) trends.destroy();
+    trends = trendsCard({ security: true });
+    fill(body, tiles, trends.el, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, logCard, rulesCard(data.rules), activity), h('div', { class: 'stack-lg' }, checks, alerts, domainCard(data.domain), integrityCard(), top, system, setup)));
     loadLog();
   };
   refresh.addEventListener('click', () => { fill(body, loading()); load(); });
   await load();
-  return { destroy: () => { alive = false; } };
+  return { destroy: () => { alive = false; if (trends) trends.destroy(); } };
 }

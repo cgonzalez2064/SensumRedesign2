@@ -265,6 +265,7 @@ ALERT_ERROR_SPIKE=25
 DISK_WARN_MB=500
 
 # --- Opcionales (déjalos vacíos si aún no los tienes) ---
+# La clave de DeepL ya no hace falta aquí: se pega en el panel (paso 20).
 DEEPL_API_KEY=
 PAGESPEED_API_KEY=
 
@@ -441,13 +442,19 @@ Solo la cuenta propietaria puede crear y modificar usuarios.
 
 | Tipo de acceso | Puede cambiar |
 |---|---|
-| Acceso completo al contenido | Textos, datos de contacto, fotos, portafolio, estado del sitio, **Prospectos y Estadísticas** |
+| Acceso completo al contenido | Textos, datos de contacto, fotos, portafolio, estado del sitio, **Prospectos, Estadísticas y Monitoreo del sitio (resumen)** |
 | Editor de contenido | Textos, datos de contacto, fotos y portafolio |
 | Solo textos | Los textos del sitio (español e inglés) |
 | Solo fotos y portafolio | Fotos de «Nosotros» y proyectos, y el PDF |
 | Solo datos de contacto | Teléfonos, WhatsApp, correo, dirección, mapa, Instagram |
 | Ventas: prospectos | Solo **Prospectos** (mensajes del formulario) y **Estadísticas**; no cambia el sitio |
-| Personalizado | La combinación que elijas |
+| Personalizado | La combinación que elijas (por ejemplo, *Solo textos* + **Monitoreo del sitio (resumen)**) |
+
+> **Monitoreo del sitio (resumen)** es una versión ligera del Monitoreo: si el sitio
+> funciona, disponibilidad, tiempo de respuesta, cantidad de errores, fechas del
+> certificado, dominio y respaldos, y las gráficas. **No** muestra mensajes de error,
+> configuración ni detalles del servidor (eso sigue siendo solo de la cuenta propietaria).
+> Dáselo a quien deba saber si el sitio está bien (gerencia, administradores).
 
 > **Prospectos contiene datos personales** de quienes escriben por el formulario: dales
 > ese acceso solo a quienes atienden clientes (por ejemplo, ventas o gerencia).
@@ -488,6 +495,12 @@ escribe si hay algún error). Agrega dos tareas, usando la ruta de PHP del paso 
 Reemplaza `/usr/local/bin/php` por la ruta que mostró `which php` y `USUARIO` por tu
 usuario de cPanel. En el panel → **Monitoreo**, «Última revisión automática» debe
 mostrar la hora de la última ejecución después de unos minutos.
+
+Cada revisión también mide **cuánto tarda en cargar la página de inicio**; con eso se
+arma la gráfica «Tiempo de respuesta» de Monitoreo → **Tendencias** (junto con errores
+por día e inicios de sesión; 7, 30 o 90 días). Algunos hostings no permiten que el
+servidor se visite a sí mismo: si la gráfica dice «Todavía no hay mediciones» después
+de un día, no es una falla del sitio (la disponibilidad se mide aparte).
 
 ### Alertas automáticas (llegan al correo de alertas del paso 13.2)
 
@@ -598,12 +611,23 @@ Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a
 
 ---
 
-## 20. Traducción automática (opcional)
+## 20. Traducción automática (recomendada)
+
+Con ella, al escribir un texto en español el inglés se llena solo (y al revés) en
+**Textos del sitio**, **opciones del formulario de contacto** y **descripciones de
+fotos**; la persona lo revisa antes de guardar. Se configura **desde el panel**:
 
 1. Crea una cuenta **DeepL API Free** en https://www.deepl.com/pro-api (el plan API,
-   no la app). Copia la clave (termina en `:fx`).
-2. Pégala en `.env` → `DEEPL_API_KEY=…`.
-3. Compruébalo: `php ~/sensum-cms/bin/console translate:test`.
+   no la app; pide tarjeta solo para verificar, no cobra). En *API Keys* copia la
+   clave (termina en `:fx`). Incluye 500,000 caracteres al mes.
+2. Panel → **Administración → Traducción**: pega la clave, deja activado **Usar
+   traducción automática**, **Guardar cambios** (pide tu contraseña).
+3. **Probar conexión**: debe decir «La clave funciona (DeepL API Free)» con el
+   consumo del mes.
+
+La clave se guarda cifrada y nunca se vuelve a mostrar. Si ya estaba en `.env`
+(`DEEPL_API_KEY`), sigue funcionando; la del panel tiene prioridad. Desde la Terminal
+también puedes comprobarla: `php ~/sensum-cms/bin/console translate:test`.
 
 ---
 
@@ -633,6 +657,9 @@ Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a
 - [ ] Abre el sitio en tu celular (sin «No rastrear») y toca el botón de WhatsApp: al rato, **Estadísticas** muestra la visita y el clic.
 - [ ] Reportes de soporte: objetivo de respuesta elegido; resuelve el ticket de prueba y califícalo con la otra cuenta.
 - [ ] **Informe mensual → Descargar PDF** se abre bien; la prueba por correo trae el PDF adjunto.
+- [ ] Traducción → **Probar conexión** dice «La clave funciona». En Textos del sitio, escribe en español y mira cómo se llena el inglés (luego descarta el cambio).
+- [ ] Monitoreo → **Tendencias** muestra las gráficas (pasa el cursor para ver cada día) después de la primera hora de revisiones automáticas.
+- [ ] Una persona con «Acceso completo» (o con *Monitoreo del sitio (resumen)*) ve **Monitoreo del sitio** en su menú, sin el registro de errores.
 - [ ] Better Stack muestra ambos monitores en verde.
 
 ---
@@ -690,6 +717,7 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
 | Estadísticas en cero o muy bajas | Revisa que estén activadas (Estadísticas → *Estadísticas y privacidad*) y que el sitio se haya publicado después. No se cuentan robots, navegadores con «No rastrear» ni, a veces, quienes usan bloqueadores de anuncios: es lo esperado. |
 | Un mensaje del formulario no llegó por correo | Búscalo en **Prospectos** (queda guardado aunque el correo falle; aparece con aviso amarillo). Luego revisa panel → Correo → *Enviar correo de prueba*. |
 | Alguien pide que borremos sus datos | Prospectos → abre su mensaje → **Eliminar** (borra mensaje, notas e historial). |
+| No aparece la traducción automática al editar | Panel → **Traducción**: debe decir «activada». Pulsa **Probar conexión**; si dice que la clave no funciona, pégala de nuevo (completa, con `:fx`). Si se acabó el mes gratuito, espera al siguiente o escribe el inglés a mano. |
 | Monitoreo → Correo y dominio muestra un problema | cPanel → **Email Deliverability** → *Repair* (SPF/DKIM). Para DMARC, paso 6.3. |
 | Llegan correos de «Nuevo inicio de sesión» | Es normal la primera vez en cada navegador. Si no fuiste tú: cambia la contraseña y usa «Cerrar sesión en otros dispositivos». |
 | «Demasiados píxeles» o falla al subir fotos | Sube `memory_limit` a 256M (paso 4). |

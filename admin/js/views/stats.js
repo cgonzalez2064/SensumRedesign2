@@ -5,18 +5,17 @@
  * Owner and accounts with the "leads" access; on/off is the owner's.
  */
 import { h, icon, fill } from '../dom.js';
-import { t, getLang, fmtDate } from '../i18n.js';
+import { t, getLang } from '../i18n.js';
 import { api } from '../api.js';
 import { pageHead, loading, loadError, toast, errorText, alertBox, cardHead, switchInput } from '../ui.js';
+import { chart } from '../charts.js';
 
 const nf = () => new Intl.NumberFormat(getLang() === 'en' ? 'en-US' : 'es-GT');
 const num = (n) => nf().format(n);
 const dec = (n) => new Intl.NumberFormat(getLang() === 'en' ? 'en-US' : 'es-GT', { maximumFractionDigits: 1 }).format(n);
 const pct = (part, total) => (total > 0 ? Math.round((100 * part) / total) : 0);
-const SVG = 'http://www.w3.org/2000/svg';
 /** Bar of a given width (CSSOM, allowed by the panel's CSP — inline style attributes are not). */
 const barFill = (p) => h('span', { class: 'bar-fill', ref: (el) => { el.style.width = Math.max(2, p) + '%'; } });
-const svg = (tag, attrs) => { const el = document.createElementNS(SVG, tag); for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v); return el; };
 
 /** "+15 %" / "-8 %" against the previous period, or null with nothing to compare. */
 function trend(now, before, higherIsBetter = true) {
@@ -43,26 +42,20 @@ function bars(rows, total, { labelOf = (k) => k, empty = t('stats.noData') } = {
     h('div', { class: 'bar-track', 'aria-hidden': 'true' }, barFill(pct(n, total))))));
 }
 
-/** Daily visitors as columns, with the numbers in a table for screen readers. */
+/** Daily visitors and page views: interactive chart (hover, touch, keyboard) with the data table. */
 function dailyChart(days) {
-  const max = Math.max(1, ...days.map((d) => d.visitors));
-  const w = 600; const hgt = 140; const gap = 2;
-  const bw = (w - gap * (days.length - 1)) / days.length;
-  const chart = svg('svg', { viewBox: `0 0 ${w} ${hgt}`, class: 'day-chart', role: 'img', 'aria-label': t('stats.dailyAria'), preserveAspectRatio: 'none' });
-  days.forEach((d, i) => {
-    const bh = Math.max(d.visitors ? 3 : 1, (d.visitors / max) * (hgt - 6));
-    const r = svg('rect', { x: (i * (bw + gap)).toFixed(1), y: (hgt - bh).toFixed(1), width: bw.toFixed(1), height: bh.toFixed(1), rx: 2, class: d.visitors ? 'bar' : 'bar zero' });
-    const tip = svg('title', {});
-    tip.textContent = `${fmtDate(Date.parse(d.day + 'T12:00:00') / 1000, false)}: ${t('stats.visitorsN', { n: num(d.visitors) })}`;
-    r.appendChild(tip);
-    chart.appendChild(r);
+  const locale = getLang() === 'en' ? 'en-US' : 'es-GT';
+  const d = (x) => new Date(x + 'T12:00:00');
+  return chart({
+    type: 'line', area: true, labels: days.map((x) => x.day), ariaLabel: t('stats.dailyAria'),
+    xFormat: (x) => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(d(x)),
+    titleFormat: (x) => new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long' }).format(d(x)),
+    series: [
+      { key: 'visitors', label: t('stats.visitors'), values: days.map((x) => x.visitors), tone: 'brand', format: num },
+      { key: 'views', label: t('stats.views'), values: days.map((x) => x.views), tone: 'info', format: num },
+    ],
+    yFormat: num, empty: t('stats.noData'),
   });
-  const table = h('table', { class: 'sr-only' }, h('caption', { text: t('stats.dailyTitle') }),
-    h('thead', null, h('tr', null, h('th', { text: t('stats.day') }), h('th', { text: t('stats.visitors') }), h('th', { text: t('stats.views') }))),
-    h('tbody', null, days.map((d) => h('tr', null, h('td', { text: d.day }), h('td', { text: String(d.visitors) }), h('td', { text: String(d.views) })))));
-  return h('div', { class: 'day-chart-wrap' }, chart,
-    h('div', { class: 'row-between tiny muted', 'aria-hidden': 'true' }, h('span', { text: fmtDate(Date.parse(days[0].day + 'T12:00:00') / 1000, false) }), h('span', { text: fmtDate(Date.parse(days[days.length - 1].day + 'T12:00:00') / 1000, false) })),
-    table);
 }
 
 export async function render({ main }) {
@@ -72,6 +65,7 @@ export async function render({ main }) {
   main.append(body);
   let period = '30d';
   let alive = true;
+  let dayChart = null;
   periodSel.addEventListener('change', () => { period = periodSel.value; load(); });
 
   const load = async () => {
@@ -96,8 +90,10 @@ export async function render({ main }) {
       kpi(t('stats.formMessages'), num(l.received), t('stats.formMessagesNote'), trend(l.received, pl.received)),
       kpi(t('stats.contactRate'), dec(rate) + (getLang() === 'en' ? '%' : ' %'), t('stats.contactRateNote'), null));
 
+    if (dayChart) dayChart.destroy();
+    dayChart = dailyChart(v.days);
     const daily = h('section', { class: 'card', 'aria-labelledby': 'st-daily' },
-      cardHead({ id: 'st-daily', icon: 'graph-up', title: t('stats.dailyTitle') }), dailyChart(v.days));
+      cardHead({ id: 'st-daily', icon: 'graph-up', title: t('stats.dailyTitle') }), dayChart.el);
 
     const sources = h('section', { class: 'card', 'aria-labelledby': 'st-src' },
       cardHead({ id: 'st-src', icon: 'globe2', title: t('stats.sources'), lead: t('stats.sourcesLead') }),
@@ -142,5 +138,5 @@ export async function render({ main }) {
   };
 
   await load();
-  return { destroy: () => { alive = false; } };
+  return { destroy: () => { alive = false; if (dayChart) dayChart.destroy(); } };
 }

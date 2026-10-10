@@ -3,12 +3,17 @@ import { h, icon, clear, fill } from '../dom.js';
 import { t, fmtBytes, fmtRelative } from '../i18n.js';
 import { api, upload } from '../api.js';
 import { pageHead, loading, loadError, textField, alertBox, toast, errorText, fieldErrorText, openDialog, confirmDialog, setBusy, button } from '../ui.js';
+import { autoTranslatePair } from '../autotranslate.js';
+
+/** Automatic ES ⇄ EN for photo descriptions (set from the session when the screen opens). */
+let translateOn = false;
 
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const IMAGE_EXT = /\.(jpe?g|png|webp)$/i;
 const CLIENT_MAX_SIDE = 3200; // larger photos are reduced in the browser before uploading
 
-export async function render({ main, params, navigate, can }) {
+export async function render({ main, params, navigate, can, session }) {
+  translateOn = !!(session && session.app && session.app.translation);
   // Photos and the PDF portfolio are separate permissions: show only the tabs this account may change.
   const allowed = [['nosotros', 'photos'], ['proyectos', 'photos'], ['documentos', 'documents']].filter(([, p]) => can(p)).map(([slug]) => slug);
   const tab = allowed.includes(params[0]) ? params[0] : allowed[0];
@@ -164,7 +169,8 @@ function altFields(slot, item) {
     }
     return ok;
   };
-  return { es, en, check };
+  const pair = translateOn ? autoTranslatePair({ es, en }) : null;
+  return { es, en, check, settle: () => (pair ? pair.settle() : Promise.resolve()) };
 }
 
 function altDialog(slot, item, reload) {
@@ -176,6 +182,7 @@ function altDialog(slot, item, reload) {
       { label: t('common.cancel'), onClick: (b, close) => close() },
       { label: t('common.save'), variant: 'primary', onClick: async (btn, close) => {
         clear(msg);
+        await f.settle();
         if (!f.check()) return;
         setBusy(btn, true, t('common.saving'));
         try { await api.put('/media/item/' + item.id, { altEs: f.es.input.value, altEn: f.en.input.value }); toast(t('media.altSaved')); close(); reload(); }
@@ -298,6 +305,7 @@ function imageDialog(slot, ctx, current, reload) {
       { label: t('media.save'), variant: 'primary', icon: 'cloud-arrow-up', onClick: async (btn, close) => {
         clear(msg);
         if (!chosen) { showErr(fieldErrorText('file_required')); return; }
+        await alt.settle();
         if (!alt.check()) return;
         const fd = new FormData();
         fd.append('file', chosen.file, chosen.file.name);

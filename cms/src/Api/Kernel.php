@@ -38,6 +38,8 @@ final class Kernel
 
         ['GET', '/api/dashboard', SystemController::class, 'dashboard', 'user'],
         ['GET', '/api/monitor/summary', MonitorController::class, 'summary', 'owner'],
+        ['GET', '/api/monitor/overview', MonitorController::class, 'overview', 'user'],
+        ['GET', '/api/monitor/series', MonitorController::class, 'series', 'user'],
         ['GET', '/api/monitor/errors', MonitorController::class, 'errors', 'owner'],
         ['POST', '/api/monitor/test-alert', MonitorController::class, 'testAlert', 'owner'],
         ['PUT', '/api/monitor/alerts', MonitorController::class, 'saveRules', 'owner'],
@@ -47,6 +49,9 @@ final class Kernel
         ['GET', '/api/settings/email', SettingsController::class, 'email', 'owner'],
         ['PUT', '/api/settings/email', SettingsController::class, 'saveEmail', 'owner'],
         ['POST', '/api/settings/email/test', SettingsController::class, 'testEmail', 'owner'],
+        ['GET', '/api/settings/translation', TranslationController::class, 'index', 'owner'],
+        ['PUT', '/api/settings/translation', TranslationController::class, 'save', 'owner'],
+        ['POST', '/api/settings/translation/test', TranslationController::class, 'test', 'owner'],
         ['GET', '/api/site-report', SiteReportController::class, 'index', 'owner'],
         ['GET', '/api/site-report/preview', SiteReportController::class, 'preview', 'owner'],
         ['PUT', '/api/site-report/settings', SiteReportController::class, 'settings', 'owner'],

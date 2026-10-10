@@ -53,6 +53,14 @@ export default async function globalSetup() {
       `('${day}', 'lang', 'es', ${v - 2})`, `('${day}', 'lang', 'en', 2)`, `('${day}', 'click', 'whatsapp', ${i % 4})`, `('${day}', 'click', 'phone', ${i % 2})`);
   }
   server.sql(`INSERT INTO analytics_daily (day, metric, dim, count) VALUES ${days.join(', ')}`);
+  // 30 days of scheduled checks (every 2 hours) with response times; one day with a failed check.
+  const runs = [];
+  for (let i = 0; i < 30 * 12; i++) {
+    const ts = now - i * 7200;
+    const failed = i === 50;
+    runs.push(`(${ts}, ${failed ? 0 : 1}, '${failed ? 'database' : ''}', ${failed ? 'NULL' : 180 + ((i * 37) % 160)}, ${failed ? 'NULL' : 200})`);
+  }
+  server.sql(`INSERT INTO monitor_runs (created_at, ok, failed, response_ms, http_status) VALUES ${runs.join(', ')}`);
   server.cli(['publish']);
   process.env.E2E_BASE = server.base;
   process.env.E2E_STORAGE = server.storage();

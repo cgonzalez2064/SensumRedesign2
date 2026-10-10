@@ -205,7 +205,7 @@ final class Cli
 
     /** Demo accounts, one per access profile (development only). id => [name, permissions, status] */
     private const DEMO_USERS = [
-        'demo.completo' => ['Demo Acceso Completo', ['texts', 'contact', 'photos', 'documents', 'site', 'leads'], 'active', 'Acceso completo al contenido'],
+        'demo.completo' => ['Demo Acceso Completo', ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'monitor'], 'active', 'Acceso completo al contenido'],
         'demo.editor' => ['Demo Editor de Contenido', ['texts', 'contact', 'photos', 'documents'], 'active', 'Editor de contenido'],
         'demo.textos' => ['Demo Solo Textos', ['texts'], 'active', 'Solo textos'],
         'demo.fotos' => ['Demo Solo Fotos', ['photos', 'documents'], 'active', 'Solo fotos y portafolio'],
@@ -338,7 +338,7 @@ final class Cli
     {
         $tr = $this->app->translator();
         if (!$tr->isEnabled()) {
-            fwrite(STDERR, "Automatic translation is off: set DEEPL_API_KEY in .env.\n");
+            fwrite(STDERR, "Automatic translation is off: add the DeepL key in the panel (Administración → Traducción) or DEEPL_API_KEY in .env, and keep it switched on.\n");
             return 1;
         }
         try {

@@ -62,9 +62,21 @@ final class ContentController extends Controller
      * Machine-translates editor text between Spanish and English. Nothing is
      * saved: the admin shows the result in the other language's box for review.
      */
+    /**
+     * Machine translation for review, for anyone who edits bilingual content:
+     * site texts (items with the field `key`), and plain labels without a key
+     * (contact-form options, photo descriptions). Saves nothing.
+     */
     public function translate(): never
     {
-        $this->requirePermission('texts');
+        if (!array_filter(['texts', 'contact', 'photos', 'documents'], fn ($p) => $this->app->auth()->can((array) $this->session, $p))) {
+            throw new ApiError(403, 'forbidden');
+        }
+        // Site texts (items with a field key) need the "texts" access itself.
+        $rawItems = $this->req->raw('items');
+        if (is_array($rawItems) && array_filter($rawItems, fn ($i) => is_array($i) && isset($i['key']))) {
+            $this->requirePermission('texts');
+        }
         $translator = $this->app->translator();
         if (!$translator->isEnabled()) {
             throw new ApiError(503, 'translation_unavailable');
@@ -84,7 +96,7 @@ final class ContentController extends Controller
             $key = is_array($item) ? ($item['key'] ?? null) : null;
             $raw = is_array($item) ? ($item['text'] ?? null) : null;
             $field = is_string($key) ? $schema->field($key) : null;
-            if (!$field || !$field['bilingual'] || !is_string($raw)) {
+            if (($key !== null && (!$field || !$field['bilingual'])) || !is_string($raw)) {
                 throw new ApiError(400, 'malformed_request');
             }
             if (strlen($raw) > 4000) {
@@ -92,9 +104,9 @@ final class ContentController extends Controller
             }
             $text = Validator::normalizeText($raw);
             if (preg_match('/[<>]/', $text)) {
-                throw ApiError::validation([$key . '.' . $from => 'no_html']);
+                throw ApiError::validation([($key ?? 'text') . '.' . $from => 'no_html']);
             }
-            $batch[] = ['key' => $key, 'text' => $text, 'emphasis' => $field['type'] === 'emphasis'];
+            $batch[] = ['key' => $key, 'text' => $text, 'emphasis' => $field !== null && $field['type'] === 'emphasis'];
             $chars += mb_strlen($text);
         }
 

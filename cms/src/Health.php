@@ -49,7 +49,7 @@ final class Health
             $tr = $app->translator();
             $canConnect = function_exists('curl_init') || filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN);
             $c['translation'] = ['ok' => $tr->isEnabled() && $canConnect, 'optional' => true, 'detail' => match (true) {
-                !$tr->isEnabled() => 'not configured (DEEPL_API_KEY) — editors write both languages by hand',
+                !$tr->isEnabled() => 'off — add a DeepL key in Administración → Traducción (or DEEPL_API_KEY); until then both languages are written by hand',
                 !$canConnect => 'PHP cannot make outgoing HTTPS requests (enable curl or allow_url_fopen)',
                 default => $tr->plan(),
             }];

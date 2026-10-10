@@ -58,7 +58,8 @@ Your choice is remembered. You can also change it in **My account**.
    on the website" with a link to view it.
 
 **Automatic translation** (if it's on, you'll see a blue notice when you open a
-section):
+section; it works the same in the **contact-form options** and the **photo
+descriptions**):
 * When you type in **Spanish**, the **English** box fills in by itself a second
   after you stop typing (and the other way round). Below it you'll see
   "Translated automatically from Spanish. Please review.": read it and fix it if
@@ -256,6 +257,12 @@ Only the **it@gruposensum.com** account sees **Monitoring** in the menu
 
 * **Status and figures:** whether the system is working, critical errors in the
   last 24 hours, errors this week, and when the scheduled check last ran.
+* **Trends (interactive charts):** the site's response time per day (red dots mark
+  days with failed checks), errors per day by severity, and successful and failed
+  sign-ins. Choose 7, 30 or 90 days; hover, tap or use the arrow keys to read each
+  day; tap a legend name to hide or show that series; "Show data" shows the table.
+* **Summary version:** the button at the top shows what people with the "Site
+  monitoring (summary)" access see.
 * **Error log:** every server, panel and website error, newest first. Filter by
   severity (Critical, Error, Warning), source and period, or search by text or
   by the **reference code** a user saw. "Technical details" shows the code
@@ -407,3 +414,27 @@ Visible to the owner account and to people with the **Leads and statistics** acc
 * Measured on the site itself, **without cookies** and without storing IP addresses;
   people asking "Do Not Track" and robots are not counted, so figures are somewhat
   lower than other tools show. The owner account can turn them off.
+
+## 19. Site monitoring (summary version)
+
+For people with the **Site monitoring (summary)** access (part of "Full content
+access", or chosen under "Custom"). In the menu: **Status → Site monitoring**.
+
+* A notice at the top says whether **everything works**, whether there **was a
+  problem** in the last 24 hours, or whether **there is a problem now** (technical
+  support is already notified).
+* 30-day **availability**, average **response time**, this week's **errors** (counts
+  only) and the last scheduled **check**.
+* The same trend **charts** (response time and errors per day).
+* **Security and backups:** published site up to date, certificate and domain expiry,
+  domain e-mail, latest backup and off-server backup.
+* It shows no error messages or settings: if something looks wrong, use **Report a
+  problem**.
+
+## 20. For the owner account: automatic translation
+
+In **Administration → Translation** you paste the **DeepL API Free** key (free,
+500,000 characters a month), switch it on or off and press **Test connection** to
+check it works and see this month's usage. The key is stored encrypted and never
+shown again; changes ask for your password. With translation on, typing in one
+language fills the other in Website text, contact-form options and photo descriptions.

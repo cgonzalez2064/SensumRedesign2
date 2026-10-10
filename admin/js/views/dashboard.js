@@ -43,6 +43,7 @@ export async function render({ main, session, isOwner, can }) {
       can('photos') || can('documents') ? quick('#/fotos', 'images', 'media') : null,
       can('contact') ? quick('#/contacto', 'telephone', 'details') : null,
       can('leads') ? quick('#/prospectos', 'inbox', 'leads') : null,
+      can('monitor') && !user.owner ? quick('#/monitoreo-basico', 'activity', 'status') : null,
       quick(data.site.url + '/', 'box-arrow-up-right', 'site', true)));
 
     // Website status.

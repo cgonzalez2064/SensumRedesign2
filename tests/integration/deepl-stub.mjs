@@ -6,6 +6,8 @@
 import { createServer } from 'node:http';
 
 export const STUB_KEY = 'test-deepl-key-0000:fx';
+// A key in DeepL's real format, for saving it in the panel (also accepted by the stand-in).
+export const STUB_PANEL_KEY = '0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0:fx';
 
 const PHRASES = {
   'EN-US': {
@@ -32,7 +34,7 @@ export async function startDeepLStub({ port }) {
         res.writeHead(status, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
       };
-      if (req.headers.authorization !== `DeepL-Auth-Key ${STUB_KEY}`) return send(403, { message: 'Wrong key' });
+      if (![`DeepL-Auth-Key ${STUB_KEY}`, `DeepL-Auth-Key ${STUB_PANEL_KEY}`].includes(req.headers.authorization)) return send(403, { message: 'Wrong key' });
       if (req.method === 'GET' && req.url === '/v2/usage') return send(200, { character_count: 1234, character_limit: 500000 });
       if (req.method !== 'POST' || req.url !== '/v2/translate') return send(404, { message: 'Not found' });
       let json;

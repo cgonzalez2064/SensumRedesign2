@@ -31,7 +31,7 @@ test('without DEEPL_API_KEY the feature is off and the endpoint says so', async 
   const r = await tr(client, 'es', 'en', [{ key: 'hero.cta1', text: 'Cotiza tu proyecto' }]);
   assert.equal(r.status, 503);
   assert.equal(r.data.error, 'translation_unavailable');
-  assert.match(off.cli(['check']), /WARN.*translation.*not configured/);
+  assert.match(off.cli(['check']), /WARN.*translation.*off — add a DeepL key in Administración → Traducción/);
 });
 
 test('only signed-in users with a CSRF token can translate', async () => {

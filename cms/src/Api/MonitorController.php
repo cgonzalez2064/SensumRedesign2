@@ -6,9 +6,28 @@ namespace Sensum\Cms\Api;
 use Sensum\Cms\Http\ApiError;
 use Sensum\Cms\Http\Response;
 
-/** Monitoring and the error log — owner account only (OWNER_EMAIL). */
+/**
+ * Monitoring and the error log — owner account only (OWNER_EMAIL) — plus the
+ * summary version (overview + daily series) for accounts with the "monitor"
+ * access: counts and dates only, never error messages or technical details.
+ */
 final class MonitorController extends Controller
 {
+    /** Summary version of Monitoring ("Monitoreo del sitio"). */
+    public function overview(): never
+    {
+        $this->requirePermission('monitor');
+        Response::ok($this->app->monitor()->overview());
+    }
+
+    /** Daily figures for the charts: 7, 30 or 90 days. Sign-ins only for the owner. */
+    public function series(): never
+    {
+        $this->requirePermission('monitor');
+        $days = (int) $this->req->query('days');
+        Response::ok($this->app->monitor()->series(in_array($days, [7, 30, 90], true) ? $days : 30, $this->isOwner()));
+    }
+
     public function summary(): never
     {
         $this->app->watchdog()->checkScheduler();

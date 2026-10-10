@@ -18,10 +18,10 @@ use Sensum\Cms\Http\ApiError;
 final class Users
 {
     public const ROLES = ['admin', 'editor'];
-    public const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads'];
+    public const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'monitor'];
     /** Ready-made access types offered when inviting (anything else shows as "Personalizado"). */
     public const ACCESS_TYPES = [
-        'full' => ['texts', 'contact', 'photos', 'documents', 'site', 'leads'],
+        'full' => ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'monitor'],
         'content' => ['texts', 'contact', 'photos', 'documents'],
         'texts' => ['texts'],
         'media' => ['photos', 'documents'],

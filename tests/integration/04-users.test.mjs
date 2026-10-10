@@ -3,7 +3,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startServer, Client, createAdmin, ADMIN, mailpitUp, waitForMail, message, linkToken, unique } from './helpers.mjs';
 
-const ALL = ['texts', 'contact', 'photos', 'documents', 'site', 'leads'];
+const ALL = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'monitor'];
 let s; let owner;
 before(async () => {
   assert.ok(await mailpitUp(), 'Mailpit must be running');
@@ -139,6 +139,8 @@ test('photo items: permission is checked on the item, and translation needs "tex
   assert.equal((await texts.put('/api/media/proj2.gallery/order', { ids: [up.data.item.id] })).status, 403);
   assert.equal((await photos.del(`/api/media/item/${up.data.item.id}`)).status, 200);
   assert.equal((await photos.post('/api/content/translate', { from: 'es', to: 'en', items: [{ key: 'hero.cta1', text: 'Hola' }] })).status, 403);
+  // Photo descriptions (plain labels) may be translated by photo editors — here it is off: 503, not 403.
+  assert.equal((await photos.post('/api/content/translate', { from: 'es', to: 'en', items: [{ text: 'Fachada terminada' }] })).status, 503);
 });
 
 test('the owner changes access types; changes apply on the next request', async () => {

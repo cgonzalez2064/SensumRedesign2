@@ -108,9 +108,13 @@ so a slow screen can never write into the next one).
 
 ### 2a. Automatic translation ES ⇄ EN
 
-Off until `DEEPL_API_KEY` is set (DeepL API Free: 500,000 characters/month;
-all of the site's editable text is ≈ 5,000 characters per language). Then, in
-**Textos del sitio**:
+Off until the owner adds a DeepL key in **Administración → Traducción** (stored
+encrypted with `Secrets`, purpose `deepl-key`; never returned; password to save;
+on/off switch; connection test with usage) — `DEEPL_API_KEY` in `.env` remains the
+fallback and the panel key wins. DeepL API Free: 500,000 characters/month; all of
+the site's editable text is ≈ 5,000 characters per language. Then, in **Textos del
+sitio** — and the same way (`admin/js/autotranslate.js`) in the **contact-form
+options** and **photo descriptions**, which send plain labels without a field key:
 
 | What the person does | What happens |
 |---|---|
@@ -201,7 +205,7 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 | `lead_notes` | notes and history events (status, amount) of each lead, author, time |
 | `analytics_daily` | visit statistics, one row per day × metric × value (view/visitor/source/device/lang/click) — totals only |
 | `analytics_seen` | today's unique-visitor hashes (random daily salt + IP + browser); deleted when the day changes |
-| `monitor_runs` | one row per scheduled check (ok / failed checks) — availability figure of the monthly report |
+| `monitor_runs` | one row per scheduled check (ok / failed checks; home-page `response_ms` and `http_status`, `009_monitor_lite.sql`) — availability and the response-time chart |
 | `site_reports` | monthly reports sent: month, when, by whom, recipients, language, status, figures |
 | `sessions` | SHA-256 of the session cookie, CSRF token, created/last-seen/expiry, pseudonymized IP, user agent |
 | `user_tokens` | SHA-256 of invitation/reset tokens, purpose, expiry, used-at |
@@ -230,6 +234,9 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 | `GET /api/monitor/summary` · `GET /api/monitor/errors?severity=&source=&days=&q=&page=` · `POST /api/monitor/test-alert` | owner | Monitoring page, error log, test alert |
 | `PUT /api/monitor/alerts` · `GET /api/monitor/integrity` · `POST /api/monitor/integrity/accept` | owner | automatic-alert toggles; site-file findings; accept current files (password) |
 | `POST /api/monitor/domain-check` | owner | SPF/DKIM/DMARC/MX and domain-expiry check now |
+| `GET /api/monitor/series?days=7|30|90` | `monitor` (owner: + sign-ins) | daily figures for the trend charts: checks, availability, average home-page response time, errors by severity |
+| `GET /api/monitor/overview` | `monitor` | summary version of Monitoring: status, 30-day availability, 7-day response time, error counts, last check, publish/certificate/domain/e-mail/backup dates — no messages or settings |
+| `GET`/`PUT /api/settings/translation` · `POST /api/settings/translation/test` | owner | DeepL key (encrypted, never returned; password to save), on/off, connection test with usage |
 | `GET /api/security` · `PUT /api/security/backup` · `POST /api/security/backup/send` · `POST /api/security/backup/download` · `PUT /api/security/policy` | owner | off-server encrypted backup settings (password), send now, download (password); who must use two-step sign-in (password) |
 | `POST /api/users/{id}/2fa-reset` | owner | turn off someone else's two-step sign-in (password; ends their sessions; never your own) |
 | `GET`/`PUT /api/contact-form/services` | contact | "Servicio de interés" options (PUT: `items` [{id?, es, en}], `version`; publishes; 409 `conflict`) |
@@ -237,7 +244,7 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 | `GET /assets/contact-handler.php?challenge=1` | public | signed single-use captcha challenge for the contact form |
 | `POST /api/site/republish` | admin | regenerate pages |
 | `GET /api/content` · `PUT /api/content/{section}` | user | read/save a section (optimistic `version`) |
-| `POST /api/content/translate` | user | machine-translate field text ES⇄EN for review (saves nothing; off without `DEEPL_API_KEY`) |
+| `POST /api/content/translate` | texts/contact/photos/documents | machine-translate ES⇄EN for review: field text (`key`) or plain labels without a key (form options, photo descriptions); saves nothing; off without a key |
 | `GET /api/media` · `POST /api/media/{slot}/upload` · `PUT /api/media/{slot}/order` · `PUT`/`DELETE /api/media/item/{id}` | user | photos & PDF |
 | `PUT /api/account/profile` · `POST /api/account/password` · `POST /api/account/sessions/revoke-others` | user | own account |
 | `GET /api/account/2fa` · `POST /api/account/2fa/setup` · `/enable` · `/recovery-codes` · `/disable` | user | own two-step sign-in: setup (password → secret + QR), enable (code → recovery codes), new codes and disable (password + code). The only routes open to an account that must still enrol |
@@ -425,6 +432,23 @@ only when `APP_URL` is a public https address. `PAGESPEED_API_KEY` (free Google
 Cloud key restricted to the PageSpeed Insights API) is recommended — Google may
 refuse anonymous requests. `PAGESPEED_ENABLED=false` turns it off. The HTTPS
 certificate expiry is checked daily; under 3 weeks it is logged as a warning.
+
+### 9d. Trend charts and the summary version of Monitoring
+
+* Every scheduled check also times a GET of the home page (`APP_URL/`, 10 s timeout,
+  no redirects) and stores `response_ms`/`http_status` in `monitor_runs`. It is
+  informational: a hosting that cannot reach its own domain from cron simply shows
+  no measurements; availability still comes from the health checks.
+* `admin/js/charts.js`: dependency-free SVG line/area and stacked-bar charts (hover,
+  touch and keyboard ← → Home End with a live region, legend toggles, data table,
+  redraw on resize, reduced-motion aware, CSP-safe). Used by Monitoreo → *Tendencias*
+  (response time with failed-check markers, errors per day by severity, owner-only
+  sign-ins; 7/30/90 days) and Estadísticas (visits per day).
+* Access `monitor` ("Monitoreo del sitio (resumen)", part of *full* and of custom
+  choices; existing accounts with `site` received it in `009_monitor_lite.sql`):
+  page `#/monitoreo-basico` with status, availability, response time, error counts,
+  key dates and the same charts. The endpoints return counts and dates only — never
+  error messages, references, settings or sign-in figures.
 
 ### 9c. Prospectos (leads), statistics and service levels
 

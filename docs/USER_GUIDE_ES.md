@@ -59,7 +59,8 @@ Tu elección se recuerda. También puedes cambiarla en **Mi cuenta**.
    Verás el mensaje «Cambios publicados en el sitio» y un enlace para verlo.
 
 **Traducción automática** (si está activada, verás un aviso azul al abrir una
-sección):
+sección; funciona igual en las **opciones del formulario de contacto** y en las
+**descripciones de fotos**):
 * Cuando escribes en **español**, el **inglés** se llena solo un segundo después
   de que dejas de escribir (y al revés). Debajo aparece «Traducido
   automáticamente del español. Revísalo.»: léelo y corrígelo si hace falta antes
@@ -271,6 +272,13 @@ Solo la cuenta **it@gruposensum.com** ve **Monitoreo** en el menú
 
 * **Estado y cifras:** si el sistema funciona, errores críticos de las últimas
   24 horas, errores de la semana y cuándo corrió la revisión automática.
+* **Tendencias (gráficas interactivas):** tiempo de respuesta del sitio por día (los
+  puntos rojos marcan días con revisiones fallidas), errores por día según su
+  gravedad e inicios de sesión correctos y fallidos. Elige 7, 30 o 90 días; pasa el
+  cursor, toca o usa las flechas del teclado para ver cada día; toca un nombre de la
+  leyenda para ocultar o mostrar esa serie; «Ver datos» muestra la tabla.
+* **Versión resumida:** el botón arriba muestra lo que ven las personas con el
+  acceso «Monitoreo del sitio (resumen)».
 * **Registro de errores:** cada error del servidor, del panel y del sitio, del más
   reciente al más antiguo. Filtra por gravedad (Crítico, Error, Advertencia),
   origen y periodo, o busca por texto o por el **código de referencia** que vio
@@ -430,3 +438,27 @@ estadísticas** (por ejemplo, el tipo «Ventas»).
 * Se mide en el propio sitio, **sin cookies** y sin guardar direcciones IP; quien pide
   «No rastrear» y los robots no se cuentan, por eso las cifras son algo menores que las
   de otras herramientas. La cuenta propietaria puede desactivarlas.
+
+## 19. Monitoreo del sitio (versión resumida)
+
+Para quienes tienen el acceso **Monitoreo del sitio (resumen)** (incluido en «Acceso
+completo», o elegido en «Personalizado»). En el menú: **Estado → Monitoreo del sitio**.
+
+* Un aviso arriba dice si **todo funciona**, si **hubo un problema** en las últimas
+  24 horas o si **hay un problema ahora** (soporte técnico ya recibe el aviso).
+* **Disponibilidad** de 30 días, **tiempo de respuesta** promedio, **errores** de la
+  semana (solo la cantidad) y la **última revisión** automática.
+* Las mismas **gráficas** de tendencias (tiempo de respuesta y errores por día).
+* **Seguridad y respaldos:** sitio publicado al día, vencimiento del certificado y del
+  dominio, correo del dominio, último respaldo y respaldo fuera del servidor.
+* No muestra mensajes de error ni configuración: si notas algo raro, usa **Reportar un
+  problema**.
+
+## 20. Para la cuenta propietaria: Traducción automática
+
+En **Administración → Traducción** pegas la clave de **DeepL API Free** (gratuita,
+500,000 caracteres al mes), la activas o desactivas y pulsas **Probar conexión** para
+ver si funciona y cuánto se ha usado en el mes. La clave se guarda cifrada y no se
+vuelve a mostrar; los cambios piden tu contraseña. Con la traducción activada, al
+escribir en un idioma se llena el otro en Textos del sitio, opciones del formulario de
+contacto y descripciones de fotos.
