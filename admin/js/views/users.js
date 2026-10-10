@@ -1,5 +1,5 @@
 /** Usuarios (owner account only). Table on large screens, cards on phones. */
-import { h, icon, clear, initials } from '../dom.js';
+import { h, icon, clear, initials, fill } from '../dom.js';
 import { t, fmtRelative, fmtDate } from '../i18n.js';
 import { api } from '../api.js';
 import { pageHead, loading, loadError, textField, alertBox, toast, errorText, fieldErrorText, openDialog, confirmDialog, setBusy, button, dropdown, copyText } from '../ui.js';
@@ -16,7 +16,7 @@ export async function render({ main }) {
   let presets = null;
   const load = async () => {
     let data;
-    try { data = await api.get('/users'); } catch (err) { clear(body).append(loadError(err, load)); return; }
+    try { data = await api.get('/users'); } catch (err) { fill(body, loadError(err, load)); return; }
     const users = data.users;
     presets = data.accessTypes;
     const statusText = (u) => {
@@ -55,7 +55,7 @@ export async function render({ main }) {
       h('div', { class: 'small', text: accessLabel(u, presets) }),
       h('div', { class: 'row' }, statusBadge(u)),
       h('div', { class: 'tiny muted', text: u.lastLoginAt ? t('users.lastLogin', { when: fmtRelative(u.lastLoginAt) }) : t('users.neverLoggedIn') }))));
-    clear(body).append(table, cards);
+    fill(body, table, cards);
   };
 
   const menuItem = (ic, label, onClick, danger) => h('button', { type: 'button', class: ['menu-item', danger && 'danger'], onclick: onClick }, icon(ic), label);

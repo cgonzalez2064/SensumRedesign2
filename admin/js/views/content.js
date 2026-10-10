@@ -1,6 +1,6 @@
 /** Textos del sitio (section list + editor) and Datos de contacto. */
-import { h, icon, clear, nextId } from '../dom.js';
-import { t, fieldText, fmtRelative } from '../i18n.js';
+import { h, icon, clear, nextId, fill } from '../dom.js';
+import { t, tp, fieldText, fmtRelative } from '../i18n.js';
 import { api } from '../api.js';
 import { pageHead, loading, loadError, textField, alertBox, toast, errorText, fieldErrorText, openDialog, setBusy, button } from '../ui.js';
 
@@ -268,7 +268,7 @@ function buildEditor(main, section, { siteUrl, onSaved, extras = null, translate
     const d = dirtyKeys();
     savebar.classList.toggle('show', d.length > 0);
     savebar.inert = d.length === 0;
-    savebarText.lastChild.textContent = t('common.unsavedCount', { n: d.length });
+    savebarText.lastChild.textContent = tp('common.unsavedCount', d.length);
     for (const st of fieldsState.values()) {
       const isDirty = Object.entries(st.inputs).some(([l, f]) => f.input.value !== st.loaded[l]);
       st.card.classList.toggle('dirty', isDirty);
@@ -318,7 +318,7 @@ function buildEditor(main, section, { siteUrl, onSaved, extras = null, translate
           const err = validate(field, f.input.value);
           f.setError(err ? fieldErrorText(err[0], err[1]) : null);
           refresh();
-          if (preview && lang === 'es') clear(previewWrap).append(emphasisPreview(f.input.value));
+          if (preview && lang === 'es') fill(previewWrap, emphasisPreview(f.input.value));
           if (extras && extras.onInput) extras.onInput(field.key, f.input.value);
         });
         inputs[lang] = f;
@@ -503,7 +503,7 @@ export async function editor({ main, params, navigate }) {
   const section = data.sections.find((s) => s.id === id);
   if (!section || id === 'details') { navigate('/textos'); return null; }
   const n = splitName(id);
-  clear(main).append(pageHead({
+  fill(main, pageHead({
     crumbs: [{ label: t('content.title'), href: '#/textos' }].concat(n.crumb ? [{ label: n.crumb }] : []),
     title: n.title,
     lead: n.desc + ' ' + t('content.editorLead'),
@@ -529,7 +529,7 @@ export async function details({ main }) {
   const join = (parts) => parts.map((p) => p.trim()).filter(Boolean).join(', ');
   const renderPreview = () => {
     const short = current.office.trim().replace(/^Oficina\s+/, 'Of. ');
-    clear(dl).append(
+    fill(dl, 
       h('dt', { text: t('details.previewFull') }), h('dd', { text: join([current.building, current.street, current.office, current.city]) }),
       h('dt', { text: t('details.previewShort') }), h('dd', { text: join([current.building, current.street, short]) }),
       h('dt', { text: t('details.previewMap') }), h('dd', null, h('strong', { text: current.map }), h('br'), join([current.street, current.office, current.city])));

@@ -1,6 +1,6 @@
 /** Mi cuenta — profile, preferences and "Cuenta / Seguridad". */
 import { h, clear } from '../dom.js';
-import { t, getLang, setLang } from '../i18n.js';
+import { t, tp, getLang, setLang } from '../i18n.js';
 import { api, setCsrf } from '../api.js';
 import { pageHead, textField, passwordField, passwordGuide, alertBox, toast, errorText, fieldErrorText, setBusy, button } from '../ui.js';
 import { updateUser, themeSwitch } from '../app.js';
@@ -35,9 +35,8 @@ export function render({ main, session }) {
       const r = await api.put('/account/profile', { name: name.input.value.trim(), lang: langSel.value, theme: getThemePref() });
       toast(t('account.profileSaved'));
       setBusy(saveProfile, false);
-      updateUser(r.user);
-      if (langSel.value !== getLang()) setLang(langSel.value);
-      else { clear(main); render({ main, session: { ...session, user: r.user } }); }
+      if (langSel.value !== getLang()) setLang(langSel.value); // the panel re-renders in the new language
+      updateUser(r.user); // and with the new name (menu, greeting)
     } catch (err) {
       setBusy(saveProfile, false);
       if (err.code === 'validation' && err.fields.name) name.setError(fieldErrorText(err.fields.name, { max: 80 }));
@@ -85,7 +84,7 @@ export function render({ main, session }) {
   const revoke = button(t('account.revokeOthers'), { icon: 'box-arrow-right' });
   revoke.addEventListener('click', async () => {
     setBusy(revoke, true, t('common.saving'));
-    try { const r = await api.post('/account/sessions/revoke-others'); toast(t('account.revoked', { n: r.ended })); }
+    try { const r = await api.post('/account/sessions/revoke-others'); toast(tp('account.revoked', r.ended)); }
     catch (err) { toast(errorText(err), { type: 'bad' }); }
     setBusy(revoke, false);
   });

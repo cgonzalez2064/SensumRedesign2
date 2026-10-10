@@ -1,5 +1,5 @@
 /** Shared interface components. Everything renders text with textContent. */
-import { h, icon, clear, nextId } from './dom.js';
+import { h, icon, clear, nextId, fill } from './dom.js';
 import { t } from './i18n.js';
 
 // ---------------------------------------------------------------- toasts
@@ -130,12 +130,12 @@ export function setBusy(btn, busy, busyLabel) {
     if (!busyContent.has(btn)) busyContent.set(btn, [...btn.childNodes]);
     btn.disabled = true;
     btn.setAttribute('aria-busy', 'true');
-    clear(btn).append(h('span', { class: 'spinner', 'aria-hidden': 'true' }), busyLabel || btn.textContent);
+    fill(btn, h('span', { class: 'spinner', 'aria-hidden': 'true' }), busyLabel || btn.textContent);
   } else {
     btn.disabled = false;
     btn.removeAttribute('aria-busy');
     if (busyContent.has(btn)) {
-      clear(btn).append(...busyContent.get(btn));
+      fill(btn, ...busyContent.get(btn));
       busyContent.delete(btn);
     }
   }
@@ -160,6 +160,7 @@ export function textField(opts) {
     type: opts.multiline ? null : (opts.type || 'text'), value: opts.value ?? '', placeholder: opts.placeholder || null,
     autocomplete: opts.autocomplete || 'off', required: opts.required || null, inputmode: opts.inputmode || null,
     rows: opts.rows || null, readOnly: opts.readOnly || false, spellcheck: opts.spellcheck === false ? 'false' : null,
+    maxlength: opts.maxlength || null,
     'aria-describedby': [opts.hint ? hintId : '', errId].filter(Boolean).join(' '),
     lang: opts.lang || null,
   });
@@ -189,7 +190,7 @@ export function textField(opts) {
     wrap, input, label,
     setError(msg) {
       if (msg) {
-        clear(error).append(icon('exclamation-circle'), h('span', { text: msg }));
+        fill(error, icon('exclamation-circle'), h('span', { text: msg }));
         error.hidden = false;
         input.setAttribute('aria-invalid', 'true');
       } else {
@@ -214,7 +215,7 @@ export function passwordField(opts) {
         input.type = shown ? 'text' : 'password';
         toggle.setAttribute('aria-pressed', String(shown));
         toggle.setAttribute('aria-label', t(shown ? 'auth.hide' : 'auth.show'));
-        clear(toggle).append(icon(shown ? 'eye-slash' : 'eye'));
+        fill(toggle, icon(shown ? 'eye-slash' : 'eye'));
       });
       return h('div', { class: 'input-group' }, input, toggle);
     },
@@ -275,8 +276,26 @@ export function pageHead({ crumbs = [], title, lead, actions = [] }) {
     actions.length ? h('div', { class: 'row' }, actions) : null);
 }
 
+/** Placeholder while something loads: shaped like content, shown only after a short delay (CSS). */
 export function loading() {
-  return h('div', { class: 'page-loading', role: 'status' }, h('span', { class: 'spinner', 'aria-hidden': 'true' }), h('span', { text: t('app.loading') }));
+  return h('div', { class: 'page-loading', role: 'status' }, h('span', { class: 'sr-only', text: t('app.loading') }),
+    h('div', { class: 'skeleton sk-title', 'aria-hidden': 'true' }), h('div', { class: 'skeleton sk-line', 'aria-hidden': 'true' }),
+    h('div', { class: 'skeleton sk-block', 'aria-hidden': 'true' }));
+}
+
+/** On/off switch (a checkbox with role="switch"); returns { wrap, input }. */
+export function switchInput({ id, checked, describedBy, onChange }) {
+  const input = h('input', { type: 'checkbox', role: 'switch', id, checked: checked || null, 'aria-describedby': describedBy || null });
+  if (onChange) input.addEventListener('change', () => onChange(input.checked, input));
+  return { input, wrap: h('span', { class: 'switch' }, input, h('span', { class: 'track', 'aria-hidden': 'true' }), h('span', { class: 'thumb', 'aria-hidden': 'true' })) };
+}
+
+/** Card header: icon tile, title, description and an optional badge on the right. */
+export function cardHead({ id, icon: ic, tone, title, lead, badge }) {
+  return h('div', { class: ['card-head', !lead && 'title-only'] },
+    ic ? h('span', { class: ['icon-tile', tone] }, icon(ic)) : null,
+    h('div', { class: 'grow' }, h('h2', { id, text: title }), lead ? h('p', { text: lead }) : null),
+    badge || null);
 }
 
 export function loadError(err, onRetry) {

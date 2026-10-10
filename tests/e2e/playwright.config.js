@@ -9,7 +9,9 @@ export default defineConfig({
   workers: 1,
   fullyParallel: false,
   reporter: [['list']],
-  use: { baseURL: 'http://127.0.0.1:8210', trace: 'off' },
+  // Entrance animations are cosmetic; accessibility scans need the settled
+  // page (the end state is the same with or without motion).
+  use: { baseURL: 'http://127.0.0.1:8210', trace: 'off', reducedMotion: 'reduce' },
   projects: [
     { name: 'desktop-chrome', use: { channel: 'chrome', viewport: { width: 1440, height: 900 } } },
     { name: 'tablet-chrome', use: { channel: 'chrome', viewport: { width: 768, height: 1024 }, hasTouch: true } },

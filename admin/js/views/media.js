@@ -1,5 +1,5 @@
 /** Fotos y archivos — photo slots, project galleries and the portfolio PDF. */
-import { h, icon, clear } from '../dom.js';
+import { h, icon, clear, fill } from '../dom.js';
 import { t, fmtBytes, fmtRelative } from '../i18n.js';
 import { api, upload } from '../api.js';
 import { pageHead, loading, loadError, textField, alertBox, toast, errorText, fieldErrorText, openDialog, confirmDialog, setBusy, button } from '../ui.js';
@@ -26,7 +26,7 @@ export async function render({ main, params, navigate, can }) {
     try {
       [media, content] = await Promise.all([api.get('/media'), api.get('/content')]);
     } catch (err) {
-      clear(body).append(loadError(err, load));
+      fill(body, loadError(err, load));
       return;
     }
     ctx.maxImage = media.maxImageBytes;

@@ -2,49 +2,56 @@
  * Sensum — Administrador de contenido (single-page app, no build step).
  * Hash routes keep reset/invitation tokens out of server logs and referrers.
  */
-import { h, icon, clear, initials } from './dom.js';
-import { t, setLang, getLang, onLangChange } from './i18n.js';
+import { h, icon, clear, initials, fill } from './dom.js';
+import { t, setLang, getLang, onLangChange, i18nReady } from './i18n.js';
 import { initTheme, setThemePref, getThemePref } from './theme.js';
 import { api, setCsrf, onSessionExpired } from './api.js';
-import { toast, openDialog, confirmDialog, dropdown, segmented, passwordField, textField, setBusy, errorText, alertBox } from './ui.js';
+import { toast, openDialog, confirmDialog, dropdown, segmented, passwordField, textField, setBusy, errorText, alertBox, loading, button } from './ui.js';
 import { initTelemetry } from './telemetry.js';
-import { openReportDialog } from './report.js';
-import * as authViews from './views/auth.js';
-import * as dashboard from './views/dashboard.js';
-import * as content from './views/content.js';
-import * as media from './views/media.js';
-import * as users from './views/users.js';
-import * as account from './views/account.js';
-import * as reports from './views/reports.js';
-import * as help from './views/help.js';
-import * as monitor from './views/monitor.js';
-import * as siteReport from './views/sitereport.js';
-import * as emailSettings from './views/email.js';
 import { can } from './access.js';
+
+// Screens are loaded when first opened (and prefetched when the pointer or
+// focus reaches their menu link), so the panel starts with only the shell.
+const lazy = (load) => { let p = null; return () => (p = p || load().catch((e) => { p = null; throw e; })); };
+const V = {
+  auth: lazy(() => import('./views/auth.js')),
+  dashboard: lazy(() => import('./views/dashboard.js')),
+  content: lazy(() => import('./views/content.js')),
+  media: lazy(() => import('./views/media.js')),
+  users: lazy(() => import('./views/users.js')),
+  account: lazy(() => import('./views/account.js')),
+  reports: lazy(() => import('./views/reports.js')),
+  help: lazy(() => import('./views/help.js')),
+  monitor: lazy(() => import('./views/monitor.js')),
+  siteReport: lazy(() => import('./views/sitereport.js')),
+  email: lazy(() => import('./views/email.js')),
+};
+const loadReport = lazy(() => import('./report.js'));
+const openReportDialog = (...args) => loadReport().then((m) => m.openReportDialog(...args));
 
 const state = { session: null, setupRequired: false, view: null, shell: null, path: null, skipGuard: false };
 
 // --------------------------------------------------------------- routes
 const PUBLIC = [
-  { re: /^\/ingresar$/, view: authViews.login },
-  { re: /^\/recuperar$/, view: authViews.forgot },
-  { re: /^\/restablecer\/([A-Za-z0-9_-]+)$/, view: authViews.reset },
-  { re: /^\/invitacion\/([A-Za-z0-9_-]+)$/, view: authViews.invitation },
-  { re: /^\/configurar$/, view: authViews.setup },
+  { re: /^\/ingresar$/, mod: V.auth, fn: 'login' },
+  { re: /^\/recuperar$/, mod: V.auth, fn: 'forgot' },
+  { re: /^\/restablecer\/([A-Za-z0-9_-]+)$/, mod: V.auth, fn: 'reset' },
+  { re: /^\/invitacion\/([A-Za-z0-9_-]+)$/, mod: V.auth, fn: 'invitation' },
+  { re: /^\/configurar$/, mod: V.auth, fn: 'setup' },
 ];
 const PRIVATE = [
-  { re: /^\/$/, view: dashboard.render, nav: 'dashboard' },
-  { re: /^\/textos$/, view: content.list, nav: 'content', perm: ['texts'] },
-  { re: /^\/textos\/([a-z]+)$/, view: content.editor, nav: 'content', perm: ['texts'] },
-  { re: /^\/contacto$/, view: content.details, nav: 'details', perm: ['contact'] },
-  { re: /^\/fotos(?:\/(nosotros|proyectos|documentos))?$/, view: media.render, nav: 'media', perm: ['photos', 'documents'] },
-  { re: /^\/usuarios$/, view: users.render, nav: 'users', owner: true },
-  { re: /^\/monitoreo$/, view: monitor.render, nav: 'monitor', owner: true },
-  { re: /^\/informe$/, view: siteReport.render, nav: 'siteReport', owner: true },
-  { re: /^\/correo$/, view: emailSettings.render, nav: 'email', owner: true },
-  { re: /^\/reportes$/, view: reports.render, nav: 'reports' },
-  { re: /^\/cuenta$/, view: account.render, nav: 'account' },
-  { re: /^\/ayuda$/, view: help.render, nav: 'help' },
+  { re: /^\/$/, mod: V.dashboard, fn: 'render', nav: 'dashboard' },
+  { re: /^\/textos$/, mod: V.content, fn: 'list', nav: 'content', perm: ['texts'] },
+  { re: /^\/textos\/([a-z]+)$/, mod: V.content, fn: 'editor', nav: 'content', perm: ['texts'] },
+  { re: /^\/contacto$/, mod: V.content, fn: 'details', nav: 'details', perm: ['contact'] },
+  { re: /^\/fotos(?:\/(nosotros|proyectos|documentos))?$/, mod: V.media, fn: 'render', nav: 'media', perm: ['photos', 'documents'] },
+  { re: /^\/usuarios$/, mod: V.users, fn: 'render', nav: 'users', owner: true },
+  { re: /^\/monitoreo$/, mod: V.monitor, fn: 'render', nav: 'monitor', owner: true },
+  { re: /^\/informe$/, mod: V.siteReport, fn: 'render', nav: 'siteReport', owner: true },
+  { re: /^\/correo$/, mod: V.email, fn: 'render', nav: 'email', owner: true },
+  { re: /^\/reportes$/, mod: V.reports, fn: 'render', nav: 'reports' },
+  { re: /^\/cuenta$/, mod: V.account, fn: 'render', nav: 'account' },
+  { re: /^\/ayuda$/, mod: V.help, fn: 'render', nav: 'help' },
 ];
 
 const currentPath = () => {
@@ -80,7 +87,7 @@ export function setSession(data) {
 
 export function updateUser(user) {
   if (state.session) state.session.user = user;
-  if (state.shell) renderShell();
+  if (state.shell) { state.path = null; route(true); }
 }
 
 export async function logout() {
@@ -148,7 +155,10 @@ window.addEventListener('beforeunload', (e) => {
 
 // --------------------------------------------------------------- shell
 function navLink(path, key, ic, active) {
-  return h('a', { href: '#' + path, 'aria-current': active === key ? 'page' : null, onclick: closeNav }, icon(ic), h('span', { text: t('nav.' + key) }));
+  const route = PRIVATE.find((r) => r.nav === key);
+  const prefetch = () => { if (route) route.mod().catch(() => {}); };
+  return h('a', { href: '#' + path, 'data-nav': key, 'aria-current': active === key ? 'page' : null, onclick: closeNav, onpointerenter: prefetch, onfocus: prefetch },
+    icon(ic), h('span', { text: t('nav.' + key) }));
 }
 
 function closeNav() {
@@ -165,10 +175,29 @@ function openNav() {
   if (first) first.focus();
 }
 
-function renderShell(activeNav) {
+/**
+ * The panel frame (sidebar, top bar). Built once and reused while the same
+ * person, language and access stay the same: navigating only swaps <main>.
+ */
+function renderShell(activeNav, force = false) {
   const app = document.getElementById('app');
   const user = state.session.user;
   const active = activeNav ?? (state.shell && state.shell.active);
+  const key = [getLang(), user.id, user.name, user.owner, (user.permissions || []).join(','), state.session.app && state.session.app.version].join('|');
+  if (!force && state.shell && state.shell.key === key && app.contains(state.shell.main)) {
+    state.shell.active = active;
+    state.shell.sidebar.querySelectorAll('.nav a[data-nav]').forEach((a) => {
+      if (a.getAttribute('data-nav') === active) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+    closeNav();
+    // A new <main> for every screen: a previous screen still finishing its
+    // requests writes into its own (detached) element, never into this one.
+    const fresh = h('main', { class: 'main view-enter', id: 'main', tabindex: '-1' });
+    state.shell.main.replaceWith(fresh);
+    state.shell.main = fresh;
+    return fresh;
+  }
   const siteUrl = (state.session.app && state.session.app.siteUrl) || '../';
 
   const openBtn = h('button', { class: 'btn btn-ghost btn-icon open-nav', type: 'button', 'aria-label': t('app.openMenu'), 'aria-expanded': 'false', 'aria-controls': 'sidebar', onclick: openNav }, icon('list'));
@@ -223,13 +252,13 @@ function renderShell(activeNav) {
       h('span', { class: 'tiny muted', text: t('app.version', { v: (state.session.app && state.session.app.version) || '' }) })));
 
   const scrim = h('div', { class: 'scrim', onclick: closeNav });
-  const main = h('main', { class: 'main', id: 'main', tabindex: '-1' });
+  const main = h('main', { class: 'main view-enter', id: 'main', tabindex: '-1' });
   const offline = h('div', { class: 'main', hidden: navigator.onLine !== false, role: 'status' }, alertBox('warn', null, t('app.offline')));
   sidebar.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sidebar.classList.contains('open')) { closeNav(); openBtn.focus(); } });
 
-  clear(app).append(h('a', { class: 'skip-link', href: '#main', onclick: (e) => { e.preventDefault(); main.focus(); } }, t('app.skip')),
+  fill(app, h('a', { class: 'skip-link', href: '#main', onclick: (e) => { e.preventDefault(); state.shell.main.focus(); } }, t('app.skip')),
     h('div', { class: 'app' }, sidebar, topbar, h('div', null, offline, main)), scrim);
-  state.shell = { main, sidebar, scrim, openBtn, active, offline };
+  state.shell = { main, sidebar, scrim, openBtn, active, offline, key };
   return main;
 }
 
@@ -287,8 +316,11 @@ async function route(force = false) {
     if (state.session && path === '/ingresar') return navigate(sessionStorage.getItem('sensum_after_login') || '/');
     state.shell = null;
     const app = document.getElementById('app');
+    let mod;
+    try { mod = await pub.mod(); } catch (e) { return showLoadFailed(document.getElementById('app'), e); }
+    if (stale()) return;
     clear(app);
-    const view = (await pub.view({ app, params: path.match(pub.re).slice(1), setupRequired: state.setupRequired, onSignedIn })) || null;
+    const view = (await mod[pub.fn]({ app, params: path.match(pub.re).slice(1), setupRequired: state.setupRequired, onSignedIn })) || null;
     if (!stale()) state.view = view;
     return;
   }
@@ -308,13 +340,27 @@ async function route(force = false) {
     focusHeading(main);
     return;
   }
-  const view = (await priv.view({ main, params: path.match(priv.re).slice(1), session: state.session, navigate, isOwner: isOwner(), can: userCan })) || null;
+  // Screen code: usually already prefetched; show a placeholder only if it takes a moment.
+  const slow = setTimeout(() => { if (!stale() && !main.firstChild) main.append(loading()); }, 120);
+  let mod;
+  try { mod = await priv.mod(); } catch (e) { clearTimeout(slow); if (!stale()) showLoadFailed(clear(main), e); return; }
+  clearTimeout(slow);
+  if (stale()) return;
+  clear(main);
+  const view = (await mod[priv.fn]({ main, params: path.match(priv.re).slice(1), session: state.session, navigate, isOwner: isOwner(), can: userCan })) || null;
   if (stale()) {
     if (view && view.destroy) view.destroy();
     return;
   }
   state.view = view;
   focusHeading(main);
+}
+
+/** A screen's code could not be downloaded (offline, or a new version was deployed meanwhile). */
+function showLoadFailed(el, err) {
+  if (window.console) console.warn(err);
+  fill(el, h('div', { class: 'card' }, alertBox('warn', t('common.loadFailed'), t('app.updateAvailable'),
+    [button(t('common.reload'), { icon: 'arrow-repeat', small: true, onClick: () => location.reload() })])));
 }
 
 function focusHeading(main) {
@@ -339,6 +385,7 @@ async function onSignedIn(data) {
 async function boot() {
   initTheme();
   initTelemetry();
+  await i18nReady();
   onSessionExpired(relogin);
   onLangChange(() => { state.path = null; route(true); });
   window.addEventListener('online', () => { if (state.shell) state.shell.offline.hidden = true; });
@@ -346,13 +393,19 @@ async function boot() {
   await loadSession();
   if (state.bootError && !state.session) {
     const app = document.getElementById('app');
-    clear(app).append(h('div', { class: 'auth' }, h('div', { class: 'auth-card' },
+    fill(app, h('div', { class: 'auth' }, h('div', { class: 'auth-card' },
       alertBox('bad', t('common.loadFailed'), errorText(state.bootError)),
       h('p'), h('button', { class: 'btn btn-primary btn-block', type: 'button', onclick: () => location.reload() }, icon('arrow-repeat'), t('common.reload')))));
     return;
   }
   window.addEventListener('hashchange', () => route());
   route(true);
+  // Once the first screen is up, quietly fetch the screens this person can open.
+  const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1500));
+  idle(() => {
+    if (!state.session) return;
+    PRIVATE.filter((r) => (!r.owner || isOwner()) && (!r.perm || r.perm.some(userCan))).forEach((r) => r.mod().catch(() => {}));
+  }, { timeout: 4000 });
 }
 
 boot();

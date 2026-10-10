@@ -36,6 +36,11 @@ export function clear(el) {
   return el;
 }
 
+/** Replaces an element's content. Like clear(el).append(...) but skips null/false (never prints "null"). */
+export function fill(el, ...children) {
+  return append(clear(el), children);
+}
+
 /** Inline SVG icon from the sprite (decorative: hidden from assistive tech). */
 export function icon(name, cls = '') {
   const ns = 'http://www.w3.org/2000/svg';

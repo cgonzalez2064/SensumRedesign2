@@ -150,7 +150,7 @@ button{ cursor:pointer; }
   background-size:200% 100%; animation: shimmer 1.3s ease-in-out infinite; min-height:1rem;
 }
 @keyframes shimmer{ from{ background-position:100% 0; } to{ background-position:-100% 0; } }
-.page-loading{ display:grid; place-items:center; min-height:40vh; color:var(--text-3); gap:.75rem; }
+.boot-loading{ display:grid; place-items:center; min-height:60vh; color:var(--text-3); gap:.75rem; }
 
 /* ---------- Cards ---------- */
 .card{
@@ -547,22 +547,6 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 .log-filters{ display:grid; gap:.6rem .75rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items:end; margin-bottom:.9rem; }
 .log-filters .field{ margin:0; }
 
-/* ---------- E-mail settings and automatic alerts ---------- */
-.form-grid{ display:grid; gap:1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); margin:.35rem 0 1rem; }
-.form-grid > *{ min-width:0; }
-.h-sub{ font-size:1rem; margin:1.25rem 0 .2rem; }
-.save-row{
-  position:sticky; bottom:.75rem; z-index:5; background:var(--surface); border:1px solid var(--border);
-  border-radius:var(--r-lg); box-shadow:var(--shadow-2); padding:.75rem 1rem;
-}
-.rule-list{ list-style:none; margin:0; padding:0; }
-.rule{ display:flex; gap:.75rem; align-items:flex-start; padding:.7rem 0; border-top:1px solid var(--border); }
-.rule:first-child{ border-top:0; padding-top:.2rem; }
-.rule input{ width:20px; height:20px; accent-color:var(--brand); flex:none; margin:.12rem 0 0; cursor:pointer; }
-.rule label{ cursor:pointer; font-weight:600; }
-.rule .badge{ margin-left:.35rem; vertical-align:1px; }
-.finding-list{ margin:.5rem 0; padding-left:1.1rem; font-size:.88rem; }
-.steps{ margin:.3rem 0 .6rem; padding-left:1.2rem; display:grid; gap:.2rem; }
 .log-filters .log-search{ grid-column: 1 / -1; }
 .kv-tight{ grid-template-columns: minmax(7rem, 42%) minmax(0, 1fr); }
 .log-list{ list-style:none; margin:0; padding:0; display:grid; gap:.6rem; }
@@ -585,6 +569,132 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 .intro-card{ background: linear-gradient(135deg, var(--accent-soft), var(--surface) 70%); }
 .intro-actions{ margin-top:1.1rem; }
 
+
+/* ==========================================================================
+   Polish — motion, card headers, form grids, switches, save bar
+   Motion uses only opacity/transform (compositor-only, no layout work) and
+   is switched off by prefers-reduced-motion (see the end of this file).
+   ========================================================================== */
+@keyframes rise-in{ from{ opacity:0; transform:translateY(8px); } }
+.main.view-enter > *{ animation: rise-in 260ms var(--ease) both; }
+.main.view-enter > :nth-child(2){ animation-delay:35ms; }
+.main.view-enter > :nth-child(3){ animation-delay:70ms; }
+.main.view-enter > :nth-child(n+4){ animation-delay:105ms; }
+/* Content that arrives after loading: a light cascade. */
+.stack-lg > .card, .stack-lg > .card-group, .dash-grid > .stack-lg > *, .grid-cards > *, .overview > *{ animation: rise-in 280ms var(--ease) both; }
+.stack-lg > :nth-child(2), .grid-cards > :nth-child(2), .overview > :nth-child(2){ animation-delay:40ms; }
+.stack-lg > :nth-child(3), .grid-cards > :nth-child(3), .overview > :nth-child(3){ animation-delay:80ms; }
+.stack-lg > :nth-child(n+4), .grid-cards > :nth-child(n+4){ animation-delay:120ms; }
+
+/* Loading placeholder: appears only if loading takes a moment. */
+.page-loading{ display:grid; gap:.8rem; min-height:0; place-items:stretch; padding:.25rem 0; animation: fade-in 200ms 150ms both; }
+.page-loading .skeleton{ height:14px; border-radius:7px; }
+.page-loading .sk-title{ width:min(240px, 60%); height:22px; }
+.page-loading .sk-line{ width:min(520px, 90%); }
+.page-loading .sk-block{ height:120px; border-radius:var(--r-lg); }
+
+/* Cards */
+.card{ transition: border-color var(--t) var(--ease), box-shadow var(--t) var(--ease); }
+.card-head{ display:flex; flex-wrap:wrap; gap:.6rem .85rem; align-items:flex-start; margin-bottom:1.1rem; }
+.card-head > .grow{ flex:1 1 220px; }
+.card-head.title-only{ align-items:center; }
+.card-head .icon-tile{ width:40px; height:40px; border-radius:12px; }
+.card-head .icon-tile .icon{ width:19px; height:19px; }
+.card-head h2{ font-size:1.08rem; }
+.card-head p{ margin:.2rem 0 0; color:var(--text-2); font-size:.9rem; max-width:70ch; }
+.card-head > .badge{ margin-left:auto; flex:none; align-self:center; }
+@media (max-width: 559px){ .card-head > .badge{ margin-left:calc(40px + .85rem); align-self:flex-start; } }
+.form-grid + .hint{ margin-top:.75rem; }
+.card-foot{
+  display:flex; flex-wrap:wrap; gap:.6rem 1rem; align-items:center; justify-content:space-between;
+  margin:1.2rem -1.15rem -1.15rem; padding:.85rem 1.15rem; border-top:1px solid var(--border);
+  background:var(--surface-2); border-radius:0 0 var(--r-lg) var(--r-lg);
+}
+.card-foot .row{ margin-left:auto; }
+.icon-tile.ok{ background:var(--ok-soft); color:var(--ok); }
+.icon-tile.warn{ background:var(--warn-soft); color:var(--warn); }
+.icon-tile.info{ background:var(--info-soft); color:var(--info); }
+
+/* Form grids: fields line up row by row whatever their hints say. */
+.form-grid{ display:grid; gap:1rem 1.1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); align-items:start; }
+.form-grid > *{ min-width:0; }
+.form-grid > .field{ align-content:start; }
+.form-grid > .span-all{ grid-column: 1 / -1; }
+.field-group{ margin-top:1.25rem; padding-top:1.15rem; border-top:1px dashed var(--border-strong); }
+.subhead{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem 1rem; margin-bottom:.85rem; }
+.subhead h3{ font-size:.98rem; }
+.subhead p{ margin:.15rem 0 0; font-size:.86rem; color:var(--text-2); }
+.help-box{ margin-top:.9rem; padding:.75rem .9rem; border-radius:var(--r); background:var(--surface-2); border:1px solid var(--border); }
+.help-box ol{ margin:.5rem 0 0; padding-left:1.2rem; display:grid; gap:.3rem; font-size:.88rem; color:var(--text-2); }
+.inline-ok{ display:flex; gap:.55rem; align-items:flex-start; padding:.7rem .85rem; border-radius:var(--r); background:var(--ok-soft); color:var(--text); font-size:.9rem; }
+.inline-ok > .icon{ color:var(--ok); margin-top:.15rem; }
+
+/* Overview tiles (state at a glance) */
+.overview{ display:grid; gap:.75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); }
+.overview-item{ display:flex; gap:.75rem; align-items:center; padding:.85rem 1rem; border:1px solid var(--border); border-radius:var(--r-lg); background:var(--surface); box-shadow:var(--shadow-1); min-width:0; }
+.overview-item .icon-tile{ width:38px; height:38px; border-radius:11px; }
+.overview-item strong{ display:block; font-size:.92rem; }
+.overview-item span{ display:block; font-size:.82rem; color:var(--text-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* Switch (input type=checkbox role=switch) */
+.switch{ position:relative; display:inline-flex; flex:none; width:44px; height:26px; margin-top:.05rem; }
+.switch input{ position:absolute; inset:0; width:100%; height:100%; margin:0; opacity:0; cursor:pointer; z-index:1; }
+.switch .track{ width:100%; height:100%; border-radius:999px; background:var(--border-strong); transition: background-color var(--t) var(--ease); }
+.switch .thumb{ position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.28); transition: transform var(--t) var(--ease); pointer-events:none; }
+.switch input:checked ~ .track{ background:var(--brand); }
+.switch input:checked ~ .thumb{ transform:translateX(18px); }
+.switch input:focus-visible ~ .track{ outline:3px solid var(--focus); outline-offset:2px; }
+.switch input:disabled{ cursor:progress; }
+.switch input:disabled ~ .track, .switch input:disabled ~ .thumb{ opacity:.65; }
+
+/* Rules list (automatic alerts) */
+.rule-list{ list-style:none; margin:0; padding:0; }
+.rule{ display:flex; gap:.9rem; align-items:flex-start; padding:.8rem .2rem; border-top:1px solid var(--border); transition: background-color var(--t-fast); }
+.rule:first-child{ border-top:0; padding-top:.2rem; }
+.rule label{ cursor:pointer; font-weight:600; }
+.rule .badge{ margin-left:.4rem; vertical-align:1px; }
+.rule.off label, .rule.off .small{ color:var(--text-3); }
+.finding-list{ margin:.5rem 0; padding-left:1.1rem; font-size:.88rem; }
+.steps{ margin:.3rem 0 .6rem; padding-left:1.2rem; display:grid; gap:.2rem; }
+
+/* Sticky save bar for settings pages */
+.save-row{
+  position:sticky; bottom:.75rem; z-index:5; display:flex; flex-wrap:wrap; gap:.6rem 1rem; align-items:center; justify-content:space-between;
+  padding:.7rem .8rem .7rem 1.1rem; border:1px solid var(--border); border-radius:var(--r-lg);
+  background:color-mix(in srgb, var(--surface) 90%, transparent); box-shadow:var(--shadow-2);
+  backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  transition: border-color var(--t) var(--ease), box-shadow var(--t) var(--ease);
+}
+.save-row.dirty{ border-color:color-mix(in srgb, var(--brand) 55%, var(--border)); box-shadow:0 10px 30px rgba(246,116,10,.16), var(--shadow-2); }
+.save-state{ display:flex; align-items:center; gap:.5rem; font-size:.88rem; color:var(--text-2); min-width:0; }
+.save-state .dot{ width:8px; height:8px; border-radius:50%; background:var(--ok); flex:none; }
+.save-row.dirty .save-state{ color:var(--text); font-weight:600; }
+.save-row.dirty .save-state .dot{ background:var(--brand); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse{ 50%{ transform:scale(1.5); opacity:.55; } }
+.save-row .btn{ min-height:40px; }
+@media (max-width: 559px){
+  /* Phones: one compact row; the state stays available to screen readers. */
+  .save-row{ flex-wrap:nowrap; bottom:.5rem; padding:.5rem .5rem .5rem .9rem; }
+  .save-state > span:not(.dot){ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+  .save-row .row{ flex-wrap:nowrap; margin-left:auto; }
+  .save-row .btn{ padding-inline:.8rem; }
+  .save-row .btn-ghost{ display:none; } /* "Descartar" stays on larger screens */
+}
+
+/* Navigation: active marker slides in */
+.nav a{ position:relative; }
+.nav a::before{
+  content:""; position:absolute; left:-.75rem; top:9px; bottom:9px; width:3px; border-radius:0 3px 3px 0;
+  background:var(--brand); transform:scaleY(0); transition: transform var(--t) var(--ease);
+}
+.nav a[aria-current="page"]::before{ transform:scaleY(1); }
+
+/* Buttons: a touch of depth on the main action */
+.btn-primary{ background-image: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,0)); }
+.btn-primary:hover{ box-shadow: 0 1px 0 rgba(0,0,0,.06), 0 10px 22px rgba(246,116,10,.3); }
+@media (hover: hover){ .btn-primary:hover{ transform:translateY(-1px); } .btn-primary:active{ transform:scale(.97); } }
+.card-link:focus-visible{ border-color:var(--brand); }
+
 /* ==========================================================================
    Responsive
    ========================================================================== */
@@ -606,7 +716,7 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 }
 @media (min-width: 1024px){
   :root{ --topbar-h: 64px; }
-  .app{ display:grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); }
+  .app{ display:grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); grid-template-rows: auto 1fr; }
   .sidebar{ position:sticky; top:0; height:100vh; width:auto; transform:none; box-shadow:none; z-index:30; grid-row: 1 / span 2; }
   .sidebar .close-nav, .topbar .open-nav, .topbar .brand{ display:none; }
   .scrim{ display:none; }
@@ -633,7 +743,7 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 @keyframes sheet-out{ to{ transform: translateY(100%); } }
 
 @media (prefers-reduced-motion: reduce){
-  *, *::before, *::after{ animation-duration:1ms !important; animation-iteration-count:1 !important; transition-duration:1ms !important; scroll-behavior:auto !important; }
+  *, *::before, *::after{ animation-duration:1ms !important; animation-delay:0s !important; animation-iteration-count:1 !important; transition-duration:1ms !important; scroll-behavior:auto !important; }
   .skeleton{ animation:none; }
 }
 @media (forced-colors: active){

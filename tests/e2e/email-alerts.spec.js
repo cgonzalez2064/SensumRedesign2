@@ -25,10 +25,12 @@ test('the owner configures the contact form and the sending account', async ({ p
   await page.locator('.nav a[href="#/correo"]').click();
   await expect(page.locator('main h1')).toHaveText('Correo');
   // Where each value comes from (.env on a fresh install, the panel once saved).
-  await expect(page.getByText(/Tomado del archivo de configuración del servidor|Configurado en este panel/).first()).toBeVisible();
+  await expect(page.getByText(/^(Desde el servidor \(\.env\)|Guardado en el panel|Valores predeterminados)$/).first()).toBeVisible();
+  await expect(page.locator('.save-row')).toContainText('Sin cambios pendientes');
 
   const to = page.getByLabel('Recibe los mensajes');
   await to.fill('contacto@sensumconstrucciones.com, no-es-correo');
+  await expect(page.locator('.save-row')).toContainText('Tienes cambios sin guardar');
   await page.getByRole('button', { name: 'Guardar configuración' }).click();
   await expect(page.getByText('Escribe de 1 a 3 correos válidos, separados por coma.')).toBeVisible();
   await expect(to).toBeFocused();
@@ -50,7 +52,8 @@ test('the owner configures the contact form and the sending account', async ({ p
   await page.getByRole('dialog', { name: 'Confirma que eres tú' }).getByLabel('Tu contraseña').fill(ADMIN.password);
   await page.getByRole('dialog', { name: 'Confirma que eres tú' }).getByLabel('Tu contraseña').press('Enter');
   await expect(page.getByText('Configuración guardada. Te enviamos un aviso de seguridad por correo.')).toBeVisible();
-  await expect(page.getByText('Configurado en este panel.').first()).toBeVisible();
+  await expect(page.locator('section[aria-labelledby="em-contact"] .card-head .badge')).toHaveText('Guardado en el panel');
+  await expect(page.locator('.save-row')).toContainText('Sin cambios pendientes');
 
   // Test e-mails (Mailpit receives them in the test environment).
   await page.getByRole('button', { name: 'Enviar mensaje de prueba' }).click();
@@ -72,17 +75,36 @@ test('Monitoring lists the automatic alerts and the file check', async ({ page }
   await page.goto('/admin/#/monitoreo');
   const rules = page.locator('section[aria-labelledby="rules-title"]');
   await expect(rules.getByRole('heading', { name: 'Alertas automáticas' })).toBeVisible();
-  await expect(rules.getByRole('checkbox')).toHaveCount(12);
-  const weekly = rules.getByRole('checkbox', { name: 'Resumen técnico semanal' });
+  await expect(rules.getByRole('switch')).toHaveCount(12);
+  const weekly = rules.getByRole('switch', { name: 'Resumen técnico semanal' });
   await expect(weekly).toBeChecked();
   await weekly.uncheck();
   await expect(page.getByText('«Resumen técnico semanal» desactivada.')).toBeVisible();
   await page.reload();
-  await expect(page.locator('section[aria-labelledby="rules-title"]').getByRole('checkbox', { name: 'Resumen técnico semanal' })).not.toBeChecked();
-  await page.locator('section[aria-labelledby="rules-title"]').getByRole('checkbox', { name: 'Resumen técnico semanal' }).check();
+  await expect(page.locator('section[aria-labelledby="rules-title"]').getByRole('switch', { name: 'Resumen técnico semanal' })).not.toBeChecked();
+  await page.locator('section[aria-labelledby="rules-title"]').getByRole('switch', { name: 'Resumen técnico semanal' }).check();
   await expect(page.getByText('«Resumen técnico semanal» activada.')).toBeVisible();
 
   const files = page.locator('section[aria-labelledby="integ-title"]');
   await files.getByRole('button', { name: 'Revisar ahora' }).click();
   await expect(files.locator('.ok-text, .warn-text').first()).toBeVisible();
 });
+
+test('the panel loads only what it needs and keeps its frame while navigating', async ({ page }) => {
+  const requested = [];
+  page.on('request', (r) => requested.push(new URL(r.url()).pathname));
+  await login(page);
+  // Spanish session: the English dictionary is never downloaded.
+  expect(requested.some((p) => p.endsWith('/i18n/en.js'))).toBe(false);
+  // The sidebar is the same element across screens (only <main> changes).
+  await page.locator('.sidebar').evaluate((el) => { el.dataset.probe = 'kept'; });
+  for (const hash of ['#/monitoreo', '#/correo', '#/usuarios', '#/']) {
+    await page.goto('/admin/' + hash);
+    await expect(page.locator('main h1')).toBeVisible();
+    await expect(page.locator('.sidebar')).toHaveAttribute('data-probe', 'kept');
+  }
+  await expect(page.locator('.nav a[aria-current="page"]')).toHaveAttribute('data-nav', 'dashboard');
+  // Screens are separate files, fetched on demand.
+  expect(requested.some((p) => p.endsWith('/views/email.js'))).toBe(true);
+});
+

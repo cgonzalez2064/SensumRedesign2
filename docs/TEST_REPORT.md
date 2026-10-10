@@ -138,6 +138,33 @@ proper singular/plural.
 
 Full re-run: API **117/117**, browser **74 passed / 25 skipped**.
 
+## Change — e-mail settings, contact-form captcha, automatic alerts, admin redesign
+
+| Suite | What it covers | Result |
+|---|---|---|
+| API (`13-email-alerts`) | owner-only e-mail settings; password re-check; validation and header-injection attempts; SMTP password encrypted at rest and never returned; security notice; panel sender/Reply-To used for all mail; contact form delivered through the handler with the panel settings (visitor in Reply-To, HTML escaped); `mail()` failure → 500 + error log; `EMAIL_SETTINGS_LOCKED`; alert toggles (owner only, allow-list); integrity baseline, new/odd/modified files, cPanel `.htaccess` blocks ignored, accept via panel (password) and CLI; login attack; new device (first device silent, same browser silent); certificate 21/7/1; backup > 48 h; error spike; stopped scheduler via `/api/health`; weekly digest and monthly review once per period; critical-error e-mails switchable | 15/15 |
+| API (`14-captcha`) | signed, expiring, never-cached challenge; refused: missing, empty, malformed, oversized, wrong/out-of-range/string number, forged signature, altered expiry, other algorithm, self-made challenge, replay; solved → delivered once; honeypot/too-fast counted; Turnstile: keys validated, secret encrypted, page republished with the site key, token required, rejected/other-site tokens refused, built-in captcha still required, Cloudflare down → built-in only + logged, turned off → removed from the page | 8/8 |
+| Browser (`contact-captcha`) | the real public form in Chrome, tablet and iPhone WebKit: captcha solved in the background, message delivered once, new answer prepared; a spent answer is replaced and the message still sent | 4/4 (+2 skipped by design) |
+| Browser (`email-alerts`) | Correo page: source badges, unsaved-changes bar, validation, password dialog (axe), save, both test e-mails, Namecheap helper; Monitoring: 12 alert switches persist, file check; performance: English dictionary not downloaded for Spanish users, panel frame kept across screens, screens fetched on demand | 7/7 (+2 skipped) |
+| Existing suites | `00-static` (public CSP allows only `challenges.cloudflare.com`), `01-public-site` (pages byte-identical with the new captcha markup, asset version 4), `08-system` | updated, passing |
+
+Full re-run: API **140/140**, browser **85 passed / 29 skipped** (skips are single-browser tests by design).
+
+Admin performance: the panel now loads only its frame and the first screen
+(initial JavaScript 309 KB → 130 KB, ≈ 98 KB → 40 KB gzip), the other screens in
+the background or when the pointer reaches their menu link; core modules are
+preloaded in parallel (`modulepreload`); the English dictionary loads only for
+English sessions; the frame is no longer rebuilt on every navigation. A stress
+test of 27 rapid navigations showed a single, correct screen and no errors.
+Entrance effects use only opacity/transform and are disabled with
+*reduce motion* (the browser suite runs with it so accessibility scans see the
+settled page).
+
+Public site: the only visual change is the one-line captcha note under the
+form's submit button (+31 px desktop, +52 px phones; screenshots reviewed in
+Chrome desktop and phone). The visual baselines in `tests/visual/baseline/`
+differ by that line and should be regenerated once approved.
+
 ## Other audits
 
 | Audit | Result |

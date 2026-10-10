@@ -1,8 +1,15 @@
-/** Localization runtime. All strings come from i18n/es.js and i18n/en.js. */
+/**
+ * Localization runtime. All strings come from i18n/es.js and i18n/en.js.
+ * Spanish (the default and the fallback) is always loaded; English is
+ * fetched only when someone uses the panel in English.
+ */
 import es from './i18n/es.js';
-import en from './i18n/en.js';
 
-const DICTS = { es, en };
+const DICTS = { es };
+let enLoading = null;
+const load = (l) => (l === 'en' && !DICTS.en
+  ? (enLoading = enLoading || import('./i18n/en.js').then((m) => { DICTS.en = m.default; }))
+  : Promise.resolve());
 const KEY = 'sensum_admin_lang';
 let lang = 'es';
 try { lang = localStorage.getItem(KEY) === 'en' ? 'en' : 'es'; } catch (e) { /* storage unavailable */ }
@@ -16,15 +23,25 @@ export function interpolate(s, vars) {
 
 /** t('auth.submit'), t('dashboard.hello', { name }) — falls back to Spanish, then to the key. */
 export function t(key, vars) {
-  let v = lookup(DICTS[lang], key);
+  let v = lookup(DICTS[lang] || DICTS.es, key);
   if (v === undefined) v = lookup(DICTS.es, key);
   if (v === undefined) return key;
   return typeof v === 'string' ? interpolate(v, vars) : v;
 }
 
+/** Count-aware text: strings written as "singular|plural" ("{n} vez|{n} veces"). */
+export function tp(key, n, vars) {
+  const s = t(key, { n, ...vars });
+  const i = s.indexOf('|');
+  return i === -1 ? s : (n === 1 ? s.slice(0, i) : s.slice(i + 1));
+}
+
+/** Resolves when the dictionary for the current language is available (call before the first render). */
+export const i18nReady = () => load(lang);
+
 /** Content-field label/help. Keys like "service3.title" fall back to "service#.title". */
 export function fieldText(key) {
-  const d = DICTS[lang].fields;
+  const d = (DICTS[lang] || DICTS.es).fields;
   const exact = d[key];
   if (exact) return { label: exact[0], help: exact[1] };
   const m = key.match(/(\d+)/);
@@ -44,8 +61,11 @@ export function setLang(next) {
   }
   lang = value;
   try { localStorage.setItem(KEY, lang); } catch (e) { /* ignore */ }
-  document.documentElement.lang = lang;
-  listeners.forEach((fn) => fn(lang));
+  return load(value).then(() => {
+    if (lang !== value) return;
+    document.documentElement.lang = lang;
+    listeners.forEach((fn) => fn(lang));
+  });
 }
 export const onLangChange = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 

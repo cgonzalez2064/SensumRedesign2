@@ -1,13 +1,15 @@
 /** Informe mensual — a short site-health report for clients (owner account only). */
-import { h, icon, clear } from '../dom.js';
+import { h, icon, clear, fill } from '../dom.js';
 import { t, fmtDate } from '../i18n.js';
 import { api } from '../api.js';
-import { pageHead, loading, loadError, button, setBusy, toast, errorText, alertBox, confirmDialog, textField } from '../ui.js';
+import { pageHead, loading, loadError, button, setBusy, toast, errorText, alertBox, confirmDialog, textField, cardHead } from '../ui.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const CARD_ICONS = { 'sr-prev': 'eye', 'sr-rec': 'people', 'sr-send': 'send', 'sr-hist': 'clock-history' };
+
 function card(id, title, ...children) {
-  return h('section', { class: 'card', 'aria-labelledby': id }, h('div', { class: 'card-header' }, h('h2', { id, text: title })), h('div', { class: 'stack' }, ...children));
+  return h('section', { class: 'card', 'aria-labelledby': id }, cardHead({ id, icon: CARD_ICONS[id], title }), h('div', { class: 'stack' }, ...children));
 }
 
 /** The report as clients will read it (same text as the e-mail, built by the server). */
@@ -35,15 +37,15 @@ export async function render({ main }) {
   const previewBox = h('div', { 'aria-live': 'polite' });
 
   const loadPreview = async () => {
-    clear(previewBox).append(loading());
+    fill(previewBox, loading());
     try {
       const r = await api.get('/site-report/preview?period=' + encodeURIComponent(period));
-      if (alive) clear(previewBox).append(preview(r.report));
-    } catch (err) { clear(previewBox).append(loadError(err, loadPreview)); }
+      if (alive) fill(previewBox, preview(r.report));
+    } catch (err) { fill(previewBox, loadError(err, loadPreview)); }
   };
 
   const load = async () => {
-    try { data = await api.get('/site-report'); } catch (err) { clear(body).append(loadError(err, load)); return; }
+    try { data = await api.get('/site-report'); } catch (err) { fill(body, loadError(err, load)); return; }
     if (!alive) return;
     recipients = [...data.settings.recipients];
     period = period || data.status.period;
@@ -68,7 +70,7 @@ export async function render({ main }) {
     // Recipients (owner always in copy) and language.
     const chips = h('ul', { class: 'chips', 'aria-label': t('siteReport.recipientsTitle') });
     const renderChips = () => {
-      clear(chips).append(h('li', { class: 'chip chip-fixed' }, icon('lock'), h('span', { text: data.ownerEmail }), h('span', { class: 'tiny muted', text: t('siteReport.alwaysCc') })),
+      fill(chips, h('li', { class: 'chip chip-fixed' }, icon('lock'), h('span', { text: data.ownerEmail }), h('span', { class: 'tiny muted', text: t('siteReport.alwaysCc') })),
         ...recipients.map((r) => h('li', { class: 'chip' }, h('span', { text: r }),
           h('button', { type: 'button', class: 'chip-x', 'aria-label': t('siteReport.removeRecipient', { email: r }), onclick: () => { recipients = recipients.filter((x) => x !== r); renderChips(); } }, icon('x-lg')))));
     };
@@ -134,7 +136,7 @@ export async function render({ main }) {
         await api.post('/site-report/send', { period, note: note.value });
         toast(t('siteReport.sentToast'));
         note.value = '';
-        clear(body).append(loading());
+        fill(body, loading());
         await load();
       } catch (err) { setBusy(sendBtn, false); toast(errorText(err), { type: 'bad' }); }
     });
@@ -151,7 +153,7 @@ export async function render({ main }) {
           h('div', { class: 'tiny muted break', text: [fmtDate(x.sentAt), x.sentBy, x.recipients.join(', ')].filter(Boolean).join(' · ') })))))
       : h('p', { class: 'muted', text: t('siteReport.noHistory') }));
 
-    clear(body).append(statusBox, h('div', { class: 'dash-grid' },
+    fill(body, statusBox, h('div', { class: 'dash-grid' },
       h('div', { class: 'stack-lg' }, previewCard),
       h('div', { class: 'stack-lg' }, recipientsCard, sendCard, history)));
     loadPreview();

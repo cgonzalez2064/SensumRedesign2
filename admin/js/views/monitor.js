@@ -1,8 +1,8 @@
 /** Monitoreo — system status, activity, alerts and the error log (owner account only). */
-import { h, icon, clear } from '../dom.js';
-import { t, fmtDate, fmtRelative, fmtBytes } from '../i18n.js';
+import { h, icon, clear, fill } from '../dom.js';
+import { t, tp, fmtDate, fmtRelative, fmtBytes } from '../i18n.js';
 import { api } from '../api.js';
-import { pageHead, loading, loadError, button, setBusy, toast, errorText, emptyState, copyText, askPassword, fieldErrorText } from '../ui.js';
+import { pageHead, loading, loadError, button, setBusy, toast, errorText, emptyState, copyText, askPassword, fieldErrorText, switchInput, cardHead } from '../ui.js';
 
 const SEVERITY_BADGE = { critical: 'badge-bad', error: 'badge-warn', warning: 'badge-info' };
 const SEVERITY_ICON = { critical: 'x-circle-fill', error: 'exclamation-triangle-fill', warning: 'info-circle-fill' };
@@ -15,30 +15,36 @@ const RULES = ['critical_errors', 'integrity', 'login_attack', 'new_device', 'ce
 function rulesCard(rules) {
   const list = h('ul', { class: 'rule-list' }, RULES.map((r) => {
     const id = 'rule-' + r;
-    const box = h('input', { type: 'checkbox', id, checked: rules.enabled[r] !== false || null, 'aria-describedby': id + '-d' });
-    box.addEventListener('change', async () => {
-      box.disabled = true;
-      try {
-        const res = await api.put('/monitor/alerts', { rules: { [r]: box.checked } });
-        rules.enabled = res.enabled;
-        toast(t(box.checked ? 'monitor.rules.turnedOn' : 'monitor.rules.turnedOff', { name: t('monitor.rules.' + r + '.name') }));
-      } catch (err) {
-        box.checked = !box.checked;
-        toast(errorText(err), { type: 'bad' });
-      }
-      box.disabled = false;
+    const li = h('li', { class: ['rule', rules.enabled[r] === false && 'off'] });
+    const sw = switchInput({
+      id, checked: rules.enabled[r] !== false, describedBy: id + '-d',
+      onChange: async (on, input) => {
+        input.disabled = true;
+        li.classList.toggle('off', !on);
+        try {
+          const res = await api.put('/monitor/alerts', { rules: { [r]: on } });
+          rules.enabled = res.enabled;
+          toast(t(on ? 'monitor.rules.turnedOn' : 'monitor.rules.turnedOff', { name: t('monitor.rules.' + r + '.name') }));
+        } catch (err) {
+          input.checked = !on;
+          li.classList.toggle('off', on);
+          toast(errorText(err), { type: 'bad' });
+        }
+        input.disabled = false;
+      },
     });
     const last = rules.lastSent[r];
-    return h('li', { class: 'rule' }, box,
+    li.append(sw.wrap,
       h('div', { class: 'grow' },
         h('label', { for: id }, t('monitor.rules.' + r + '.name'), r === 'new_device' ? h('span', { class: 'badge badge-info', text: t('monitor.rules.toUser') }) : null),
         h('div', { class: 'small muted', id: id + '-d', text: t('monitor.rules.' + r + '.desc') }),
-        h('div', { class: 'tiny muted', text: t('monitor.rules.when', { when: t('monitor.rules.' + r + '.when') }) + (last ? ' · ' + t('monitor.rules.last', { when: fmtRelative(last) }) : '') })));
+        h('div', { class: 'tiny muted' }, icon('clock-history'), ' ', t('monitor.rules.when', { when: t('monitor.rules.' + r + '.when') }) + (last ? ' · ' + t('monitor.rules.last', { when: fmtRelative(last) }) : ''))));
+    return li;
   }));
   return h('section', { class: 'card', 'aria-labelledby': 'rules-title' },
-    h('div', { class: 'card-header' }, h('div', null, h('h2', { id: 'rules-title', text: t('monitor.rules.title') }), h('p', { text: t('monitor.rules.lead') }))),
+    cardHead({ id: 'rules-title', icon: 'bell', title: t('monitor.rules.title'), lead: t('monitor.rules.lead') }),
     list,
-    h('p', { class: 'tiny muted', text: t('monitor.rules.always') }));
+    h('p', { class: 'tiny muted' }, icon('shield-lock'), ' ', t('monitor.rules.always')));
 }
 
 /** Owner panel: files of the public site compared with the published version. */
@@ -47,7 +53,7 @@ function integrityCard() {
   const checkBtn = button(t('monitor.integrity.check'), { icon: 'shield-lock', small: true });
   const show = (findings) => {
     if (!findings.length) {
-      clear(out).append(h('p', { class: 'small ok-text' }, icon('check-circle-fill'), ' ', t('monitor.integrity.clean')));
+      fill(out, h('p', { class: 'small ok-text' }, icon('check-circle-fill'), ' ', t('monitor.integrity.clean')));
       return;
     }
     const accept = button(t('monitor.integrity.accept'), { small: true, icon: 'check-lg' });
@@ -64,8 +70,8 @@ function integrityCard() {
         setBusy(accept, false);
       }
     });
-    clear(out).append(
-      h('p', { class: 'small warn-text' }, icon('exclamation-triangle-fill'), ' ', t('monitor.integrity.found', { n: findings.length })),
+    fill(out, 
+      h('p', { class: 'small warn-text' }, icon('exclamation-triangle-fill'), ' ', tp('monitor.integrity.found', findings.length)),
       h('ul', { class: 'finding-list' }, findings.slice(0, 30).map((f) => h('li', { class: 'break' }, h('strong', { text: t('monitor.integrity.type.' + f.type) + ': ' }), h('code', { text: f.path })))),
       h('p', { class: 'tiny muted', text: t('monitor.integrity.help') }),
       accept);
@@ -76,9 +82,11 @@ function integrityCard() {
     setBusy(checkBtn, false);
   });
   return h('section', { class: 'card', 'aria-labelledby': 'integ-title' },
-    h('div', { class: 'card-header' }, h('div', null, h('h2', { id: 'integ-title', text: t('monitor.integrity.title') }), h('p', { text: t('monitor.integrity.lead') }))),
+    cardHead({ id: 'integ-title', icon: 'shield-lock', title: t('monitor.integrity.title'), lead: t('monitor.integrity.lead') }),
     h('div', null, checkBtn), out);
 }
+
+const CARD_ICONS = { 'log-title': 'bug', 'diag-title': 'check2-circle', 'alert-title': 'envelope', 'act-title': 'bar-chart', 'top-title': 'exclamation-circle', 'sys-title': 'laptop', 'setup-title': 'clock-history' };
 
 const eventLabel = (code) => {
   const label = t('monitor.events.' + code);
@@ -86,7 +94,7 @@ const eventLabel = (code) => {
 };
 
 function card(id, title, ...children) {
-  return h('section', { class: 'card', 'aria-labelledby': id }, h('div', { class: 'card-header' }, h('h2', { id, text: title })), ...children);
+  return h('section', { class: 'card', 'aria-labelledby': id }, cardHead({ id, icon: CARD_ICONS[id], title }), ...children);
 }
 
 function kpi(value, label, tone) {
@@ -109,20 +117,20 @@ export async function render({ main, session }) {
   const loadLog = async () => {
     if (!logBox) return;
     const qs = new URLSearchParams(Object.entries(filters).filter(([, v]) => v !== '' && v !== 0)).toString();
-    clear(logBox).append(loading());
+    fill(logBox, loading());
     let data;
-    try { data = await api.get('/monitor/errors' + (qs ? '?' + qs : '')); } catch (err) { clear(logBox).append(loadError(err, loadLog)); return; }
+    try { data = await api.get('/monitor/errors' + (qs ? '?' + qs : '')); } catch (err) { fill(logBox, loadError(err, loadLog)); return; }
     if (!alive) return;
     if (!data.items.length) {
-      clear(logBox).append(emptyState('check2-circle', t('monitor.log.emptyTitle'), t('monitor.log.emptyBody')));
+      fill(logBox, emptyState('check2-circle', t('monitor.log.emptyTitle'), t('monitor.log.emptyBody')));
       return;
     }
     const pager = h('div', { class: 'row-between log-pager' },
-      h('span', { class: 'small muted', 'aria-live': 'polite', text: t('monitor.log.page', { page: data.page, pages: data.pages, total: data.total }) }),
+      h('span', { class: 'small muted', 'aria-live': 'polite', text: tp('monitor.log.page', data.total, { page: data.page, pages: data.pages, total: data.total }) }),
       h('div', { class: 'row' },
         button(t('monitor.log.newer'), { small: true, icon: 'arrow-left', attrs: { disabled: data.page <= 1 || null }, onClick: () => { filters.page = data.page - 1; loadLog(); } }),
         button(t('monitor.log.older'), { small: true, attrs: { disabled: data.page >= data.pages || null }, onClick: () => { filters.page = data.page + 1; loadLog(); } })));
-    clear(logBox).append(h('ol', { class: 'log-list' }, data.items.map((e) => h('li', { class: 'log-item' },
+    fill(logBox, h('ol', { class: 'log-list' }, data.items.map((e) => h('li', { class: 'log-item' },
       h('div', { class: 'row-between' },
         h('span', { class: ['badge', SEVERITY_BADGE[e.severity]] }, icon(SEVERITY_ICON[e.severity]), t('monitor.severity.' + e.severity)),
         h('span', { class: 'tiny muted', title: fmtDate(e.at), text: fmtRelative(e.at) })),
@@ -150,7 +158,7 @@ export async function render({ main, session }) {
 
   const load = async () => {
     let data;
-    try { data = await api.get('/monitor/summary'); } catch (err) { clear(body).append(loadError(err, load)); return; }
+    try { data = await api.get('/monitor/summary'); } catch (err) { fill(body, loadError(err, load)); return; }
     if (!alive) return;
     const s = data.system;
     const c = data.counts;
@@ -196,7 +204,7 @@ export async function render({ main, session }) {
       [t('monitor.system.inSync'), h('span', { class: s.inSync ? 'ok-text' : 'warn-text', text: t(s.inSync ? 'monitor.system.syncYes' : 'monitor.system.syncNo') })],
       [t('monitor.system.database'), fmtBytes(s.databaseBytes)],
       [t('monitor.system.disk'), s.diskFreeBytes === null ? '—' : fmtBytes(s.diskFreeBytes)],
-      [t('monitor.system.uploads'), t('monitor.system.uploadsValue', { n: s.uploadsFiles, size: fmtBytes(s.uploadsBytes) })],
+      [t('monitor.system.uploads'), tp('monitor.system.uploadsValue', s.uploadsFiles, { size: fmtBytes(s.uploadsBytes) })],
       [t('monitor.system.backup'), s.lastBackupAt ? fmtDate(s.lastBackupAt) : t('monitor.never')],
     ], true));
 
@@ -233,7 +241,7 @@ export async function render({ main, session }) {
     const top = card('top-title', t('monitor.top.title'), data.top.length
       ? h('ul', { class: 'status-list' }, data.top.map((e) => h('li', null, h('span', { class: SEVERITY_BADGE[e.severity] === 'badge-bad' ? 'bad-text' : 'warn-text' }, icon(SEVERITY_ICON[e.severity])),
         h('div', { class: 'grow' }, h('div', { class: 'break', text: eventLabel(e.event) + (e.message ? ' — ' + e.message : '') }),
-          h('div', { class: 'tiny muted', text: [t('monitor.source.' + e.source), t('dashboard.times', { n: e.count }), fmtRelative(e.lastSeen)].join(' · ') })))))
+          h('div', { class: 'tiny muted', text: [t('monitor.source.' + e.source), tp('dashboard.times', e.count), fmtRelative(e.lastSeen)].join(' · ') })))))
       : h('p', { class: 'muted', text: t('monitor.top.none') }));
 
     // External monitoring + scheduled check.
@@ -245,10 +253,10 @@ export async function render({ main, session }) {
       h('div', { class: 'code-line' }, h('code', { class: 'break', text: cron }), copyBtn),
       h('p', { class: 'tiny muted', text: t('monitor.setup.cronHint') }));
 
-    clear(body).append(tiles, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, logCard, rulesCard(data.rules), activity), h('div', { class: 'stack-lg' }, checks, alerts, integrityCard(), top, system, setup)));
+    fill(body, tiles, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, logCard, rulesCard(data.rules), activity), h('div', { class: 'stack-lg' }, checks, alerts, integrityCard(), top, system, setup)));
     loadLog();
   };
-  refresh.addEventListener('click', () => { clear(body).append(loading()); load(); });
+  refresh.addEventListener('click', () => { fill(body, loading()); load(); });
   await load();
   return { destroy: () => { alive = false; } };
 }

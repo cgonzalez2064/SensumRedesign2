@@ -1,5 +1,5 @@
 /** Reportes de soporte — minimal history of submitted reports, with retry. */
-import { h, icon, clear } from '../dom.js';
+import { h, icon, clear, fill } from '../dom.js';
 import { t, fmtDate } from '../i18n.js';
 import { api } from '../api.js';
 import { pageHead, loading, loadError, emptyState, toast, errorText, setBusy, button } from '../ui.js';
@@ -16,13 +16,13 @@ export async function render({ main, isOwner: isAdmin }) {
 
   const load = async () => {
     let data;
-    try { data = await api.get('/reports'); } catch (err) { clear(body).append(loadError(err, load)); return; }
+    try { data = await api.get('/reports'); } catch (err) { fill(body, loadError(err, load)); return; }
     if (!data.reports.length) {
-      clear(body).append(h('div', { class: 'card' }, emptyState('chat-square-text', t('reports.emptyTitle'), t('reports.emptyBody'),
+      fill(body, h('div', { class: 'card' }, emptyState('chat-square-text', t('reports.emptyTitle'), t('reports.emptyBody'),
         button(t('reports.new'), { icon: 'life-preserver', onClick: () => openReportDialog() }))));
       return;
     }
-    clear(body).append(h('div', { class: 'list-cards' }, data.reports.map((r) => {
+    fill(body, h('div', { class: 'list-cards' }, data.reports.map((r) => {
       const [cls, ic] = STATUS[r.emailStatus] || STATUS.pending;
       let retry = null;
       if (r.emailStatus !== 'sent') {

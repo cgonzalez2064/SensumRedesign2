@@ -1,5 +1,5 @@
 /** "Reportar un problema" — available from every screen of the panel. */
-import { h, icon, clear } from './dom.js';
+import { h, icon, clear, fill } from './dom.js';
 import { t, getLang } from './i18n.js';
 import { getThemePref } from './theme.js';
 import { api, upload } from './api.js';
@@ -84,7 +84,7 @@ export function openReportDialog() {
   setTimeout(() => titleF.input.focus(), 60);
 
   const showResult = (delivered) => {
-    clear(dlg.body).append(delivered
+    fill(dlg.body, delivered
       ? h('div', { class: 'empty' }, h('span', { class: 'icon-tile' }, icon('check-circle-fill')), h('h3', { text: t('report.sentTitle') }), h('p', { text: t('report.sent') }), h('p', { class: 'muted small', text: t('report.sentMore') }))
       : alertBox('warn', t('report.failedTitle'), t('report.failed')));
     clear(dlg.foot);

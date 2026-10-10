@@ -1,5 +1,5 @@
 /** Sign-in, password recovery, invitation and first-time setup screens. */
-import { h, icon, clear } from '../dom.js';
+import { h, icon, clear, fill } from '../dom.js';
 import { t } from '../i18n.js';
 import { api } from '../api.js';
 import { textField, passwordField, passwordGuide, alertBox, errorText, fieldErrorText, setBusy } from '../ui.js';
@@ -12,7 +12,7 @@ function layout(app, title, lead, ...content) {
     h('div', { class: 'auth-brand' }, h('img', { src: '../assets/logo-icon.png', alt: '', width: 46, height: 46 }),
       h('div', null, h('strong', { text: t('app.brand') }), h('span', { text: t('app.name') }))),
     h1, lead ? h('p', { class: 'lead', text: lead }) : null, ...content);
-  clear(app).append(
+  fill(app, 
     h('main', { class: 'auth', id: 'main' },
       h('div', { class: 'auth-top' }, langSwitch(), themeSwitch()),
       h('div', { class: 'stack' }, card,
@@ -77,7 +77,7 @@ export function forgot({ app }) {
     setBusy(submit, true, t('common.saving'));
     try {
       await api.post('/auth/forgot', { email: value }, { auth: false });
-      clear(card).append(h('div', { class: 'empty' }, h('span', { class: 'icon-tile' }, icon('envelope')),
+      fill(card, h('div', { class: 'empty' }, h('span', { class: 'icon-tile' }, icon('envelope')),
         h('h1', { tabindex: '-1', text: t('auth.forgotDoneTitle') }), h('p', { text: t('auth.forgotDone', { email: value }) }),
         h('a', { class: 'btn btn-primary', href: '#/ingresar' }, t('auth.backToLogin'))));
       card.querySelector('h1').focus();
@@ -96,7 +96,7 @@ function invalidLink(app, kind) {
 }
 
 function checking(app) {
-  layout(app, t('auth.checking'), null, h('div', { class: 'page-loading', role: 'status' }, h('span', { class: 'spinner', 'aria-hidden': 'true' })));
+  layout(app, t('auth.checking'), null, h('div', { class: 'row', role: 'status' }, h('span', { class: 'spinner', 'aria-hidden': 'true' })));
 }
 
 export async function reset({ app, params }) {
@@ -122,7 +122,7 @@ export async function reset({ app, params }) {
     setBusy(submit, true, t('common.saving'));
     try {
       await api.post('/auth/reset', { token, password: pw.input.value, passwordConfirm: pw2.input.value }, { auth: false });
-      clear(card).append(h('div', { class: 'empty' }, h('span', { class: 'icon-tile' }, icon('check-circle-fill')),
+      fill(card, h('div', { class: 'empty' }, h('span', { class: 'icon-tile' }, icon('check-circle-fill')),
         h('h1', { tabindex: '-1', text: t('auth.resetDone') }), h('a', { class: 'btn btn-primary', href: '#/ingresar' }, t('auth.loginTitle'))));
       card.querySelector('h1').focus();
     } catch (err) {

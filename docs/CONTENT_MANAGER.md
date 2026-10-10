@@ -73,6 +73,15 @@ sensum-cms/                          (PRIVATE — outside public_html)
 `api/index.php` finds the private folder via `SENSUM_CMS_DIR`, then
 `../../sensum-cms` (next to `public_html`), then `../cms` (development).
 
+### Admin performance
+
+No build step, but the panel is split by screen: `admin/index.html` preloads the
+core modules (`modulepreload`), `js/app.js` imports each screen with `import()`
+when it is first opened (prefetched on menu hover/focus and when the browser is
+idle), the English dictionary is fetched only for English sessions, and the
+sidebar/top bar are built once per session (each screen gets a fresh `<main>`,
+so a slow screen can never write into the next one).
+
 ## 2. Features
 
 | Area | What users can do |
