@@ -22,6 +22,17 @@ final class AccountController extends Controller
         Response::ok(['user' => $this->app->auth()->publicUser($users->find($this->uid()))]);
     }
 
+    /** First sign-in: the language and appearance chosen on the welcome screen (once; later in Mi cuenta). */
+    public function welcome(): never
+    {
+        $lang = $this->lang();
+        $theme = in_array($this->str('theme'), ['light', 'dark', 'system'], true) ? $this->str('theme') : 'system';
+        $now = time();
+        $this->app->db()->run('UPDATE users SET lang = ?, theme = ?, onboarded_at = COALESCE(onboarded_at, ?), updated_at = ? WHERE id = ?', [$lang, $theme, $now, $now, $this->uid()]);
+        $this->app->activity($this->uid(), 'welcome_completed', '', ['lang' => $lang, 'theme' => $theme], $this->req->ip());
+        Response::ok(['user' => $this->app->auth()->publicUser((new Users($this->app))->find($this->uid()))]);
+    }
+
     /**
      * Changes the password. Requires the current password; afterwards every
      * other session is signed out and this one gets a fresh session id.

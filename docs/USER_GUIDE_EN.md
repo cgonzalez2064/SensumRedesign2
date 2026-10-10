@@ -35,7 +35,15 @@ happens while you're editing, the panel asks for your password right there and
 
 **First time:** you'll receive an invitation email. Open it, tap **Create my
 password**, choose a password, and you're in. The link expires after 72 hours;
-if it expired, ask an administrator to send a new one.
+if it expired, ask an administrator to send a new one. When your account is
+activated you get a **welcome e-mail** with your access type, first steps and how to
+get help.
+
+**Welcome (first time only):** before you go in, the panel asks you to choose the
+**language** (Español or English; it is also the language of the e-mails it sends
+you) and the **appearance** (Light, Dark or **Automatic**, which follows your device and
+is selected by default). Each option applies at once so you can see it; press **Save
+and continue**. You can change both any time in **My account**.
 
 ## 2. Language and appearance
 
@@ -45,8 +53,8 @@ In the menu with your name (top right):
 
 Your choice is remembered. You can also change it in **My account**.
 
-**The top stays in place.** When you scroll, the top bar (menu, logo, "Report an
-issue" and your name) stays put. On computers the logo and "Content Manager" also stay
+**The top stays in place.** When you scroll, the top bar (menu, logo, "Request
+support" and your name) stays put. On computers the logo and "Content Manager" also stay
 at the top of the side menu even when the menu is long; on phones and tablets the same
 happens inside the slide-out menu.
 
@@ -185,10 +193,11 @@ reset it.
 Nobody from the technical team will ever ask for your password or your codes, by
 email or phone.
 
-## 7. Reporting a problem or an improvement
+## 7. Requesting support (a problem, an improvement or a change)
 
-If something doesn't work, looks wrong, or you have an idea, tap **Report an
-issue** (at the top of every panel screen; on phones it's the life-buoy icon).
+If something doesn't work, looks wrong, or you have an idea, tap **Request support**
+(at the top of every panel screen; on phones it's the life-buoy icon) or **New
+request** in the Help Center. **New support request** opens:
 
 1. Choose the **Type**: Problem, Improvement / suggestion, Content, Design / visual or Other.
 2. Write a short **Title** (e.g. "The Projects image doesn't load").
@@ -196,23 +205,22 @@ issue** (at the top of every panel screen; on phones it's the life-buoy icon).
 4. Say **where you noticed it** (website, panel or both). The **Page** is filled
    in with the screen you were on; change or clear it if it happened elsewhere.
 5. Optionally attach a **screenshot** (JPG, PNG or WebP, up to 5 MB).
-6. Tap **Send report**.
+6. Tap **Send request**.
 
-The report goes straight to the technical support team (it@gruposensum.com).
+The request goes straight to the technical support team (it@gruposensum.com).
 
 **Follow-up:** the **Support** menu opens the **Help Center**. Under **My requests**
-each report has its own page with its status (New, In progress, Waiting for
-information, Resolved, Closed) and the conversation with support. The **New request**
-button opens the same form as "Report an issue". You get an e-mail when support
+each request has its own page with its status (New, In progress, Waiting for
+information, Resolved, Closed) and the conversation with support. You get an e-mail when support
 replies, asks for more information or resolves it, and the menu shows a number next
 to "Support" when there's a new reply. To answer, write in **Your reply** and tap **Send
 reply**: if you were asked for information, or it was marked resolved but the
-problem persists, your reply moves it back to "In progress". Closed reports take
-no more replies (you can send a new one).
+problem persists, your reply moves it back to "In progress". Closed requests take
+no more replies (you can create a new one).
 
-**Rate the help:** when support marks your report as resolved, its page shows **How
+**Rate the help:** when support marks your request as resolved, its page shows **How
 did we do?**: choose 1 to 5 stars and, if you like, leave a comment. Without a reply,
-the report closes on its own after 7 days.
+the request closes on its own after 7 days.
 
 **Technical information sent automatically:** browser and version, operating
 system, device type, window and screen size, panel language and theme, time zone,
@@ -221,9 +229,9 @@ time, and your name and email. You can see it before sending under "See the
 technical information that is sent". Passwords, cookies and anything typed in
 other forms are **never** sent.
 
-> **Don't include passwords or sensitive information in the report.**
+> **Don't include passwords or sensitive information in the request.**
 
-If the email couldn't be sent at that moment, the panel tells you: your report
+If the email couldn't be sent at that moment, the panel tells you: your request
 **is saved** and you can retry right away or later from **Support** (Help Center),
 where you can also see your request history.
 
@@ -233,14 +241,14 @@ where you can also see your request history.
    or **Cmd + Shift + R** (Mac). On a phone, close and reopen the tab.
 2. If you're viewing the website in English, remember English text is edited separately.
 3. Make sure you saw "Changes published on the website".
-4. If it still doesn't show after a few minutes, use **Report an issue**.
+4. If it still doesn't show after a few minutes, use **Request support**.
 
 ## 9. If an error appears
 
 * Read the message: it almost always explains what happened and what to do
   (e.g. check your internet connection or fix a field marked in red).
 * **What you were editing is not lost** — it stays on screen so you can try again.
-* If the error repeats, use **Report an issue** and include the **code** shown in
+* If the error repeats, use **Request support** and include the **code** shown in
   the message (e.g. `A1B2C3`); it helps the technical team find the cause.
 * If you can't sign in to the panel, email it@gruposensum.com.
 
@@ -295,7 +303,7 @@ Only the **it@gruposensum.com** account sees **Monitoring** in the menu
 * **E-mail alerts:** critical errors are e-mailed automatically to
   it@gruposensum.com (the same error at most once an hour). Use **Send a test
   e-mail** to check they arrive.
-* **Activity and errors:** sign-ins, failed attempts, changes, photos, reports and
+* **Activity and errors:** sign-ins, failed attempts, changes, photos, support requests and
   failed e-mails over 24 hours, 7 and 30 days.
 * **System:** version, disk space, database size, last backup, and whether the
   published pages match the saved content.
@@ -349,11 +357,11 @@ In **Administration → E-mail** you decide who sends and who receives e-mail:
   which address appears as the sender and how they are sent. Replying to a
   message goes straight to the visitor.
 * **Panel's sending account:** the address that sends invitations, passwords,
-  problem reports, the monthly report and alerts, and where replies go. The
+  support requests, the monthly report and alerts, and where replies go. The
   **Fill in the Namecheap details** button fills the server, port and security.
   The mailbox password is stored encrypted and never shown again (leave it empty
   to keep it).
-* **Where notices go:** problem reports and automatic alerts.
+* **Where notices go:** support requests and automatic alerts.
 * **Spam protection (captcha):** the built-in captcha is always on and invisible to
   visitors. Optionally turn on **Cloudflare Turnstile** by pasting its Site Key and
   Secret Key (the steps are on the same page).

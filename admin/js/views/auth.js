@@ -1,6 +1,7 @@
-/** Sign-in, password recovery, invitation and first-time setup screens. */
+/** Sign-in, password recovery, invitation, first-time setup and the first-sign-in welcome screens. */
 import { h, icon, clear, fill } from '../dom.js';
-import { t } from '../i18n.js';
+import { t, getLang, setLang } from '../i18n.js';
+import { getThemePref, setThemePref } from '../theme.js';
 import { api } from '../api.js';
 import { textField, passwordField, passwordGuide, alertBox, errorText, fieldErrorText, setBusy, toast } from '../ui.js';
 import { themeSwitch, langSwitch } from '../app.js';
@@ -243,3 +244,73 @@ export function enroll({ app, onDone, onLogout }) {
     h('p', { class: 'small auth-alt' }, h('a', { href: '#/ingresar', onclick: (e) => { e.preventDefault(); onLogout(); }, text: t('topbar.logout') })));
   renderSetup(box, { onEnabled: onDone, doneLabel: t('twofa.goToPanel') });
 }
+
+// ------------------------------------------------------------------ first sign-in
+
+/** Which option keeps the keyboard focus when the screen is redrawn in the other language. */
+let welcomeFocus = null;
+
+/**
+ * First sign-in (once): the language of the panel (and of its e-mails) and the
+ * appearance. Both apply at once as a preview; «Guardar y continuar» stores
+ * them in the account. Automático (like the device) is the default appearance.
+ */
+export function welcome({ app, user, onDone }) {
+  const lang = getLang();
+  const theme = getThemePref();
+  const first = String(user.name || '').trim().split(' ')[0] || user.name;
+  const h1 = h('h1', { tabindex: '-1', text: t('welcome.title', { name: first }) });
+  const check = () => icon('check-circle-fill', 'opt-check');
+  const langOption = (value, badge, name, hint) => h('label', { class: 'welcome-option', id: 'opt-' + value },
+    h('input', { type: 'radio', name: 'w-lang', value, checked: value === lang || null }),
+    h('span', { class: 'opt-badge', 'aria-hidden': 'true', text: badge }),
+    h('span', { class: 'opt-text' }, h('strong', { text: name }), h('small', { text: hint })), check());
+  const mini = (tone) => h('span', { class: 'tp tp-' + tone, 'aria-hidden': 'true' },
+    h('span', { class: 'tp-side' }, h('i'), h('i'), h('i')), h('span', { class: 'tp-main' }, h('i', { class: 'w60' }), h('i', { class: 'card' }), h('i', { class: 'w40' })));
+  const themeOption = (value, ic, preview) => h('label', { class: 'welcome-option theme', id: 'opt-' + value },
+    h('input', { type: 'radio', name: 'w-theme', value, checked: value === theme || null }), preview,
+    h('span', { class: 'theme-name' }, icon(ic), h('span', null, h('span', { text: t('welcome.' + value) }), h('small', { text: t('welcome.' + value + 'Hint') }))), check());
+  const save = h('button', { class: 'btn btn-primary btn-block', type: 'submit' }, h('span', { text: t('welcome.go') }), icon('chevron-right'));
+  const msg = h('div', { 'aria-live': 'assertive' });
+  const form = h('form', { class: 'welcome-form', novalidate: true },
+    h('fieldset', { class: 'fieldset-reset welcome-group' },
+      h('legend', { class: 'welcome-legend' }, icon('translate'), h('span', { text: t('welcome.langTitle') })),
+      h('p', { class: 'welcome-hint', text: t('welcome.langHint') }),
+      h('div', { class: 'welcome-options two' }, langOption('es', 'ES', 'Español', t('welcome.esHint')), langOption('en', 'EN', 'English', t('welcome.enHint')))),
+    h('fieldset', { class: 'fieldset-reset welcome-group' },
+      h('legend', { class: 'welcome-legend' }, icon('circle-half'), h('span', { text: t('welcome.themeTitle') })),
+      h('p', { class: 'welcome-hint', text: t('welcome.themeHint') }),
+      h('div', { class: 'welcome-options three' },
+        themeOption('light', 'sun', mini('light')),
+        themeOption('dark', 'moon-stars', mini('dark')),
+        themeOption('system', 'circle-half', h('span', { class: 'tp-auto', 'aria-hidden': 'true' }, mini('light'), mini('dark'))))),
+    msg,
+    h('div', { class: 'welcome-actions' }, save, h('p', { class: 'welcome-note', text: t('welcome.note') })));
+  const card = h('div', { class: 'auth-card' },
+    h('div', { class: 'auth-brand' }, h('img', { src: '../assets/logo-icon.png', alt: '', width: 46, height: 46 }),
+      h('div', null, h('strong', { text: t('app.brand') }), h('span', { text: t('app.name') }))),
+    h('p', { class: 'welcome-eyebrow' }, icon('star-fill'), h('span', { text: t('welcome.eyebrow') })),
+    h1, h('p', { class: 'lead', text: t('welcome.lead') }), form);
+  fill(app, h('main', { class: 'auth welcome', id: 'main' }, h('div', { class: 'stack' }, card)));
+  document.title = t('welcome.eyebrow') + ' · ' + t('app.name');
+
+  // Preview: the language redraws the screen (keeping the focus on the option); the theme applies at once.
+  form.querySelectorAll('input[name="w-lang"]').forEach((i) => i.addEventListener('change', () => { welcomeFocus = 'opt-' + i.value; setLang(i.value); }));
+  form.querySelectorAll('input[name="w-theme"]').forEach((i) => i.addEventListener('change', () => setThemePref(i.value)));
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clear(msg);
+    setBusy(save, true, t('common.saving'));
+    try {
+      const r = await api.put('/account/welcome', { lang: getLang(), theme: getThemePref() });
+      onDone(r.user);
+    } catch (err) {
+      setBusy(save, false);
+      msg.append(alertBox('bad', null, errorText(err)));
+    }
+  });
+  const keep = welcomeFocus && document.querySelector('#' + welcomeFocus + ' input');
+  welcomeFocus = null;
+  (keep || h1).focus();
+}
+

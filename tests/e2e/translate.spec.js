@@ -13,6 +13,7 @@ test.beforeAll(async () => {
   stub = await startDeepLStub({ port: 8218 });
   server = await startServer({ port: 8211, env: { DEEPL_API_KEY: STUB_KEY, DEEPL_API_URL: stub.url } });
   createAdmin(server);
+  server.sql("UPDATE users SET onboarded_at = strftime('%s','now')"); // no first-sign-in welcome here
   server.cli(['publish']);
 });
 test.afterAll(async () => { await server.stop(); await stub.stop(); });

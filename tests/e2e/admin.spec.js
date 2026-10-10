@@ -131,7 +131,7 @@ for (const theme of ['light', 'dark']) {
     }
     // The report dialog from the top bar.
     await page.locator('.topbar .report-btn').click();
-    await expect(page.getByRole('dialog', { name: /Reportar un problema/ })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: /Nueva solicitud de soporte/ })).toBeVisible();
     await page.waitForTimeout(400);
     await axe(page, 'report dialog');
     await expectAlignedIcons(page, 'report dialog');
@@ -252,14 +252,14 @@ test('sending a report with a screenshot shows the confirmation', async ({ page 
   await login(page);
   await page.goto('/admin/#/textos');
   await page.locator('.topbar .report-btn').click();
-  const dlg = page.getByRole('dialog', { name: /Reportar un problema/ });
+  const dlg = page.getByRole('dialog', { name: /Nueva solicitud de soporte/ });
   await dlg.getByRole('radio', { name: 'Mejora / sugerencia' }).check();
   await dlg.getByLabel('Título').fill('Prueba E2E ' + Date.now());
   await dlg.getByLabel('Descripción').fill('Esto es una prueba automatizada del formulario de reportes.');
   await expect(dlg.getByLabel(/Página/)).toHaveValue('/admin/#/textos');
   await dlg.locator('#report-shot').setInputFiles(join(FIXTURES, 'wide-1600x900.jpg'));
-  await dlg.getByRole('button', { name: 'Enviar reporte' }).click();
-  await expect(dlg.getByText('¡Gracias! Tu reporte fue enviado correctamente al equipo de soporte.')).toBeVisible();
+  await dlg.getByRole('button', { name: 'Enviar solicitud' }).click();
+  await expect(dlg.getByText('¡Gracias! Tu solicitud fue enviada correctamente al equipo de soporte.')).toBeVisible();
 });
 
 // ---------------------------------------------------------------- Pass 2 (adversarial)
@@ -298,12 +298,12 @@ test('report text containing HTML is shown as text, never executed', async ({ pa
   page.on('dialog', (d) => { dialogs++; d.dismiss(); });
   await login(page);
   await page.locator('.topbar .report-btn').click();
-  const dlg = page.getByRole('dialog', { name: /Reportar un problema/ });
+  const dlg = page.getByRole('dialog', { name: /Nueva solicitud de soporte/ });
   const title = '<img src=x onerror=alert(1)> ' + Date.now();
   await dlg.getByLabel('Título').fill(title);
   await dlg.getByLabel('Descripción').fill('<script>alert(2)</script> descripción de prueba');
-  await dlg.getByRole('button', { name: 'Enviar reporte' }).click();
-  await expect(dlg.getByText(/Tu reporte fue enviado/)).toBeVisible();
+  await dlg.getByRole('button', { name: 'Enviar solicitud' }).click();
+  await expect(dlg.getByText(/Tu solicitud fue enviada/)).toBeVisible();
   await dlg.getByRole('button', { name: 'Listo' }).click();
   // In the list of tickets and on the ticket itself: text, never markup.
   await page.goto('/admin/#/reportes');

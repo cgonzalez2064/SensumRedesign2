@@ -377,3 +377,12 @@ archive is needed.
 | Technical detail | `SiteReport::technical()` is returned only by `GET /api/site-report/preview`, which requires the new `report` permission (owner included); it is never e-mailed or put in the PDF. | `12-site-report`, `21-profiles-health` |
 | `report` permission | View-only: both versions of the last 13 months (period validated as before). Sending, recipients, history and the PDF stay owner-only (403). Part of *Administrador del sitio* and *Soporte técnico*; not of *Gerencia*, *Ventas* or content types. Migration `012_report_access.sql` grants it once to accounts that already had `site` and `monitor` (those two types), so their access type is still recognised. | `12-site-report`, `21-profiles-health`, `access-report.spec` |
 | Lead figures for viewers | The client version shows aggregate counts and the won amount only — no names, e-mails or messages — so a viewer without `leads` sees no personal data. | `12-site-report` |
+
+## 18. Change review — first-sign-in welcome, welcome e-mail, «solicitud» wording
+
+| Area | Design | Verified by |
+|---|---|---|
+| Welcome screen | Shown only to the signed-in account itself (session `welcome` flag from `onboarded_at`), never while the owner views as someone; `PUT /api/account/welcome` changes only the caller's language and theme, validates both against fixed lists, keeps the first `onboarded_at`, is CSRF-protected like every change and is refused with `view_only` during "Ver como". Two-step enrolment, when required, still comes first. | `22-welcome`, `welcome.spec` |
+| Welcome e-mail | Sent once, after the invitation is accepted (answer first, then the e-mail), to the account's own address in its language. It contains the access type and permission names, first steps, the support address and safety advice — never the password, the invitation token or any link with a secret (only the panel address). The send is logged without content. | `22-welcome`, `welcome.spec` |
+| Wording | «Reportar un problema» → «Solicitar soporte», «reporte» → «solicitud» in the panel and e-mails; «Ayuda» → «Guía de uso». Text only: routes, permissions and stored data unchanged. | existing suites |
+

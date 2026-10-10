@@ -1,4 +1,4 @@
-// "Reportar un problema": validation, e-mail to it@gruposensum.com, failures, retry, abuse limits.
+// "Solicitar soporte" (new support request): validation, e-mail to it@gruposensum.com, failures, retry, abuse limits.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startServer, Client, createAdmin, ADMIN, mailpitUp, waitForMail, messagesTo, countTo, message, unique } from './helpers.mjs';
@@ -50,7 +50,7 @@ test('a report is stored and e-mailed to support with a scannable, escaped messa
   assert.deepEqual(mail.ReplyTo.map((t) => t.Address), [ADMIN.email]);
   assert.ok(!mail.HTML.includes('<script>alert(1)</script>'), 'HTML e-mail escapes report text');
   assert.ok(mail.HTML.includes('&lt;b&gt;negrita&lt;/b&gt; &amp; &quot;comillas&quot;'));
-  for (const label of ['Tipo', 'Título', 'Reportado por', 'Fecha y hora', 'Página', 'Navegador', 'Versión de la aplicación']) assert.ok(mail.Text.includes(label), label);
+  for (const label of ['Tipo', 'Título', 'Enviada por', 'Fecha y hora', 'Página', 'Navegador', 'Versión de la aplicación']) assert.ok(mail.Text.includes(label), label);
   assert.ok(!/secret-session|cookie|password/i.test(mail.Text), 'unknown context keys (cookies, passwords) are dropped');
   assert.ok(Number(s.sql("SELECT COUNT(*) FROM support_reports WHERE email_status='sent'")) >= 1);
 });
@@ -61,7 +61,7 @@ test('an optional screenshot is validated, re-encoded and attached', async () =>
   assert.equal(ok.status, 201);
   const mail = await message((await waitForMail(SUPPORT, before + 1))[0].ID);
   assert.equal(mail.Attachments.length, 1);
-  assert.match(mail.Attachments[0].FileName, /^captura-reporte-\d+\.(webp|jpg)$/);
+  assert.match(mail.Attachments[0].FileName, /^captura-solicitud-\d+\.(webp|jpg)$/);
   const bad = await report({ title: 'Captura falsa ' + Date.now() }, 'script-disguised.jpg');
   assert.equal(bad.status, 422);
   assert.equal(bad.data.fields.file, 'file_type_not_allowed');

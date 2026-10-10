@@ -75,6 +75,7 @@ final class Kernel
         ['DELETE', '/api/media/item/{id}', ContentController::class, 'deleteItem', 'user'],
 
         ['PUT', '/api/account/profile', AccountController::class, 'profile', 'user'],
+        ['PUT', '/api/account/welcome', AccountController::class, 'welcome', 'user'],
         ['POST', '/api/account/password', AccountController::class, 'password', 'user'],
         ['POST', '/api/account/sessions/revoke-others', AccountController::class, 'revokeOthers', 'user'],
         ['GET', '/api/account/2fa', AccountController::class, 'twoFactor', 'user'],

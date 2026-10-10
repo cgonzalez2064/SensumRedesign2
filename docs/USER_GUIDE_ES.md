@@ -35,7 +35,15 @@ y **no perderás lo que estabas escribiendo**.
 
 **Primera vez:** recibirás un correo de invitación. Ábrelo, toca **Crear mi
 contraseña**, elige una contraseña y listo. El enlace vence en 72 horas; si
-venció, pide a un administrador que te envíe otro.
+venció, pide a un administrador que te envíe otro. Al activar tu cuenta te llega
+un **correo de bienvenida** con tu tipo de acceso, los primeros pasos y cómo pedir
+ayuda.
+
+**Bienvenida (solo la primera vez):** antes de entrar, el panel te pide elegir el
+**idioma** (Español o English; también es el idioma de los correos que te envía) y
+la **apariencia** (Claro, Oscuro o **Automático**, que sigue a tu dispositivo y viene
+elegido de inicio). Cada opción se aplica al instante para que la veas; pulsa
+**Guardar y continuar**. Puedes cambiarlo cuando quieras en **Mi cuenta**.
 
 ## 2. Idioma y apariencia
 
@@ -46,7 +54,7 @@ En el menú con tu nombre (arriba a la derecha):
 Tu elección se recuerda. También puedes cambiarla en **Mi cuenta**.
 
 **La parte de arriba queda fija.** Al desplazarte, la barra superior (menú, logo,
-«Reportar un problema» y tu nombre) se queda en su lugar. En computadora, el logo y
+«Solicitar soporte» y tu nombre) se queda en su lugar. En computadora, el logo y
 «Administrador de contenido» también se quedan arriba del menú lateral aunque el menú
 sea largo; en celular y tableta pasa lo mismo dentro del menú desplegable.
 
@@ -196,11 +204,12 @@ técnico que te la restablezca.
 Nadie del equipo técnico te pedirá tu contraseña ni tus códigos, ni por correo ni
 por teléfono.
 
-## 7. Reportar un problema o una mejora
+## 7. Solicitar soporte (un problema, una mejora o un cambio)
 
-Si algo no funciona, se ve mal o tienes una idea, toca **Reportar un problema**
+Si algo no funciona, se ve mal o tienes una idea, toca **Solicitar soporte**
 (arriba, en cualquier pantalla del panel; en el celular es el ícono del
-salvavidas).
+salvavidas) o **Nueva solicitud** en el Centro de Ayuda. Se abre **Nueva solicitud
+de soporte**:
 
 1. Elige el **Tipo**: Problema, Mejora / sugerencia, Contenido, Diseño / visual u Otro.
 2. Escribe un **Título** corto (ej.: «La imagen de Proyectos no carga»).
@@ -208,24 +217,23 @@ salvavidas).
 4. Indica **dónde lo notaste** (sitio web, panel o ambos). La **Página** se llena
    sola con la pantalla donde estabas; cámbiala o bórrala si fue en otro lugar.
 5. Si quieres, adjunta una **captura de pantalla** (JPG, PNG o WebP, hasta 5 MB).
-6. Toca **Enviar reporte**.
+6. Toca **Enviar solicitud**.
 
-El reporte llega directamente al equipo de soporte técnico (it@gruposensum.com).
+La solicitud llega directamente al equipo de soporte técnico (it@gruposensum.com).
 
 **Seguimiento:** en el menú **Soporte** se abre el **Centro de Ayuda**. Ahí, en **Mis
-solicitudes**, cada reporte tiene su página con su estado (Nuevo, En progreso,
-Esperando información, Resuelto, Cerrado) y la conversación con soporte. El botón
-**Nueva solicitud** abre el mismo formulario que «Reportar un problema». Te llega un
-correo cuando soporte te responde, te pide más información o lo resuelve, y el menú
+solicitudes**, cada solicitud tiene su página con su estado (Nueva, En progreso,
+Esperando información, Resuelta, Cerrada) y la conversación con soporte. Te llega un
+correo cuando soporte te responde, te pide más información o la resuelve, y el menú
 muestra un número junto a «Soporte» cuando tienes una respuesta nueva. Para contestar, escribe en **Tu
 respuesta** y toca **Enviar respuesta**: si te pidieron información o lo
-marcaron como resuelto pero el problema sigue, tu respuesta lo vuelve a poner
-«En progreso». Los reportes cerrados ya no reciben respuestas (puedes enviar uno
-nuevo).
+marcaron como resuelta pero el problema sigue, tu respuesta la vuelve a poner
+«En progreso». Las solicitudes cerradas ya no reciben respuestas (puedes crear una
+nueva).
 
-**Califica la atención:** cuando soporte marca tu reporte como resuelto, en su página
+**Califica la atención:** cuando soporte marca tu solicitud como resuelta, en su página
 aparece **¿Cómo te atendimos?**: elige de 1 a 5 estrellas y, si quieres, deja un
-comentario. Si no respondes, el reporte se cierra solo a los 7 días.
+comentario. Si no respondes, la solicitud se cierra sola a los 7 días.
 
 **Qué información técnica se envía automáticamente:** navegador y versión,
 sistema operativo, tipo de dispositivo, tamaño de la ventana y de la pantalla,
@@ -234,10 +242,10 @@ estabas, la versión del sistema, la fecha y hora, y tu nombre y correo. Puedes
 verla antes de enviar en «Ver la información técnica que se envía».
 **No** se envían contraseñas, cookies ni lo que hayas escrito en otros formularios.
 
-> **No incluyas contraseñas ni información sensible en el reporte.**
+> **No incluyas contraseñas ni información sensible en la solicitud.**
 
-Si el correo no se pudo enviar en ese momento, el panel te lo dirá: tu reporte
-**queda guardado** y puedes reintentar el envío ahí mismo o más tarde desde
+Si el correo no se pudo enviar en ese momento, el panel te lo dirá: tu solicitud
+**queda guardada** y puedes reintentar el envío ahí mismo o más tarde desde
 **Soporte** (Centro de Ayuda), donde también ves el historial de tus solicitudes.
 
 ## 8. Si un cambio no aparece en el sitio
@@ -247,7 +255,7 @@ Si el correo no se pudo enviar en ese momento, el panel te lo dirá: tu reporte
    vuelve a abrir la pestaña.
 2. Si ves el sitio en inglés, recuerda que el texto en inglés se edita por separado.
 3. Confirma que viste el mensaje «Cambios publicados en el sitio».
-4. Si después de unos minutos sigue sin aparecer, usa **Reportar un problema**.
+4. Si después de unos minutos sigue sin aparecer, usa **Solicitar soporte**.
 
 ## 9. Si aparece un error
 
@@ -255,7 +263,7 @@ Si el correo no se pudo enviar en ese momento, el panel te lo dirá: tu reporte
   la conexión a internet o corregir un campo marcado en rojo).
 * **Lo que estabas editando no se pierde**: sigue en pantalla para que lo
   intentes de nuevo.
-* Si el error se repite, usa **Reportar un problema** e incluye el **código** que
+* Si el error se repite, usa **Solicitar soporte** e incluye el **código** que
   aparece en el mensaje (por ejemplo `A1B2C3`); ayuda al equipo técnico a
   encontrar la causa.
 * Si no puedes entrar al panel, escribe a it@gruposensum.com.
@@ -314,7 +322,7 @@ Solo la cuenta **it@gruposensum.com** ve **Monitoreo** en el menú
   it@gruposensum.com (el mismo error como máximo una vez por hora). Usa **Enviar
   correo de prueba** para comprobar que llegan.
 * **Actividad y errores:** inicios de sesión, intentos fallidos, cambios, fotos,
-  reportes y correos fallidos en 24 horas, 7 y 30 días.
+  solicitudes de soporte y correos fallidos en 24 horas, 7 y 30 días.
 * **Sistema:** versión, espacio en disco, tamaño de la base de datos, último
   respaldo y si las páginas publicadas coinciden con lo guardado.
 
@@ -368,11 +376,11 @@ En **Administración → Correo** decides quién envía y quién recibe los corr
   visitantes (hasta 3), qué correo aparece como remitente y cómo se envían.
   Al responder un mensaje, la respuesta va directo al visitante.
 * **Cuenta de envío del panel:** el correo desde el que salen invitaciones,
-  contraseñas, reportes de problemas, el informe mensual y las alertas, y adónde
+  contraseñas, solicitudes de soporte, el informe mensual y las alertas, y adónde
   llegan las respuestas. El botón **Completar con los datos de Namecheap** llena el
   servidor, el puerto y la seguridad. La contraseña del buzón se guarda cifrada y
   no se vuelve a mostrar (déjala vacía para conservarla).
-* **Adónde llegan los avisos:** reportes de problemas y alertas automáticas.
+* **Adónde llegan los avisos:** solicitudes de soporte y alertas automáticas.
 * **Protección contra spam (captcha):** el captcha integrado está siempre activo y
   es invisible para los visitantes. Opcionalmente puedes activar **Cloudflare
   Turnstile** pegando su Site Key y Secret Key (los pasos están en la misma página).
@@ -411,8 +419,8 @@ solicitudes**, las solicitudes de **todas** las personas:
   resolución), la primera respuesta promedio, la satisfacción, la gráfica **Recibidas
   y resueltas por día** y barras **por estado, tipo, prioridad y dónde se notó**.
 
-* **Filtros** por estado (Abiertos, Nuevos, En progreso, Esperando información,
-  Resueltos, Cerrados, Todos) con su cantidad, y **búsqueda** por título, texto,
+* **Filtros** por estado (Abiertas, Nuevas, En progreso, Esperando información,
+  Resueltas, Cerradas, Todas) con su cantidad, y **búsqueda** por título, texto,
   persona o número (`#12`). Los tickets sin leer aparecen en negrita y primero;
   el menú muestra cuántos esperan atención.
 * En cada ticket: la descripción, la **captura de pantalla**, la información

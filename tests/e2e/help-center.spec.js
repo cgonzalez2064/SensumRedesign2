@@ -29,7 +29,7 @@ test('the menu says «Soporte» (headset icon); the page is the Centro de Ayuda 
   await expect(page.getByRole('heading', { name: 'Gestión de solicitudes' })).toHaveCount(0);
   await expect(page.locator('.ticket-row', { hasText: 'La galería no abre en el celular' })).toBeVisible();
   await page.getByRole('button', { name: 'Nueva solicitud' }).first().click();
-  await expect(page.getByRole('dialog', { name: /Reportar un problema/ })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: /Nueva solicitud de soporte/ })).toBeVisible();
   await page.keyboard.press('Escape');
   await page.locator('.ticket-row').first().click();
   await expect(page.locator('.crumbs, nav[aria-label]').filter({ hasText: 'Centro de Ayuda' }).first()).toBeVisible();

@@ -15,6 +15,8 @@ final class AuthController extends Controller
     {
         $auth = $this->app->auth();
         $public = $auth->publicUser($user);
+        // First sign-in: the panel asks for the language and the appearance once (never while viewing as someone).
+        $public['welcome'] = array_key_exists('onboarded_at', $user) && $user['onboarded_at'] === null && !$auth->viewingAs($user);
         $viewAs = null;
         if ($auth->viewingAs($user)) {
             $public['twoFactorRequired'] = false; // their two-step setup is not the owner's to do
@@ -184,7 +186,15 @@ final class AuthController extends Controller
         );
         $this->app->activity((int) $row['id'], 'invitation_accepted', '', [], $this->req->ip());
         $auth->startSession($this->req, (int) $row['id']);
-        Response::ok(['activated' => true]);
+        Response::okAndContinue(['activated' => true]);
+        // Welcome e-mail: their access in plain words, first steps, how to get help (once).
+        $user = (new Users($this->app))->find((int) $row['id']);
+        $inviter = $user && $user['invited_by'] !== null ? (new Users($this->app))->find((int) $user['invited_by']) : null;
+        if ($user) {
+            $sent = $this->app->mailer()->send((new Emails($this->app))->welcome($user, $inviter ? (string) $inviter['name'] : ''));
+            $this->app->activity((int) $user['id'], 'welcome_email', '', ['sent' => $sent]);
+        }
+        exit;
     }
 
     /**

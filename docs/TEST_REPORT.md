@@ -9,8 +9,8 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 
 | Suite | Location | Size |
 |---|---|---|
-| API integration | `tests/integration/*.test.mjs` | 203 tests in 22 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
-| Browser E2E | `tests/e2e/*.spec.js` | 66 specs × 3 browser profiles (198 runs, 53 skipped by design: phone-only, desktop-only or single-submission tests) |
+| API integration | `tests/integration/*.test.mjs` | 209 tests in 23 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
+| Browser E2E | `tests/e2e/*.spec.js` | 69 specs × 3 browser profiles (207 runs, 53 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
 | Production build | `tests/apache/apache.test.mjs` | 6 checks of the built release under Apache + PHP-FPM |
 
@@ -304,6 +304,16 @@ Full re-run: API **203/203**, browser **145 passed / 53 skipped**; PHPStan 0 err
 | Production build on Apache | release `6ca3c18` (68 public + 252 private files, 1.2 MB zip) under Apache + PHP-FPM; migration `012_report_access` applied on first request; the preview refuses anonymous requests (401) | 6/6 |
 
 Full re-run: API **204/204**, browser **148 passed / 53 skipped**; PHPStan 0 errors.
+
+## Change — first-sign-in welcome, welcome e-mail, «Solicitar soporte» / «solicitud», «Guía de uso»
+
+| Suite | Added | Result |
+|---|---|---|
+| API (`22-welcome`, new) | a never-used account gets `welcome: true` (Automático by default); `PUT /api/account/welcome` stores language and appearance, keeps the first date, unknown values fall back, 401 without a session; viewing as someone never shows it and refuses the change (`view_only`); accepting an invitation sends one welcome e-mail (access type and permissions in plain words, first steps, support address, safety advice; never the password), in the account's language, naming custom access by its parts; migration `013_welcome` marks accounts that had signed in | 5/5 |
+| Browser (`welcome`, new) | the owner invites; the invitation link from Mailpit; on a fresh device the person creates the password and gets the welcome screen (Spanish and Automático preselected, no menu, axe, no horizontal overflow); English switches the screen at once keeping the focus; Dark applies at once; saving lands on the dashboard in English and dark, not shown again after reload; the welcome e-mail arrived with the access and help text | 6/6 (3 devices) |
+| Existing suites | new wording (*Nueva solicitud de soporte*, *Enviar solicitud*, *Ver la solicitud*, feminine statuses, e-mail subjects «fue resuelta», e-mail to IT «Enviada por»), seeded accounts marked as past the welcome | passing |
+
+Full re-run: API **209/209**, browser **154 passed / 53 skipped**; PHPStan 0 errors.
 
 ## Other audits
 

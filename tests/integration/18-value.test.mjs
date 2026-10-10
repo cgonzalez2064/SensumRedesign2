@@ -286,7 +286,7 @@ test('tickets: first response time, rating by the reporter, response target', as
   assert.equal((await editor.post(`/api/reports/${ticket}/rating`, { rating: 5 })).status, 409);
   const res = await owner.post(`/api/reports/${ticket}/status`, { status: 'resolved', message: 'Listo, era la caché.', notify: true });
   assert.equal(res.status, 200);
-  const mail = (await waitForMail(EDITOR.email, 1)).find((m) => /resuelto/i.test(m.Subject));
+  const mail = (await waitForMail(EDITOR.email, 1)).find((m) => /fue resuelta/i.test(m.Subject));
   assert.ok((await message(mail.ID)).Text.includes('calificar la atención'));
   const d = await editor.get(`/api/reports/${ticket}`);
   assert.equal(d.data.canRate, true);

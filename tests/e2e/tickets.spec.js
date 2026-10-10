@@ -23,13 +23,13 @@ test('IT asks for information, the person answers, IT resolves it', async ({ bro
   // The editor reports a problem.
   await login(ed, EDITOR);
   await ed.locator('.topbar .report-btn').click();
-  const dlg = ed.getByRole('dialog', { name: /Reportar un problema/ });
+  const dlg = ed.getByRole('dialog', { name: /Nueva solicitud de soporte/ });
   await dlg.getByLabel('Título').fill(title);
   await dlg.getByLabel('Descripción').fill('Al guardar la sección de servicios aparece un error.');
-  await dlg.getByRole('button', { name: 'Enviar reporte' }).click();
-  await dlg.getByRole('link', { name: /Ver el reporte #/ }).click();
+  await dlg.getByRole('button', { name: 'Enviar solicitud' }).click();
+  await dlg.getByRole('link', { name: /Ver la solicitud #/ }).click();
   await expect(ed.locator('main h1')).toHaveText(title);
-  await expect(ed.locator('.ticket-summary')).toContainText('Nuevo');
+  await expect(ed.locator('.ticket-summary')).toContainText('Nueva');
 
   // IT sees it unread and asks for more information.
   await login(it, ADMIN);
@@ -69,9 +69,9 @@ test('IT asks for information, the person answers, IT resolves it', async ({ bro
   await expect(it.locator('.timeline-msg.note')).toContainText('Era el permiso');
   await it.getByRole('button', { name: 'Marcar como resuelto' }).click();
   const solve = it.getByRole('dialog', { name: 'Marcar como resuelto' });
-  await solve.getByLabel(/Mensaje para quien reportó/).fill('Corregido. Ya puedes guardar.');
+  await solve.getByLabel(/Mensaje para quien la envió/).fill('Corregido. Ya puedes guardar.');
   await solve.getByRole('button', { name: 'Marcar como resuelto' }).click();
-  await expect(it.locator('.ticket-summary')).toContainText('Resuelto');
+  await expect(it.locator('.ticket-summary')).toContainText('Resuelta');
   const v = (await new AxeBuilder({ page: it }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations.filter((x) => ['serious', 'critical'].includes(x.impact));
   expect(v.map((x) => x.id)).toEqual([]);
 

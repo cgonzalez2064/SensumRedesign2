@@ -33,11 +33,11 @@ El `.env` queda con 5 líneas obligatorias.
 └── sensum-cms/                     ← PRIVADO (fuera de public_html; nadie lo ve desde internet)
     ├── .env                        ← configuración y contraseñas (lo creas tú, paso 9)
     ├── src/, vendor/, templates/…  ← el programa
-    └── storage/                    ← base de datos, registros, respaldos, capturas de reportes
+    └── storage/                    ← base de datos, registros, respaldos, capturas de solicitudes de soporte
         ├── database.sqlite         ← LA base de datos (se crea sola)
         ├── logs/                   ← registro técnico
         ├── backups/                ← copias de la base de datos y de las páginas
-        └── reports/                ← capturas de pantalla de «Reportar un problema»
+        └── reports/                ← capturas de pantalla de «Solicitar soporte»
 ```
 
 **Dónde se guardan las fotografías:** en `public_html/assets/uploads/`. El panel
@@ -149,7 +149,7 @@ solo creas los correos en cPanel.
 | Qué envía | Desde (remitente) | Hacia | Respuestas van a |
 |---|---|---|---|
 | **Formulario de contacto** del sitio | `formulario@sensumconstrucciones.com` | `contacto@sensumconstrucciones.com` | Al visitante (responder = escribirle al cliente) |
-| **Panel**: invitaciones, contraseñas, «Reportar un problema», informe mensual, recordatorios | `notificaciones@sensumconstrucciones.com` | Según el caso | `soporte@sensumconstrucciones.com` |
+| **Panel**: invitaciones, correo de bienvenida, contraseñas, «Solicitar soporte», informe mensual, recordatorios | `notificaciones@sensumconstrucciones.com` | Según el caso | `soporte@sensumconstrucciones.com` |
 | **Alertas automáticas** y errores críticos | `notificaciones@sensumconstrucciones.com` | `it@gruposensum.com` | `soporte@sensumconstrucciones.com` |
 
 ### 6.1 Correos recomendados para `@sensumconstrucciones.com`
@@ -159,7 +159,7 @@ cPanel → **Email Accounts** (buzones) y cPanel → **Forwarders** (reenvíos):
 | Correo | Crear como | Para qué | Dónde se usa en el panel |
 |---|---|---|---|
 | `contacto@` | **Buzón** (si ya existe, déjalo) | Recibe los mensajes del formulario y lo que escriben los clientes. Lo atiende ventas / atención al cliente. | Correo → «Recibe los mensajes» |
-| `notificaciones@` | **Buzón** con contraseña larga | **Cuenta de envío** del panel (SMTP). Envía invitaciones, contraseñas, reportes, informe mensual, alertas y, con el método recomendado, también el formulario. | Correo → Cuenta de envío del panel |
+| `notificaciones@` | **Buzón** con contraseña larga | **Cuenta de envío** del panel (SMTP). Envía invitaciones, correos de bienvenida, contraseñas, solicitudes de soporte, informe mensual, alertas y, con el método recomendado, también el formulario. | Correo → Cuenta de envío del panel |
 | `formulario@` | **Reenvío** → `contacto@` | Remitente visible de los mensajes del formulario: permite filtrarlos en la bandeja. Si algún rebote llega, termina en `contacto@`. | Correo → «Correo que envía los mensajes» |
 | `soporte@` | **Reenvío** → `it@gruposensum.com` (o buzón propio) | Si alguien responde un aviso o el informe mensual, la respuesta llega a soporte. | Correo → «Las respuestas llegan a» |
 | `postmaster@` y `abuse@` | **Reenvío** → `it@gruposensum.com` | Direcciones estándar: otros proveedores avisan aquí de rebotes, bloqueos o spam. | — |
@@ -479,6 +479,11 @@ Prospectos · **Estadísticas de visitas** · **Salud del sitio** · **Informe m
 
 3. La persona recibe un correo para crear su contraseña (vence en 72 horas). Si el
    correo no sale, el panel te muestra el enlace para compartirlo por otro medio.
+   Al crear su contraseña recibe un **correo de bienvenida** (una sola vez, en el idioma
+   elegido en la invitación) con su tipo de acceso explicado, los primeros pasos y cómo
+   pedir ayuda; y la **primera vez que entra** el panel le pide elegir **idioma** y
+   **apariencia** (Claro, Oscuro o Automático, que viene preseleccionado). Las cuentas
+   que ya usaban el panel no ven esa pantalla.
 4. Para cambiar el acceso después: menú «⋮» de la persona → **Cambiar tipo de
    acceso**. Se aplica de inmediato.
 5. **Buscar personas:** arriba de la lista hay un buscador (nombre, correo o tipo de
@@ -701,10 +706,10 @@ también puedes comprobarla: `php ~/sensum-cms/bin/console translate:test`.
 - [ ] Monitoreo → **Correo y dominio → Revisar ahora**: SPF, DKIM, DMARC y MX en verde, y la fecha de vencimiento del dominio.
 - [ ] Verificación en dos pasos activa en la cuenta propietaria (y códigos de recuperación guardados).
 - [ ] Seguridad → **Enviar respaldo ahora**: el ZIP llega al correo elegido y se abre con la contraseña de respaldos.
-- [ ] **Reportar un problema** (botón arriba en el panel) → llega a it@gruposensum.com con el nuevo diseño.
+- [ ] **Solicitar soporte** (botón arriba en el panel) → la **Nueva solicitud de soporte** llega a it@gruposensum.com con el nuevo diseño.
 - [ ] **Monitoreo → Enviar correo de prueba** → llega la alerta de prueba.
 - [ ] **Informe mensual → Enviarme una prueba** → llega.
-- [ ] Invitas a una persona como «Redactor» → solo ve «Textos del sitio».
+- [ ] Invitas a una persona como «Redactor» (usa un correo tuyo) → al crear su contraseña le llega el **correo de bienvenida** y, al entrar, la pantalla para elegir **idioma y apariencia**; después solo ve «Textos del sitio».
 - [ ] Cambias un texto, lo ves en el sitio (recarga con Ctrl+F5) y lo restauras.
 - [ ] Subes una foto de proyecto y aparece en la tarjeta.
 - [ ] Monitoreo → «Última revisión automática» muestra una hora reciente (cron funcionando).
@@ -749,6 +754,8 @@ da a nadie automáticamente: asígnala tú en Usuarios → «⋮» → **Cambiar
 **Publicación y actividad** y **Salud del sitio** (Administrador del sitio y Soporte
 técnico) reciben **Informe mensual (consulta)**. Revisa después con **Ver como…** que
 cada persona vea lo que corresponde.
+Las personas que ya habían entrado al panel no verán la pantalla de bienvenida (idioma
+y apariencia); solo la ven las cuentas que entran por primera vez.
 
 **Alternativa con Git (cPanel → Git Version Control):** cPanel puede clonar el
 repositorio de GitHub y desplegarlo con un archivo `.cpanel.yml`, pero entonces

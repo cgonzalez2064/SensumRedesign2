@@ -93,7 +93,8 @@ so a slow screen can never write into the next one).
 | Documents | Replace the portfolio PDF (or go back to the sample) |
 | Users (admins) | Invite (e-mailed single-use link), resend, change role (Administrador / Editor), disable/enable, delete; last-admin and self-lockout protection |
 | Account | Name, panel language, theme; change password (signs out other devices); sign out other sessions |
-| Support | "Reportar un problema" from every screen; history with delivery status and retry |
+| Support | "Solicitar soporte" (a new support request) from every screen; history with delivery status and retry |
+| First sign-in | Once per account: a welcome screen to choose the panel language (also used for its e-mails) and the appearance (light, dark or automatic, preselected), previewed live; a welcome e-mail when an invitation is accepted |
 | Dashboard | Site status, last publish, sync check + republish (admins), recent activity, monitoring status; diagnostics and recent errors for the owner |
 | Monitoring (owner) | Uptime (24 h / 7 / 30 / 90 days), incidents with the checks that failed, interactive trend charts (daily uptime, response time, errors, sign-ins), error log with filters and details, key figures, most frequent errors, system details, e-mail alerts for critical errors + test e-mail (§9a, §9d) |
 | Salud del sitio (`monitor`) | Summary of Monitoring for the team: status, uptime, charts, incidents, error counts and key dates — no messages or settings (§9d) |
@@ -269,6 +270,7 @@ nothing.
 | `POST /api/content/translate` | texts/contact/photos/documents | machine-translate ES⇄EN for review: field text (`key`) or plain labels without a key (form options, photo descriptions); saves nothing; off without a key |
 | `GET /api/media` · `POST /api/media/{slot}/upload` · `PUT /api/media/{slot}/order` · `PUT`/`DELETE /api/media/item/{id}` | user | photos & PDF |
 | `PUT /api/account/profile` · `POST /api/account/password` · `POST /api/account/sessions/revoke-others` | user | own account |
+| `PUT /api/account/welcome` | user | first sign-in: `lang` (es/en) and `theme` (light/dark/system) stored with `onboarded_at` (kept from the first time); the session's `user.welcome` is true until then (never while viewing as someone, where the change is refused with `view_only`). Migration `013_welcome` marks accounts that had signed in before |
 | `GET /api/account/2fa` · `POST /api/account/2fa/setup` · `/enable` · `/recovery-codes` · `/disable` | user | own two-step sign-in: setup (password → secret + QR), enable (code → recovery codes), new codes and disable (password + code). The only routes open to an account that must still enrol |
 | `GET /api/reports?status=&q=` · `POST /api/reports` · `POST /api/reports/{id}/retry` · `GET /api/reports/badge` | user | support requests (owner and `support`: all, filters, search, `canManage: true`; others: own) |
 | `GET /api/reports/{id}` · `POST /api/reports/{id}/messages` · `GET /api/reports/{id}/screenshot` | user (own) / owner · `support` | request, conversation (managers: `internal` notes), screenshot |
@@ -332,10 +334,12 @@ so the editor and the site never disagree. External edits of the live files
 (e.g. a deployment) are detected, backed up, and reported on the dashboard;
 admins can republish with one click (or `php bin/console publish`).
 
-## 8. Issue reporting ("Reportar un problema")
+## 8. Support requests ("Solicitar soporte")
 
-* Entry points: top bar on every screen (icon-only on phones), sidebar footer,
-  Help page, Dashboard (editors), Reports page.
+* Entry points: top bar on every screen (*Solicitar soporte*, icon-only on phones),
+  sidebar footer, *Guía de uso* page, Dashboard (editors), *Centro de Ayuda* (*Nueva
+  solicitud*). The dialog is *Nueva solicitud de soporte*; e-mails and screens call
+  each one a *solicitud* (#id).
 * Fields: Tipo (Problema, Mejora / sugerencia, Contenido, Diseño / visual, Otro),
   Título (3–120), Descripción (10–4000), ¿Dónde lo notaste? (default "Panel de
   administración"), Página (auto-filled with the current screen, editable/

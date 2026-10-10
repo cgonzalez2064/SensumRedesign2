@@ -52,6 +52,65 @@ final class Emails
         return $this->action($user['email'], $user['lang'], 'invite', ['name' => $user['name'], 'inviter' => $inviterName, 'hours' => $hours], $this->adminUrl('invitacion/' . $token));
     }
 
+    /**
+     * Sent once, when a new person activates their account (invitation
+     * accepted): their access in plain words, first steps, how to get help and
+     * how to keep the account safe. In their language.
+     *
+     * @return array{to:string,subject:string,text:string,html:string,embedded:list<array{path:string,cid:string,name:string,mime:string}>}
+     */
+    public function welcome(array $user, string $inviterName): array
+    {
+        $lang = ($user['lang'] ?? 'es') === 'en' ? 'en' : 'es';
+        $s = $this->strings($lang);
+        $e = fn (string $v) => self::esc($v);
+        $first = explode(' ', trim((string) $user['name']))[0] ?: (string) $user['name'];
+        $vars = ['name' => $first, 'email' => (string) $user['email'], 'support' => $this->app->mailSettings()->supportEmail()];
+        $f = fn (string $key) => self::fill($s[$key], $vars);
+        $perms = array_values(array_intersect(Users::PERMISSIONS, Users::permissionsOf($user)));
+        $type = Users::accessTypeOf($perms);
+        $label = fn (string $t) => '<div style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#7a7a82;font-family:Arial,Helvetica,sans-serif">' . $e($t) . '</div>';
+
+        $permRows = '';
+        $permText = '';
+        foreach ($perms as $p) {
+            $permRows .= '<tr><td valign="top" width="26" style="padding:6px 0"><div style="width:18px;height:18px;border-radius:50%;background:#f6740a;color:#1c1c1c;font:700 12px/18px Arial,Helvetica,sans-serif;text-align:center">&#10003;</div></td>'
+                . '<td style="padding:5px 0 6px 6px;font-size:14px;line-height:1.45;color:#2b2b31"><strong style="color:#1c1c1c">' . $e($s['acc.perm.' . $p]) . '</strong><br><span style="color:#5c5c66">' . $e($s['acc.permHelp.' . $p]) . '</span></td></tr>';
+            $permText .= '- ' . $s['acc.perm.' . $p] . ': ' . $s['acc.permHelp.' . $p] . "\n";
+        }
+        $steps = '';
+        $stepText = '';
+        foreach (['welcome.step1', 'welcome.step2', 'welcome.step3'] as $i => $key) {
+            $steps .= '<tr><td valign="top" width="30" style="padding:5px 0"><div style="width:22px;height:22px;border-radius:50%;background:#1c1c1c;color:#ffffff;font:700 12px/22px Arial,Helvetica,sans-serif;text-align:center">' . ($i + 1) . '</div></td>'
+                . '<td style="padding:6px 0 6px 6px;font-size:14px;line-height:1.5;color:#2b2b31">' . $e($s[$key]) . '</td></tr>';
+            $stepText .= ($i + 1) . '. ' . $s[$key] . "\n";
+        }
+        $safety = array_map($f, ['welcome.safe1', 'welcome.safe2', 'welcome.safe3']);
+        $link = $this->app->config->appUrl() . '/admin/';
+
+        $body = '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#e8f6ec;color:#166534;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif">' . $e($s['welcome.badge']) . '</td></tr></table>'
+            . '<h1 style="margin:14px 0 8px;font-size:24px;line-height:1.3;color:#1c1c1c">' . $e($f('welcome.title')) . '</h1>'
+            . '<p style="margin:0 0 18px;color:#2b2b31">' . $e($f('welcome.intro')) . '</p>'
+            . '<div style="margin:0 0 18px;padding:16px 18px;background:#fff8f1;border:1px solid #ffe2c7;border-radius:14px">'
+            . $label($s['welcome.access'])
+            . '<div style="margin:0 0 6px;font-size:17px;font-weight:800;color:#1c1c1c">' . $e($s['acc.type.' . $type]) . '</div>'
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' . $permRows . '</table></div>'
+            . $label($s['welcome.steps'])
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 4px">' . $steps . '</table>'
+            . self::cta($s['welcome.button'], $link)
+            . '<div style="margin:18px 0 0;padding:14px 16px;background:#f7f7f9;border-radius:12px;font-size:14px;line-height:1.5;color:#3c3c43">'
+            . '<strong style="color:#1c1c1c">' . $e($s['welcome.helpTitle']) . '</strong><br>' . $e($f('welcome.help')) . '</div>'
+            . '<div style="margin:16px 0 4px;font-size:13px;line-height:1.5;color:#5c5c66"><strong style="color:#3c3c43">' . $e($s['welcome.safeTitle']) . '</strong>'
+            . '<ul style="margin:6px 0 0;padding-left:18px">' . implode('', array_map(fn ($l) => '<li style="margin:0 0 4px">' . $e($l) . '</li>', $safety)) . '</ul></div>';
+        $footer = $inviterName !== '' ? self::fill($s['welcome.footer'], ['inviter' => $inviterName]) : $s['welcome.footerNoInviter'];
+        $layout = $this->branded($lang, $s['welcome.tag'], $s['welcome.preheader'], $body, $e($footer));
+
+        $text = $f('welcome.title') . "\n\n" . $f('welcome.intro') . "\n\n" . $s['welcome.access'] . ': ' . $s['acc.type.' . $type] . "\n" . $permText
+            . "\n" . $s['welcome.steps'] . ":\n" . $stepText . "\n" . $s['welcome.button'] . ': ' . $link . "\n\n"
+            . $s['welcome.helpTitle'] . ' ' . $f('welcome.help') . "\n\n" . $s['welcome.safeTitle'] . ":\n- " . implode("\n- ", $safety) . "\n\n— " . $footer . "\n";
+        return ['to' => (string) $user['email'], 'subject' => $s['welcome.subject'], 'text' => $text, 'html' => $layout['html'], 'embedded' => $layout['embedded']];
+    }
+
     public function passwordReset(array $user, string $token): array
     {
         $minutes = (string) $this->app->config->int('RESET_TTL_MINUTES', 60, 10, 1440);

@@ -249,9 +249,9 @@ final class Reports
             'Título' => $r['title'],
             'Dónde se notó' => self::AREA_LABELS[$r['area']] ?? $r['area'],
             'Página' => $r['page'] !== '' ? $r['page'] : '—',
-            'Reportado por' => $r['reporter_name'] . ' <' . $r['reporter_email'] . '>',
+            'Enviada por' => $r['reporter_name'] . ' <' . $r['reporter_email'] . '>',
             'Fecha y hora' => $when,
-            'Número de reporte' => '#' . $r['id'],
+            'Número de solicitud' => '#' . $r['id'],
         ];
         // Friendly values for the support engineer (raw codes otherwise).
         $readable = [
@@ -265,7 +265,7 @@ final class Reports
             $tech[self::CONTEXT_LABELS[$k] ?? $k] = $readable[$k][(string) $v] ?? (string) $v;
         }
 
-        $text = "Nuevo reporte desde el Administrador de contenido de Sensum Construcciones\n\n";
+        $text = "Nueva solicitud de soporte desde el Administrador de contenido de Sensum Construcciones\n\n";
         foreach ($rows as $k => $v) {
             $text .= "{$k}: {$v}\n";
         }
@@ -284,7 +284,7 @@ final class Reports
         if ($r['screenshot'] && preg_match('/^report-\d{8}-[a-f0-9]{12}-w\d+\.(webp|jpg)$/', (string) $r['screenshot'], $m)) {
             $path = $this->app->storage('reports/' . $r['screenshot']);
             if (is_file($path)) {
-                $attachments[] = ['path' => $path, 'name' => 'captura-reporte-' . $r['id'] . '.' . $m[1], 'mime' => $m[1] === 'webp' ? 'image/webp' : 'image/jpeg'];
+                $attachments[] = ['path' => $path, 'name' => 'captura-solicitud-' . $r['id'] . '.' . $m[1], 'mime' => $m[1] === 'webp' ? 'image/webp' : 'image/jpeg'];
                 $preview = $this->emailPreview($path, (int) $r['id']);
                 if ($preview) {
                     $embedded[] = ['path' => $preview['path'], 'cid' => 'report-shot', 'name' => 'vista-previa.jpg', 'mime' => 'image/jpeg'];
@@ -316,20 +316,20 @@ final class Reports
             . '<div style="margin:22px 0 0;padding:16px 18px;background:#fff8f1;border-left:4px solid #f6740a;border-radius:0 12px 12px 0;white-space:pre-wrap;font-size:15px;color:#1f2328">' . $e($r['description']) . '</div>'
             . ($preview
                 ? '<div style="margin:22px 0 0"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7a7a82;margin-bottom:8px">Captura de pantalla</div>'
-                    . '<img src="cid:report-shot" alt="Captura de pantalla enviada con el reporte" width="' . $shotWidth . '" style="display:block;width:100%;max-width:' . $shotWidth . 'px;height:auto;border:1px solid #e7e7ea;border-radius:12px">'
+                    . '<img src="cid:report-shot" alt="Captura de pantalla enviada con la solicitud" width="' . $shotWidth . '" style="display:block;width:100%;max-width:' . $shotWidth . 'px;height:auto;border:1px solid #e7e7ea;border-radius:12px">'
                     . '<div style="font-size:12px;color:#7a7a82;margin-top:6px">La imagen original va adjunta a este correo.</div></div>'
                 : '')
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="6" style="margin:18px -6px 0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif"><tr>'
-            . $detail('Página', $r['page'] !== '' ? $e($r['page']) : '—') . $detail('Número de reporte', '#' . (int) $r['id']) . '</tr><tr>'
-            . $detail('Reportado por', $e($r['reporter_name'])) . $detail('Correo', '<a href="mailto:' . $e($r['reporter_email']) . '" style="color:#c25500;text-decoration:none">' . $e($r['reporter_email']) . '</a>')
+            . $detail('Página', $r['page'] !== '' ? $e($r['page']) : '—') . $detail('Número de solicitud', '#' . (int) $r['id']) . '</tr><tr>'
+            . $detail('Enviada por', $e($r['reporter_name'])) . $detail('Correo', '<a href="mailto:' . $e($r['reporter_email']) . '" style="color:#c25500;text-decoration:none">' . $e($r['reporter_email']) . '</a>')
             . '</tr></table>'
             . Emails::cta('Responder a ' . $firstName, $reply)
-            . '<div style="font-size:13px;margin:0 0 4px"><a href="' . $e((new Emails($this->app))->adminUrl('reportes/' . (int) $r['id'])) . '" style="color:#c25500;text-decoration:none">Abrir el ticket #' . (int) $r['id'] . ' en el panel (estado, respuestas, notas) →</a></div>'
+            . '<div style="font-size:13px;margin:0 0 4px"><a href="' . $e((new Emails($this->app))->adminUrl('reportes/' . (int) $r['id'])) . '" style="color:#c25500;text-decoration:none">Abrir la solicitud #' . (int) $r['id'] . ' en el panel (estado, respuestas, notas) →</a></div>'
             . '<div style="margin:22px 0 6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7a7a82">Información técnica (automática)</div>'
             . '<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:12px;line-height:1.5">' . $techRows . '</table>';
         $footer = 'Enviado automáticamente por el Administrador de contenido de sensumconstrucciones.com. '
             . 'Responde a este correo para escribirle directamente a ' . $e($r['reporter_name']) . '. No incluye contraseñas ni datos de sesión.';
-        $layout = (new Emails($this->app))->branded('es', 'Reporte de soporte #' . (int) $r['id'], $typeLabel . ': ' . $r['title'] . ' — ' . $r['reporter_name'], $body, $footer);
+        $layout = (new Emails($this->app))->branded('es', 'Solicitud de soporte #' . (int) $r['id'], $typeLabel . ': ' . $r['title'] . ' — ' . $r['reporter_name'], $body, $footer);
         return [
             'to' => $this->app->mailSettings()->supportEmail(),
             'subject' => '[Sensum Website] ' . $typeLabel . ': ' . Mailer::oneLine($r['title'], 120),

@@ -444,6 +444,20 @@ async function route(force = false) {
     return;
   }
 
+  // First sign-in: choose the language and the appearance once (not while viewing as someone).
+  if (state.session.user.welcome && !state.session.viewAs) {
+    state.shell = null;
+    let mod;
+    try { mod = await V.auth(); } catch (e) { return showLoadFailed(document.getElementById('app'), e); }
+    if (stale()) return;
+    mod.welcome({ app: document.getElementById('app'), user: state.session.user, onDone: (user) => {
+      state.session.user = user;
+      state.path = null;
+      route(true);
+    } });
+    return;
+  }
+
   const priv = PRIVATE.find((r) => r.re.test(path));
   const main = renderShell(priv ? priv.nav : null);
   if (!priv || (priv.owner && !isOwner()) || (priv.perm && !priv.perm.some(userCan))) {

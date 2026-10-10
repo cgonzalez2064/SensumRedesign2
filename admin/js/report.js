@@ -1,4 +1,4 @@
-/** "Reportar un problema" — available from every screen of the panel. */
+/** "Solicitar soporte" — a new support request, available from every screen of the panel. */
 import { h, icon, clear, fill } from './dom.js';
 import { t, getLang } from './i18n.js';
 import { getThemePref } from './theme.js';

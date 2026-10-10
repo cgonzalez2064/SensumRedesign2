@@ -311,7 +311,7 @@ Do these on the live site and tick them in `docs/PRODUCTION_CHECKLIST.md`:
 7. Password change: Mi cuenta → Cuenta / Seguridad.
 8. Password reset: "¿Olvidaste tu contraseña?" → e-mail arrives → new password works.
 9. Invitation: invite a test address you control → e-mail → activate → delete the test user.
-10. Issue report: **Reportar un problema** → the message arrives at
+10. Support request: **Solicitar soporte** → the message arrives at
     **it@gruposensum.com** with subject `[Sensum Website] …`.
 11. Report failure handling: temporarily set a wrong `SMTP_PASSWORD`, send a
     report → the panel says it was saved but not sent → restore the password →
@@ -347,7 +347,9 @@ Do these on the live site and tick them in `docs/PRODUCTION_CHECKLIST.md`:
    permission (manage all support requests) is never granted automatically.
    Migration `012_report_access` gives **report** (view the monthly report: client
    version and technical detail) to accounts that had both **site** and **monitor**.
-   Only the client version is ever e-mailed.
+   Only the client version is ever e-mailed. Migration `013_welcome` marks everyone
+   who already signed in as past the first-sign-in welcome screen (language and
+   appearance), so only new accounts see it.
 5. Republish (§9) so the new templates are combined with the current content —
    the uploaded pages contain default content until you do.
 6. Re-run the post-deployment tests that relate to the change.

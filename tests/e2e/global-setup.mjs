@@ -70,6 +70,8 @@ export default async function globalSetup() {
   }
   server.sql(`INSERT INTO monitor_runs (created_at, ok, failed, response_ms, http_status) VALUES ${runs.join(', ')}`);
   server.sql(`INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('monitor_last_run', '${now}', ${now})`);
+  // These accounts have used the panel before: no first-sign-in welcome (it has its own test).
+  server.sql("UPDATE users SET onboarded_at = strftime('%s','now')");
   server.cli(['publish']);
   process.env.E2E_BASE = server.base;
   process.env.E2E_STORAGE = server.storage();

@@ -202,7 +202,7 @@ Links expire after 60 minutes (`RESET_TTL_MINUTES`) and work once.
 Links expire after 72 hours (`INVITE_TTL_HOURS`) and work once. If e-mail cannot
 be sent, the panel shows the link once so it can be shared another way.
 
-### "Reportar un problema" (issue reports)
+### "Solicitar soporte" (support requests)
 Use the button in the top bar. The report is stored and e-mailed to
 `SUPPORT_EMAIL`; locally it lands in Mailpit addressed to `it@gruposensum.com`.
 To test a delivery failure, stop Mailpit (`pkill mailpit`) and send a report:

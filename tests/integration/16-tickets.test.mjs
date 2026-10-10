@@ -133,7 +133,7 @@ test('the reporter answers: the ticket goes back to "in progress" and IT is e-ma
   const r = await ana.post(`/api/reports/${t1}/messages`, { body: 'Dice "No se pudo guardar". Pasa en Chrome.' });
   assert.equal(r.status, 200, r.text);
   assert.equal(r.data.report.status, 'in_progress');
-  const [m] = (await waitForMail(support, before + 1)).filter((x) => /respondió en el reporte/.test(x.Subject));
+  const [m] = (await waitForMail(support, before + 1)).filter((x) => /respondió en la solicitud/.test(x.Subject));
   assert.ok(m);
   const full = await message(m.ID);
   assert.match(full.Text, /envió la información que pediste/);
@@ -147,7 +147,7 @@ test('resolving notifies; the reporter can reopen; closed tickets take no more r
   const r = await owner.post(`/api/reports/${t1}/status`, { status: 'resolved', message: 'Corregimos los permisos. Ya puedes guardar.', notify: true });
   assert.equal(r.data.report.status, 'resolved');
   assert.ok(r.data.report.resolvedAt);
-  const [m] = (await waitForMail(anaUser.email, before + 1)).filter((x) => /fue resuelto/.test(x.Subject));
+  const [m] = (await waitForMail(anaUser.email, before + 1)).filter((x) => /fue resuelta/.test(x.Subject));
   assert.ok(m);
   // Not fixed after all.
   const reopen = await ana.post(`/api/reports/${t1}/messages`, { body: 'Sigue sin funcionar en el celular.' });
