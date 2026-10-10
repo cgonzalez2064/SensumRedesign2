@@ -37,16 +37,16 @@ test('the owner invites someone with a ready-made access type and changes it lat
   expect(r.map((v) => v.id)).toEqual([]);
   await dlg.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(page.getByText('Tipo de acceso actualizado. Se aplica de inmediato.')).toBeVisible();
-  await expect(row.getByText('Datos de contacto · Fotos · Portafolio en PDF')).toBeVisible();
+  await expect(row.getByText('Datos de contacto y formulario · Fotos · Portafolio en PDF')).toBeVisible();
 });
 
 test('an account with "Solo textos" only sees and opens what it may change', async ({ page }) => {
   await login(page, TEXTS_ONLY);
   const nav = page.locator('.nav');
   await expect(nav.locator('a[href="#/textos"]')).toHaveCount(1);
-  for (const href of ['#/fotos', '#/contacto', '#/usuarios', '#/monitoreo', '#/informe']) await expect(nav.locator(`a[href="${href}"]`)).toHaveCount(0);
+  for (const href of ['#/fotos', '#/contacto', '#/formulario', '#/usuarios', '#/monitoreo', '#/informe', '#/correo']) await expect(nav.locator(`a[href="${href}"]`)).toHaveCount(0);
   await expect(page.locator('.quick a[href="#/fotos"]')).toHaveCount(0);
-  for (const hash of ['#/fotos', '#/contacto', '#/usuarios', '#/informe']) {
+  for (const hash of ['#/fotos', '#/contacto', '#/formulario', '#/usuarios', '#/informe']) {
     await page.goto('/admin/' + hash);
     await expect(page.locator('main h1')).toHaveText('No encontramos esta pantalla');
   }

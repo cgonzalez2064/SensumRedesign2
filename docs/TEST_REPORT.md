@@ -173,6 +173,16 @@ form's submit button (+31 px desktop, +52 px phones; screenshots reviewed in
 Chrome desktop and phone). The visual baselines in `tests/visual/baseline/`
 differ by that line and should be regenerated once approved.
 
+## Change — editable "Servicio de interés" options
+
+| Suite | What it covers | Result |
+|---|---|---|
+| API (`15-contact-services`) | approved options by default; access = "contact" permission (texts-only 403, anonymous 401); refused: empty list, > 20, empty/short/long/HTML/control-character names, duplicates ignoring case, HTML in English; rename keeps the id, new ids, removal, order; page published at once with escaped texts and ES/EN overrides only where they differ; activity logged; no-change save; edit conflict (409); the public form accepts ids and Spanish names, e-mails the Spanish name, refuses removed or unknown options; restoring the originals gives back the approved page byte for byte | 6/6 |
+| Browser (`contact-services`) | add (focus, placed before "Otro"), live titles and preview, move up, remove + undo, duplicate caught before saving, English preview, axe, save, public site in Spanish and English, restore | 1/1 (desktop; the screen itself is also covered on 3 devices × 2 themes by `admin.spec`) |
+| Existing suites | `01-public-site` (committed page uses option ids), `access-report` (new menu entry hidden for "Solo textos"), all screens on iPhone (fixed a horizontal overflow caused by long option names) | passing |
+
+Full re-run: API **146/146**, browser **86 passed / 31 skipped**.
+
 ## Other audits
 
 | Audit | Result |

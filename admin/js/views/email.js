@@ -71,6 +71,7 @@ export async function render({ main, session }) {
       cardHead({ id: 'em-contact', icon: 'envelope', title: t('email.contact.title'), lead: t('email.contact.lead'), badge: sourceBadge(data.sources.contact) }),
       h('div', { class: 'form-grid' }, f['contact.to'].wrap, f['contact.fromAddress'].wrap, f['contact.fromName'].wrap, method.wrap),
       h('p', { class: 'hint', text: t('email.contact.methodHint') }),
+      h('a', { class: 'btn btn-sm btn-ghost svc-link', href: '#/formulario' }, icon('card-text'), t('email.contact.editServices'), icon('chevron-right')),
       h('div', { class: 'card-foot' }, h('span', { class: 'tiny muted', text: t('email.testHint') }), testContact));
 
     // ---- spam protection

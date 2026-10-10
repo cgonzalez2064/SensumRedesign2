@@ -25,6 +25,7 @@ const V = {
   monitor: lazy(() => import('./views/monitor.js')),
   siteReport: lazy(() => import('./views/sitereport.js')),
   email: lazy(() => import('./views/email.js')),
+  form: lazy(() => import('./views/form.js')),
 };
 const loadReport = lazy(() => import('./report.js'));
 const openReportDialog = (...args) => loadReport().then((m) => m.openReportDialog(...args));
@@ -44,6 +45,7 @@ const PRIVATE = [
   { re: /^\/textos$/, mod: V.content, fn: 'list', nav: 'content', perm: ['texts'] },
   { re: /^\/textos\/([a-z]+)$/, mod: V.content, fn: 'editor', nav: 'content', perm: ['texts'] },
   { re: /^\/contacto$/, mod: V.content, fn: 'details', nav: 'details', perm: ['contact'] },
+  { re: /^\/formulario$/, mod: V.form, fn: 'render', nav: 'form', perm: ['contact'] },
   { re: /^\/fotos(?:\/(nosotros|proyectos|documentos))?$/, mod: V.media, fn: 'render', nav: 'media', perm: ['photos', 'documents'] },
   { re: /^\/usuarios$/, mod: V.users, fn: 'render', nav: 'users', owner: true },
   { re: /^\/monitoreo$/, mod: V.monitor, fn: 'render', nav: 'monitor', owner: true },
@@ -239,6 +241,7 @@ function renderShell(activeNav, force = false) {
       can(user, 'texts') ? navLink('/textos', 'content', 'pencil-square', active) : null,
       can(user, 'photos') || can(user, 'documents') ? navLink('/fotos', 'media', 'images', active) : null,
       can(user, 'contact') ? navLink('/contacto', 'details', 'telephone', active) : null,
+      can(user, 'contact') ? navLink('/formulario', 'form', 'card-text', active) : null,
       user.owner ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active),
         navLink('/monitoreo', 'monitor', 'activity', active), navLink('/informe', 'siteReport', 'bar-chart', active),
         navLink('/correo', 'email', 'envelope', active)] : null,

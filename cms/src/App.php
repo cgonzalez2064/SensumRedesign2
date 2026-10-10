@@ -206,6 +206,12 @@ final class App
         return new ContactForm($this);
     }
 
+    /** The contact form's "Servicio de interés" options (editable in the panel). */
+    public function contactServices(): ContactServices
+    {
+        return new ContactServices($this);
+    }
+
     /** E-mail settings: the owner's panel values over .env (see MailSettings). */
     public function mailSettings(): MailSettings
     {

@@ -524,6 +524,7 @@ Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a
 - [ ] `https://sensumconstrucciones.com/api/health` → `"status":"ok"`.
 - [ ] **Formulario de contacto:** envía un mensaje real desde el sitio (en celular y computadora). Bajo el botón aparece «Verificación anti-spam completa.» y el mensaje llega a `contacto@sensumconstrucciones.com` con remitente `formulario@`; al responderlo, la respuesta va al visitante.
 - [ ] (Si activaste Turnstile) el formulario sigue enviando y no muestra errores; en Cloudflare → Turnstile aparecen las verificaciones.
+- [ ] (Opcional) Panel → **Formulario de contacto**: ajusta las opciones de «Servicio de interés» a los servicios que ofreces hoy y pulsa **Guardar y publicar**; compruébalo en el sitio (español e inglés).
 - [ ] **Correo del panel:** panel → Correo → **Enviar correo de prueba** → llega a it@gruposensum.com.
 - [ ] Inicias sesión en `/admin/` como it@gruposensum.com; ves Usuarios, Monitoreo, Informe mensual y Correo.
 - [ ] Monitoreo → **Alertas automáticas**: las 12 activadas. **Archivos del sitio → Revisar ahora**: «Todo en orden».

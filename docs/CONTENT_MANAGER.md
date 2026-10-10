@@ -97,6 +97,7 @@ so a slow screen can never write into the next one).
 | Dashboard | Site status, last publish, sync check + republish (admins), recent activity, monitoring status; diagnostics and recent errors for the owner |
 | Monitoring (owner) | Error log with filters and details, key figures (24 h / 7 d / 30 d), most frequent errors, system details, e-mail alerts for critical errors + test e-mail (§9a) |
 | Monthly report (owner) | Short plain-language site-health and visibility report for clients; recipients (owner always copied), preview, test, send, history; reminder after day 5 (§9b) |
+| Contact-form options | "Servicio de interés" list: add, rename (ES/EN), reorder, remove (up to 20), live preview, restore the approved options; published at once; stable ids so renaming never breaks open pages (access: contact details) |
 | E-mail settings (owner) | Panel's SMTP sending account (+ Reply-To), contact-form receivers/sender/method, problem-report and alert recipients, optional Cloudflare Turnstile keys; password re-check, secrets encrypted at rest, security notice, test buttons; `EMAIL_SETTINGS_LOCKED` for .env-only setups |
 | Contact-form captcha | Built-in invisible proof-of-work captcha (always on, no keys) + optional Cloudflare Turnstile; counts of messages and blocked spam in the weekly summary |
 | Automatic alerts (owner) | 12 rules with their own periods and de-duplication (critical errors, file integrity, sign-in attack, new device, certificate, backup, scheduler, disk, error spike, weekly digest, monthly security review, report reminder), on/off per rule; file-integrity check with "accept" (password) |
@@ -219,6 +220,7 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 | `GET /api/dashboard` | user | dashboard data (admins get activity; the owner also gets diagnostics and errors) |
 | `GET /api/monitor/summary` · `GET /api/monitor/errors?severity=&source=&days=&q=&page=` · `POST /api/monitor/test-alert` | owner | Monitoring page, error log, test alert |
 | `PUT /api/monitor/alerts` · `GET /api/monitor/integrity` · `POST /api/monitor/integrity/accept` | owner | automatic-alert toggles; site-file findings; accept current files (password) |
+| `GET`/`PUT /api/contact-form/services` | contact | "Servicio de interés" options (PUT: `items` [{id?, es, en}], `version`; publishes; 409 `conflict`) |
 | `GET`/`PUT /api/settings/email` · `POST /api/settings/email/test` | owner | e-mail settings (PUT needs `currentPassword`), test e-mails (`target`: `panel` / `contact`) |
 | `GET /assets/contact-handler.php?challenge=1` | public | signed single-use captcha challenge for the contact form |
 | `POST /api/site/republish` | admin | regenerate pages |

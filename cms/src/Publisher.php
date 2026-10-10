@@ -147,6 +147,25 @@ final class Publisher
         $vars['instagram_handle'] = self::e($val('contact.instagram_handle'));
         $fallback = $this->formFallback($office, $email, $wa);
         $vars['form_fallback_html'] = $fallback['es'];
+
+        // Contact form: "Servicio de interés" options (Sitio web → Formulario de contacto).
+        // The option value is the stable id; texts for the ES/EN toggle travel as
+        // "form.opt_<id>" overrides when they differ from the built-in dictionary.
+        $options = [];
+        $serviceOverrides = ['es' => [], 'en' => []];
+        foreach ($this->app->contactServices()->items() as $svc) {
+            $key = 'form.opt_' . $svc['id'];
+            $options[] = '<option value="' . self::e($svc['id']) . '" data-i18n="' . self::e($key) . '">' . self::e($svc['es']) . '</option>';
+            $builtIn = ContactServices::DEFAULTS[$svc['id']] ?? null;
+            $en = $svc['en'] !== '' ? $svc['en'] : $svc['es'];
+            if ($builtIn === null || $builtIn[0] !== $svc['es']) {
+                $serviceOverrides['es'][$key] = $svc['es'];
+            }
+            if ($builtIn === null || $builtIn[1] !== $en) {
+                $serviceOverrides['en'][$key] = $en;
+            }
+        }
+        $vars['form_service_options'] = implode("\n                ", $options);
         // Optional Cloudflare Turnstile on the contact form (owner → Correo).
         $turnstile = $this->app->mailSettings()->turnstile();
         $flags['turnstile'] = $turnstile['siteKey'] !== '' && $turnstile['secret'] !== '';
@@ -171,7 +190,7 @@ final class Publisher
 
         // Photos and documents.
         $media = $this->app->media();
-        $overrides = ['es' => [], 'en' => []];
+        $overrides = $serviceOverrides; // starts with the contact-form options (above)
         $images = [];
         foreach (range(1, 6) as $i) {
             $pid = "proj{$i}";

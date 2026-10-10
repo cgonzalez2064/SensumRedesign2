@@ -166,5 +166,13 @@ fields, rate limit, honeypot, minimum time) and adds:
   come from panel → Administración → Correo; otherwise the constants at the top of
   the handler and `mail()` are used.
 
+**Service options:** the `<select id="service">` options come from the panel
+(Sitio web → Formulario de contacto) via `{{form_service_options}}`. Each option's
+`value` is a stable id (`remodel`, `civil`, … or `s-xxxxxxxx` for new ones) and its
+text key is `form.opt_<id>`; changed or new texts reach the ES/EN toggle through the
+`siteContent` overrides. The handler maps the id (or, for pages published before
+ids, the Spanish name) to the Spanish name used in the e-mail; without the Content
+Manager it uses the approved list at the top of `contact-handler.php`.
+
 Asset cache version: `ASSET_VERSION = '4'` (`?v=4` in the committed pages).
 

@@ -90,6 +90,23 @@ section, footer, green WhatsApp button, error page and privacy notice.
 * **Google Maps:** search the address in Google Maps, tap **Share** and copy the
   link. Use **Test link** to check it.
 
+### Form options ("Service of interest")
+
+Under **Contact form** (*Website* menu) you decide which options visitors choose
+from in "Service of interest":
+
+* **Add option:** type the Spanish name; English is optional (if empty, the
+  English version shows the Spanish text). New options go before "Other".
+* **Rename:** type over the text. The e-mail you receive shows the chosen option
+  in Spanish.
+* **Reorder:** the ↑ ↓ arrows of each option.
+* **Remove:** the bin icon; **Undo** appears for a few seconds.
+* The **Preview** shows the list as visitors will see it, in Spanish or English.
+* **Save and publish** updates the website right away. **Restore the original
+  options** brings back the 7 approved options (then press Save).
+
+Up to 20 options, 2 to 60 characters, no repeated names.
+
 ## 5. Changing photos
 
 Go to **Photos & files**. There are three tabs: **About**, **Types of projects**

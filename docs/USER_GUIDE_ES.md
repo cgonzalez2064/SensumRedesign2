@@ -93,6 +93,24 @@ aviso de privacidad.
 * **Google Maps:** en Google Maps busca la dirección, toca **Compartir** y copia el
   enlace. Con **Probar enlace** puedes comprobarlo.
 
+### Opciones del formulario («Servicio de interés»)
+
+En **Formulario de contacto** (menú *Sitio web*) decides qué opciones elige el
+visitante en «Servicio de interés»:
+
+* **Agregar opción:** escribe el nombre en español; el inglés es opcional (si lo
+  dejas vacío, en la versión en inglés se muestra el texto en español). Las
+  opciones nuevas se colocan antes de «Otro».
+* **Cambiar el nombre:** escribe sobre el texto. El correo que recibes muestra la
+  opción elegida en español.
+* **Ordenar:** flechas ↑ ↓ de cada opción.
+* **Eliminar:** ícono de papelera; aparece **Deshacer** por unos segundos.
+* La **Vista previa** muestra la lista como la verá el visitante, en español o inglés.
+* **Guardar y publicar** actualiza el sitio en ese momento. **Restaurar las opciones
+  originales** vuelve a las 7 opciones aprobadas (después pulsa Guardar).
+
+Máximo 20 opciones, de 2 a 60 caracteres, sin nombres repetidos.
+
 ## 5. Cambiar fotos
 
 Ve a **Fotos y archivos**. Hay tres pestañas: **Nosotros**, **Tipos de proyectos**

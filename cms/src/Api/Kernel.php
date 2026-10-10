@@ -51,6 +51,8 @@ final class Kernel
         ['POST', '/api/site/republish', SystemController::class, 'republish', 'user'],
 
         ['GET', '/api/content', ContentController::class, 'index', 'user'],
+        ['GET', '/api/contact-form/services', FormController::class, 'services', 'user'],
+        ['PUT', '/api/contact-form/services', FormController::class, 'saveServices', 'user'],
         ['POST', '/api/content/translate', ContentController::class, 'translate', 'user'],
         ['PUT', '/api/content/{section}', ContentController::class, 'update', 'user'],
         ['GET', '/api/media', ContentController::class, 'media', 'user'],

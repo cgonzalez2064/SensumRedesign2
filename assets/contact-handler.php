@@ -56,16 +56,18 @@ const ALLOWED_ORIGINS = [
     'https://sensumconstrucciones.com',
     'https://www.sensumconstrucciones.com',
 ];
-// Exact allowlist for the "service" field — must match the <select>
-// options in index.html.
+// Allowlist for the "service" field (option value => Spanish name used in
+// the e-mail). When the Content Manager is installed, the options edited in
+// the panel (Sitio web → Formulario de contacto) are used instead; these are
+// the approved defaults, matching the <select> in index.html.
 const ALLOWED_SERVICES = [
-    'Remodelaciones',
-    'Diseño arquitectónico',
-    'Impermeabilización y tratamientos técnicos',
-    'Obra civil',
-    'Instalaciones generales',
-    'Mantenimiento preventivo',
-    'Otro',
+    'remodel' => 'Remodelaciones',
+    'design' => 'Diseño arquitectónico',
+    'waterproof' => 'Impermeabilización y tratamientos técnicos',
+    'civil' => 'Obra civil',
+    'installations' => 'Instalaciones generales',
+    'maintenance' => 'Mantenimiento preventivo',
+    'other' => 'Otro',
 ];
 const ALLOWED_FIELDS = ['name', 'phone', 'email', 'service', 'message', 'website', 'loaded_at', 'captcha', 'cf-turnstile-response'];
 // Built-in captcha: the browser tries up to this many numbers (about half on
@@ -372,6 +374,27 @@ function captchaFirstUse($challenge, $expires) {
     return $first;
 }
 
+/**
+ * Spanish name of the chosen service, or null if it isn't offered. Accepts
+ * the option id (current pages) or the Spanish name (pages published
+ * before options had ids).
+ */
+function serviceLabel($value) {
+    $app = sensumCmsApp();
+    if ($app) {
+        try {
+            return $app->contactServices()->labelFor((string) $value);
+        } catch (\Throwable $e) {
+            error_log('[sensum-contact] services_unavailable');
+        }
+    }
+    $value = trim((string) $value);
+    if (isset(ALLOWED_SERVICES[$value])) {
+        return ALLOWED_SERVICES[$value];
+    }
+    return in_array($value, ALLOWED_SERVICES, true) ? $value : null;
+}
+
 function clientHash() {
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     // Not a cryptographic secret — just avoids storing raw IPs at rest.
@@ -538,7 +561,8 @@ if (utf8Len($email) > 180 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $errors[] = 'email';
 }
 
-if (!in_array($service, ALLOWED_SERVICES, true)) {
+$service = serviceLabel($service);
+if ($service === null) {
     $errors[] = 'service';
 }
 
