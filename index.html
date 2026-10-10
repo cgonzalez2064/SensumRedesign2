@@ -49,20 +49,14 @@
 <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
 <link rel="manifest" href="site.webmanifest">
 
-<!-- Fonts: Oswald (600,700) + Roboto (400,500,600,700) — trimmed to the
-     exact weights assets/main.css actually uses (previously 400/500/600/700
-     for Oswald and 300/400/500/700 for Roboto — Oswald 400/500 and Roboto
-     300 were never used anywhere in the stylesheet). display=swap avoids
-     invisible text while the font loads.
-     Self-hosting these as WOFF2 is the preferred long-term setup and is
-     scaffolded and ready to run — see assets/fonts/README.md — but this
-     sandbox's network policy blocks fonts.googleapis.com/fonts.gstatic.com,
-     so the actual font files could not be fetched and bundled from here.
-     See the completion report. Until that migration is run, this Google
-     Fonts stylesheet is the working, already-in-production font source. -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Roboto:wght@400;500;600;700&display=swap">
+<!-- Fonts: Oswald (600–700) + Roboto (400–700), self-hosted variable WOFF2
+     files (assets/fonts, SIL Open Font License; regenerate with
+     assets/fonts/fetch-fonts.sh). No request leaves the site, nothing is sent
+     to Google, and the two Latin files are preloaded. display=swap avoids
+     invisible text while the font loads. -->
+<link rel="preload" href="assets/fonts/roboto-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/oswald-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/fonts/local-fonts.css?v=4">
 
 <!-- Structured data: LocalBusiness / GeneralContractor.
      Fields below (address, phone, email, hours, geo, sameAs) reflect the

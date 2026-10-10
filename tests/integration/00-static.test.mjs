@@ -1,7 +1,7 @@
 // Fast checks that need no server: translations, defaults, templates.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { ROOT, PHP } from './helpers.mjs';
@@ -51,3 +51,17 @@ test('the dev router serves the same CSP as the production .htaccess', () => {
   const admin = readFileSync(join(ROOT, 'admin/.htaccess'), 'utf8').match(/Header always set Content-Security-Policy "(.*)"/)[1];
   assert.doesNotMatch(admin, /unsafe-inline|unsafe-eval|https:/);
 });
+
+test('fonts are self-hosted: no Google Fonts anywhere, CSP allows fonts and styles only from the site', () => {
+  for (const f of ['index.html', '404.html', 'privacy-notice.html', 'cms/templates/index.html.tpl', 'cms/templates/404.html.tpl', 'cms/templates/privacy-notice.html.tpl']) {
+    const html = readFileSync(join(ROOT, f), 'utf8');
+    assert.doesNotMatch(html, /fonts\.googleapis|fonts\.gstatic/, f);
+    assert.match(html, /<link rel="stylesheet" href="assets\/fonts\/local-fonts\.css\?v=/, f);
+  }
+  const css = readFileSync(join(ROOT, 'assets/fonts/local-fonts.css'), 'utf8');
+  for (const m of css.matchAll(/url\("([^"]+)"\)/g)) assert.ok(existsSync(join(ROOT, 'assets/fonts', m[1])), m[1]);
+  const csp = readFileSync(join(ROOT, '.htaccess'), 'utf8').match(/Header always set Content-Security-Policy "(.*)"/)[1];
+  assert.match(csp, /style-src 'self';/);
+  assert.match(csp, /font-src 'self';/);
+});
+

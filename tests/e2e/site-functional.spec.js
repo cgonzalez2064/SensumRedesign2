@@ -103,3 +103,17 @@ test('privacy notice and 404 page render without errors', async ({ page }) => {
   // The only expected "error" is the 404 status of the missing page itself.
   expect(problems.filter((p) => !p.startsWith('404') && !/status of 404/.test(p))).toEqual([]);
 });
+
+test('the public site requests nothing from third parties (fonts included)', async ({ page }) => {
+  const external = [];
+  page.on('request', (r) => { const u = new URL(r.url()); if (!['127.0.0.1', 'localhost'].includes(u.hostname) && u.protocol.startsWith('http')) external.push(u.hostname); });
+  const fonts = [];
+  page.on('response', (r) => { if (r.url().includes('/assets/fonts/') && r.url().endsWith('.woff2')) fonts.push(r.status()); });
+  await page.goto('/');
+  await page.locator('#contacto').scrollIntoViewIfNeeded();
+  await page.waitForLoadState('networkidle');
+  expect([...new Set(external)]).toEqual([]);
+  expect(fonts.length).toBeGreaterThanOrEqual(2);
+  expect(fonts.every((s) => s === 200)).toBe(true);
+  expect(await page.evaluate(() => document.fonts.check('600 16px Oswald') && document.fonts.check('400 16px Roboto'))).toBe(true);
+});
