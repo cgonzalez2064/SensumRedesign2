@@ -2,7 +2,7 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { ADMIN } from '../integration/helpers.mjs';
-import { TEXTS_ONLY } from './global-setup.mjs';
+import { TEXTS_ONLY, OTHER_ADMIN } from './global-setup.mjs';
 
 async function login(page, user = ADMIN) {
   await page.goto('/admin/#/ingresar');
@@ -59,7 +59,23 @@ test('monthly report: preview, recipients with the owner always copied, test e-m
   await login(page);
   await page.goto('/admin/#/informe');
   await expect(page.locator('main h1')).toHaveText('Informe mensual');
-  await expect(page.locator('.report-preview .report-headline')).toBeVisible();
+  // Two versions: what clients receive (no technical details) and the team's technical detail.
+  const tabs = page.getByRole('group', { name: 'Versión del informe' });
+  await expect(tabs.getByRole('button', { name: 'Para clientes' })).toHaveAttribute('aria-pressed', 'true');
+  const client = page.locator('.report-preview');
+  await expect(client.locator('.report-headline')).toBeVisible();
+  await expect(client).toContainText('Monitoreo y protección');
+  await expect(client).toContainText('Vigilado las 24 horas');
+  for (const word of ['respaldo', 'Respaldo', 'Requiere atención', 'Pendientes técnicos', 'certificado']) await expect(client).not.toContainText(word);
+  await tabs.getByRole('button', { name: 'Detalle técnico' }).click();
+  const tech = page.locator('.report-preview.report-technical');
+  await expect(tech).toContainText('Interno');
+  await expect(tech).toContainText('Seguridad y respaldos');
+  await expect(tech).toContainText('Último respaldo');
+  await expect(page.getByText('No se envía a los clientes.', { exact: false })).toBeVisible();
+  const v = (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations.filter((x) => ['serious', 'critical'].includes(x.impact));
+  expect(v.map((x) => `${x.id}: ${x.nodes.map((n) => n.target).join(', ')}`)).toEqual([]);
+  await tabs.getByRole('button', { name: 'Para clientes' }).click();
   await expect(page.locator('.tag-fixed')).toContainText(ADMIN.email);
   await page.getByLabel('Agregar correo').fill('no-es-un-correo');
   await page.getByRole('button', { name: 'Agregar', exact: true }).click();
@@ -73,4 +89,21 @@ test('monthly report: preview, recipients with the owner always copied, test e-m
   await expect(page.getByText(`Prueba enviada a ${ADMIN.email}.`)).toBeVisible();
   await page.getByRole('button', { name: /Quitar a cliente@example.test/ }).click();
   await expect(page.locator('.tag', { hasText: 'cliente@example.test' })).toHaveCount(0);
+});
+
+test('site administrators view both versions of the monthly report, without sending it', async ({ page }, info) => {
+  await login(page, OTHER_ADMIN);
+  const nav = page.locator('.nav');
+  if (await page.locator('.open-nav').isVisible()) await page.locator('.open-nav').click();
+  await expect(nav.locator('a[href="#/informe"]')).toBeVisible();
+  await nav.locator('a[href="#/informe"]').click();
+  await expect(page.locator('main h1')).toHaveText('Informe mensual');
+  await expect(page.locator('.report-preview .report-headline')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Enviar informe/ })).toHaveCount(0);
+  await expect(page.getByText('Destinatarios')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Detalle técnico' }).click();
+  await expect(page.locator('.report-preview.report-technical')).toContainText('Seguridad y respaldos');
+  await page.getByLabel('Mes del informe').selectOption({ index: 1 });
+  await expect(page.locator('.report-preview.report-technical')).toBeVisible();
+  if (info.project.name !== 'desktop-chrome') expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });

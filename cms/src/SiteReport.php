@@ -6,11 +6,15 @@ namespace Sensum\Cms;
 use Sensum\Cms\Http\ApiError;
 
 /**
- * The monthly site report: a short, plain-language summary of the site's
- * health and visibility for people who are not technical (clients,
- * management). The owner previews it, chooses who receives it, and sends
- * it; the owner is always in copy. If the previous month's report has not
- * been sent by the end of day 5, the owner gets a reminder.
+ * The monthly site report, in two versions built from the same figures:
+ *  - build(): for clients (e-mail and PDF) — the value of the month in plain,
+ *    positive language: results, the work done, monitoring and protection;
+ *  - technical(): for the owner and the team — backups, certificates, errors,
+ *    interruptions, service levels and technical to-dos. Never sent.
+ * The owner previews it, chooses who receives it, and sends it; the owner is
+ * always in copy. Accounts with the "report" access view both versions. If
+ * the previous month's report has not been sent by the end of day 5, the
+ * owner gets a reminder.
  *
  * Figures come from what the Content Manager already records: the scheduled
  * check (availability), the error log (incidents), the activity log
@@ -272,58 +276,73 @@ final class SiteReport
         return implode(', ', $items) . ' ' . $and . ' ' . $last;
     }
 
+    /** @var array<string, array<string, mixed>> figures per month (a preview builds both versions) */
+    private array $figuresCache = [];
+
+    private function monthFigures(string $period): array
+    {
+        return $this->figuresCache[$period] ??= $this->figures($period);
+    }
+
+    private static function monthBefore(string $period): string
+    {
+        return date('Y-m', strtotime($period . '-01 -1 month') ?: time());
+    }
+
+    /** "100 %", "99,9 %", "99,95 %": as many decimals as the figure needs (max 2). */
+    private static function pct(float $v, string $lang): string
+    {
+        return self::number($v, $lang, fmod($v, 1.0) === 0.0 ? 0 : (fmod($v * 10, 1.0) === 0.0 ? 1 : 2)) . ($lang === 'en' ? '%' : ' %');
+    }
+
+    /** "Visitas: 931 y 12 mensajes" — the visits/leads sentence both versions share. */
+    private function visitsSentence(array $s, int $visitors, int $leads, string $lang): string
+    {
+        $visits = self::plural($s['sr.summary.visitsPart'], $visitors, ['count' => self::number($visitors, $lang)]);
+        if ($visitors > 0) {
+            return $leads > 0
+                ? self::fill($s['sr.summary.visitsLeads'], ['visits' => $visits, 'leads' => self::plural($s['sr.summary.leadsPart'], $leads)])
+                : self::fill($s['sr.summary.visitsOnly'], ['visits' => $visits]);
+        }
+        return $leads > 0 ? self::plural($s['sr.summary.leadsOnly'], $leads) : '';
+    }
+
     /**
-     * The report as plain-language content, used both by the e-mail and by
-     * the panel's preview, in the report's language.
+     * The report for clients (e-mail, PDF, preview): plain language and the
+     * value of the month — the site's results, the work done and the
+     * monitoring and protection behind it. Comparisons with the month before
+     * appear only when they are good news. No technical details (backups,
+     * certificates, DNS, errors): those are in technical(), for the team.
      */
     public function build(string $period, string $lang): array
     {
         $s = $this->strings($lang);
-        $f = $this->figures($period);
+        $f = $this->monthFigures($period);
         $month = $this->periodLabel($period, $lang);
-        // The month before, to compare (trend arrows).
-        $prevPeriod = date('Y-m', strtotime($period . '-01 -1 month') ?: time());
-        $p = $this->figures($prevPeriod);
+        $prevPeriod = self::monthBefore($period);
+        $p = $this->monthFigures($prevPeriod);
         $prevMonth = $s['sr.months'][(int) substr($prevPeriod, 5, 2) - 1];
-        $trend = fn ($now, $before, ?bool $higherIsBetter = true, bool $points = false) => $this->trend($now, $before, $lang, $prevMonth, $higherIsBetter, $points);
+        $up = function ($now, $before, bool $points = false) use ($lang, $prevMonth): ?array {
+            $t = $this->trend($now, $before, $lang, $prevMonth, true, $points);
+            return $t && $t['good'] === true ? $t : null;
+        };
         $leadsNow = $f['leads']['received'] ?: $f['contact']['sent'];
         $leadsBefore = $p['leads']['received'] ?: $p['contact']['sent'];
         $visitors = (int) $f['visits']['visitors'];
         $pctSign = $lang === 'en' ? '%' : ' %';
-        // "100 %", "99,9 %", "99,95 %": as many decimals as the figure needs (max 2).
-        $pctOf = fn (float $v) => self::number($v, $lang, fmod($v, 1.0) === 0.0 ? 0 : (fmod($v * 10, 1.0) === 0.0 ? 1 : 2)) . $pctSign;
-        $pct = $f['availability'] !== null ? $pctOf((float) $f['availability']) : null;
+        $pct = $f['availability'] !== null ? self::pct((float) $f['availability'], $lang) : null;
         $changes = $f['textChanges'] + $f['photos'] + $f['portfolio'];
-        $down = $f['downtime'];
+        $prevChanges = $p['textChanges'] + $p['photos'] + $p['portfolio'];
+        $threats = $f['blocked'] + $f['contact']['blocked'];
+        $tk = $f['tickets'];
+        $sv = $f['service'];
+        $m = $f['maintenance'];
+        $score = $f['pagespeed'] ? (int) $f['pagespeed']['mobile']['performance'] : null;
 
-        // Security: say exactly what needs attention instead of a vague "review".
-        // (A local or test address is not expected to have HTTPS.)
-        $publicSite = !preg_match('#^https?://(localhost|127\.[0-9.]+|\[::1\]|[^/:]+\.(test|localhost|local|example))([:/]|$)#i', $this->app->config->appUrl());
-        $noHttps = !$f['https'] && $publicSite;
-        $staleBackup = $f['lastBackup'] && $f['lastBackup'] < time() - 7 * 86400;
-        $securityIssues = array_values(array_filter([
-            $noHttps ? $s['sr.kpi.secNoHttps'] : null,
-            !$f['lastBackup'] ? $s['sr.kpi.secNoBackup'] : ($staleBackup ? $s['sr.kpi.secOldBackup'] : null),
-            $f['https'] && $f['certificateUntil'] && $f['certificateUntil'] < time() + 7 * 86400 ? $s['sr.kpi.secCertSoon'] : null,
-        ]));
-        $good = $f['incidents'] === 0 && ($f['availability'] === null || $f['availability'] >= 99) && !$securityIssues;
-
-        // ---- Executive summary: availability, results, content, support — only what happened.
-        $summary = $pct !== null
-            ? self::fill($s['sr.summary.uptime'], ['month' => $month, 'pct' => $pct, 'interruptions' => $down['incidents'] > 0
-                ? self::plural($s['sr.summary.interruptions'], $down['incidents'], ['time' => $this->minutes($down['minutes'], $lang)])
-                : $s['sr.summary.noInterruptions']])
-            : self::fill($s['sr.summary.noUptime'], ['month' => $month]);
-        if ($f['incidents'] > 0) {
-            $summary .= ' ' . self::plural($s['sr.summary.incidents'], $f['incidents']);
-        }
-        if ($visitors > 0) {
-            $summary .= ' ' . ($leadsNow > 0
-                ? self::fill($s['sr.summary.visitsLeads'], ['visits' => self::plural($s['sr.summary.visitsPart'], $visitors, ['count' => self::number($visitors, $lang)]), 'leads' => self::plural($s['sr.summary.leadsPart'], $leadsNow)])
-                : self::fill($s['sr.summary.visitsOnly'], ['visits' => self::plural($s['sr.summary.visitsPart'], $visitors, ['count' => self::number($visitors, $lang)])]));
-        } elseif ($leadsNow > 0) {
-            $summary .= ' ' . self::plural($s['sr.summary.leadsOnly'], $leadsNow);
-        }
+        // ---- Summary: the results, then the work and the care behind them.
+        $summary = $pct !== null ? self::fill($s['sr.c.summary.uptime'], ['month' => $month, 'pct' => $pct]) : self::fill($s['sr.c.summary.online'], ['month' => $month]);
+        $visitsLine = $this->visitsSentence($s, $visitors, $leadsNow, $lang);
+        $summary .= $visitsLine !== '' ? ' ' . $visitsLine : '';
         $parts = array_values(array_filter([
             $f['textChanges'] > 0 ? self::plural($s['sr.summary.texts'], $f['textChanges']) : null,
             $f['photos'] > 0 ? self::plural($s['sr.summary.photos'], $f['photos']) : null,
@@ -332,45 +351,52 @@ final class SiteReport
         if ($parts) {
             $sentence = self::listJoin($parts, $s['sr.and']);
             $summary .= ' ' . mb_strtoupper(mb_substr($sentence, 0, 1)) . mb_substr($sentence, 1) . '.';
-        } else {
-            $summary .= ' ' . $s['sr.summary.noChanges'];
         }
-        if ($f['tickets']['resolved'] > 0) {
-            $summary .= ' ' . self::plural($s['sr.summary.resolved'], $f['tickets']['resolved']);
+        if ($tk['resolved'] > 0) {
+            $summary .= ' ' . self::plural($s['sr.c.summary.support'], $tk['resolved']);
+        }
+        if ($f['checks'] > 0) {
+            $summary .= ' ' . self::plural($s['sr.c.summary.monitoring'], $f['checks'], ['count' => self::number($f['checks'], $lang)]);
+        }
+        if ($threats > 0) {
+            $summary .= ' ' . self::plural($s['sr.c.summary.protection'], $threats);
         }
 
-        // ---- Key figures
+        // ---- Key figures: what the site achieved and the work behind it.
         $kpis = [];
         if ($pct !== null) {
-            $kpis[] = ['label' => $s['sr.kpi.availability'], 'value' => $pct,
-                'note' => $down['incidents'] > 0 ? self::plural($s['sr.kpi.availabilityDown'], $down['incidents'], ['time' => $this->minutes($down['minutes'], $lang)]) : $s['sr.kpi.availabilityNote'],
-                'trend' => $trend($f['availability'], $p['availability'], true, true)];
+            $kpis[] = ['label' => $s['sr.kpi.availability'], 'value' => $pct, 'note' => $s['sr.c.kpi.availabilityNote'], 'trend' => $up($f['availability'], $p['availability'], true)];
         }
         if ($visitors > 0) {
             $kpis[] = ['label' => $s['sr.kpi.visits'], 'value' => self::number($visitors, $lang), 'note' => self::plural($s['sr.kpi.visitsNote'], (int) $f['visits']['views'], ['count' => self::number((int) $f['visits']['views'], $lang)]),
-                'trend' => $p['visits']['visitors'] > 0 ? $trend($visitors, (int) $p['visits']['visitors']) : null];
+                'trend' => $p['visits']['visitors'] > 0 ? $up($visitors, (int) $p['visits']['visitors']) : null];
         }
-        if ($leadsNow > 0 || $leadsBefore > 0) {
+        if ($leadsNow > 0) {
             $clicks = (int) $f['visits']['contacts'];
-            $kpis[] = ['label' => $s['sr.kpi.leads'], 'value' => self::number($leadsNow, $lang), 'note' => $clicks > 0 ? self::plural($s['sr.kpi.leadsClicks'], $clicks) : $s['sr.kpi.leadsNote'],
-                'trend' => $trend($leadsNow, $leadsBefore)];
+            $kpis[] = ['label' => $s['sr.kpi.leads'], 'value' => self::number($leadsNow, $lang), 'note' => $clicks > 0 ? self::plural($s['sr.kpi.leadsClicks'], $clicks) : $s['sr.kpi.leadsNote'], 'trend' => $up($leadsNow, $leadsBefore)];
         }
-        if ($f['responseMs'] !== null) {
-            $kpis[] = ['label' => $s['sr.kpi.speed'], 'value' => $this->seconds($f['responseMs'], $lang), 'note' => $s['sr.kpi.speedNote'],
-                'trend' => $p['responseMs'] !== null ? $trend($f['responseMs'], $p['responseMs'], false) : null];
-        } elseif ($f['pagespeed']) {
-            $kpis[] = ['label' => $s['sr.kpi.google'], 'value' => $f['pagespeed']['mobile']['performance'] . '/100', 'note' => $this->grade((int) $f['pagespeed']['mobile']['performance'], $lang), 'trend' => null];
+        if ($f['checks'] > 0) {
+            $kpis[] = ['label' => $s['sr.c.kpi.checks'], 'value' => self::number($f['checks'], $lang), 'note' => $s['sr.c.kpi.checksNote'], 'trend' => null];
         }
-        $prevChanges = $p['textChanges'] + $p['photos'] + $p['portfolio'];
-        $kpis[] = ['label' => $s['sr.kpi.updates'], 'value' => (string) $changes, 'note' => $s['sr.kpi.updatesNote'], 'trend' => $trend($changes, $prevChanges, null)];
-        $kpis[] = ['label' => $s['sr.kpi.security'], 'value' => $securityIssues ? $s['sr.kpi.attention'] : $s['sr.kpi.secure'],
-            'note' => $securityIssues ? implode(' · ', $securityIssues) : ($f['blocked'] > 0 ? self::plural($s['sr.kpi.blocked' . ($f['https'] ? '' : 'Local')], $f['blocked']) : $s['sr.kpi.noThreats' . ($f['https'] ? '' : 'Local')]), 'trend' => null];
+        if ($changes > 0) {
+            $kpis[] = ['label' => $s['sr.kpi.updates'], 'value' => (string) $changes, 'note' => $s['sr.kpi.updatesNote'], 'trend' => $up($changes, $prevChanges)];
+        }
+        if ($threats > 0) {
+            $kpis[] = ['label' => $s['sr.c.kpi.protection'], 'value' => self::number($threats, $lang), 'note' => $s['sr.c.kpi.protectionNote'], 'trend' => null];
+        }
+        if ($tk['resolved'] > 0) {
+            $kpis[] = ['label' => $s['sr.c.kpi.support'], 'value' => (string) $tk['resolved'], 'note' => $s['sr.c.kpi.supportNote'], 'trend' => null];
+        }
+        if ($score !== null && $score >= 90) {
+            $kpis[] = ['label' => $s['sr.kpi.google'], 'value' => $score . '/100', 'note' => $this->grade($score, $lang), 'trend' => null];
+        }
+        $kpis = array_slice($kpis, 0, 6);
 
         $sections = [];
-        // ---- Highlights: the three best pieces of news of the month.
+        // ---- Highlights: the best news of the month.
         $highlights = [];
-        $vt = $p['visits']['visitors'] > 0 ? $trend($visitors, (int) $p['visits']['visitors']) : null;
-        if ($vt && $vt['dir'] === 'up') {
+        $vt = $p['visits']['visitors'] > 0 ? $up($visitors, (int) $p['visits']['visitors']) : null;
+        if ($vt) {
             $highlights[] = self::fill($s['sr.hl.visitsUp'], ['change' => ltrim(explode(' vs.', $vt['text'])[0], '+'), 'month' => $prevMonth]);
         }
         if ($f['leads']['won'] > 0) {
@@ -381,16 +407,22 @@ final class SiteReport
         if ($pct !== null && $f['availability'] >= 99.9) {
             $highlights[] = self::fill($s['sr.hl.uptime'], ['pct' => $pct]);
         }
-        if ($f['pagespeed'] && (int) $f['pagespeed']['mobile']['performance'] >= 90) {
-            $highlights[] = self::fill($s['sr.hl.speed'], ['score' => (int) $f['pagespeed']['mobile']['performance']]);
+        if ($threats > 0) {
+            $highlights[] = self::plural($s['sr.hl.protected'], $threats);
         }
-        if ($f['tickets']['resolved'] > 0) {
-            $highlights[] = $f['service']['ratings'] > 0
-                ? self::plural($s['sr.hl.supportRated'], $f['tickets']['resolved'], ['avg' => self::number((float) $f['service']['ratingAvg'], $lang, 1)])
-                : self::plural($s['sr.hl.support'], $f['tickets']['resolved']);
+        if ($score !== null && $score >= 90) {
+            $highlights[] = self::fill($s['sr.hl.speed'], ['score' => $score]);
+        }
+        if ($tk['resolved'] > 0) {
+            $highlights[] = $sv['ratings'] > 0 && $sv['ratingAvg'] >= 4
+                ? self::plural($s['sr.hl.supportRated'], $tk['resolved'], ['avg' => self::number((float) $sv['ratingAvg'], $lang, 1)])
+                : self::plural($s['sr.hl.support'], $tk['resolved']);
         }
         if ($changes > 0) {
             $highlights[] = self::plural($s['sr.hl.content'], $changes);
+        }
+        if (count($highlights) < 3 && $f['checks'] > 0) {
+            $highlights[] = self::plural($s['sr.hl.monitored'], $f['checks'], ['count' => self::number($f['checks'], $lang)]);
         }
         if ($highlights) {
             $sections[] = ['title' => $s['sr.sec.highlights'], 'intro' => null, 'items' => array_slice($highlights, 0, 3)];
@@ -422,7 +454,7 @@ final class SiteReport
         }
         $ld = $f['leads'];
         if ($leadsNow > 0) {
-            $t = $trend($leadsNow, $leadsBefore);
+            $t = $up($leadsNow, $leadsBefore);
             $reach[] = self::plural($s['sr.leads.received'], $leadsNow) . ($t ? ' (' . $t['text'] . ')' : '') . '.';
             $services = array_slice(array_filter($ld['byService'], fn ($k) => $k !== '', ARRAY_FILTER_USE_KEY), 0, 3, true);
             if ($services) {
@@ -435,7 +467,7 @@ final class SiteReport
             if ($ld['wonAmount'] > 0) {
                 $reach[] = self::fill($s['sr.leads.wonAmount'], ['amount' => 'Q ' . self::number($ld['wonAmount'], $lang)]);
             }
-            if ($ld['avgResponseHours'] !== null) {
+            if ($ld['avgResponseHours'] !== null && $ld['avgResponseHours'] <= 48) {
                 $reach[] = self::fill($s['sr.leads.response'], ['time' => $this->duration((int) round($ld['avgResponseHours']), $lang)]);
             }
         }
@@ -443,7 +475,159 @@ final class SiteReport
             $sections[] = ['title' => $s['sr.sec.reach'], 'intro' => $visitors > 0 ? $s['sr.sec.reachIntro'] : null, 'items' => $reach];
         }
 
-        // ---- Uptime and speed
+        // ---- The work done this month (content and support)
+        $work = [];
+        if ($f['textChanges'] > 0) {
+            $work[] = self::plural($s['sr.content.texts'], $f['textChanges']);
+        }
+        if ($f['photos'] > 0) {
+            $work[] = self::plural($s['sr.content.photos'], $f['photos']);
+        }
+        if ($f['portfolio'] > 0) {
+            $work[] = $s['sr.content.portfolio'];
+        }
+        if ($tk['received'] > 0) {
+            $work[] = $tk['resolved'] > 0
+                ? self::plural($s['sr.c.work.support'], $tk['received'], ['resolved' => self::plural($s['sr.support.resolvedPart'], $tk['resolved'])])
+                : self::plural($s['sr.c.work.supportOpen'], $tk['received']);
+        } elseif ($tk['resolved'] > 0) {
+            $work[] = self::plural($s['sr.support.resolvedOnly'], $tk['resolved']);
+        }
+        if ($sv['avgFirstResponseHours'] !== null && $sv['avgFirstResponseHours'] <= max(24, (int) $sv['targetHours'])) {
+            $work[] = self::fill($s['sr.c.work.firstResponse'], ['time' => $this->duration((int) round($sv['avgFirstResponseHours']), $lang)]);
+        }
+        if ($sv['ratings'] > 0 && $sv['ratingAvg'] >= 4) {
+            $work[] = self::fill($s['sr.c.work.rating'], ['avg' => self::number((float) $sv['ratingAvg'], $lang, 1)]);
+        }
+        foreach ($tk['resolvedTitles'] as $title) {
+            $work[] = self::fill($s['sr.support.done'], ['title' => $title]);
+        }
+        if (!$work) {
+            $work[] = $s['sr.c.work.none'];
+        }
+        $sections[] = ['title' => $s['sr.c.sec.work'], 'intro' => $s['sr.c.sec.workIntro'], 'items' => $work];
+
+        // ---- Monitoring and protection: the automatic work, in plain words
+        $care = array_values(array_filter([
+            $f['checks'] > 0 ? self::plural($s['sr.c.care.checks'], $f['checks'], ['count' => self::number($f['checks'], $lang)]) : null,
+            $f['checks'] > 0 ? $s['sr.c.care.alerts'] : null,
+            $m['integrity'] > 0 ? self::plural($s['sr.c.care.integrity'], $m['integrity'], ['count' => self::number($m['integrity'], $lang)]) : null,
+            $f['https'] && $m['certificate'] > 0 ? $s['sr.c.care.secure'] : null,
+            $f['blocked'] > 0 ? self::plural($s['sr.c.care.blocked'], $f['blocked']) : null,
+            $f['contact']['blocked'] > 0 ? self::plural($s['sr.c.care.spam'], $f['contact']['blocked']) : null,
+            $score !== null && $score >= 75 ? self::fill($s['sr.c.care.google'], ['score' => $score, 'grade' => mb_strtolower($this->grade($score, $lang))]) : null,
+            $f['responseMs'] !== null && $f['responseMs'] < 2000 ? self::fill($s['sr.c.care.speed'], ['time' => $this->seconds($f['responseMs'], $lang)]) : null,
+        ]));
+        if ($care) {
+            $sections[] = ['title' => $s['sr.c.sec.care'], 'intro' => $s['sr.c.sec.careIntro'], 'items' => $care];
+        }
+
+        // ---- Next steps the client can take (technical items go to the team's detail)
+        $next = [];
+        if ($f['leadsWaiting'] > 0) {
+            $next[] = self::plural($s['sr.c.next.leads'], $f['leadsWaiting']);
+        }
+        if ($changes === 0 && $prevChanges === 0) {
+            $next[] = $s['sr.next.content'];
+        }
+        if ($next) {
+            $sections[] = ['title' => $s['sr.c.sec.next'], 'intro' => $s['sr.c.sec.nextIntro'], 'items' => $next];
+        }
+
+        $headline = $leadsNow > 0
+            ? self::plural($s['sr.c.headline.leads'], $leadsNow, ['month' => $month])
+            : ($pct !== null && $f['availability'] >= 99.9 && $f['downtime']['incidents'] === 0
+                ? self::fill($s['sr.headline.perfect'], ['month' => $month])
+                : ($visitors > 0 ? self::plural($s['sr.c.headline.visits'], $visitors, ['count' => self::number($visitors, $lang), 'month' => $month]) : self::fill($s['sr.c.headline.work'], ['month' => $month])));
+        return [
+            'audience' => 'client',
+            'period' => $period,
+            'periodLabel' => $month,
+            'lang' => $lang,
+            'status' => 'good',
+            'statusLabel' => $s[$f['checks'] > 0 ? 'sr.c.pill.monitored' : 'sr.c.pill.online'],
+            'headline' => $headline,
+            'summary' => $summary,
+            'kpis' => $kpis,
+            'sections' => $sections,
+            'siteUrl' => $this->app->config->appUrl(),
+            'subject' => self::fill($s['sr.subject'], ['month' => $month]),
+            'previousPeriod' => $prevPeriod,
+            'figures' => $f,
+        ];
+    }
+
+    /**
+     * The technical detail of the month, for the owner and the team (never
+     * sent to clients): interruptions, errors, security and backups,
+     * certificates and domain, Google scores, service levels, the automatic
+     * maintenance and what needs attention. Comparisons in both directions.
+     */
+    public function technical(string $period, string $lang): array
+    {
+        $s = $this->strings($lang);
+        $f = $this->monthFigures($period);
+        $month = $this->periodLabel($period, $lang);
+        $prevPeriod = self::monthBefore($period);
+        $p = $this->monthFigures($prevPeriod);
+        $prevMonth = $s['sr.months'][(int) substr($prevPeriod, 5, 2) - 1];
+        $trend = fn ($now, $before, ?bool $higherIsBetter = true, bool $points = false) => $this->trend($now, $before, $lang, $prevMonth, $higherIsBetter, $points);
+        $pct = $f['availability'] !== null ? self::pct((float) $f['availability'], $lang) : null;
+        $down = $f['downtime'];
+        $m = $f['maintenance'];
+        $tk = $f['tickets'];
+        [$start, $end] = self::bounds($period);
+
+        // Security: exactly what needs attention. (A local or test address is not expected to have HTTPS.)
+        $publicSite = !preg_match('#^https?://(localhost|127\.[0-9.]+|\[::1\]|[^/:]+\.(test|localhost|local|example))([:/]|$)#i', $this->app->config->appUrl());
+        $noHttps = !$f['https'] && $publicSite;
+        $staleBackup = $f['lastBackup'] && $f['lastBackup'] < time() - 7 * 86400;
+        $securityIssues = array_values(array_filter([
+            $noHttps ? $s['sr.kpi.secNoHttps'] : null,
+            !$f['lastBackup'] ? $s['sr.kpi.secNoBackup'] : ($staleBackup ? $s['sr.kpi.secOldBackup'] : null),
+            $f['https'] && $f['certificateUntil'] && $f['certificateUntil'] < time() + 7 * 86400 ? $s['sr.kpi.secCertSoon'] : null,
+        ]));
+        $good = $f['incidents'] === 0 && ($f['availability'] === null || $f['availability'] >= 99) && !$securityIssues;
+        $errors = ['critical' => 0, 'error' => 0, 'warning' => 0];
+        foreach ($this->app->db()->all('SELECT severity, COUNT(*) AS n FROM error_log WHERE created_at >= ? AND created_at < ? GROUP BY severity', [$start, $end]) as $row) {
+            $errors[(string) $row['severity']] = (int) $row['n'];
+        }
+
+        $summary = $pct !== null
+            ? self::fill($s['sr.summary.uptime'], ['month' => $month, 'pct' => $pct, 'interruptions' => $down['incidents'] > 0
+                ? self::plural($s['sr.summary.interruptions'], $down['incidents'], ['time' => $this->minutes($down['minutes'], $lang)])
+                : $s['sr.summary.noInterruptions']])
+            : self::fill($s['sr.summary.noUptime'], ['month' => $month]);
+        if ($f['incidents'] > 0) {
+            $summary .= ' ' . self::plural($s['sr.summary.incidents'], $f['incidents']);
+        }
+        if ($securityIssues) {
+            $summary .= ' ' . self::fill($s['sr.t.summary.attention'], ['list' => self::listJoin($securityIssues, $s['sr.and'])]);
+        }
+
+        // ---- Key figures
+        $kpis = [];
+        if ($pct !== null) {
+            $kpis[] = ['label' => $s['sr.kpi.availability'], 'value' => $pct,
+                'note' => $down['incidents'] > 0 ? self::plural($s['sr.kpi.availabilityDown'], $down['incidents'], ['time' => $this->minutes($down['minutes'], $lang)]) : $s['sr.kpi.availabilityNote'],
+                'trend' => $trend($f['availability'], $p['availability'], true, true)];
+        }
+        $kpis[] = ['label' => $s['sr.t.kpi.downtime'], 'value' => (string) $down['incidents'],
+            'note' => $down['incidents'] > 0 ? self::fill($s['sr.t.kpi.downtimeNote'], ['time' => $this->minutes($down['minutes'], $lang)]) : $s['sr.t.kpi.downtimeNone'],
+            'trend' => $trend($down['incidents'], $p['downtime']['incidents'], false)];
+        if ($f['responseMs'] !== null) {
+            $kpis[] = ['label' => $s['sr.kpi.speed'], 'value' => $this->seconds($f['responseMs'], $lang), 'note' => $s['sr.kpi.speedNote'],
+                'trend' => $p['responseMs'] !== null ? $trend($f['responseMs'], $p['responseMs'], false) : null];
+        }
+        $kpis[] = ['label' => $s['sr.t.kpi.errors'], 'value' => (string) $errors['critical'],
+            'note' => self::plural($s['sr.t.errorN'], $errors['error']) . ' · ' . self::plural($s['sr.t.warningN'], $errors['warning']), 'trend' => $trend($f['incidents'], $p['incidents'], false)];
+        $kpis[] = ['label' => $s['sr.t.kpi.backup'], 'value' => $f['lastBackup'] ? date('d/m/Y', (int) $f['lastBackup']) : '—',
+            'note' => $f['lastBackup'] ? self::plural($s['sr.auto.backups'], $m['backups']) : $s['sr.security.noBackup'], 'trend' => null];
+        $kpis[] = ['label' => $s['sr.kpi.security'], 'value' => $securityIssues ? $s['sr.kpi.attention'] : $s['sr.kpi.secure'],
+            'note' => $securityIssues ? implode(' · ', $securityIssues) : ($f['blocked'] > 0 ? self::plural($s['sr.kpi.blocked' . ($f['https'] ? '' : 'Local')], $f['blocked']) : $s['sr.kpi.noThreats' . ($f['https'] ? '' : 'Local')]), 'trend' => null];
+
+        $sections = [];
+        // ---- Uptime, interruptions, speed and errors
         $uptime = [];
         if ($pct !== null) {
             $uptime[] = $down['incidents'] > 0
@@ -451,41 +635,16 @@ final class SiteReport
                 : self::fill($s['sr.uptime.full'], ['pct' => $pct]);
             $uptime[] = self::fill($s['sr.uptime.checks'], ['count' => self::number($f['checks'], $lang)]);
         }
+        foreach (array_slice($this->app->monitor()->incidentsBetween($start, min($end, time()), true), 0, 10) as $i) {
+            $uptime[] = self::plural($s['sr.t.incident'], (int) $i['checks'], ['date' => $this->date((int) $i['start'], $lang) . ', ' . date('H:i', (int) $i['start']),
+                'time' => $this->minutes((int) $i['minutes'], $lang), 'failed' => $i['failed'] ? implode(', ', $i['failed']) : '—']);
+        }
         if ($f['responseMs'] !== null) {
             $uptime[] = self::fill($s['sr.uptime.speed'], ['time' => $this->seconds($f['responseMs'], $lang), 'grade' => $f['responseMs'] < 800 ? $s['sr.uptime.fast'] : ($f['responseMs'] < 2000 ? $s['sr.uptime.ok'] : $s['sr.uptime.slow'])]);
         }
-        if ($uptime) {
-            $sections[] = ['title' => $s['sr.sec.uptime'], 'intro' => $s['sr.sec.uptimeIntro'], 'items' => $uptime];
-        }
-        if ($f['pagespeed']) {
-            $ps = $f['pagespeed'];
-            $line = fn (string $key, int $score) => self::fill($s[$key], ['score' => $score, 'grade' => mb_strtolower($this->grade($score, $lang))]);
-            $sections[] = ['title' => $s['sr.sec.visibility'], 'intro' => $s['sr.sec.visibilityIntro'], 'items' => [
-                $line('sr.psi.mobile', (int) $ps['mobile']['performance']),
-                $line('sr.psi.desktop', (int) $ps['desktop']['performance']),
-                $line('sr.psi.seo', (int) $ps['mobile']['seo']),
-                $line('sr.psi.accessibility', (int) $ps['mobile']['accessibility']),
-            ]];
-        }
-
-        // ---- Content
-        $content = [];
-        if ($f['textChanges'] > 0) {
-            $content[] = self::plural($s['sr.content.texts'], $f['textChanges']);
-        }
-        if ($f['photos'] > 0) {
-            $content[] = self::plural($s['sr.content.photos'], $f['photos']);
-        }
-        if ($f['portfolio'] > 0) {
-            $content[] = $s['sr.content.portfolio'];
-        }
-        if (!$content) {
-            $content[] = $s['sr.content.none'];
-        }
-        if ($f['lastPublished']) {
-            $content[] = self::fill($s['sr.content.lastPublished'], ['date' => $this->date($f['lastPublished'], $lang)]);
-        }
-        $sections[] = ['title' => $s['sr.sec.content'], 'intro' => null, 'items' => $content];
+        $uptime[] = self::fill($s['sr.t.errors'], ['critical' => self::plural($s['sr.t.criticalN'], $errors['critical']),
+            'errors' => self::plural($s['sr.t.errorN'], $errors['error']), 'warnings' => self::plural($s['sr.t.warningN'], $errors['warning'])]);
+        $sections[] = ['title' => $s['sr.sec.uptime'], 'intro' => $s['sr.sec.uptimeIntro'], 'items' => $uptime];
 
         // ---- Security and backups
         $security = [];
@@ -508,9 +667,19 @@ final class SiteReport
         $security[] = $f['lastBackup'] ? self::fill($s['sr.security.backup'], ['date' => $this->date($f['lastBackup'], $lang)]) : $s['sr.security.noBackup'];
         $sections[] = ['title' => $s['sr.sec.security'], 'intro' => null, 'items' => $security];
 
-        // ---- Technical support
+        if ($f['pagespeed']) {
+            $ps = $f['pagespeed'];
+            $line = fn (string $key, int $score) => self::fill($s[$key], ['score' => $score, 'grade' => mb_strtolower($this->grade($score, $lang))]);
+            $sections[] = ['title' => $s['sr.sec.visibility'], 'intro' => $s['sr.sec.visibilityIntro'], 'items' => [
+                $line('sr.psi.mobile', (int) $ps['mobile']['performance']),
+                $line('sr.psi.desktop', (int) $ps['desktop']['performance']),
+                $line('sr.psi.seo', (int) $ps['mobile']['seo']),
+                $line('sr.psi.accessibility', (int) $ps['mobile']['accessibility']),
+            ]];
+        }
+
+        // ---- Technical support (all of it, including what is still open)
         $support = [$f['incidents'] === 0 ? $s['sr.support.noIncidents'] : self::plural($s['sr.support.incidents'], $f['incidents'])];
-        $tk = $f['tickets'];
         if ($tk['received'] > 0 || $tk['resolved'] > 0) {
             $support[] = $tk['received'] > 0
                 ? self::plural($s['sr.support.received'], $tk['received'], ['resolved' => self::plural($s['sr.support.resolvedPart'], $tk['resolved'])])
@@ -526,9 +695,6 @@ final class SiteReport
             if ($sv['ratings'] > 0) {
                 $support[] = self::plural($s['sr.support.rating'], $sv['ratings'], ['avg' => self::number((float) $sv['ratingAvg'], $lang, 1)]);
             }
-            foreach ($tk['resolvedTitles'] as $title) {
-                $support[] = self::fill($s['sr.support.done'], ['title' => $title]);
-            }
             if ($tk['open'] > 0) {
                 $support[] = self::plural($s['sr.support.open'], $tk['open']);
             }
@@ -537,8 +703,7 @@ final class SiteReport
         }
         $sections[] = ['title' => $s['sr.sec.support'], 'intro' => null, 'items' => $support];
 
-        // ---- Automatic maintenance (only what is known)
-        $m = $f['maintenance'];
+        // ---- Automatic maintenance (everything the system did)
         $auto = array_values(array_filter([
             $f['checks'] > 0 ? self::plural($s['sr.auto.checks'], $f['checks'], ['count' => self::number($f['checks'], $lang)]) : null,
             $m['integrity'] > 0 ? self::plural($s['sr.auto.integrity'], $m['integrity'], ['count' => self::number($m['integrity'], $lang)]) : null,
@@ -555,11 +720,8 @@ final class SiteReport
             $sections[] = ['title' => $s['sr.sec.auto'], 'intro' => $s['sr.sec.autoIntro'], 'items' => $auto];
         }
 
-        // ---- Recommendations for next month (only when something calls for it)
+        // ---- Technical to-dos
         $next = [];
-        if ($f['leadsWaiting'] > 0) {
-            $next[] = self::plural($s['sr.next.leads'], $f['leadsWaiting']);
-        }
         if ($noHttps) {
             $next[] = $s['sr.next.https'];
         }
@@ -572,31 +734,25 @@ final class SiteReport
         if ($f['pagespeed'] && (int) $f['pagespeed']['mobile']['performance'] < 75) {
             $next[] = $s['sr.next.speed'];
         }
-        if ($changes === 0 && $prevChanges === 0) {
-            $next[] = $s['sr.next.content'];
-        }
         if ($tk['open'] > 0) {
             $next[] = self::plural($s['sr.next.tickets'], $tk['open']);
         }
         if ($next) {
-            $sections[] = ['title' => $s['sr.sec.next'], 'intro' => $s['sr.sec.nextIntro'], 'items' => $next];
+            $sections[] = ['title' => $s['sr.t.sec.pending'], 'intro' => null, 'items' => $next];
         }
 
         $state = $good ? 'good' : 'attention';
         return [
+            'audience' => 'technical',
             'period' => $period,
             'periodLabel' => $month,
             'lang' => $lang,
             'status' => $state,
             'statusLabel' => $s['sr.status.' . $state],
-            'headline' => self::fill($s['sr.headline.' . ($good && $pct !== null && $f['availability'] >= 99.9 && $down['incidents'] === 0 ? 'perfect' : $state)], ['month' => $month]),
+            'headline' => self::fill($s['sr.t.headline.' . $state], ['month' => $month]),
             'summary' => $summary,
             'kpis' => $kpis,
             'sections' => $sections,
-            'siteUrl' => $this->app->config->appUrl(),
-            'subject' => self::fill($s['sr.subject'], ['month' => $month]),
-            'previousPeriod' => $prevPeriod,
-            'figures' => $f,
         ];
     }
 

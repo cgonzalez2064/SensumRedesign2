@@ -170,20 +170,21 @@ what an account cannot use.
 | `leads` | Prospectos (personal data from the contact form) and the complete Estadísticas |
 | `stats` | Estadísticas, basic version: visits, sources, devices, clicks — no contact-form figures (`leads`/`previousLeads` are `null`) |
 | `monitor` | *Salud del sitio*: status, uptime 24 h/7/30/90 days, charts, incidents (without check names), error counts, key dates |
+| `report` | *Informe mensual (consulta)*: both versions of the monthly report (client and technical detail) for any of the last 13 months; cannot send, change recipients or download the PDF |
 | `support` | Manage **everyone's** support requests (status, priority, internal notes, response target) and the *Panorama de soporte* charts |
 
 Ready-made types (`Users::ACCESS_TYPES`, one concrete job each), or *Personalizado*:
 
 | Type | Permissions |
 |---|---|
-| *Administrador del sitio* (`admin`) | texts, contact, photos, documents, site, leads, stats, monitor |
+| *Administrador del sitio* (`admin`) | texts, contact, photos, documents, site, leads, stats, monitor, report |
 | *Editor de contenido* (`content`) | texts, contact, photos, documents |
 | *Redactor* (`texts`) | texts |
 | *Fotos y portafolio* (`media`) | photos, documents |
 | *Datos de contacto* (`contact`) | contact |
 | *Ventas* (`sales`) | leads, stats |
 | *Gerencia (consulta)* (`management`) | stats, monitor |
-| *Soporte técnico* (`support`) | support, monitor, site |
+| *Soporte técnico* (`support`) | support, monitor, report, site |
 
 `Users::accessTypeOf()` maps a permission set to its type (order-insensitive;
 anything else is `custom`). `bin/console create-admin` gives the *Administrador del
@@ -192,7 +193,7 @@ sees only their own unless they have `support`). Existing accounts were migrated
 `003_access.sql` (former administrators: the first five; former editors: all but
 `site`), `009_monitor_lite.sql` (`site` → `+monitor`) and `011_access_profiles.sql`
 (`leads` → `+stats`, so nobody lost Estadísticas; `support` is never granted
-automatically). The old `role` column is kept only for compatibility; it grants
+automatically) and `012_report_access.sql` (`site` + `monitor` → `+report`). The old `role` column is kept only for compatibility; it grants
 nothing.
 
 ## 3. Editable content model
@@ -282,7 +283,8 @@ nothing.
 | `PUT /api/reports/{id}` · `POST /api/reports/{id}/status` | owner · `support` | edit fields/priority; status with optional `message` and `notify` |
 | `GET`/`POST /api/users` · `POST /api/users/{id}/resend` · `PUT`/`DELETE /api/users/{id}` | owner | user management, access types |
 | `GET /api/view-as` · `POST /api/view-as` · `POST /api/view-as/switch` · `POST /api/view-as/stop` | owner (really) | "Ver como": candidates (active/invited, never the owner); start with `userId` + `currentPassword`; switch without password while active; stop. While active the session answers as that account, read-only (`403 view_only` for any change except switch/stop and the leads CSV), with `X-View-As: <id>` (0 otherwise) so the panel notices changes |
-| `GET /api/site-report` · `GET /api/site-report/preview?period=&lang=` · `PUT /api/site-report/settings` · `POST /api/site-report/send` | owner | monthly client report |
+| `GET /api/site-report` · `PUT /api/site-report/settings` · `POST /api/site-report/send` · `POST /api/site-report/pdf` | owner | monthly report: status, recipients, history, sending (client version only), PDF |
+| `GET /api/site-report/preview?period=&lang=` | `report` (owner included) | both versions of a month: `report` (client: `audience: client`) and `technical` (`audience: technical`), plus `period` and `periods` |
 
 Errors are `{"ok":false,"error":"<code>","fields":{…}}`; the admin translates
 codes into friendly ES/EN text. Unexpected failures return only
@@ -419,38 +421,53 @@ Stack / UptimeRobot on the site and `/api/health`).
 
 ### 9b. Monthly site report for clients
 
-Owner-only page **Informe mensual**. A short report in plain language (Spanish
-or English) for people who aren't technical:
+Page **Informe mensual**: the owner prepares and sends it; the `report` access views
+it read-only (menu *Estado del sitio*). Each month has two versions, built from the
+same figures (`SiteReport::figures`, cached per request):
 
-* Headline and status (*Todo en orden* / *Requiere atención*: any critical
-  incident, availability below 99 %, or a security issue), one-paragraph summary
-  that mentions the interruptions (count and total time) when there were any.
-* Figures: *Disponibilidad* (share of the month's scheduled checks that passed,
-  with the downtime), *Visitas*, *Clientes potenciales*, *Tiempo de carga* (average
-  home-page response; the Google mobile score when there are no measurements),
-  *Cambios publicados* and *Seguridad*: **Protegido**, or **Requiere atención** with
-  the exact reasons — HTTPS not active (only checked for public addresses, never
-  `localhost`/`127.x`/`*.test`), no backup or the latest older than 7 days, the
-  certificate expiring within 7 days; the note says how many sign-ins were blocked
-  (or that there were no unauthorized attempts).
-* Sections, in order: *Lo más destacado del mes* (up to 3), *Visitas y clientes
-  potenciales*, *Funcionamiento y velocidad* (incidents from `monitor_runs`, response
-  time), *Visibilidad en Google* (PageSpeed on phones and computers, SEO,
-  accessibility), *Contenido del sitio*, *Seguridad y respaldos*, *Soporte técnico*,
-  *Mantenimiento automático* and *Recomendaciones para el próximo mes* (pending
-  potential clients, backups, open support requests, speed…). Sections without data
-  are left out rather than shown empty.
+**For clients — `SiteReport::build()`** (the e-mail, the PDF and the first tab). Its
+job is to show the value of the support service, in plain language and positive
+terms; it never mentions backups, certificates, the domain, DNS/e-mail
+authentication, errors, interruption details or technical to-dos.
+
+* Headline about the best result (potential clients → no interruptions → visits →
+  "Así cuidamos tu sitio web en …"), a green pill (*Vigilado las 24 horas* when the
+  scheduled check ran) and a summary: uptime, visits and messages, content
+  published, requests resolved, automatic checks, threats stopped.
+* Up to 6 figures: *Disponibilidad*, *Visitas*, *Clientes potenciales*,
+  *Revisiones automáticas*, *Cambios publicados*, *Amenazas detenidas* (blocked
+  sign-ins + spam), *Solicitudes resueltas*, *Velocidad en celulares* (only 90+).
+  Comparisons with the previous month (`trend`) are kept only when they are good
+  news.
+* Sections: *Lo más destacado del mes* (up to 3), *Visitas y clientes potenciales*
+  (first-party statistics and Prospectos: sources, phones, contact clicks, services,
+  follow-up, won amount, time to first contact when ≤ 48 h), *Trabajo realizado este
+  mes* (content, requests handled and resolved with their titles, first answer when
+  within the target, rating when ≥ 4), *Monitoreo y protección* (checks, instant
+  alerts, file-integrity scans, secure connection, blocked sign-ins, spam, Google
+  speed when ≥ 75, load time when < 2 s) and *Próximos pasos* (only what the client
+  can act on: pending potential clients, fresh content).
+
+**Technical detail — `SiteReport::technical()`** (second tab; never sent): status
+*Todo en orden* / *Requiere atención* (critical incident, availability below 99 % or
+a security issue) with the exact reasons — HTTPS not active (public addresses only,
+never `localhost`/`127.x`/`*.test`), no backup or the latest older than 7 days, a
+certificate expiring within 7 days. Figures: availability with downtime,
+interruptions, load time, critical errors, latest backup, security — with
+comparisons both ways. Sections: uptime with each interruption (date, time,
+duration, failed checks) and the error log counts; security and backups
+(certificate, domain, SPF/DKIM/DMARC, blocked sign-ins, spam, latest backup); Google
+PageSpeed (phones, computers, SEO, accessibility); the full service level (open
+requests, all ratings); automatic maintenance (checks, scans, backups, off-server
+backups, certificate, Google, DNS, spam, auto-closed requests, alerts); technical
+to-dos (HTTPS, backups, domain renewal, speed, open requests).
+
 * Optional message from the team; the branded e-mail embeds the logo (no remote
   images) and replies go to the owner.
-* Comparison with the previous month on each figure (`trend`: direction, text,
-  good/bad/neutral — green ▲ / red ▼ in the e-mail, PDF and preview).
-* *Visitas y clientes potenciales* (first-party statistics and Prospectos: visits, sources,
-  share from phones, contact clicks, messages by service, follow-up, won amount,
-  time to first contact) and service levels under *Soporte técnico* (first-response time
-  against the owner's target, satisfaction 1–5) plus tickets closed automatically.
 * **PDF version** (`cms/src/Pdf.php`, a ~300-line writer with the standard
-  Helvetica fonts and Windows-1252 text — no external library): attached to every
-  sent report and downloadable from the page (`POST /api/site-report/pdf`).
+  Helvetica fonts and Windows-1252 text — no external library) of the client
+  version: attached to every sent report and downloadable by the owner
+  (`POST /api/site-report/pdf`).
 
 Recipients: up to 20 (Namecheap allows 50 per message), validated and saved;
 the owner is always in Cc. *Enviarme una prueba* sends only to the owner and is

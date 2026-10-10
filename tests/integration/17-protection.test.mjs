@@ -259,8 +259,10 @@ test('domain check: SPF, DKIM, DMARC, MX and expiry are read and shown; the repo
   assert.ok(d.expiry.validTo > Date.now() / 1000 + 300 * 86400);
   assert.deepEqual(d.problems, []);
   assert.equal((await owner.get('/api/monitor/summary')).data.domain.domain, 'sensumconstrucciones.com');
-  const report = (await owner.get('/api/site-report/preview')).data.report;
-  const sec = report.sections.find((x) => x.title === 'Seguridad y respaldos').items;
+  // In the team's technical detail (never in the client version).
+  const { report, technical } = (await owner.get('/api/site-report/preview')).data;
+  assert.ok(!JSON.stringify(report.sections).includes('SPF'));
+  const sec = technical.sections.find((x) => x.title === 'Seguridad y respaldos').items;
   assert.ok(sec.includes('El correo del dominio está protegido contra suplantación (SPF, DKIM y DMARC).'));
   assert.ok(sec.some((x) => /^El dominio sensumconstrucciones\.com está registrado hasta el /.test(x)));
 });

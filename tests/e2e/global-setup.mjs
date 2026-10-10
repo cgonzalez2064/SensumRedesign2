@@ -28,7 +28,7 @@ export default async function globalSetup() {
   createAdmin(server, SUPPORT);
   server.sql(`UPDATE users SET role='editor', permissions='leads,stats' WHERE email='${SALES.email}'`);
   server.sql(`UPDATE users SET role='editor', permissions='stats,monitor' WHERE email='${MANAGER.email}'`);
-  server.sql(`UPDATE users SET role='editor', permissions='site,monitor,support' WHERE email='${SUPPORT.email}'`);
+  server.sql(`UPDATE users SET role='editor', permissions='site,monitor,report,support' WHERE email='${SUPPORT.email}'`);
   server.sql(`UPDATE users SET role='editor', permissions='texts' WHERE email='${TWO_STEP.email}'`);
   server.sql(`UPDATE users SET role='editor', permissions='texts' WHERE email='${TEXTS_ONLY.email}'`);
   server.sql(`UPDATE users SET role='editor' WHERE email='${EDITOR.email}'`);

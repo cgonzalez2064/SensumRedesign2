@@ -293,6 +293,16 @@ Full re-run: API **203/203**, browser **135 passed / 51 skipped**; PHPStan 0 err
 
 Full re-run: API **203/203**, browser **145 passed / 53 skipped**; PHPStan 0 errors.
 
+## Change — monthly report: client version (value of the month) and technical detail
+
+| Suite | Added | Result |
+|---|---|---|
+| API (`12-site-report`, rewritten) | the owner sends, the `report` access views both versions (preview 200 with `report`/`technical`/`periods`; recipients, sending and PDF 403), content editors 403; client version: headline about the best result, green "Vigilado las 24 horas" pill, summary (uptime, content, monitoring, threats stopped), figures (availability, automatic checks, changes, threats, requests resolved…), sections *Lo más destacado*, *Trabajo realizado*, *Monitoreo y protección*, *Próximos pasos*; the client JSON never contains backups, certificates, DNS/SPF, errors, «Requiere atención» or interruption details (also with no backup and after a critical error); technical detail: *Requiere atención* with the reason, interruption with date/time and failed check, backups, error counts, full service level and maintenance, technical to-dos; English; the sent e-mail carries only the client version | 9/9 |
+| API (updated) | `17-protection` (domain lines only in the technical detail), `18-value` (quick answer for clients, low rating only for the team), `21-profiles-health` (client next steps vs. technical to-dos; Gerencia 403; migration `012` grants `report` once to site + monitor accounts, which still match their type), `04-users`, `16-tickets` | passing |
+| Browser (`access-report`, `value`) | the owner's preview has *Para clientes* / *Detalle técnico* tabs; the client tab never shows backup or security wording; the technical tab is marked *Interno*, axe; trends checked in the technical tab; a site administrator finds *Estado del sitio → Informe mensual*, sees both tabs and no send or recipients controls, on 3 devices | passing |
+
+Full re-run: API **204/204**, browser **148 passed / 53 skipped**; PHPStan 0 errors.
+
 ## Other audits
 
 | Audit | Result |

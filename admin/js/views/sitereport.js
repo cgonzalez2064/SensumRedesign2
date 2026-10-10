@@ -1,8 +1,14 @@
-/** Informe mensual — a short site-health report for clients (owner account only). */
+/**
+ * Informe mensual — two versions of each month:
+ *  - for clients (e-mail and PDF): the value of the month — results, the work
+ *    done and the monitoring behind it — in plain language;
+ *  - the technical detail for the team (backups, certificates, errors, to-dos).
+ * The owner chooses the recipients and sends it; the "report" access views both.
+ */
 import { h, icon, clear, fill } from '../dom.js';
 import { t, fmtDate } from '../i18n.js';
 import { api, download, saveBlob } from '../api.js';
-import { pageHead, loading, loadError, button, setBusy, toast, errorText, alertBox, confirmDialog, textField, cardHead } from '../ui.js';
+import { pageHead, loading, loadError, button, setBusy, toast, errorText, alertBox, confirmDialog, textField, cardHead, segmented } from '../ui.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -12,14 +18,15 @@ function card(id, title, ...children) {
   return h('section', { class: 'card', 'aria-labelledby': id }, cardHead({ id, icon: CARD_ICONS[id], title }), h('div', { class: 'stack' }, ...children));
 }
 
-/** The report as clients will read it (same text as the e-mail, built by the server). */
+/** One version of the report, as the server built it (the client one is the e-mail's text). */
 function preview(r) {
-  return h('article', { class: 'report-preview', lang: r.lang },
-    h('div', { class: 'report-eyebrow', text: r.periodLabel }),
+  const technical = r.audience === 'technical';
+  return h('article', { class: ['report-preview', technical && 'report-technical'], lang: r.lang },
+    h('div', { class: 'report-eyebrow' }, technical ? h('span', { class: 'badge badge-info' }, icon('lock'), t('siteReport.internal')) : null, h('span', { text: r.periodLabel })),
     h('h3', { class: 'report-headline', text: r.headline }),
     h('span', { class: ['badge', r.status === 'good' ? 'badge-ok' : 'badge-warn'] }, icon(r.status === 'good' ? 'check-circle-fill' : 'exclamation-triangle-fill'), r.statusLabel),
     h('p', { class: 'report-summary', text: r.summary }),
-    h('div', { class: 'kpi-grid' }, r.kpis.map((k) => h('div', { class: 'kpi' },
+    h('div', { class: 'kpi-grid kpi-compact' }, r.kpis.map((k) => h('div', { class: 'kpi' },
       h('span', { class: 'kpi-label', text: k.label }), h('span', { class: 'kpi-num', text: k.value }), h('span', { class: 'kpi-label', text: k.note }),
       k.trend ? h('span', { class: ['trend', k.trend.good === null ? '' : k.trend.good ? 'trend-good' : 'trend-bad'] },
         h('span', { 'aria-hidden': 'true', text: { up: '▲ ', down: '▼ ', flat: '= ' }[k.trend.dir] }), k.trend.text) : null))),
@@ -28,23 +35,54 @@ function preview(r) {
       h('ul', null, s.items.map((i) => h('li', { text: i }))))));
 }
 
-export async function render({ main }) {
-  main.append(pageHead({ title: t('siteReport.title'), lead: t('siteReport.lead') }));
+export async function render({ main, isOwner }) {
+  main.append(pageHead({ title: t('siteReport.title'), lead: t(isOwner ? 'siteReport.lead' : 'siteReport.leadViewer') }));
   const body = h('div', { class: 'stack-lg' }, loading());
   main.append(body);
   let alive = true;
   let data;
   let period;
   let recipients = [];
+  let tab = 'client';
+  let shown = null;
   const previewBox = h('div', { 'aria-live': 'polite' });
+  const tabHint = h('p', { class: 'small muted' });
+  const showPreview = () => {
+    tabHint.textContent = t(tab === 'client' ? 'siteReport.previewHint' : 'siteReport.technicalHint');
+    if (shown) fill(previewBox, preview(tab === 'client' ? shown.report : shown.technical));
+  };
+  const tabs = segmented([
+    { value: 'client', label: t('siteReport.tabClient'), icon: 'people' },
+    { value: 'technical', label: t('siteReport.tabTechnical'), icon: 'shield-lock' },
+  ], tab, (v) => { tab = v; showPreview(); }, t('siteReport.tabsLabel'));
+  tabs.classList.add('report-tabs');
 
   const loadPreview = async () => {
     fill(previewBox, loading());
     try {
-      const r = await api.get('/site-report/preview?period=' + encodeURIComponent(period));
-      if (alive) fill(previewBox, preview(r.report));
-    } catch (err) { fill(previewBox, loadError(err, loadPreview)); }
+      const r = await api.get('/site-report/preview' + (period ? '?period=' + encodeURIComponent(period) : ''));
+      if (!alive) return null;
+      shown = r;
+      period = r.period;
+      showPreview();
+      return r;
+    } catch (err) { fill(previewBox, loadError(err, loadPreview)); return null; }
   };
+  const previewCard = (periods, onPeriod) => {
+    const monthSel = h('select', { class: 'select', id: 'sr-period' }, periods.map((p) => h('option', { value: p.value, text: p.label, selected: p.value === period || null })));
+    monthSel.addEventListener('change', () => { period = monthSel.value; if (onPeriod) onPeriod(); loadPreview(); });
+    return card('sr-prev', t('siteReport.previewTitle'),
+      h('div', { class: 'row-between' }, h('label', { class: 'field grow' }, h('span', { class: 'label', text: t('siteReport.month') }), monthSel)),
+      tabs, tabHint, previewBox);
+  };
+
+  // The "report" access: both versions, read-only.
+  if (!isOwner) {
+    const first = await loadPreview();
+    if (!alive) return { destroy: () => {} };
+    fill(body, first ? previewCard(first.periods) : previewBox);
+    return { destroy: () => { alive = false; } };
+  }
 
   const load = async () => {
     try { data = await api.get('/site-report'); } catch (err) { fill(body, loadError(err, load)); return; }
@@ -60,14 +98,9 @@ export async function render({ main }) {
       : alertBox(st.overdue ? 'warn' : 'info', t('siteReport.pendingTitle', { month: periodLabel(st.period) }),
         t(st.overdue ? 'siteReport.overdueBody' : 'siteReport.pendingBody') + (st.reminderSentAt ? ' ' + t('siteReport.reminded', { when: fmtDate(st.reminderSentAt) }) : ''));
 
-    // Preview with month selector.
-    const monthSel = h('select', { class: 'select', id: 'sr-period' }, data.periods.map((p) => h('option', { value: p.value, text: p.label, selected: p.value === period || null })));
-    monthSel.addEventListener('change', () => { period = monthSel.value; sendBtn.lastChild.textContent = t('siteReport.send', { month: periodLabel(period) }); loadPreview(); });
-    const previewCard = card('sr-prev', t('siteReport.previewTitle'),
-      h('div', { class: 'row-between' }, h('label', { class: 'field grow' }, h('span', { class: 'label', text: t('siteReport.month') }), monthSel)),
-      h('p', { class: 'small muted', text: t('siteReport.previewHint') }),
-      data.pagespeed.enabled || data.pagespeed.fetchedAt ? null : h('p', { class: 'small muted', text: t('siteReport.noPagespeed') }),
-      previewBox);
+    // Preview with month selector and the two versions.
+    const prevCard = previewCard(data.periods, () => { sendBtn.lastChild.textContent = t('siteReport.send', { month: periodLabel(period) }); });
+    if (!(data.pagespeed.enabled || data.pagespeed.fetchedAt)) prevCard.querySelector('.stack').append(h('p', { class: 'small muted', text: t('siteReport.noPagespeed') }));
 
     // Recipients (owner always in copy) and language.
     const chips = h('ul', { class: 'tag-list', 'aria-label': t('siteReport.recipientsTitle') });
@@ -164,7 +197,7 @@ export async function render({ main }) {
       : h('p', { class: 'muted', text: t('siteReport.noHistory') }));
 
     fill(body, statusBox, h('div', { class: 'dash-grid' },
-      h('div', { class: 'stack-lg' }, previewCard),
+      h('div', { class: 'stack-lg' }, prevCard),
       h('div', { class: 'stack-lg' }, recipientsCard, sendCard, history)));
     loadPreview();
   };

@@ -57,7 +57,7 @@ final class Kernel
         ['PUT', '/api/settings/translation', TranslationController::class, 'save', 'owner'],
         ['POST', '/api/settings/translation/test', TranslationController::class, 'test', 'owner'],
         ['GET', '/api/site-report', SiteReportController::class, 'index', 'owner'],
-        ['GET', '/api/site-report/preview', SiteReportController::class, 'preview', 'owner'],
+        ['GET', '/api/site-report/preview', SiteReportController::class, 'preview', 'user'],
         ['PUT', '/api/site-report/settings', SiteReportController::class, 'settings', 'owner'],
         ['POST', '/api/site-report/send', SiteReportController::class, 'send', 'owner'],
         ['POST', '/api/site-report/pdf', SiteReportController::class, 'pdf', 'owner'],

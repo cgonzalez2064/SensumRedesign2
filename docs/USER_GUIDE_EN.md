@@ -251,14 +251,15 @@ disable or delete accounts.
 * **Invite user:** name, email, **access type** and email language. The person
   receives a link to create their password.
   * **Site administrator:** all the content, publishing and activity, **Leads**,
-    **Statistics** and **Site health** (does not manage support).
+    **Statistics**, **Site health** and **Monthly report (view)** (does not manage
+    support or send the report).
   * **Content editor:** text, contact details and form, photos and portfolio.
   * **Copywriter** (text only), **Photos and portfolio**, **Contact details**.
   * **Sales:** Leads and full Statistics; does not change the website.
   * **Management (view only):** Statistics (basic version, no personal data) and
     Site health; changes nothing.
   * **Technical support:** manages **all** support requests (with their charts),
-    Site health, and publishing and activity.
+    Site health, Monthly report (view), and publishing and activity.
   * **Custom:** tick exactly what they need; each box explains what it includes.
 * **Search:** above the list type a name, e-mail or access type (accents and capitals
   don't matter) and filter by **status** or **access type**. **Clear filters** shows
@@ -302,36 +303,43 @@ Only the **it@gruposensum.com** account sees **Monitoring** in the menu
 If you receive an alert: open Monitoring, search for the reference code from the
 e-mail and look at the technical details. If it was a one-off, nothing else is needed.
 
-## 12. For the owner account: monthly report for clients
+## 12. Monthly report for clients
 
-Under **Administration → Monthly report** you prepare a short, plain-language
-report about the site's health and visibility to share with your clients:
-availability, Google score, updated content, security and support.
+In **Monthly report** you prepare a short, positive report for your clients every
+month: the **website's results**, the **work done** and the **monitoring and protection**
+that keep it online. It shows the value of the support service.
 
-1. **Recipients:** add the email addresses (up to 20) and press **Save
-   recipients**. Your account is always copied. Choose the language (Spanish or English).
+The preview has two tabs:
+
+* **For clients** — what is sent (e-mail and PDF). Summary, key figures
+  (**Availability**, **Visits**, **Potential clients**, **Automatic checks**,
+  **Published changes**, **Threats stopped**, **Requests resolved**), **Highlights of
+  the month**, **Visits and potential clients**, **Work done this month**,
+  **Monitoring and protection** and **Next steps**. Comparisons with the previous month
+  (▲ in green) appear only when they improved. It does not mention backups,
+  certificates, errors or other technical topics.
+* **Technical detail** (internal, never sent) — for the owner account and the team:
+  **Security** ("Protected" or "Needs attention" with the exact reason: no HTTPS, no
+  recent backups or a certificate about to expire), interruptions with date and time,
+  the month's errors, backups, certificate and domain, Google scores, the full service
+  level, automatic maintenance and **technical to-dos**.
+
+**Owner account (sending):**
+
+1. **Recipients:** add the e-mails (up to 20) and press **Save recipients**. Your
+   account is always copied. Choose the language (Spanish or English).
 2. Check the month's **Preview** (you can pick another month).
-3. Optionally write a **message for your clients**; it appears at the top of the report.
-4. **Send me a test** sends it only to you; **Send the {month} report** sends it to everyone.
+3. Optionally write a **message for your clients**; it appears at the top.
+4. **Send me a test** sends it only to you; **Send the {month} report** sends it to
+   everyone (always the **For clients** version, with the PDF attached).
 5. **History** shows what was sent.
 
 If last month's report isn't sent in the **first 5 days of the month**, you get a
 **reminder** email (once) and a notice on **Home**.
 
-**What it includes** (only what has data): a one-sentence summary; the key figures
-(**Availability**, **Visits**, **Potential clients**, **Load time**, **Published
-changes** and **Security**) compared with the **previous month** (▲ in green when it
-improved, ▼ in red when it got worse); **Highlights of the month**; **Visits and
-potential clients**; **Uptime and speed** (interruptions and how long they lasted);
-**Visibility on Google**; **Website content**; **Security and backups**; **Technical
-support** (requests, first answer and satisfaction); **Automatic maintenance** and
-**Recommendations for next month**. The e-mail carries the **PDF version** attached;
-**Download PDF** lets you print or share it.
-
-**Security: "Protected" or "Needs attention".** When it says "Needs attention", the
-note says exactly why: the site doesn't use **HTTPS**, there are **no backups** (or the
-latest is older than 7 days), or the **certificate expires soon**. It also says whether
-any **sign-ins were blocked** (suspicious attempts) or none were.
+**Administrators (view):** anyone with the **Monthly report (view)** access (part of
+"Site administrator" and "Technical support") finds it under **Site status → Monthly
+report** and sees both tabs, without recipients or send buttons.
 
 ## 13. For the owner account: e-mail and the form's captcha
 

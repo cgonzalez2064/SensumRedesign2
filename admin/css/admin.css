@@ -594,6 +594,10 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 .report-eyebrow{ font-size:.78rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); }
 .report-headline{ font-size:1.35rem; line-height:1.25; margin:0; }
 .report-preview .badge{ justify-self:start; }
+.report-preview.report-technical{ border-top-color:var(--info); }
+.report-preview .report-eyebrow{ display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }
+.report-preview .report-eyebrow .badge{ letter-spacing:.02em; }
+.report-tabs{ justify-self:start; max-width:100%; }
 .report-summary{ font-size:1rem; line-height:1.6; margin:0; }
 .report-preview .kpi-num{ font-size:1.35rem; }
 .report-section h4{ margin:.4rem 0 .2rem; font-size:1rem; }

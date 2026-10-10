@@ -14,7 +14,7 @@ before(async () => {
   s = await startServer({ port: 8331 });
   createAdmin(s); createAdmin(s, MGMT); createAdmin(s, SUPPORT); createAdmin(s, EDITOR);
   s.sql(`UPDATE users SET role='editor', permissions='stats,monitor' WHERE email='${MGMT.email}'`);
-  s.sql(`UPDATE users SET role='editor', permissions='site,monitor,support' WHERE email='${SUPPORT.email}'`);
+  s.sql(`UPDATE users SET role='editor', permissions='site,monitor,report,support' WHERE email='${SUPPORT.email}'`);
   s.sql(`UPDATE users SET role='editor', permissions='texts' WHERE email='${EDITOR.email}'`);
   ids = Object.fromEntries(s.sql('SELECT email, id FROM users').split('\n').map((l) => l.split('|')).map(([e, i]) => [e, Number(i)]));
   owner = new Client(s.base); await owner.login();
@@ -26,16 +26,16 @@ after(async () => { await s.stop(); });
 
 test('ready-made access types are concrete jobs, and the panel offers each permission', async () => {
   const d = (await owner.get('/api/users')).data;
-  assert.deepEqual(d.permissions, ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'support']);
+  assert.deepEqual(d.permissions, ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'support']);
   assert.deepEqual(Object.keys(d.accessTypes), ['admin', 'content', 'texts', 'media', 'contact', 'sales', 'management', 'support']);
-  assert.deepEqual(d.accessTypes.admin, ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor'], 'administrators do not handle IT tickets');
+  assert.deepEqual(d.accessTypes.admin, ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report'], 'administrators do not handle IT tickets');
   assert.deepEqual(d.accessTypes.management, ['stats', 'monitor']);
-  assert.deepEqual(d.accessTypes.support, ['support', 'monitor', 'site']);
+  assert.deepEqual(d.accessTypes.support, ['support', 'monitor', 'report', 'site']);
   assert.deepEqual(d.accessTypes.sales, ['leads', 'stats']);
   // Accounts made from the terminal are site administrators (not support managers).
   assert.equal(s.sql(`SELECT permissions FROM users WHERE email='${MGMT.email}'`), 'stats,monitor');
   createAdmin(s, { name: 'Nuevo Admin', email: 'nuevo.admin@example.test', password: 'Clave-Nuevo-Admin-2026' });
-  assert.equal(s.sql("SELECT permissions FROM users WHERE email='nuevo.admin@example.test'"), 'texts,contact,photos,documents,site,leads,stats,monitor');
+  assert.equal(s.sql("SELECT permissions FROM users WHERE email='nuevo.admin@example.test'"), 'texts,contact,photos,documents,site,leads,stats,monitor,report');
 });
 
 test('basic statistics: visits without the contact-form figures; no Prospectos', async () => {
@@ -114,17 +114,23 @@ test('the "support" access manages everyone’s tickets and sees the charts; oth
   assert.equal((await support.get('/api/monitor/summary')).status, 403);
 });
 
-test('the monthly report: concrete security wording, highlights and recommendations', async () => {
+test('the monthly report: client next steps are for the client; technical to-dos stay with the team', async () => {
   const period = new Date().toISOString().slice(0, 7);
-  const r = (await owner.get(`/api/site-report/preview?period=${period}`)).data.report;
-  const security = r.kpis.find((k) => k.label === 'Seguridad');
+  const { report: r, technical: tech } = (await owner.get(`/api/site-report/preview?period=${period}`)).data;
+  const security = tech.kpis.find((k) => k.label === 'Seguridad');
   assert.equal(security.value, 'Requiere atención');
   assert.equal(security.note, 'no hay respaldos de la información', 'says why, instead of a vague "review"');
-  const next = r.sections.find((x) => x.title === 'Recomendaciones para el próximo mes').items;
-  assert.ok(next.some((i) => /Contactar 1 cliente potencial/.test(i)), JSON.stringify(next));
-  assert.ok(next.some((i) => /respaldos automáticos/.test(i)));
-  assert.ok(next.some((i) => /Dar seguimiento a 2 solicitudes de soporte abiertas/.test(i)));
-  assert.match(r.headline, /hay puntos que conviene atender|buen estado|sin interrupciones/);
+  const pending = tech.sections.find((x) => x.title === 'Pendientes técnicos').items;
+  assert.ok(pending.some((i) => /respaldos automáticos/.test(i)), JSON.stringify(pending));
+  assert.ok(pending.some((i) => /Dar seguimiento a 2 solicitudes de soporte abiertas/.test(i)));
+  const next = r.sections.find((x) => x.title === 'Próximos pasos').items;
+  assert.ok(next.some((i) => /^Hay 1 cliente potencial esperando respuesta en Prospectos/.test(i)), JSON.stringify(next));
+  assert.ok(!next.some((i) => /respaldo|solicitud de soporte/.test(i)));
+  assert.equal(r.kpis.find((k) => k.label === 'Seguridad'), undefined, 'no security verdict for clients');
+  assert.match(r.headline, /^Tu sitio web generó 1 contacto de un cliente potencial en /);
+  // The "report" access sees both; "Gerencia" does not have it.
+  assert.equal((await support.get(`/api/site-report/preview?period=${period}`)).status, 200);
+  assert.equal((await mgmt.get(`/api/site-report/preview?period=${period}`)).status, 403);
 });
 
 test('upgrading: accounts that saw Prospectos keep their statistics (now a separate access)', async () => {
@@ -140,4 +146,27 @@ test('upgrading: accounts that saw Prospectos keep their statistics (now a separ
   assert.equal(perms('m2@example.test'), 'texts,leads,monitor,stats');
   assert.equal(perms('m3@example.test'), 'texts', 'no leads, no statistics');
   assert.equal(perms('m4@example.test'), 'leads,stats', 'not added twice');
+});
+
+test('upgrading: site administrators and support get the new monthly-report access (once)', async () => {
+  const mk = (email, perms) => {
+    createAdmin(s, { name: 'Migración', email, password: 'Clave-Migracion-Prueba-2026' });
+    s.sql(`UPDATE users SET role='editor', permissions='${perms}' WHERE email='${email}'`);
+  };
+  mk('r1@example.test', 'texts,contact,photos,documents,site,leads,stats,monitor');
+  mk('r2@example.test', 'support,monitor,site');
+  mk('r3@example.test', 'texts,site');
+  mk('r4@example.test', 'site,monitor,report');
+  s.sql("DELETE FROM schema_migrations WHERE version='012_report_access'");
+  s.cli(['migrate']);
+  const perms = (e) => s.sql(`SELECT permissions FROM users WHERE email='${e}'`);
+  assert.equal(perms('r1@example.test'), 'texts,contact,photos,documents,site,leads,stats,monitor,report');
+  assert.equal(perms('r2@example.test'), 'support,monitor,site,report');
+  assert.equal(perms('r3@example.test'), 'texts,site', 'no Salud del sitio, no report');
+  assert.equal(perms('r4@example.test'), 'site,monitor,report', 'not added twice');
+  // They match their ready-made type again.
+  const types = (await owner.get('/api/users')).data.accessTypes;
+  const same = (a, b) => [...a].sort().join() === [...b].sort().join();
+  assert.ok(same(perms('r1@example.test').split(','), types.admin));
+  assert.ok(same(perms('r2@example.test').split(','), types.support));
 });

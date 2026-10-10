@@ -355,11 +355,16 @@ test('the monthly report compares with the previous month and adds visits, leads
   assert.match(items, /4 descargas del portafolio/);
   assert.match(items, /Proyectos ganados desde el sitio por un total de Q 150\.000\./);
   assert.match(items, /Servicios más solicitados: Remodelaciones/);
-  assert.match(r.summary, /El sitio recibió 150 visitas y \d+ mensajes? de/);
-  const support = r.sections.find((x) => x.title === 'Soporte técnico').items.join('\n');
+  assert.match(r.summary, /Recibió 150 visitas y \d+ mensajes? de/);
+  // Clients: the quick answer (good news); a low rating stays in the team's detail.
+  const work = r.sections.find((x) => x.title === 'Trabajo realizado este mes').items.join('\n');
+  assert.match(work, /Respondimos en menos de una hora en promedio\./);
+  assert.doesNotMatch(work, /Satisfacción|calificó/);
+  const tech = pv.data.technical;
+  const support = tech.sections.find((x) => x.title === 'Soporte técnico').items.join('\n');
   assert.match(support, /Primera respuesta en menos de una hora en promedio \(100 % dentro del objetivo de 8 horas\)/);
   assert.match(support, /Satisfacción con la atención: 2,0 de 5 \(1 calificación\)/);
-  const auto = r.sections.find((x) => x.title === 'Mantenimiento automático').items.join('\n');
+  const auto = tech.sections.find((x) => x.title === 'Mantenimiento automático').items.join('\n');
   assert.match(auto, /1 solicitud resuelta se cerró sola tras 7 días sin respuesta/);
   // English.
   const en = (await owner.get(`/api/site-report/preview?period=${period}&lang=en`)).data.report;

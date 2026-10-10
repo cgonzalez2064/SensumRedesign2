@@ -29,20 +29,20 @@ final class Users
      *   monitor    Salud del sitio (uptime, speed, incidents — no technical details)
      *   support    Gestión de solicitudes de soporte (everyone's tickets)
      */
-    public const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'support'];
+    public const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'support'];
     /**
      * Ready-made access types offered when inviting, one per real job
      * (anything else shows as "Personalizado").
      */
     public const ACCESS_TYPES = [
-        'admin' => ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor'],
+        'admin' => ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report'],
         'content' => ['texts', 'contact', 'photos', 'documents'],
         'texts' => ['texts'],
         'media' => ['photos', 'documents'],
         'contact' => ['contact'],
         'sales' => ['leads', 'stats'],
         'management' => ['stats', 'monitor'],
-        'support' => ['support', 'monitor', 'site'],
+        'support' => ['support', 'monitor', 'report', 'site'],
     ];
 
     public function __construct(private App $app)

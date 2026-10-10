@@ -368,3 +368,12 @@ archive is needed.
 | Monthly report wording | «Seguridad» now states the concrete reason (no HTTPS, no/old backup, certificate expiring) instead of a vague «Revisar». HTTPS is only required for public addresses; the local-address exception is decided from the server's own `APP_URL`, never from request input. The report contains no secrets, IPs or account names. | `12-site-report`, `21-profiles-health` |
 | Users search | Client-side filtering of the list the owner already receives; no new endpoint or query parameter. | `profiles.spec` |
 | Contact-form preview | A local replica: no request to the contact handler, no data stored; validation rules mirror the site's for display only (the server still validates every real message). | `contact-services.spec` |
+
+## 17. Change review — monthly report split: client version and technical detail
+
+| Area | Design | Verified by |
+|---|---|---|
+| What reaches clients | The e-mail and the PDF are built only from `SiteReport::build()` (client version). It contains results, work done and automatic monitoring in plain words; backups, certificates, domain and e-mail-authentication status, errors, interruption details and technical to-dos are not part of it, so none of that internal posture is disclosed outside the team. Tests scan the client JSON and the sent e-mail for those terms. | `12-site-report`, `17-protection`, `access-report.spec` |
+| Technical detail | `SiteReport::technical()` is returned only by `GET /api/site-report/preview`, which requires the new `report` permission (owner included); it is never e-mailed or put in the PDF. | `12-site-report`, `21-profiles-health` |
+| `report` permission | View-only: both versions of the last 13 months (period validated as before). Sending, recipients, history and the PDF stay owner-only (403). Part of *Administrador del sitio* and *Soporte técnico*; not of *Gerencia*, *Ventas* or content types. Migration `012_report_access.sql` grants it once to accounts that already had `site` and `monitor` (those two types), so their access type is still recognised. | `12-site-report`, `21-profiles-health`, `access-report.spec` |
+| Lead figures for viewers | The client version shows aggregate counts and the won amount only — no names, e-mails or messages — so a viewer without `leads` sees no personal data. | `12-site-report` |

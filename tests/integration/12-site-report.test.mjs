@@ -1,4 +1,5 @@
-// Monthly site report for clients: owner-only, recipients (owner always copied), content, sending, reminder after day 5.
+// Monthly site report: the client version (value of the month, no technical details) and the technical
+// detail for the team; the owner sends it (recipients, owner always copied), the "report" access views both.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
@@ -52,15 +53,22 @@ function seedLastMonth() {
     (NULL, 'login_throttled', '', '{}', ${t0 + 180})`);
 }
 
-test('the monthly report is for the owner account only', async () => {
+test('the owner prepares and sends it; the "report" access (site administrators) only views both versions', async () => {
   const other = new Client(s.base); await other.login(OTHER.email, OTHER.password);
   const editor = new Client(s.base); await editor.login(EDITOR.email, EDITOR.password);
   for (const c of [other, editor]) {
     assert.equal((await c.get('/api/site-report')).status, 403);
-    assert.equal((await c.get('/api/site-report/preview')).status, 403);
     assert.equal((await c.put('/api/site-report/settings', { recipients: [], lang: 'es' })).status, 403);
     assert.equal((await c.post('/api/site-report/send', {})).status, 403);
+    assert.equal((await c.post('/api/site-report/pdf', {})).status, 403);
   }
+  assert.equal((await editor.get('/api/site-report/preview')).status, 403, 'content editors do not see it');
+  const view = await other.get('/api/site-report/preview');
+  assert.equal(view.status, 200, view.text);
+  assert.equal(view.data.report.audience, 'client');
+  assert.equal(view.data.technical.audience, 'technical');
+  assert.equal(view.data.periods.length, 13);
+  assert.equal(view.data.period, prev);
   assert.equal((await new Client(s.base).get('/api/site-report')).status, 401);
   const r = (await owner.get('/api/site-report')).data;
   assert.equal(r.ownerEmail, ADMIN.email);
@@ -78,45 +86,61 @@ test('recipients: validated, de-duplicated, owner excluded (always copied), at m
   assert.equal((await owner.put('/api/site-report/settings', { recipients: many, lang: 'es' })).data.fields.recipients, 'too_many');
 });
 
-test('content: plain-language summary built from the month\'s figures, without empty sections', async () => {
+const TECH_WORDS = /respaldo|backup|copia de seguridad|certificad|HTTPS|SPF|DKIM|DMARC|DNS|dominio|error|Requiere atención|interrupci/i;
+const clientText = (r) => JSON.stringify({ ...r, figures: undefined });
+
+test('client version: the value of the month in plain words, never technical details', async () => {
   seedLastMonth();
-  // Without any backup, Security says so (and the report needs attention).
-  let r = (await owner.get('/api/site-report/preview?period=' + prev)).data.report;
-  assert.equal(r.status, 'attention');
-  assert.equal(r.kpis.find((k) => k.label === 'Seguridad').value, 'Requiere atención');
-  assert.equal(r.kpis.find((k) => k.label === 'Seguridad').note, 'no hay respaldos de la información', 'the reason, not a vague "review"');
-  assert.ok(r.sections.find((x) => x.title === 'Recomendaciones para el próximo mes').items.some((i) => /respaldos automáticos/.test(i)));
-  s.cli(['backup']);
-  r = (await owner.get('/api/site-report/preview?period=' + prev)).data.report;
+  // Without any backup: the team's technical detail says so; the client version does not mention it.
+  let { report: r, technical: tech } = (await owner.get('/api/site-report/preview?period=' + prev)).data;
+  assert.equal(tech.status, 'attention');
+  assert.equal(tech.kpis.find((k) => k.label === 'Seguridad').value, 'Requiere atención');
+  assert.equal(tech.kpis.find((k) => k.label === 'Seguridad').note, 'no hay respaldos de la información', 'the reason, not a vague "review"');
+  assert.ok(tech.sections.find((x) => x.title === 'Pendientes técnicos').items.some((i) => /respaldos automáticos/.test(i)));
   assert.equal(r.status, 'good');
-  assert.equal(r.statusLabel, 'Todo en orden');
-  assert.equal(r.headline, 'Tu sitio web está en buen estado');
-  assert.match(r.summary, /el sitio estuvo en línea el 99 % del tiempo, con 1 interrupción breve \(15 min en total\)\./);
-  assert.match(r.summary, /Se actualizaron 3 textos y se publicaron 2 fotos nuevas\./);
-  assert.deepEqual(r.kpis.map((k) => k.label), ['Disponibilidad', 'Cambios publicados', 'Seguridad'], 'no Google score yet → no Google tile');
-  assert.equal(r.kpis[0].note, 'del tiempo en línea · 1 interrupción (15 min)');
-  assert.equal(r.kpis[1].value, '5');
-  assert.deepEqual([r.kpis[2].value, r.kpis[2].note], ['Protegido', '1 intento de acceso bloqueado'], 'a local address is not expected to have HTTPS');
-  assert.deepEqual(r.sections.map((x) => x.title), ['Lo más destacado del mes', 'Funcionamiento y velocidad', 'Contenido del sitio', 'Seguridad y respaldos', 'Soporte técnico', 'Mantenimiento automático']);
-  assert.deepEqual(r.sections[0].items, ['Se publicaron 5 actualizaciones de contenido.']);
-  assert.ok(r.sections[1].items.includes('Disponible el 99 % del tiempo; hubo 1 interrupción breve (15 min en total), atendida por soporte.'));
-  assert.deepEqual(r.sections.at(-1).items, ['100 revisiones automáticas de funcionamiento (cada 15 minutos)'], 'only what is known');
-  // An incident turns it into "Requiere atención".
+  assert.equal(r.statusLabel, 'Vigilado las 24 horas');
+  assert.doesNotMatch(clientText(r), TECH_WORDS);
+  s.cli(['backup']);
+  ({ report: r, technical: tech } = (await owner.get('/api/site-report/preview?period=' + prev)).data);
+  assert.deepEqual([tech.status, tech.statusLabel], ['good', 'Todo en orden']);
+  assert.match(tech.headline, /^Detalle técnico de .+: todo en orden$/);
+  // Client: results, the work done and the monitoring behind it.
+  assert.match(r.headline, /^Así cuidamos tu sitio web en /);
+  assert.match(r.summary, /tu sitio estuvo en línea el 99 % del tiempo\. Se actualizaron 3 textos y se publicaron 2 fotos nuevas\. Lo vigilamos día y noche con 100 revisiones automáticas\. Además, detuvimos 1 intento de acceso indebido o mensaje de spam\.$/);
+  assert.deepEqual(r.kpis.map((k) => [k.label, k.value]), [['Disponibilidad', '99 %'], ['Revisiones automáticas', '100'], ['Cambios publicados', '5'], ['Amenazas detenidas', '1']]);
+  assert.equal(r.kpis[0].note, 'del tiempo en línea');
+  assert.deepEqual(r.sections.map((x) => x.title), ['Lo más destacado del mes', 'Trabajo realizado este mes', 'Monitoreo y protección']);
+  assert.deepEqual(r.sections[0].items, ['Detuvimos 1 amenaza antes de que afectara tu sitio.', 'Se publicaron 5 actualizaciones de contenido.', 'Vigilamos tu sitio 100 veces durante el mes, cada 15 minutos.']);
+  assert.deepEqual(r.sections[1].items, ['3 textos actualizados', '2 fotos nuevas publicadas']);
+  assert.deepEqual(r.sections[2].items, ['Revisamos que el sitio funcionara 100 veces (cada 15 minutos, día y noche).',
+    'Si algo falla, el equipo técnico recibe un aviso al instante para resolverlo.', 'Bloqueamos 1 intento de acceso indebido al panel.']);
+  assert.doesNotMatch(clientText(r), TECH_WORDS);
+  // Technical: the interruption with its time, and the complete security and maintenance picture.
+  assert.equal(tech.kpis[0].note, 'del tiempo en línea · 1 interrupción (15 min)');
+  assert.deepEqual(tech.kpis.map((k) => k.label), ['Disponibilidad', 'Interrupciones', 'Errores críticos', 'Último respaldo', 'Seguridad']);
+  assert.deepEqual([tech.kpis[2].value, tech.kpis[4].value, tech.kpis[4].note], ['0', 'Protegido', '1 intento de acceso bloqueado'], 'a local address is not expected to have HTTPS');
+  assert.deepEqual(tech.sections.map((x) => x.title), ['Funcionamiento y velocidad', 'Seguridad y respaldos', 'Soporte técnico', 'Mantenimiento automático']);
+  assert.ok(tech.sections[0].items.includes('Disponible el 99 % del tiempo; hubo 1 interrupción breve (15 min en total), atendida por soporte.'));
+  assert.ok(tech.sections[0].items.some((i) => /^Interrupción el .+: 15 min \(1 revisión con fallas; falló: database\)\.$/.test(i)), JSON.stringify(tech.sections[0].items));
+  assert.ok(tech.sections[1].items.some((i) => /^Respaldo más reciente: /.test(i)));
+  assert.deepEqual(tech.sections.at(-1).items, ['100 revisiones automáticas de funcionamiento (cada 15 minutos)'], 'only what is known');
+  // A critical error: the team sees it; the client version stays the same.
   const [y, m] = prev.split('-').map(Number);
   s.sql(`INSERT INTO error_log (created_at, severity, source, event, message, fingerprint) VALUES (${Math.floor(new Date(y, m - 1, 15).getTime() / 1000)}, 'critical', 'server', 'unhandled_exception', 'x', 'sr-${RUN}')`);
-  const r2 = (await owner.get('/api/site-report/preview?period=' + prev)).data.report;
-  assert.equal(r2.status, 'attention');
-  assert.equal(r2.statusLabel, 'Requiere atención');
-  assert.match(r2.summary, /Hubo 1 error técnico, que soporte atendió de inmediato\./);
-  // English version.
-  const en = (await owner.get('/api/site-report/preview?lang=en&period=' + prev)).data.report;
-  assert.match(en.subject, /^Website report for /);
-  assert.match(en.summary, /the site was online 99% of the time, with 1 brief interruption \(15 min in total\)\./);
+  const again = (await owner.get('/api/site-report/preview?period=' + prev)).data;
+  assert.deepEqual([again.technical.status, again.technical.statusLabel], ['attention', 'Requiere atención']);
+  assert.match(again.technical.summary, /Hubo 1 error técnico, que soporte atendió de inmediato\./);
+  assert.equal(again.report.summary, r.summary);
+  // English.
+  const en = (await owner.get('/api/site-report/preview?lang=en&period=' + prev)).data;
+  assert.match(en.report.subject, /^Website report for /);
+  assert.match(en.report.summary, /your website was online 99% of the time\./);
+  assert.match(en.technical.summary, /the site was online 99% of the time, with 1 brief interruption \(15 min in total\)\./);
   // Only the last 13 months are accepted.
   assert.equal((await owner.get('/api/site-report/preview?period=2001-01')).status, 422);
 });
 
-test('support tickets and automatic maintenance of the month show the value of the service', async () => {
+test('support and automatic work: the client sees what was done; the team sees everything', async () => {
   const [y, m] = prev.split('-').map(Number);
   const at = (d, h = 10) => Math.floor(new Date(y, m - 1, d, h).getTime() / 1000);
   const day = (d) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -129,32 +153,45 @@ test('support tickets and automatic maintenance of the month show the value of t
     ON CONFLICT(key) DO UPDATE SET value = excluded.value`);
   s.sql(`INSERT INTO settings (key, value, updated_at) VALUES ('maintenance_log', '${JSON.stringify({ [prev]: { backups: 30, integrity: 2880, certificate: 30, pagespeed: 30, alerts: 2 } })}', 0)
     ON CONFLICT(key) DO UPDATE SET value = excluded.value`);
-  const r = (await owner.get('/api/site-report/preview?period=' + prev)).data.report;
-  assert.match(r.summary, /Soporte técnico resolvió 2 solicitudes\./);
-  const leads = r.kpis.find((k) => k.label === 'Clientes potenciales');
-  assert.equal(leads.value, '12');
-  const support = r.sections.find((x) => x.title === 'Soporte técnico').items;
+  const { report: r, technical: tech } = (await owner.get('/api/site-report/preview?period=' + prev)).data;
+  // Client
+  assert.match(r.summary, /Atendimos y resolvimos 2 solicitudes de tu equipo\./);
+  assert.deepEqual(r.kpis.map((k) => k.label), ['Disponibilidad', 'Clientes potenciales', 'Revisiones automáticas', 'Cambios publicados', 'Amenazas detenidas', 'Solicitudes resueltas']);
+  assert.deepEqual([r.kpis[1].value, r.kpis[4].value, r.kpis[5].value], ['12', '43', '2']);
+  const work = r.sections.find((x) => x.title === 'Trabajo realizado este mes').items;
+  assert.ok(work.includes('Atendimos 3 solicitudes de tu equipo (2 resueltas).'), JSON.stringify(work));
+  assert.ok(work.includes('Resuelto: «No se guardaba el texto de servicios».'));
+  assert.ok(work.includes('Resuelto: «Cambiar el horario de atención».'));
+  assert.ok(!work.some((i) => /sigue en atención/.test(i)), 'what is still open is for the team');
+  const care = r.sections.find((x) => x.title === 'Monitoreo y protección').items;
+  assert.ok(care.includes('Verificamos 2.880 veces que los archivos del sitio no hubieran sido alterados.'), JSON.stringify(care));
+  assert.ok(care.includes('El formulario de contacto detuvo 42 mensajes de spam.'));
+  assert.doesNotMatch(clientText(r), TECH_WORDS);
+  // Team
+  const support = tech.sections.find((x) => x.title === 'Soporte técnico').items;
   assert.ok(support.includes('El equipo envió 3 solicitudes de soporte (2 resueltas).'), JSON.stringify(support));
   assert.ok(support.includes('Tiempo promedio hasta la solución: 18 horas.'));
-  assert.ok(support.includes('Resuelto: «No se guardaba el texto de servicios».'));
-  assert.ok(support.includes('Resuelto: «Cambiar el horario de atención».'));
   assert.ok(support.includes('1 solicitud sigue en atención.'));
-  assert.ok(r.sections.find((x) => x.title === 'Recomendaciones para el próximo mes').items.includes('Dar seguimiento a 1 solicitud de soporte abierta.'));
-  const auto = r.sections.find((x) => x.title === 'Mantenimiento automático');
+  assert.ok(tech.sections.find((x) => x.title === 'Pendientes técnicos').items.includes('Dar seguimiento a 1 solicitud de soporte abierta.'));
+  const auto = tech.sections.find((x) => x.title === 'Mantenimiento automático');
   assert.ok(auto.intro);
   for (const line of ['2.880 análisis de seguridad de los archivos del sitio', '30 copias de seguridad de la base de datos', 'Certificado de seguridad (HTTPS) verificado 30 veces',
     'Velocidad y preparación para Google medidas 30 veces', '42 mensajes de spam bloqueados en el formulario de contacto']) assert.ok(auto.items.includes(line), line);
   assert.ok(auto.items.some((x) => /^\d+ avisos automáticos enviados al equipo técnico$/.test(x)), 'watchdog + critical alerts');
   // English.
-  const en = (await owner.get('/api/site-report/preview?lang=en&period=' + prev)).data.report;
-  assert.ok(en.sections.find((x) => x.title === 'Automatic maintenance').items.includes('2,880 security scans of the site files'));
-  assert.ok(en.sections.find((x) => x.title === 'Technical support').items.includes('Average time to resolution: 18 hours.'));
-  // And in the e-mail.
+  const en = (await owner.get('/api/site-report/preview?lang=en&period=' + prev)).data;
+  assert.ok(en.technical.sections.find((x) => x.title === 'Automatic maintenance').items.includes('2,880 security scans of the site files'));
+  assert.ok(en.technical.sections.find((x) => x.title === 'Technical support').items.includes('Average time to resolution: 18 hours.'));
+  assert.ok(en.report.sections.find((x) => x.title === 'Monitoring and protection').items.includes('We verified 2,880 times that the website files had not been altered.'));
+  // The e-mail carries the client version only.
   const mail = (await owner.post('/api/site-report/send', { period: prev, test: true }));
   assert.equal(mail.status, 200, mail.text);
   const [msg] = (await waitForMail(ADMIN.email, 1)).filter((x) => /Informe del sitio web/.test(x.Subject));
-  const html = (await message(msg.ID)).HTML;
-  assert.ok(html.includes('Mantenimiento automático') && html.includes('Resuelto: «No se guardaba el texto de servicios».'));
+  const full = await message(msg.ID);
+  assert.ok(full.HTML.includes('Monitoreo y protección') && full.HTML.includes('Resuelto: «No se guardaba el texto de servicios».'));
+  for (const word of ['Mantenimiento automático', 'copias de seguridad', 'Respaldo', 'Certificado', 'Pendientes técnicos']) {
+    assert.ok(!full.HTML.includes(word) && !full.Text.includes(word), word);
+  }
 });
 
 test('the scheduled check records availability, Google scores and the certificate step', async () => {
@@ -166,10 +203,13 @@ test('the scheduled check records availability, Google scores and the certificat
   assert.equal(psiCalls, 2);
   await cliAsync(s, ['monitor']);
   assert.equal(psiCalls, 2, 'scores are refreshed at most once a day');
-  const r = (await owner.get('/api/site-report/preview?period=' + prev)).data.report;
-  assert.equal(r.kpis.find((k) => k.label === 'Velocidad en celulares').value, '86/100');
-  const visibility = r.sections.find((x) => x.title === 'Visibilidad en Google');
+  const { report: r, technical: tech } = (await owner.get('/api/site-report/preview?period=' + prev)).data;
+  // Clients: one plain line (scores of 90+ also become a key figure); the team: every score.
+  assert.ok(r.sections.find((x) => x.title === 'Monitoreo y protección').items.includes('Google califica la velocidad del sitio en celulares con 86/100 (muy buena).'));
+  assert.equal(r.kpis.find((k) => k.label === 'Velocidad en celulares'), undefined, 'below 90: not a headline figure');
+  const visibility = tech.sections.find((x) => x.title === 'Visibilidad en Google');
   assert.ok(visibility.items.includes('Velocidad en computadoras: 99/100 (excelente)'));
+  assert.ok(visibility.items.includes('Velocidad en celulares: 86/100 (muy buena)'));
 });
 
 test('sending: recipients in To, the owner in Cc, branded e-mail, history recorded', async () => {

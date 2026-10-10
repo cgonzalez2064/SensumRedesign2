@@ -345,6 +345,9 @@ Do these on the live site and tick them in `docs/PRODUCTION_CHECKLIST.md`:
    Migration `011_access_profiles` gives the new **stats** permission to every
    account that had **leads** (they kept seeing Estadísticas); the **support**
    permission (manage all support requests) is never granted automatically.
+   Migration `012_report_access` gives **report** (view the monthly report: client
+   version and technical detail) to accounts that had both **site** and **monitor**.
+   Only the client version is ever e-mailed.
 5. Republish (§9) so the new templates are combined with the current content —
    the uploaded pages contain default content until you do.
 6. Re-run the post-deployment tests that relate to the change.

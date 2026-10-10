@@ -267,14 +267,15 @@ cambiar, desactivar o eliminar cuentas.
 * **Invitar usuario:** nombre, correo, **tipo de acceso** e idioma de los correos.
   La persona recibe un enlace para crear su contraseña.
   * **Administrador del sitio:** todo el contenido, publicación y actividad,
-    **Prospectos**, **Estadísticas** y **Salud del sitio** (no gestiona el soporte).
+    **Prospectos**, **Estadísticas**, **Salud del sitio** e **Informe mensual
+    (consulta)** (no gestiona el soporte ni envía el informe).
   * **Editor de contenido:** textos, datos de contacto y formulario, fotos y portafolio.
   * **Redactor** (solo textos), **Fotos y portafolio**, **Datos de contacto**.
   * **Ventas:** Prospectos y Estadísticas completas; no cambia el sitio.
   * **Gerencia (consulta):** Estadísticas (versión básica, sin datos personales) y
     Salud del sitio; no cambia nada.
   * **Soporte técnico:** gestiona **todas** las solicitudes de soporte (con sus
-    gráficas), Salud del sitio y publicación y actividad.
+    gráficas), Salud del sitio, Informe mensual (consulta) y publicación y actividad.
   * **Personalizado:** marca exactamente lo que necesita; cada casilla explica qué incluye.
 * **Buscar:** arriba de la lista escribe un nombre, correo o tipo de acceso (no importan
   tildes ni mayúsculas) y filtra por **estado** o **tipo de acceso**. **Quitar filtros**
@@ -320,36 +321,44 @@ Solo la cuenta **it@gruposensum.com** ve **Monitoreo** en el menú
 Si recibes una alerta: abre Monitoreo, busca el código de referencia del correo
 y revisa los detalles técnicos. Si fue un fallo puntual, no hace falta hacer nada.
 
-## 12. Para la cuenta propietaria: informe mensual para clientes
+## 12. Informe mensual para clientes
 
-En **Administración → Informe mensual** preparas un informe breve, en lenguaje
-sencillo, sobre la salud y la visibilidad del sitio para compartir con tus clientes:
-disponibilidad, calificación de Google, contenido actualizado, seguridad y soporte.
+En **Informe mensual** preparas cada mes un informe breve y positivo para tus clientes:
+los **resultados del sitio**, el **trabajo realizado** y el **monitoreo y la protección**
+que lo mantienen en línea. Sirve para mostrar el valor del soporte.
+
+La vista previa tiene dos pestañas:
+
+* **Para clientes** — lo que se envía (correo y PDF). Resumen, cifras clave
+  (**Disponibilidad**, **Visitas**, **Clientes potenciales**, **Revisiones
+  automáticas**, **Cambios publicados**, **Amenazas detenidas**, **Solicitudes
+  resueltas**), **Lo más destacado del mes**, **Visitas y clientes potenciales**,
+  **Trabajo realizado este mes**, **Monitoreo y protección** y **Próximos pasos**. Las
+  comparaciones con el mes anterior (▲ en verde) aparecen solo cuando mejoran. No
+  menciona respaldos, certificados, errores ni otros temas técnicos.
+* **Detalle técnico** (interno, nunca se envía) — para la cuenta propietaria y el
+  equipo: **Seguridad** («Protegido» o «Requiere atención» con el motivo exacto: sin
+  HTTPS, sin respaldos recientes o certificado por vencer), interrupciones con fecha y
+  hora, errores del mes, respaldos, certificado y dominio, calificaciones de Google,
+  nivel de servicio completo, mantenimiento automático y **pendientes técnicos**.
+
+**Cuenta propietaria (envío):**
 
 1. **Destinatarios:** agrega los correos (máximo 20) y pulsa **Guardar
    destinatarios**. Tu cuenta va siempre en copia. Elige el idioma (español o inglés).
 2. Revisa la **Vista previa** del mes (puedes elegir otro mes).
 3. Si quieres, escribe un **mensaje para tus clientes**; aparece al inicio del informe.
-4. **Enviarme una prueba** te lo envía solo a ti; **Enviar informe de {mes}** lo envía a todos.
+4. **Enviarme una prueba** te lo envía solo a ti; **Enviar informe de {mes}** lo envía a
+   todos (siempre la versión **Para clientes**, con el PDF adjunto).
 5. El **Historial** muestra lo enviado.
 
 Si el informe del mes anterior no se envía en los **primeros 5 días del mes**, te
 llega un **recordatorio** por correo (una sola vez) y un aviso en **Inicio**.
 
-**Qué incluye** (solo aparece lo que tiene datos): un resumen en una frase; las cifras
-clave (**Disponibilidad**, **Visitas**, **Clientes potenciales**, **Tiempo de carga**,
-**Cambios publicados** y **Seguridad**) comparadas con el **mes anterior** (▲ en verde
-si mejoró, ▼ en rojo si empeoró); **Lo más destacado del mes**; **Visitas y clientes
-potenciales**; **Funcionamiento y velocidad** (interrupciones y cuánto duraron);
-**Visibilidad en Google**; **Contenido del sitio**; **Seguridad y respaldos**;
-**Soporte técnico** (solicitudes, primera respuesta y satisfacción); **Mantenimiento
-automático** y **Recomendaciones para el próximo mes**. El correo lleva la **versión
-en PDF** adjunta; también puedes usar **Descargar PDF** para imprimirlo o compartirlo.
-
-**Seguridad: «Protegido» o «Requiere atención».** Si dice «Requiere atención», la nota
-explica exactamente por qué: el sitio no usa **HTTPS**, **no hay respaldos** (o el
-último tiene más de 7 días) o el **certificado vence pronto**. También indica si hubo
-**inicios de sesión bloqueados** (intentos sospechosos) o si no hubo ninguno.
+**Administradores (consulta):** quien tenga el acceso **Informe mensual (consulta)**
+(incluido en «Administrador del sitio» y «Soporte técnico») lo encuentra en **Estado
+del sitio → Informe mensual** y ve las dos pestañas, sin destinatarios ni botones de
+envío.
 
 ## 13. Para la cuenta propietaria: correo y captcha del formulario
 

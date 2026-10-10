@@ -205,14 +205,14 @@ final class Cli
 
     /** Demo accounts, one per access profile (development only). id => [name, permissions, status] */
     private const DEMO_USERS = [
-        'demo.completo' => ['Demo Administrador del Sitio', ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor'], 'active', 'Administrador del sitio'],
+        'demo.completo' => ['Demo Administrador del Sitio', ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report'], 'active', 'Administrador del sitio'],
         'demo.editor' => ['Demo Editor de Contenido', ['texts', 'contact', 'photos', 'documents'], 'active', 'Editor de contenido'],
         'demo.textos' => ['Demo Redactor', ['texts'], 'active', 'Redactor (solo textos)'],
         'demo.fotos' => ['Demo Fotos y Portafolio', ['photos', 'documents'], 'active', 'Fotos y portafolio'],
         'demo.contacto' => ['Demo Datos de Contacto', ['contact'], 'active', 'Datos de contacto y formulario'],
         'demo.ventas' => ['Demo Ventas', ['leads', 'stats'], 'active', 'Ventas: prospectos y estadísticas'],
         'demo.gerencia' => ['Demo Gerencia', ['stats', 'monitor'], 'active', 'Gerencia: estadísticas y salud del sitio (consulta)'],
-        'demo.soporte' => ['Demo Soporte Técnico', ['support', 'monitor', 'site'], 'active', 'Soporte técnico: solicitudes, salud del sitio y publicación'],
+        'demo.soporte' => ['Demo Soporte Técnico', ['support', 'monitor', 'report', 'site'], 'active', 'Soporte técnico: solicitudes, salud del sitio, informe técnico y publicación'],
         'demo.personalizado' => ['Demo Personalizado', ['texts', 'photos'], 'active', 'Personalizado: textos + fotos'],
         'demo.desactivado' => ['Demo Cuenta Desactivada', ['texts'], 'disabled', 'Desactivada (no puede entrar)'],
     ];

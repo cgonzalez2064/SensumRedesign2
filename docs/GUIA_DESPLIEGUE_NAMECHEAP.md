@@ -442,20 +442,20 @@ Solo la cuenta propietaria puede crear y modificar usuarios.
 
 | Tipo de acceso | Para quién | Ve y puede usar |
 |---|---|---|
-| Administrador del sitio | Quien administra el sitio día a día | Textos, datos de contacto y formulario, fotos, portafolio, publicación y actividad, **Prospectos**, **Estadísticas** y **Salud del sitio** |
+| Administrador del sitio | Quien administra el sitio día a día | Textos, datos de contacto y formulario, fotos, portafolio, publicación y actividad, **Prospectos**, **Estadísticas**, **Salud del sitio** e **Informe mensual (consulta)** |
 | Editor de contenido | Quien actualiza el sitio | Textos, datos de contacto y formulario, fotos y portafolio |
 | Redactor | Quien solo corrige o escribe textos | Los textos del sitio (español e inglés) |
 | Fotos y portafolio | Quien sube fotos de proyectos | Fotos de «Nosotros» y proyectos, y el PDF |
 | Datos de contacto | Recepción / atención | Teléfonos, WhatsApp, correo, dirección, mapa, Instagram y las opciones del formulario |
 | Ventas | Quien atiende clientes | **Prospectos** (mensajes del formulario) y **Estadísticas** completas; no cambia el sitio |
 | Gerencia (consulta) | Dirección / gerencia | **Estadísticas de visitas** (versión básica, sin datos personales) y **Salud del sitio**; no cambia nada |
-| Soporte técnico | Tu equipo de TI o un proveedor | **Gestión de solicitudes de soporte** (todas, con gráficas), **Salud del sitio** y publicación y actividad |
+| Soporte técnico | Tu equipo de TI o un proveedor | **Gestión de solicitudes de soporte** (todas, con gráficas), **Salud del sitio**, **Informe mensual (consulta)** y publicación y actividad |
 | Personalizado | Cualquier otra combinación | Marca los permisos uno por uno; cada casilla explica qué incluye |
 
 Los permisos que puedes combinar en **Personalizado** son: Textos del sitio · Datos de
 contacto y formulario · Fotos · Portafolio en PDF · Publicación y actividad ·
-Prospectos · **Estadísticas de visitas** · **Salud del sitio** · **Gestión de
-solicitudes de soporte**.
+Prospectos · **Estadísticas de visitas** · **Salud del sitio** · **Informe mensual
+(consulta)** · **Gestión de solicitudes de soporte**.
 
 > **Salud del sitio** es la versión resumida del Monitoreo: si el sitio funciona, la
 > **disponibilidad (uptime)** de las últimas 24 horas, 7, 30 y 90 días, la gráfica de
@@ -617,7 +617,7 @@ que **no hace falta banner de cookies**. Quien pide «No rastrear» no se cuenta
 
 ## 19. Informe mensual para clientes
 
-1. Panel → **Informe mensual** (solo la cuenta propietaria).
+1. Panel → **Informe mensual** (la cuenta propietaria lo envía; los administradores solo lo consultan).
 2. **Destinatarios:** agrega los correos de tus clientes (máximo 20) → *Guardar
    destinatarios*. La cuenta propietaria va siempre en copia.
 3. **Enviarme una prueba** para verlo en tu correo; luego **Enviar informe de {mes}**.
@@ -626,25 +626,34 @@ que **no hace falta banner de cookies**. Quien pide «No rastrear» no se cuenta
 5. El correo lleva **la versión en PDF adjunta** (lista para imprimir o reenviar) y
    compara cada cifra con el **mes anterior** (▲ verde si mejoró, ▼ rojo si empeoró).
    También puedes **Descargar PDF** desde la página del informe.
-6. **Qué contiene** (solo aparece lo que tiene datos):
-   - **Resumen** en una frase y las cifras clave: **Disponibilidad** (con el tiempo
-     fuera de servicio, si hubo), **Visitas**, **Clientes potenciales**, **Tiempo de
-     carga**, **Cambios publicados** y **Seguridad**.
-   - **Lo más destacado del mes** (hasta 3 logros).
-   - **Visitas y clientes potenciales**: de dónde llegan, clics en WhatsApp y teléfono,
-     mensajes recibidos, servicios más pedidos, cotizados y ganados con su monto.
-   - **Funcionamiento y velocidad**: disponibilidad, interrupciones (cuántas y cuánto
-     duraron) y tiempo de respuesta.
-   - **Visibilidad en Google**, **Contenido del sitio**, **Seguridad y respaldos**,
-     **Soporte técnico** (solicitudes, primera respuesta y satisfacción) y
-     **Mantenimiento automático**.
-   - **Recomendaciones para el próximo mes** (por ejemplo, contactar los clientes
-     potenciales pendientes o dar seguimiento a solicitudes abiertas).
-7. **Seguridad: «Protegido» o «Requiere atención».** Cuando dice «Requiere atención»
-   explica el motivo exacto: el sitio **no usa HTTPS**, **no hay respaldos** o el último
-   tiene **más de 7 días**, o el **certificado vence pronto**. La nota indica además si
-   hubo **inicios de sesión bloqueados** (intentos sospechosos). En una prueba local
-   (`http://localhost` o `127.0.0.1`) no se exige HTTPS; en el servidor real sí.
+6. **Dos versiones del mismo mes** (pestañas en la vista previa):
+   - **Para clientes** — es la que se envía por correo y en PDF. Breve, positiva y sin
+     términos técnicos: muestra el **valor del soporte**.
+     - **Resumen** y cifras clave: **Disponibilidad**, **Visitas**, **Clientes
+       potenciales**, **Revisiones automáticas** (cada 15 minutos), **Cambios
+       publicados**, **Amenazas detenidas** (accesos indebidos y spam) y **Solicitudes
+       resueltas**. Las comparaciones con el mes anterior aparecen **solo cuando
+       mejoran**.
+     - **Lo más destacado del mes**, **Visitas y clientes potenciales** (de dónde
+       llegan, clics, mensajes, proyectos ganados y su monto), **Trabajo realizado**
+       (contenido publicado, solicitudes atendidas y resueltas, tiempo de respuesta),
+       **Monitoreo y protección** (revisiones automáticas, avisos al instante,
+       verificación de archivos, conexión segura, accesos y spam bloqueados, velocidad)
+       y **Próximos pasos** para el cliente (por ejemplo, contactar clientes
+       potenciales pendientes).
+     - **No incluye** respaldos, certificados, dominio, configuración de correo,
+       errores, interrupciones detalladas ni pendientes técnicos.
+   - **Detalle técnico** (interno, **nunca se envía**): estado **Protegido / Requiere
+     atención** con el motivo exacto (sin HTTPS, sin respaldos o respaldo de más de 7
+     días, certificado por vencer), interrupciones con fecha, hora y qué falló, errores
+     del mes, respaldos, certificado, dominio, SPF/DKIM/DMARC, calificaciones de Google,
+     nivel de servicio completo (incluidas solicitudes abiertas y calificaciones),
+     mantenimiento automático y **pendientes técnicos**. En una prueba local
+     (`http://localhost` o `127.0.0.1`) no se exige HTTPS; en el servidor real sí.
+7. **Quién lo ve:** la cuenta propietaria lo prepara y lo envía. Las personas con el
+   acceso **Informe mensual (consulta)** —incluido en **Administrador del sitio** y
+   **Soporte técnico**— ven las dos versiones en el menú **Estado del sitio → Informe
+   mensual**, pero no pueden enviarlo ni cambiar destinatarios.
 
 Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a 100):
 
@@ -710,7 +719,8 @@ también puedes comprobarla: `php ~/sensum-cms/bin/console translate:test`.
 - [ ] Monitoreo (cuenta propietaria) → **Disponibilidad (uptime)** e **Incidentes (30 días)** muestran datos después de las primeras revisiones automáticas.
 - [ ] Una persona «Gerencia (consulta)» ve **Estadísticas** sin mensajes del formulario ni el menú Prospectos.
 - [ ] Si alguien da soporte técnico: tipo de acceso «Soporte técnico» → ve todas las solicitudes y el **Panorama de soporte**; no ve Usuarios ni Monitoreo.
-- [ ] **Informe mensual → Vista previa**: «Seguridad» dice «Protegido» (con HTTPS y respaldo reciente); si dice «Requiere atención», la nota explica el motivo.
+- [ ] **Informe mensual → Vista previa**: la pestaña **Para clientes** no menciona respaldos ni temas técnicos; en **Detalle técnico**, «Seguridad» dice «Protegido» (con HTTPS y respaldo reciente) o explica el motivo de «Requiere atención».
+- [ ] Una persona «Administrador del sitio» ve **Estado del sitio → Informe mensual** (las dos pestañas) sin botones de envío.
 - [ ] Usuarios → el **buscador** encuentra a una persona por nombre o correo.
 - [ ] En **celular y tableta**: al desplazarte, la barra de arriba (menú, logo) queda fija; al abrir el menú lateral y desplazarlo, el logo y «Administrador de contenido» se quedan arriba. En **Soporte** se ven todos los filtros sin cortarse.
 - [ ] Usuarios → **Ver como…**: revisa cada persona del equipo; su menú solo muestra lo que su tipo de acceso permite. Termina con **Volver a mi cuenta**.
@@ -735,8 +745,10 @@ también puedes comprobarla: `php ~/sensum-cms/bin/console translate:test`.
 que ya tenían **Prospectos** reciben también **Estadísticas de visitas** (antes iban
 juntas), así nadie pierde lo que veía. **Gestión de solicitudes de soporte** no se le
 da a nadie automáticamente: asígnala tú en Usuarios → «⋮» → **Cambiar tipo de acceso**
-(tipo **Soporte técnico**) si alguien más atiende el soporte. Revisa después con
-**Ver como…** que cada persona vea lo que corresponde.
+(tipo **Soporte técnico**) si alguien más atiende el soporte. Las cuentas que tenían
+**Publicación y actividad** y **Salud del sitio** (Administrador del sitio y Soporte
+técnico) reciben **Informe mensual (consulta)**. Revisa después con **Ver como…** que
+cada persona vea lo que corresponde.
 
 **Alternativa con Git (cPanel → Git Version Control):** cPanel puede clonar el
 repositorio de GitHub y desplegarlo con un archivo `.cpanel.yml`, pero entonces

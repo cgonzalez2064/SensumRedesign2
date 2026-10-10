@@ -7,7 +7,11 @@ use Sensum\Cms\Http\ApiError;
 use Sensum\Cms\Http\Response;
 use Sensum\Cms\SiteReport;
 
-/** The monthly site report for clients — owner account only. */
+/**
+ * The monthly site report. The owner prepares and sends the client version;
+ * accounts with the "report" access see both versions (client and technical
+ * detail) without sending anything.
+ */
 final class SiteReportController extends Controller
 {
     private function report(): SiteReport
@@ -34,11 +38,15 @@ final class SiteReportController extends Controller
         ]);
     }
 
+    /** Both versions of a month: what clients receive and the technical detail for the team. */
     public function preview(): never
     {
+        $this->requirePermission('report');
         $r = $this->report();
         $lang = $this->req->query('lang');
-        Response::ok(['report' => $r->build($r->validPeriod($this->req->query('period')), in_array($lang, ['es', 'en'], true) ? $lang : $r->settings()['lang'])]);
+        $lang = in_array($lang, ['es', 'en'], true) ? $lang : $r->settings()['lang'];
+        $period = $r->validPeriod($this->req->query('period'));
+        Response::ok(['period' => $period, 'periods' => $r->periodOptions($lang), 'report' => $r->build($period, $lang), 'technical' => $r->technical($period, $lang)]);
     }
 
     /** The report as a PDF download (same content as the e-mail; the optional note included). */

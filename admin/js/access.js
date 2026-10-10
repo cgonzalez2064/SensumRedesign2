@@ -6,7 +6,7 @@
 import { h } from './dom.js';
 import { t } from './i18n.js';
 
-export const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'support'];
+export const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'support'];
 
 /** The owner can do everything; everyone else only what their access type allows. */
 export const can = (user, permission) => !!user && (user.owner || (user.permissions || []).includes(permission));

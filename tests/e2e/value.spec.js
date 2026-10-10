@@ -171,7 +171,10 @@ test('monthly report: trends in the preview and the PDF download', async ({ page
   await page.goto('/admin/#/informe');
   await page.getByLabel('Mes').selectOption({ index: 0 });
   await expect(page.locator('.report-preview')).toContainText('Visitas y clientes potenciales');
-  await expect(page.locator('.report-preview .trend').first()).toBeVisible();
+  // Comparisons in both directions are in the team's technical detail.
+  await page.getByRole('button', { name: 'Detalle técnico' }).click();
+  await expect(page.locator('.report-preview.report-technical .trend').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Para clientes' }).click();
   const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Descargar PDF' }).click()]);
   expect(dl.suggestedFilename()).toMatch(/^informe-sitio-sensum-\d{4}-\d{2}\.pdf$/);
   expect(readFileSync(await dl.path()).subarray(0, 8).toString()).toBe('%PDF-1.4');

@@ -211,10 +211,10 @@ test('demo accounts: one per access profile, passwords only in a private local f
   assert.equal(perms['demo.fotos@example.test'], 'photos,documents|active');
   assert.equal(perms['demo.contacto@example.test'], 'contact|active');
   assert.equal(perms['demo.personalizado@example.test'], 'texts,photos|active');
-  assert.equal(perms['demo.completo@example.test'], 'texts,contact,photos,documents,site,leads,stats,monitor|active');
+  assert.equal(perms['demo.completo@example.test'], 'texts,contact,photos,documents,site,leads,stats,monitor,report|active');
   assert.equal(perms['demo.ventas@example.test'], 'leads,stats|active');
   assert.equal(perms['demo.gerencia@example.test'], 'stats,monitor|active');
-  assert.equal(perms['demo.soporte@example.test'], 'site,monitor,support|active');
+  assert.equal(perms['demo.soporte@example.test'], 'site,monitor,report,support|active');
   assert.equal(perms['demo.desactivado@example.test'], 'texts|disabled');
   const c = new Client(s.base);
   assert.equal((await c.login('demo.contacto@example.test', creds['demo.contacto@example.test'])).status, 200);
