@@ -1,8 +1,9 @@
 /** Mi cuenta — profile, preferences and "Cuenta / Seguridad". */
-import { h, clear } from '../dom.js';
+import { h, clear, fill, icon } from '../dom.js';
 import { t, tp, getLang, setLang } from '../i18n.js';
 import { api, setCsrf } from '../api.js';
-import { pageHead, textField, passwordField, passwordGuide, alertBox, toast, errorText, fieldErrorText, setBusy, button } from '../ui.js';
+import { pageHead, textField, passwordField, passwordGuide, alertBox, toast, errorText, fieldErrorText, setBusy, button, cardHead, openDialog } from '../ui.js';
+import { renderSetup, confirmWithCode, recoveryCodes } from '../twofactor.js';
 import { updateUser, themeSwitch } from '../app.js';
 import { getThemePref } from '../theme.js';
 import { permissionList } from '../access.js';
@@ -91,5 +92,51 @@ export function render({ main, session }) {
   const sessions = h('section', { class: 'card stack', 'aria-labelledby': 'ses-t' },
     h('div', null, h('h2', { id: 'ses-t', text: t('account.sessions') }), h('p', { class: 'muted small', text: t('account.sessionsLead') })), h('div', null, revoke));
 
-  main.append(h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, profile, sessions), security));
+  // Two-step sign-in.
+  const tfBody = h('div', null);
+  const twoStep = h('section', { class: 'card', 'aria-labelledby': 'tf-t' },
+    cardHead({ id: 'tf-t', icon: 'shield-lock', title: t('twofa.title'), lead: t('twofa.lead') }), tfBody);
+  const drawTwoStep = (st) => {
+    const badge = h('span', { class: ['badge', st.enabled ? 'badge-ok' : (st.required ? 'badge-warn' : '')] },
+      icon(st.enabled ? 'check-circle-fill' : 'exclamation-triangle-fill'), t(st.enabled ? 'twofa.on' : 'twofa.off'));
+    if (!st.enabled) {
+      const start = button(t('twofa.enable'), { variant: 'primary', icon: 'shield-lock' });
+      start.addEventListener('click', () => {
+        const box = h('div');
+        const dlg = openDialog({ title: t('twofa.setupTitle'), lead: t('twofa.setupLead'), labelledIcon: 'shield-lock', wide: true, body: box });
+        renderSetup(box, { onEnabled: async () => { dlg.close(); toast(t('twofa.enabledToast')); drawTwoStep(await api.get('/account/2fa')); } });
+      });
+      fill(tfBody, h('div', { class: 'stack' }, h('div', null, badge), h('p', { class: 'small', text: t('twofa.why') }), h('div', null, start)));
+      return;
+    }
+    const regen = button(t('twofa.newCodes'), { icon: 'arrow-repeat', small: true });
+    regen.addEventListener('click', async () => {
+      const c = await confirmWithCode({ title: t('twofa.newCodes'), lead: t('twofa.newCodesLead'), confirmLabel: t('twofa.newCodesConfirm') });
+      if (!c) return;
+      try {
+        const r = await api.post('/account/2fa/recovery-codes', { currentPassword: c.password, code: c.code });
+        const box = h('div');
+        const dlg = openDialog({ title: t('twofa.codesTitle'), labelledIcon: 'shield-lock', body: box, dismissible: false });
+        fill(box, recoveryCodes(r.recoveryCodes, () => { dlg.close(); drawTwoStep(r.status); }, t('twofa.continue')));
+      } catch (err) { toast(err.code === 'validation' ? t(err.fields.currentPassword ? 'fieldErrors.current_password_wrong' : 'twofa.wrongCode') : errorText(err), { type: 'bad' }); }
+    });
+    const off = st.required ? null : button(t('twofa.disable'), { icon: 'x-lg', small: true, variant: 'ghost' });
+    if (off) {
+      off.addEventListener('click', async () => {
+        const c = await confirmWithCode({ title: t('twofa.disable'), lead: t('twofa.disableLead'), confirmLabel: t('twofa.disable'), danger: true });
+        if (!c) return;
+        try { const r = await api.post('/account/2fa/disable', { currentPassword: c.password, code: c.code }); toast(t('twofa.disabledToast')); drawTwoStep(r.status); }
+        catch (err) { toast(err.code === 'validation' ? t(err.fields.currentPassword ? 'fieldErrors.current_password_wrong' : 'twofa.wrongCode') : errorText(err), { type: 'bad' }); }
+      });
+    }
+    fill(tfBody, h('div', { class: 'stack' },
+      h('div', { class: 'row' }, badge, st.enabledAt ? h('span', { class: 'tiny muted', text: t('twofa.since', { date: new Date(st.enabledAt * 1000).toLocaleDateString() }) }) : null),
+      h('p', { class: 'small', text: t('twofa.recoveryLeft', { n: st.recoveryRemaining }) }),
+      st.recoveryRemaining <= 3 ? alertBox('warn', null, t('twofa.fewCodes')) : null,
+      st.required ? h('p', { class: 'tiny muted', text: t('twofa.requiredNote') }) : null,
+      h('div', { class: 'row' }, regen, off)));
+  };
+  api.get('/account/2fa').then(drawTwoStep).catch((err) => fill(tfBody, alertBox('bad', null, errorText(err))));
+
+  main.append(h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, profile, sessions), h('div', { class: 'stack-lg' }, security, twoStep)));
 }

@@ -194,14 +194,16 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 
 | Table | Purpose |
 |---|---|
-| `users` | e-mail (unique, lower-case), name, permissions (access type), status (invited/active/disabled), Argon2id/bcrypt hash, language, theme, timestamps |
+| `users` | e-mail (unique, lower-case), name, permissions (access type), status (invited/active/disabled), Argon2id/bcrypt hash, language, theme, timestamps; encrypted TOTP secret (active and pending), enabled date, last used step (`007_two_factor.sql`) |
+| `recovery_codes` | keyed HMAC of each two-step recovery code, used-at |
+| `login_challenges` | SHA-256 of the 5-minute token between the password and the code, attempts |
 | `monitor_runs` | one row per scheduled check (ok / failed checks) — availability figure of the monthly report |
 | `site_reports` | monthly reports sent: month, when, by whom, recipients, language, status, figures |
 | `sessions` | SHA-256 of the session cookie, CSRF token, created/last-seen/expiry, pseudonymized IP, user agent |
 | `user_tokens` | SHA-256 of invitation/reset tokens, purpose, expiry, used-at |
 | `content` | key, language (`es`/`en`/`*`), value, who/when |
 | `media` | slot, position, server-generated file base, extension, size, generated widths, alt ES/EN, sanitized original name, soft-delete date |
-| `settings` | last publish, published file hashes, drift notice |
+| `settings` | last publish, published file hashes, drift notice, e-mail/captcha settings (secrets encrypted), off-server backup settings, two-step policy, last domain check |
 | `support_reports` | reporter, type, title, description, area, page, allow-listed context, screenshot file, delivery status/attempts |
 | `activity_log` | who did what (content changes keep old/new values, max 300 chars each) |
 | `rate_limits` | fixed-window counters (keys are HMAC pseudonyms, never raw IPs/e-mails) |
@@ -215,13 +217,17 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 | `GET /api/health` | public | status per area only (no versions/paths) |
 | `POST /api/telemetry/error` | public, throttled | JS error from the admin (and public site if enabled) |
 | `GET /api/auth/session` | public | current user + CSRF token, or `setupRequired` |
-| `POST /api/auth/login` · `/logout` | public | sign in/out |
+| `POST /api/auth/login` · `/logout` | public | sign in/out; with two-step sign-in the login answers `{twoFactor:true, challenge}` instead of a session |
+| `POST /api/auth/login/2fa` | public, 5 attempts | second step: `challenge` + `code` (6-digit TOTP or recovery code) → session |
 | `POST /api/auth/forgot` · `/reset/verify` · `/reset` | public | password reset |
 | `POST /api/auth/invitation/verify` · `/invitation/accept` | public | invitation |
 | `POST /api/setup` | public, one-time | first admin with `SETUP_TOKEN` |
 | `GET /api/dashboard` | user | dashboard data (admins get activity; the owner also gets diagnostics and errors) |
 | `GET /api/monitor/summary` · `GET /api/monitor/errors?severity=&source=&days=&q=&page=` · `POST /api/monitor/test-alert` | owner | Monitoring page, error log, test alert |
 | `PUT /api/monitor/alerts` · `GET /api/monitor/integrity` · `POST /api/monitor/integrity/accept` | owner | automatic-alert toggles; site-file findings; accept current files (password) |
+| `POST /api/monitor/domain-check` | owner | SPF/DKIM/DMARC/MX and domain-expiry check now |
+| `GET /api/security` · `PUT /api/security/backup` · `POST /api/security/backup/send` · `POST /api/security/backup/download` · `PUT /api/security/policy` | owner | off-server encrypted backup settings (password), send now, download (password); who must use two-step sign-in (password) |
+| `POST /api/users/{id}/2fa-reset` | owner | turn off someone else's two-step sign-in (password; ends their sessions; never your own) |
 | `GET`/`PUT /api/contact-form/services` | contact | "Servicio de interés" options (PUT: `items` [{id?, es, en}], `version`; publishes; 409 `conflict`) |
 | `GET`/`PUT /api/settings/email` · `POST /api/settings/email/test` | owner | e-mail settings (PUT needs `currentPassword`), test e-mails (`target`: `panel` / `contact`) |
 | `GET /assets/contact-handler.php?challenge=1` | public | signed single-use captcha challenge for the contact form |
@@ -230,6 +236,7 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 | `POST /api/content/translate` | user | machine-translate field text ES⇄EN for review (saves nothing; off without `DEEPL_API_KEY`) |
 | `GET /api/media` · `POST /api/media/{slot}/upload` · `PUT /api/media/{slot}/order` · `PUT`/`DELETE /api/media/item/{id}` | user | photos & PDF |
 | `PUT /api/account/profile` · `POST /api/account/password` · `POST /api/account/sessions/revoke-others` | user | own account |
+| `GET /api/account/2fa` · `POST /api/account/2fa/setup` · `/enable` · `/recovery-codes` · `/disable` | user | own two-step sign-in: setup (password → secret + QR), enable (code → recovery codes), new codes and disable (password + code). The only routes open to an account that must still enrol |
 | `GET /api/reports?status=&q=` · `POST /api/reports` · `POST /api/reports/{id}/retry` · `GET /api/reports/badge` | user | tickets (owner: all, filters, search; others: own) |
 | `GET /api/reports/{id}` · `POST /api/reports/{id}/messages` · `GET /api/reports/{id}/screenshot` | user (own) / owner | ticket, conversation (owner: `internal` notes), screenshot |
 | `PUT /api/reports/{id}` · `POST /api/reports/{id}/status` | owner | edit fields/priority; status with optional `message` and `notify` |
@@ -245,6 +252,10 @@ codes into friendly ES/EN text. Unexpected failures return only
 * Authentication: Argon2id (bcrypt fallback), 10+ character passwords with a
   common-password block-list, generic errors, timing-equalized lookups,
   per-account (5/15 min) and per-IP (20/15 min) failure throttling.
+* Two-step sign-in: TOTP (RFC 6238) with encrypted secrets, no code reuse,
+  single-use hashed recovery codes; required for the owner by default
+  (`TWO_FACTOR_POLICY`, changeable in Seguridad); an account that must enrol can
+  only reach the setup routes.
 * Sessions: 256-bit random cookie (`__Host-sensum_admin`, HttpOnly, Secure,
   SameSite=Strict in production), hash-only storage, 60 min idle / 12 h absolute
   expiry, rotation on login and password change, revocation on logout,
@@ -430,6 +441,7 @@ generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`,
 `monitor` (scheduled check + automatic alerts, cron) · `alert:test` ·
 `reports:retry` · `backup` (consistent DB copy, keeps 14) ·
 `integrity:accept` (record the current public files as expected) ·
+`2fa:reset <email>` (turn off an account's two-step sign-in when it is locked out) ·
 `demo-users [--reports]` (local demo accounts per access profile; refused in production)
 
 ## 12. Logs, backups and recovery
@@ -444,7 +456,10 @@ generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`,
 * Automatic safety nets: the last 30 published versions of the pages
   (`storage/backups/published/`), removed photos kept 30 days, every content
   change recorded with its previous value.
-* Restore procedures: `NAMECHEAP_DEPLOYMENT.md` §12–13.
+* Off-server copy: **Seguridad** e-mails an AES-256 encrypted ZIP (database via
+  `VACUUM INTO`, uploads, restore instructions) on a daily/weekly/monthly schedule
+  run by the scheduled check; `offsite_backup` alerts when it fails or is overdue.
+* Restore procedures: `NAMECHEAP_DEPLOYMENT.md` §12–13 and the guide's rollback section.
 
 ## 13. Known limitations
 

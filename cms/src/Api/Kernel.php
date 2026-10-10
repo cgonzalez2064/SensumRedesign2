@@ -26,6 +26,7 @@ final class Kernel
 
         ['GET', '/api/auth/session', AuthController::class, 'session', 'public'],
         ['POST', '/api/auth/login', AuthController::class, 'login', 'public'],
+        ['POST', '/api/auth/login/2fa', AuthController::class, 'loginSecondStep', 'public'],
         ['POST', '/api/auth/logout', AuthController::class, 'logout', 'public'],
         ['POST', '/api/auth/forgot', AuthController::class, 'forgot', 'public'],
         ['POST', '/api/auth/reset/verify', AuthController::class, 'resetVerify', 'public'],
@@ -40,6 +41,7 @@ final class Kernel
         ['POST', '/api/monitor/test-alert', MonitorController::class, 'testAlert', 'owner'],
         ['PUT', '/api/monitor/alerts', MonitorController::class, 'saveRules', 'owner'],
         ['GET', '/api/monitor/integrity', MonitorController::class, 'integrity', 'owner'],
+        ['POST', '/api/monitor/domain-check', MonitorController::class, 'domainCheck', 'owner'],
         ['POST', '/api/monitor/integrity/accept', MonitorController::class, 'acceptIntegrity', 'owner'],
         ['GET', '/api/settings/email', SettingsController::class, 'email', 'owner'],
         ['PUT', '/api/settings/email', SettingsController::class, 'saveEmail', 'owner'],
@@ -64,6 +66,17 @@ final class Kernel
         ['PUT', '/api/account/profile', AccountController::class, 'profile', 'user'],
         ['POST', '/api/account/password', AccountController::class, 'password', 'user'],
         ['POST', '/api/account/sessions/revoke-others', AccountController::class, 'revokeOthers', 'user'],
+        ['GET', '/api/account/2fa', AccountController::class, 'twoFactor', 'user'],
+        ['POST', '/api/account/2fa/setup', AccountController::class, 'twoFactorSetup', 'user'],
+        ['POST', '/api/account/2fa/enable', AccountController::class, 'twoFactorEnable', 'user'],
+        ['POST', '/api/account/2fa/recovery-codes', AccountController::class, 'twoFactorRecovery', 'user'],
+        ['POST', '/api/account/2fa/disable', AccountController::class, 'twoFactorDisable', 'user'],
+        ['GET', '/api/security', SecurityController::class, 'index', 'owner'],
+        ['PUT', '/api/security/backup', SecurityController::class, 'saveBackup', 'owner'],
+        ['POST', '/api/security/backup/send', SecurityController::class, 'sendBackup', 'owner'],
+        ['POST', '/api/security/backup/download', SecurityController::class, 'downloadBackup', 'owner'],
+        ['PUT', '/api/security/policy', SecurityController::class, 'savePolicy', 'owner'],
+        ['POST', '/api/users/{id}/2fa-reset', UsersController::class, 'resetTwoFactor', 'owner'],
 
         ['GET', '/api/reports', ReportsController::class, 'index', 'user'],
         ['POST', '/api/reports', ReportsController::class, 'create', 'user'],
@@ -102,6 +115,10 @@ final class Kernel
             } else {
                 $session = $this->app->auth()->require($req, $guard === 'user' ? null : $guard);
                 $this->uid = (int) $session['uid'];
+                // Covered by the two-step policy but not set up yet: only the set-up endpoints.
+                if (!str_starts_with($req->path, '/api/account/2fa') && $this->app->twoFactor()->mustEnroll($session)) {
+                    throw new ApiError(403, 'two_factor_setup_required');
+                }
             }
             $controller = new $class($this->app, $req, $session);
             $controller->$method(...$params);

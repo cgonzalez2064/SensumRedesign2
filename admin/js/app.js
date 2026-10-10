@@ -5,10 +5,11 @@
 import { h, icon, clear, initials, fill } from './dom.js';
 import { t, setLang, getLang, onLangChange, i18nReady } from './i18n.js';
 import { initTheme, setThemePref, getThemePref } from './theme.js';
-import { api, setCsrf, onSessionExpired } from './api.js';
+import { api, setCsrf, onSessionExpired, onTwoFactorRequired } from './api.js';
 import { toast, openDialog, confirmDialog, dropdown, segmented, passwordField, textField, setBusy, errorText, alertBox, loading, button } from './ui.js';
 import { initTelemetry } from './telemetry.js';
 import { can } from './access.js';
+import { codeField } from './twofactor.js';
 
 // Screens are loaded when first opened (and prefetched when the pointer or
 // focus reaches their menu link), so the panel starts with only the shell.
@@ -25,6 +26,7 @@ const V = {
   monitor: lazy(() => import('./views/monitor.js')),
   siteReport: lazy(() => import('./views/sitereport.js')),
   email: lazy(() => import('./views/email.js')),
+  security: lazy(() => import('./views/security.js')),
   form: lazy(() => import('./views/form.js')),
 };
 const loadReport = lazy(() => import('./report.js'));
@@ -51,6 +53,7 @@ const PRIVATE = [
   { re: /^\/monitoreo$/, mod: V.monitor, fn: 'render', nav: 'monitor', owner: true },
   { re: /^\/informe$/, mod: V.siteReport, fn: 'render', nav: 'siteReport', owner: true },
   { re: /^\/correo$/, mod: V.email, fn: 'render', nav: 'email', owner: true },
+  { re: /^\/seguridad$/, mod: V.security, fn: 'render', nav: 'security', owner: true },
   { re: /^\/reportes$/, mod: V.reports, fn: 'render', nav: 'reports' },
   { re: /^\/reportes\/([1-9][0-9]{0,8})$/, mod: V.reports, fn: 'detail', nav: 'reports' },
   { re: /^\/cuenta$/, mod: V.account, fn: 'render', nav: 'account' },
@@ -113,6 +116,8 @@ function relogin() {
     const emailF = textField({ label: t('auth.email'), value: email, type: 'email', autocomplete: 'username', readOnly: !!email });
     const pwF = passwordField({ label: t('auth.password'), autocomplete: 'current-password' });
     const msg = h('div');
+    const codeF = codeField({ allowRecovery: true, id: 'relogin-code' });
+    let challenge = null;
     let ok = false;
     const form = h('form', { class: 'stack', novalidate: true }, alertBox('info', null, t('auth.sessionExpiredBody')), emailF.wrap, pwF.wrap, msg);
     const dlg = openDialog({
@@ -130,12 +135,28 @@ function relogin() {
       setBusy(btn, true, t('auth.submitting'));
       clear(msg);
       try {
-        const data = await api.post('/auth/login', { email: emailF.input.value, password: pwF.input.value }, { auth: false });
+        let data;
+        if (challenge) {
+          data = await api.post('/auth/login/2fa', { challenge, code: codeF.input.value.trim() }, { auth: false });
+        } else {
+          data = await api.post('/auth/login', { email: emailF.input.value, password: pwF.input.value }, { auth: false });
+          if (data.twoFactor) {
+            // Two-step sign-in: ask for the code in the same dialog.
+            challenge = data.challenge;
+            setBusy(btn, false);
+            pwF.wrap.hidden = true;
+            emailF.wrap.hidden = true;
+            form.insertBefore(codeF.wrap, msg);
+            codeF.input.focus();
+            return;
+          }
+        }
         setSession(data);
         ok = true;
         resolve();
         dlg.close();
       } catch (err) {
+        if (challenge && err.code === 'two_factor_expired') { challenge = null; pwF.wrap.hidden = false; emailF.wrap.hidden = false; codeF.wrap.remove(); }
         setBusy(btn, false);
         msg.appendChild(alertBox('bad', null, errorText(err)));
         pwF.input.select();
@@ -264,7 +285,7 @@ function renderShell(activeNav, force = false) {
       can(user, 'contact') ? navLink('/formulario', 'form', 'card-text', active) : null,
       user.owner ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active),
         navLink('/monitoreo', 'monitor', 'activity', active), navLink('/informe', 'siteReport', 'bar-chart', active),
-        navLink('/correo', 'email', 'envelope', active)] : null,
+        navLink('/correo', 'email', 'envelope', active), navLink('/seguridad', 'security', 'shield-lock', active)] : null,
       h('div', { class: 'nav-section', text: t('nav.groupSupport') }),
       navLink('/reportes', 'reports', 'chat-square-text', active),
       navLink('/ayuda', 'help', 'question-circle', active),
@@ -354,6 +375,21 @@ async function route(force = false) {
     return navigate(state.setupRequired ? '/configurar' : '/ingresar');
   }
 
+  // Covered by the two-step policy but not set up yet: only the set-up screen.
+  if (state.session.user.twoFactorRequired && !state.session.user.twoFactor) {
+    state.shell = null;
+    let mod;
+    try { mod = await V.auth(); } catch (e) { return showLoadFailed(document.getElementById('app'), e); }
+    if (stale()) return;
+    mod.enroll({ app: document.getElementById('app'), onLogout: logout, onDone: async () => {
+      await loadSession();
+      state.path = null;
+      navigate('/');
+      route(true);
+    } });
+    return;
+  }
+
   const priv = PRIVATE.find((r) => r.re.test(path));
   const main = renderShell(priv ? priv.nav : null);
   if (!priv || (priv.owner && !isOwner()) || (priv.perm && !priv.perm.some(userCan))) {
@@ -411,6 +447,8 @@ async function boot() {
   initTelemetry();
   await i18nReady();
   onSessionExpired(relogin);
+  // The policy changed while signed in: refresh the session and show the set-up screen.
+  onTwoFactorRequired(async () => { await loadSession(); state.path = null; route(true); });
   onLangChange(() => { state.path = null; route(true); });
   window.addEventListener('online', () => { if (state.shell) state.shell.offline.hidden = true; });
   window.addEventListener('offline', () => { if (state.shell) state.shell.offline.hidden = false; });

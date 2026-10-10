@@ -20,6 +20,11 @@ Panel address: **https://sensumconstrucciones.com/admin/**
 After several wrong attempts in a row, the panel asks you to wait a few minutes
 (protection against intruders).
 
+**Two-step sign-in.** If your account has it on, after the password the panel asks
+for the **6-digit code** from your authenticator app (Google Authenticator,
+Microsoft Authenticator, 1Password…). Without your phone, tap **Use a recovery
+code** and type one of the codes you saved (each works once).
+
 **Sign out**
 Open the menu with your name (top right) and choose **Sign out**. Always do this
 on a computer that isn't yours.
@@ -156,7 +161,19 @@ In **My account**:
 3. Open the link and choose a new password. The link expires after 60 minutes and
    works only once.
 
-Nobody from the technical team will ever ask for your password, by email or phone.
+**Two-step sign-in (recommended; required for the owner account):**
+1. In **My account → Two-step sign-in** tap **Turn on** and enter your password.
+2. Scan the QR code with your authenticator app (or type the key by hand).
+3. Enter the 6-digit code the app shows.
+4. Keep the **10 recovery codes** somewhere safe (a password manager or printed).
+   You can generate new ones at any time.
+
+If you change phones, turn it off and on again with the new one (asks for your
+password and a code). If you lost it and have no codes, ask technical support to
+reset it.
+
+Nobody from the technical team will ever ask for your password or your codes, by
+email or phone.
 
 ## 7. Reporting a problem or an improvement
 
@@ -291,14 +308,19 @@ In **Administration → E-mail** you decide who sends and who receives e-mail:
 
 **Monitoring → Automatic alerts** lists the notices the system sends on its own
 (critical errors, changes to the site files, suspicious sign-in attempts, sign-ins
-from new devices, HTTPS certificate, backups, disk space, weekly summary, monthly
-security review and the report reminder), when each is sent and when it was last
+from new devices, HTTPS certificate, domain expiry, e-mail setup (SPF/DKIM/DMARC),
+backups, off-server backup, disk space, weekly summary, monthly security review and
+the report reminder), when each is sent and when it was last
 sent. Tick or untick each box to turn it on or off; it is saved at once.
 
 **Site files → Check now** compares the published files with the installed version.
 If you get a change alert and **don't** recognise the changes, don't accept them:
 tell technical support. If you made them, press **Mark as expected** (asks for your
 password).
+
+**E-mail and domain → Check now** confirms that the domain's e-mail is set up
+correctly (SPF, DKIM, DMARC and MX: without them the site's e-mails land in spam or
+can be forged) and shows when the domain expires. It is also checked once a day.
 
 ## 15. For the owner account: support tickets
 
@@ -323,3 +345,19 @@ Under **Support reports** the owner account sees **everyone's** reports as ticke
 The **monthly report** includes a summary of the month's tickets (received,
 resolved, average time, pending) and of the automatic maintenance (checks,
 security scans, backups, certificate, Google, blocked spam, notices).
+
+## 16. For the owner account: Security
+
+In **Administration → Security**:
+
+* **Encrypted off-server backup.** The system e-mails an encrypted ZIP with the
+  database and the photos as often as you choose (daily, weekly or monthly). Use an
+  address that is **not** on this hosting and a backup password of at least 12
+  characters (keep it: without it the file can't be opened). **Send backup now**
+  is for testing and **Download full backup** saves it on your computer. To open
+  it: 7-Zip (Windows) or Keka / The Unarchiver (Mac), with the backup password.
+* **Two-step sign-in.** Choose who must use it (only the owner account, the whole
+  team or nobody) and see who already has it on. If someone lost their phone, press
+  **Reset** next to their name: they set it up again at their next sign-in.
+
+Every change asks for your password and is logged.

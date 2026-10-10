@@ -33,6 +33,7 @@ final class Cli
             'backup' => $this->backup(),
             'integrity:accept' => $this->integrityAccept(),
             'demo-users' => $this->demoUsers($args),
+            '2fa:reset' => $this->twoFactorReset($args[0] ?? ''),
             default => $this->help(),
         };
     }
@@ -44,7 +45,7 @@ final class Cli
 
     private function help(): int
     {
-        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|translate:test|monitor|alert:test|reports:retry|backup|integrity:accept|demo-users [--reports]>');
+        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|translate:test|monitor|alert:test|reports:retry|backup|integrity:accept|demo-users [--reports]|2fa:reset <email>>');
         return 0;
     }
 
@@ -179,6 +180,26 @@ final class Cli
             $this->out("  {$f['type']}: {$f['path']}");
         }
         $this->out('Accepted the current public files as expected (' . $wd->acceptIntegrity() . ' files).');
+        return 0;
+    }
+
+    /**
+     * Turns off two-step sign-in for an account from the server (e.g. the owner
+     * lost the phone and the recovery codes). The person sets it up again at the
+     * next sign-in when the policy requires it.
+     */
+    private function twoFactorReset(string $email): int
+    {
+        $user = $this->app->db()->one('SELECT * FROM users WHERE lower(email) = ?', [strtolower(trim($email))]);
+        if (!$user) {
+            fwrite(STDERR, "No account with that e-mail.\n");
+            return 1;
+        }
+        $this->app->twoFactor()->disable((int) $user['id']);
+        $this->app->auth()->revokeSessions((int) $user['id']);
+        $this->app->activity(null, 'two_factor_reset', (string) $user['id'], ['by' => 'console']);
+        $this->app->watchdog()->twoFactorNotice($user, 'reset');
+        $this->out('Two-step sign-in turned off for ' . $user['email'] . '; their sessions were ended.');
         return 0;
     }
 

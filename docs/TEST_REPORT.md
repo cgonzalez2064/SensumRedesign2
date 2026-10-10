@@ -9,8 +9,8 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 
 | Suite | Location | Size |
 |---|---|---|
-| API integration | `tests/integration/*.test.mjs` | 117 tests in 13 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
-| Browser E2E | `tests/e2e/*.spec.js` | 33 specs × 3 browser profiles (99 runs, 25 skipped by design: phone-only, desktop-only or single-submission tests) |
+| API integration | `tests/integration/*.test.mjs` | 168 tests in 18 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
+| Browser E2E | `tests/e2e/*.spec.js` | 43 specs × 3 browser profiles (129 runs, 37 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
 | Production build | `tests/apache/apache.test.mjs` | 6 checks of the built release under Apache + PHP-FPM |
 
@@ -194,16 +194,27 @@ Full re-run: API **146/146**, browser **86 passed / 31 skipped**.
 
 Full re-run: API **158/158**, browser **87 passed / 33 skipped**.
 
+## Change — protection: two-step sign-in, off-server backups, domain checks, CI
+
+| Suite | Added | Result |
+|---|---|---|
+| API (`17-protection`) | TOTP setup (password, QR as SVG data URI, wrong code refused, recovery codes once); login becomes two steps (no session after the password; wrong code counted, 5 attempts, challenge single use; replayed code refused); recovery code works once and e-mails the person; disabling needs password + code; policy owner/all/none (owner only, password), a required account can only reach the setup routes (403 elsewhere); owner resets someone else's 2FA (sessions ended, e-mail) but never their own (422); `2fa:reset` CLI; off-server backup: owner-only, password ≥ 12 stored encrypted, AES-256 ZIP e-mailed and **opened with the password** (fails without it), download with password, sent by the scheduled check when due, failure alert; domain check: SPF/DKIM/DMARC/MX and RDAP expiry read from local stand-ins, shown in Monitoring and the report; missing/weak records and an expiring domain alert once | 9/9 |
+| Browser (`protection`) | owner forced to enrol at first sign-in (QR, code, recovery codes) and then signs in with a code; Seguridad page saves the backup settings (password confirmation, validation messages) | 2/2 (desktop) |
+| Existing suites | 15 automatic alerts (was 12); Seguridad in every-screen checks (3 devices × 2 themes); self-hosted fonts: no third-party requests on the public site, CSP `font-src 'self'` | passing |
+| Static analysis | PHPStan level 6 now also in CI | 0 errors |
+
+Full re-run: API **168/168**, browser **92 passed / 37 skipped** (skips by design: phone-only, desktop-only or single-submission tests).
+
 ## Other audits
 
 | Audit | Result |
 |---|---|
 | Security Audit 1 & 2 | see `SECURITY_AUDIT.md` (no critical findings; 9 findings fixed and re-verified) |
 | Dependency audit | `composer audit`: no advisories (PHPMailer 6.12.0); `npm audit` (dev tools): 0 |
-| Static analysis | PHPStan level 6, PHP 8.1 target: 0 errors |
+| Static analysis | PHPStan level 6, PHP 8.1 target: 0 errors (also run in GitHub Actions on every push, with `composer audit` and `npm audit`) |
 | Accessibility — admin | axe-core WCAG 2.1 AA on 12 screens + drawer + dialog, light and dark, 3 devices: no serious/critical violations; keyboard navigation, focus management, reduced motion and 44 px targets reviewed |
 | Accessibility — public | identical before/after; pre-existing contrast findings on the approved orange labels reported as an optional recommendation |
-| Performance | Lighthouse before/after: equal (desktop 99, mobile 84–85 locally with network throttling); +7 KB (main.js/css additions), no extra requests; with photos the LCP stays the hero heading (photos lazy, responsive `srcset`). Outliers were traced to slow Google Fonts responses (affects the approved site equally). |
+| Performance | Lighthouse before/after: equal (desktop 99, mobile 84–85 locally with network throttling); +7 KB (main.js/css additions), no extra requests; with photos the LCP stays the hero heading (photos lazy, responsive `srcset`). Outliers were traced to slow Google Fonts responses (affects the approved site equally). Fonts are now self-hosted (no requests to Google; the two Latin files are preloaded). |
 | Visual regression | 22/22 identical to `main` (desktop 1440/1280, tablet 768, phones 390/320, ES and EN, modal, menu, form errors, FAQ, privacy, 404) |
 | Production build | `tools/build-release.sh` → 48 public files + 133 private files (≈ 700 KB zip), no secrets/dev files; verified under Apache |
 

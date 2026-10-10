@@ -49,6 +49,21 @@ final class AuthController extends Controller
             throw new ApiError(401, 'invalid_credentials');
         }
         $result = $this->app->auth()->login($this->req, $email, $password);
+        if (isset($result['challenge'])) {
+            // Password correct; the authenticator code comes next (no session yet).
+            Response::ok(['authenticated' => false, 'twoFactor' => true, 'challenge' => $result['challenge']]);
+        }
+        Response::ok($this->sessionPayload($result['user'], $result['csrf']));
+    }
+
+    /** Second step of the sign-in: the 6-digit code or a recovery code. */
+    public function loginSecondStep(): never
+    {
+        $code = $this->str('code');
+        if ($code === '') {
+            throw ApiError::validation(['code' => 'required']);
+        }
+        $result = $this->app->auth()->loginSecondStep($this->req, $this->str('challenge'), mb_substr($code, 0, 40));
         Response::ok($this->sessionPayload($result['user'], $result['csrf']));
     }
 

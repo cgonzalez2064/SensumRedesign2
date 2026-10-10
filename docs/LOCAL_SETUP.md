@@ -14,8 +14,8 @@ work the same way with their own package manager.
 
 | Tool | Version | Needed for | Install (macOS) |
 |---|---|---|---|
-| PHP | **8.1 or newer** (tested 8.2 and 8.5) with `pdo_sqlite`, `gd` (with WebP), `fileinfo`, `mbstring`, `json`; recommended `exif`, `intl` | the site's PHP and the Content Manager | `brew install php@8.2` (or `brew install php`) |
-| Composer | 2.x | installing PHPMailer | `brew install composer` |
+| PHP | **8.1 or newer** (tested 8.2 and 8.5) with `pdo_sqlite`, `gd` (with WebP), `fileinfo`, `mbstring`, `json`, `zip` (with AES encryption, libzip ≥ 1.2) and `sodium` or `openssl`; recommended `exif`, `intl`, `curl` | the site's PHP and the Content Manager | `brew install php@8.2` (or `brew install php`) |
+| Composer | 2.x | PHPMailer, the QR-code library (two-step sign-in) and PHPStan | `brew install composer` |
 | Mailpit | any recent | local fake inbox for every e-mail | `brew install mailpit` |
 | Git | any | getting the code | included with Xcode tools |
 | Node.js | **20 or newer** (tested 24) | automated tests only — not needed to run the site | `brew install node` |
@@ -26,7 +26,8 @@ Check PHP has what it needs:
 
 ```bash
 php -v
-php -m | grep -E -i "pdo_sqlite|gd|fileinfo|mbstring|exif|intl"
+php -m | grep -E -i "pdo_sqlite|gd|fileinfo|mbstring|exif|intl|zip|sodium|curl"
+php -r 'var_dump(defined("ZipArchive::EM_AES_256"));'   # encrypted backups
 php -r 'var_dump(function_exists("imagewebp"));'
 ```
 
@@ -42,7 +43,9 @@ git switch content-manager
 composer install --working-dir=cms
 ```
 
-`composer install` creates `cms/vendor/` (PHPMailer). It is not committed.
+`composer install` creates `cms/vendor/` (PHPMailer, bacon/bacon-qr-code and, as a
+dev dependency, PHPStan). It is not committed. The release build installs with
+`--no-dev`, so PHPStan never reaches the server.
 
 ## 3. Configure (`cms/.env`)
 
@@ -152,6 +155,26 @@ activity (`SESSION_IDLE_MINUTES`) or 12 hours in total (`SESSION_ABSOLUTE_HOURS`
 if that happens while editing, the panel asks for the password in place and
 keeps your changes.
 
+### Two-step sign-in (authenticator app)
+In production the owner account must use it (`TWO_FACTOR_POLICY=owner`); the
+owner can require it for everyone in **Administración → Seguridad**. Locally it
+is optional unless you set the policy. To try it: **Mi cuenta → Verificación en
+dos pasos → Activar**, scan the QR with any authenticator app, confirm a code,
+and keep the 10 recovery codes. If you lock yourself out:
+
+```bash
+php cms/bin/console 2fa:reset you@example.com
+```
+
+### Off-server backups and domain checks
+**Administración → Seguridad** sends an AES-256 encrypted ZIP (database + photos)
+to an outside e-mail on a schedule — locally it lands in Mailpit; open it with
+`7z x` or Keka using the backup password. **Monitoreo → Correo y dominio**
+checks SPF, DKIM, DMARC, MX and the domain's expiry once a day. A local
+`APP_URL` (127.0.0.1) has no public domain, so the check is skipped unless
+`DNS_STUB_FILE` points to a JSON file of fake records (see
+`tests/integration/17-protection.test.mjs`).
+
 ### Edit content and see it on the site
 Change a text under **Textos del sitio**, press **Guardar cambios**, then reload
 http://127.0.0.1:8080/. Published files are in `cms/storage/dev-public/`. To
@@ -252,7 +275,8 @@ Mailpit must be running for the e-mail tests (`mailpit &`).
 
 | Suite | Command | What it covers |
 |---|---|---|
-| API integration (117 tests) | `npm --prefix tests test` | auth, sessions, CSRF, passwords, invitations, content, automatic translation, uploads, reports, telemetry, monitoring and alerts, access types, monthly report, failure handling. Each file starts its own server with a throwaway database. |
+| Static analysis | `cms/vendor/bin/phpstan analyse -c cms/phpstan.neon` | PHPStan level 6 over the CMS, the API entry point and the contact-form handler — must report 0 errors |
+| API integration | `npm --prefix tests test` | auth, two-step sign-in, sessions, CSRF, passwords, invitations, content, automatic translation, uploads, reports, telemetry, monitoring and alerts, off-server backups, domain/e-mail checks, access types, monthly report, failure handling. Each file starts its own server with a throwaway database. |
 | Browser E2E | `npm --prefix tests run test:e2e` | every admin screen in light/dark on desktop Chrome, tablet and iPhone (WebKit) with accessibility scans; automatic translation; owner-only Monitoring; public site with managed content; content stress test; existing site behavior |
 | Visual regression | see below | the public site against the approved screenshots |
 | Production build on Apache | see section 8 | `.htaccess` behavior of the built release |
@@ -267,6 +291,12 @@ kill %1
 tools/dev-server.sh &                                                    # or any server with default content
 BASE_URL=http://127.0.0.1:8080 npm --prefix tests run test:visual        # compare
 ```
+
+**Continuous integration.** `.github/workflows/tests.yml` runs PHPStan,
+`composer audit`, `npm audit`, the API suite and the browser suite (Chrome) on
+every push and pull request, with a Mailpit service container. Dependabot
+(`.github/dependabot.yml`) opens weekly update PRs for Composer, npm and the
+GitHub Actions used.
 
 Compare against a server with the approved (default) content — e.g. a fresh
 database — or the screenshots will (correctly) show your local edits.

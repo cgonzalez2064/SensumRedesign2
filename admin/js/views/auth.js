@@ -2,8 +2,9 @@
 import { h, icon, clear, fill } from '../dom.js';
 import { t } from '../i18n.js';
 import { api } from '../api.js';
-import { textField, passwordField, passwordGuide, alertBox, errorText, fieldErrorText, setBusy } from '../ui.js';
+import { textField, passwordField, passwordGuide, alertBox, errorText, fieldErrorText, setBusy, toast } from '../ui.js';
 import { themeSwitch, langSwitch } from '../app.js';
+import { codeField, renderSetup } from '../twofactor.js';
 
 /** Common auth layout: centered card + theme/language switches. */
 function layout(app, title, lead, ...content) {
@@ -51,6 +52,7 @@ export function login({ app, onSignedIn }) {
     setBusy(submit, true, t('auth.submitting'));
     try {
       const data = await api.post('/auth/login', { email: email.input.value.trim(), password: pw.input.value }, { auth: false });
+      if (data.twoFactor) { secondStep(app, data.challenge, onSignedIn); return; }
       onSignedIn(data);
     } catch (err) {
       setBusy(submit, false);
@@ -59,6 +61,38 @@ export function login({ app, onSignedIn }) {
       pw.input.focus();
     }
   });
+}
+
+/** Second step of the sign-in: the code from the authenticator app (or a recovery code). */
+function secondStep(app, challenge, onSignedIn) {
+  const code = codeField({ allowRecovery: true, id: 'login-code' });
+  const msg = h('div', { 'aria-live': 'assertive' });
+  const submit = h('button', { class: 'btn btn-primary btn-block', type: 'submit' }, icon('shield-lock'), t('twofa.verify'));
+  const form = h('form', { class: 'stack', novalidate: true }, code.wrap, msg, submit,
+    h('p', { class: 'small' }, h('a', { href: '#/ingresar', onclick: (e) => { e.preventDefault(); login({ app, onSignedIn }); }, text: t('twofa.backToPassword') })));
+  layout(app, t('twofa.loginTitle'), t('twofa.loginLead'), form);
+  setTimeout(() => code.input.focus(), 50);
+  const send = async () => {
+    const v = code.input.value.trim();
+    if (!v) { code.setError(fieldErrorText('required')); code.input.focus(); return; }
+    clear(msg);
+    setBusy(submit, true, t('auth.submitting'));
+    try {
+      onSignedIn(await api.post('/auth/login/2fa', { challenge, code: v }, { auth: false }));
+    } catch (err) {
+      setBusy(submit, false);
+      if (err.code === 'two_factor_expired') {
+        login({ app, onSignedIn });
+        toast(t('twofa.expired'), { type: 'warn' });
+        return;
+      }
+      const left = err.data && typeof err.data.attemptsLeft === 'number' ? err.data.attemptsLeft : null;
+      code.setError(err.code === 'validation' ? (left !== null ? t('twofa.wrongCodeLeft', { n: left }) : t('twofa.wrongCode')) : errorText(err));
+      code.input.select();
+    }
+  };
+  form.addEventListener('submit', (e) => { e.preventDefault(); send(); });
+  code.input.addEventListener('input', () => { if (!code.isRecovery() && /^\d{6}$/.test(code.input.value)) send(); });
 }
 
 export function forgot({ app }) {
@@ -200,4 +234,12 @@ export function setup({ app, setupRequired, onSignedIn }) {
       msg.append(alertBox('bad', null, errorText(err)));
     }
   });
+}
+
+/** Required two-step set-up (the policy covers this account and it isn't set up yet). */
+export function enroll({ app, onDone, onLogout }) {
+  const box = h('div');
+  layout(app, t('twofa.requiredTitle'), t('twofa.requiredLead'), box,
+    h('p', { class: 'small auth-alt' }, h('a', { href: '#/ingresar', onclick: (e) => { e.preventDefault(); onLogout(); }, text: t('topbar.logout') })));
+  renderSetup(box, { onEnabled: onDone, doneLabel: t('twofa.goToPanel') });
 }

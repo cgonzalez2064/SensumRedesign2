@@ -67,4 +67,73 @@ final class AccountController extends Controller
         $this->app->activity($this->uid(), 'sessions_revoked', '', ['count' => $n], $this->req->ip());
         Response::ok(['ended' => $n]);
     }
+
+    // ------------------------------------------------------------------ two-step sign-in
+
+    public function twoFactor(): never
+    {
+        Response::ok($this->app->twoFactor()->status($this->uid()));
+    }
+
+    /** Starts set-up (password confirmed): QR code and key for the authenticator app. */
+    public function twoFactorSetup(): never
+    {
+        $this->confirmPassword('two_factor_setup');
+        if ($this->app->twoFactor()->status($this->uid())['enabled']) {
+            throw new ApiError(409, 'two_factor_already_enabled');
+        }
+        Response::ok($this->app->twoFactor()->beginSetup($this->uid()));
+    }
+
+    /** Confirms set-up with the first code; returns the recovery codes (shown once). */
+    public function twoFactorEnable(): never
+    {
+        if (!$this->app->rateLimiter()->hit('two_factor_enable', (string) $this->uid(), 10, 900)) {
+            throw new ApiError(429, 'too_many_attempts');
+        }
+        $codes = $this->app->twoFactor()->confirmSetup($this->uid(), $this->str('code'));
+        $this->app->activity($this->uid(), 'two_factor_enabled', '', [], $this->req->ip());
+        $user = (new Users($this->app))->find($this->uid());
+        Response::okAndContinue(['recoveryCodes' => $codes, 'status' => $this->app->twoFactor()->status($this->uid())]);
+        $this->app->watchdog()->twoFactorNotice($user, 'enabled');
+        exit;
+    }
+
+    /** New recovery codes (password + a current code). */
+    public function twoFactorRecovery(): never
+    {
+        $this->confirmPassword('two_factor_recovery');
+        $this->requireCode();
+        $codes = $this->app->twoFactor()->newRecoveryCodes($this->uid());
+        $this->app->activity($this->uid(), 'two_factor_recovery_codes', '', [], $this->req->ip());
+        Response::ok(['recoveryCodes' => $codes, 'status' => $this->app->twoFactor()->status($this->uid())]);
+    }
+
+    /** Turns it off (password + a current code), unless the policy requires it. */
+    public function twoFactorDisable(): never
+    {
+        $this->confirmPassword('two_factor_disable');
+        if ($this->app->twoFactor()->status($this->uid())['required']) {
+            throw new ApiError(409, 'two_factor_required_by_policy');
+        }
+        $this->requireCode();
+        $this->app->twoFactor()->disable($this->uid());
+        $this->app->activity($this->uid(), 'two_factor_disabled', '', [], $this->req->ip());
+        $user = (new Users($this->app))->find($this->uid());
+        Response::okAndContinue(['status' => $this->app->twoFactor()->status($this->uid())]);
+        $this->app->watchdog()->twoFactorNotice($user, 'disabled');
+        exit;
+    }
+
+    private function requireCode(): void
+    {
+        $rl = $this->app->rateLimiter();
+        if ($rl->tooMany('two_factor_code', (string) $this->uid(), 5, 900)) {
+            throw new ApiError(429, 'too_many_attempts');
+        }
+        if ($this->app->twoFactor()->verify($this->uid(), mb_substr($this->str('code'), 0, 40)) === null) {
+            $rl->hit('two_factor_code', (string) $this->uid(), PHP_INT_MAX, 900);
+            throw ApiError::validation(['code' => 'two_factor_invalid']);
+        }
+    }
 }

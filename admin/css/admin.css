@@ -736,6 +736,23 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 .status-steps .badge{ justify-self:start; }
 @media (min-width: 1024px){ .ticket-side{ position:sticky; top:calc(var(--topbar-h) + 1rem); } }
 
+/* Two-step sign-in and Security */
+.auth-alt{ margin-top:1.1rem; padding-top:.9rem; border-top:1px solid var(--border); }
+.code-input{ font-family:var(--mono); font-size:1.35rem; letter-spacing:.35em; text-align:center; max-width:280px; }
+.steps-intro{ margin:0; padding-left:0; list-style:none; display:grid; gap:.5rem; font-size:.92rem; color:var(--text-2); }
+.steps-intro strong{ color:var(--accent); }
+.qr-block{ display:flex; flex-wrap:wrap; gap:1rem 1.25rem; align-items:center; }
+.qr-block .stack-sm{ flex:1 1 220px; min-width:0; }
+.qr{ width:200px; height:200px; padding:10px; background:#fff; border:1px solid var(--border); border-radius:var(--r); flex:none; }
+.recovery-codes{ list-style:none; margin:0; padding:.9rem; display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:.5rem .9rem;
+  background:var(--surface-2); border:1px dashed var(--border-strong); border-radius:var(--r); counter-reset: rc; }
+.recovery-codes li{ font-family:var(--mono); font-size:1rem; letter-spacing:.05em; }
+.person-list{ list-style:none; margin:.9rem 0 .4rem; padding:0; }
+.person-row{ display:flex; flex-wrap:wrap; align-items:center; gap:.5rem .75rem; padding:.6rem 0; border-top:1px solid var(--border); }
+.person-row:first-child{ border-top:0; }
+.person-row .avatar{ width:34px; height:34px; font-size:.78rem; }
+.person-row .grow{ flex:1 1 180px; }
+
 /* Sticky save bar for settings pages */
 .save-row{
   position:sticky; bottom:.75rem; z-index:5; display:flex; flex-wrap:wrap; gap:.6rem 1rem; align-items:center; justify-content:space-between;

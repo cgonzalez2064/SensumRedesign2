@@ -19,6 +19,12 @@ Dirección del panel: **https://sensumconstrucciones.com/admin/**
 Si te equivocas varias veces seguidas, el panel te pedirá esperar unos minutos
 (es una protección contra intrusos).
 
+**Verificación en dos pasos.** Si tu cuenta la tiene activa, después de la
+contraseña el panel te pide el **código de 6 dígitos** de tu app de autenticación
+(Google Authenticator, Microsoft Authenticator, 1Password…). Si no tienes el
+celular a mano, toca **Usar un código de recuperación** y escribe uno de los
+códigos que guardaste (cada uno sirve una sola vez).
+
 **Salir**
 Abre el menú con tu nombre (arriba a la derecha) y elige **Cerrar sesión**.
 Hazlo siempre si usaste una computadora que no es tuya.
@@ -165,7 +171,19 @@ En **Mi cuenta**:
 3. Abre el enlace y elige una contraseña nueva. El enlace vence en 60 minutos y
    solo funciona una vez.
 
-Nadie del equipo técnico te pedirá tu contraseña, ni por correo ni por teléfono.
+**Verificación en dos pasos (recomendada; obligatoria para la cuenta propietaria):**
+1. En **Mi cuenta → Verificación en dos pasos** toca **Activar** y escribe tu contraseña.
+2. Escanea el código QR con tu app de autenticación (o copia la clave a mano).
+3. Escribe el código de 6 dígitos que muestra la app.
+4. Guarda los **10 códigos de recuperación** en un lugar seguro (gestor de
+   contraseñas o impresos). Puedes generar otros nuevos cuando quieras.
+
+Si cambias de celular, desactívala y vuelve a activarla con el nuevo (te pide la
+contraseña y un código). Si lo perdiste y no tienes códigos, pide a soporte
+técnico que te la restablezca.
+
+Nadie del equipo técnico te pedirá tu contraseña ni tus códigos, ni por correo ni
+por teléfono.
 
 ## 7. Reportar un problema o una mejora
 
@@ -307,14 +325,19 @@ prueba** para confirmar que todo llega (revisa también la carpeta de spam).
 En **Monitoreo → Alertas automáticas** ves los avisos que el sistema envía solo
 (errores críticos, cambios en los archivos del sitio, intentos de acceso
 sospechosos, inicios de sesión desde dispositivos nuevos, certificado HTTPS,
-respaldos, espacio en disco, resumen semanal, revisión mensual de seguridad y
-recordatorio del informe), cuándo se envía cada uno y cuándo fue el último envío.
+vencimiento del dominio, configuración de correo (SPF/DKIM/DMARC), respaldos,
+respaldo fuera del servidor, espacio en disco, resumen semanal, revisión mensual
+de seguridad y recordatorio del informe), cuándo se envía cada uno y cuándo fue el último envío.
 Marca o desmarca cada casilla para activarlo o desactivarlo; se guarda al instante.
 
 **Archivos del sitio → Revisar ahora** compara los archivos publicados con la
 versión instalada. Si recibes una alerta de cambios y **no** los reconoces, no los
 aceptes: avisa a soporte técnico. Si los hiciste tú, pulsa **Marcar como esperados**
 (te pide tu contraseña).
+
+**Correo y dominio → Revisar ahora** comprueba que el correo del dominio esté bien
+configurado (SPF, DKIM, DMARC y MX: sin ellos los correos del sitio llegan a spam o
+pueden falsificarse) y muestra cuándo vence el dominio. Se revisa solo una vez al día.
 
 ## 15. Para la cuenta propietaria: tickets de soporte
 
@@ -341,3 +364,21 @@ El **informe mensual** incluye un resumen de los tickets del mes (recibidos,
 resueltos, tiempo promedio, pendientes) y de las tareas automáticas de
 mantenimiento (revisiones, análisis de seguridad, respaldos, certificado, Google,
 spam bloqueado, avisos).
+
+## 16. Para la cuenta propietaria: Seguridad
+
+En **Administración → Seguridad**:
+
+* **Respaldo cifrado fuera del servidor.** El sistema envía por correo, con la
+  frecuencia que elijas (diaria, semanal o mensual), un ZIP cifrado con la base de
+  datos y las fotos. Usa un correo que **no** esté en este hosting y una contraseña
+  de respaldos de al menos 12 caracteres (guárdala: sin ella el archivo no se
+  abre). **Enviar respaldo ahora** sirve para probarlo y **Descargar respaldo
+  completo** para guardarlo en tu computadora. Para abrirlo: 7-Zip (Windows) o
+  Keka / The Unarchiver (Mac), con la contraseña de respaldos.
+* **Verificación en dos pasos.** Elige a quién se le exige (solo a la cuenta
+  propietaria, a todo el equipo o a nadie) y mira quién ya la tiene activa. Si
+  alguien perdió su celular, pulsa **Restablecer** junto a su nombre: la vuelve a
+  configurar la próxima vez que entre.
+
+Todos los cambios piden tu contraseña y quedan registrados.

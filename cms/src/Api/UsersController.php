@@ -131,4 +131,24 @@ final class UsersController extends Controller
         $this->app->activity($this->uid(), 'user_deleted', (string) $id, ['email' => $this->app->pseudonym((string) $user['email']), 'status' => $user['status']], $this->req->ip());
         Response::ok();
     }
+
+    /** Owner: turns off someone's two-step sign-in (lost phone). They set it up again at next sign-in if required. */
+    public function resetTwoFactor(int $id): never
+    {
+        // Your own second step is turned off in "Mi cuenta", which also asks for a code.
+        if ($id === $this->uid()) {
+            throw ApiError::validation(['user' => 'two_factor_self']);
+        }
+        $this->confirmPassword('two_factor_reset');
+        $user = (new Users($this->app))->find($id);
+        if (!$user) {
+            throw new ApiError(404, 'not_found');
+        }
+        $this->app->twoFactor()->disable($id);
+        $this->app->auth()->revokeSessions($id);
+        $this->app->activity($this->uid(), 'two_factor_reset', (string) $id, [], $this->req->ip());
+        Response::okAndContinue(['twoFactor' => $this->app->twoFactor()->overview()]);
+        $this->app->watchdog()->twoFactorNotice($user, 'reset');
+        exit;
+    }
 }

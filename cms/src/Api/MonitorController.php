@@ -47,6 +47,16 @@ final class MonitorController extends Controller
         ]));
     }
 
+    /** Checks SPF/DKIM/DMARC/MX and the domain's expiry now (owner, a few times per hour). */
+    public function domainCheck(): never
+    {
+        if (!$this->app->rateLimiter()->hit('domain_check', (string) $this->uid(), 6, 3600)) {
+            throw new ApiError(429, 'too_many_attempts');
+        }
+        $r = $this->app->domainHealth()->check();
+        Response::ok(['domain' => $r]);
+    }
+
     /** Current findings of the file-integrity check (same as the scheduled check). */
     public function integrity(): never
     {

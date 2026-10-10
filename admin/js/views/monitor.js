@@ -9,7 +9,7 @@ const SEVERITY_ICON = { critical: 'x-circle-fill', error: 'exclamation-triangle-
 const ALERT_BADGE = { sent: 'badge-ok', failed: 'badge-bad', suppressed: 'badge', off: 'badge' };
 
 /** Automatic alerts, in the order shown, with how often each one can arrive. */
-const RULES = ['critical_errors', 'integrity', 'login_attack', 'new_device', 'certificate', 'backup', 'scheduler', 'disk_space', 'error_spike', 'weekly_digest', 'monthly_review', 'report_reminder'];
+const RULES = ['critical_errors', 'integrity', 'login_attack', 'new_device', 'certificate', 'domain_expiry', 'email_dns', 'backup', 'offsite_backup', 'scheduler', 'disk_space', 'error_spike', 'weekly_digest', 'monthly_review', 'report_reminder'];
 
 /** Owner panel: turn each automatic alert on or off (saved at once). */
 function rulesCard(rules) {
@@ -45,6 +45,31 @@ function rulesCard(rules) {
     cardHead({ id: 'rules-title', icon: 'bell', title: t('monitor.rules.title'), lead: t('monitor.rules.lead') }),
     list,
     h('p', { class: 'tiny muted' }, icon('shield-lock'), ' ', t('monitor.rules.always')));
+}
+
+/** Owner panel: SPF/DKIM/DMARC/MX and the domain's expiry. */
+function domainCard(initial) {
+  const out = h('div', { 'aria-live': 'polite' });
+  const show = (d) => {
+    if (!d) { fill(out, h('p', { class: 'small muted', text: t('monitor.domain.notChecked') })); return; }
+    const row = (key, ok, detail) => h('li', null, h('span', { class: ok ? 'ok-text' : 'warn-text' }, icon(ok ? 'check-circle-fill' : 'exclamation-triangle-fill')),
+      h('div', { class: 'grow' }, h('div', { text: t('monitor.domain.' + key) }), h('div', { class: 'tiny muted break', text: detail })));
+    const issue = (k) => (d[k].ok ? t('monitor.domain.ok.' + k) : t('monitor.domain.issue.' + k + '.' + (d[k].issue || 'missing')));
+    const days = d.expiry && d.expiry.validTo ? Math.floor((d.expiry.validTo - Date.now() / 1000) / 86400) : null;
+    fill(out, h('ul', { class: 'status-list' },
+      row('spf', d.spf.ok, issue('spf')), row('dkim', d.dkim.ok, issue('dkim')), row('dmarc', d.dmarc.ok, issue('dmarc')), row('mx', d.mx.ok, d.mx.ok ? d.mx.records.join(', ') : issue('mx')),
+      row('expiry', days === null || days > 30, days === null ? t('monitor.domain.expiryUnknown') : t('monitor.domain.expiryValue', { date: fmtDate(d.expiry.validTo, false), days }) + (d.expiry.registrar ? ' · ' + d.expiry.registrar : ''))),
+    h('p', { class: 'tiny muted', text: t('monitor.domain.checked', { domain: d.domain, when: fmtRelative(d.checkedAt) }) }));
+  };
+  const btn = button(t('monitor.domain.check'), { icon: 'arrow-repeat', small: true });
+  btn.addEventListener('click', async () => {
+    setBusy(btn, true, t('monitor.integrity.checking'));
+    try { const r = await api.post('/monitor/domain-check', {}); show(r.domain); if (!r.domain) toast(t('monitor.domain.noDomain'), { type: 'info' }); } catch (err) { toast(errorText(err), { type: 'bad' }); }
+    setBusy(btn, false);
+  });
+  show(initial);
+  return h('section', { class: 'card', 'aria-labelledby': 'dom-title' },
+    cardHead({ id: 'dom-title', icon: 'envelope', title: t('monitor.domain.title'), lead: t('monitor.domain.lead') }), out, h('div', null, btn));
 }
 
 /** Owner panel: files of the public site compared with the published version. */
@@ -253,7 +278,7 @@ export async function render({ main, session }) {
       h('div', { class: 'code-line' }, h('code', { class: 'break', text: cron }), copyBtn),
       h('p', { class: 'tiny muted', text: t('monitor.setup.cronHint') }));
 
-    fill(body, tiles, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, logCard, rulesCard(data.rules), activity), h('div', { class: 'stack-lg' }, checks, alerts, integrityCard(), top, system, setup)));
+    fill(body, tiles, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, logCard, rulesCard(data.rules), activity), h('div', { class: 'stack-lg' }, checks, alerts, domainCard(data.domain), integrityCard(), top, system, setup)));
     loadLog();
   };
   refresh.addEventListener('click', () => { fill(body, loading()); load(); });

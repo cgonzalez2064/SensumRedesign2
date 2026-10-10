@@ -99,6 +99,7 @@ final class Monitor
                 'lastBackupAt' => $lastBackup ?: null,
                 'lastCheckAt' => ((int) $this->app->settings()->get('monitor_last_run', '0')) ?: null,
             ],
+            'domain' => $this->app->domainHealth()->latest() ?: null,
             'alerts' => [
                 'enabled' => $alerts->enabled(),
                 'recipient' => $alerts->recipient(),
@@ -209,6 +210,17 @@ final class Monitor
         $until = $report->refreshCertificate();
         $out[] = 'HTTPS certificate: ' . ($until ? 'valid until ' . date('Y-m-d', $until) : 'not checked (needs a public https APP_URL)');
         $out[] = 'Google PageSpeed: ' . $this->app->pageSpeed()->refreshIfStale();
+        try {
+            $out[] = 'Off-site backup: ' . $this->app->offsiteBackup()->runIfDue();
+        } catch (\Throwable $e) {
+            $out[] = 'Off-site backup: failed';
+        }
+        try {
+            $out[] = 'Domain and e-mail DNS: ' . $this->app->domainHealth()->refreshIfStale();
+        } catch (\Throwable $e) {
+            $this->app->logger()->warning('domain_check_failed', ['type' => get_class($e)]);
+            $out[] = 'Domain and e-mail DNS: failed';
+        }
         $out[] = 'Monthly report reminder: ' . ($report->maybeRemind() ? 'sent to the owner' : 'not needed');
         $this->app->settings()->set('monitor_last_run', (string) time());
         foreach ($this->app->watchdog()->run() as $line) {

@@ -252,37 +252,13 @@ final class MailSettings
 
     // ------------------------------------------------------------------ secret at rest
 
-    private function key(): string
-    {
-        return hash('sha256', 'sensum-mail-settings|' . $this->app->key(), true);
-    }
-
     private function encrypt(string $plain): string
     {
-        if (function_exists('sodium_crypto_secretbox')) {
-            $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-            return 's1:' . base64_encode($nonce . sodium_crypto_secretbox($plain, $nonce, $this->key()));
-        }
-        $iv = random_bytes(12);
-        $tag = '';
-        $cipher = (string) openssl_encrypt($plain, 'aes-256-gcm', $this->key(), OPENSSL_RAW_DATA, $iv, $tag);
-        return 'o1:' . base64_encode($iv . $tag . $cipher);
+        return $this->app->secrets()->encrypt($plain, 'mail-settings');
     }
 
     private function decrypt(string $stored): ?string
     {
-        $raw = base64_decode(substr($stored, 3), true);
-        if ($raw === false) {
-            return null;
-        }
-        if (str_starts_with($stored, 's1:') && function_exists('sodium_crypto_secretbox_open')) {
-            $plain = sodium_crypto_secretbox_open(substr($raw, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES), substr($raw, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES), $this->key());
-            return $plain === false ? null : $plain;
-        }
-        if (str_starts_with($stored, 'o1:')) {
-            $plain = openssl_decrypt(substr($raw, 28), 'aes-256-gcm', $this->key(), OPENSSL_RAW_DATA, substr($raw, 0, 12), substr($raw, 12, 16));
-            return $plain === false ? null : $plain;
-        }
-        return null;
+        return $this->app->secrets()->decrypt($stored, 'mail-settings');
     }
 }

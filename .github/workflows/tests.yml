@@ -1,0 +1,79 @@
+# Runs every test on each push and pull request: static analysis, dependency
+# audit, API integration tests and browser tests (Chrome + iPhone WebKit).
+name: Tests
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      # Captures every e-mail the tests send (SMTP 1025, API 8025).
+      mailpit:
+        image: axllent/mailpit:latest
+        ports:
+          - 1025:1025
+          - 8025:8025
+    env:
+      TZ: America/Guatemala
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_sqlite, sqlite3, gd, intl, mbstring, fileinfo, exif, zip, sodium, curl, iconv
+          ini-values: memory_limit=1G
+          coverage: none
+          tools: composer:v2
+
+      - name: SQLite command-line tool (used by the tests)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends sqlite3
+
+      - name: PHP dependencies
+        run: composer install --working-dir=cms --no-interaction --prefer-dist
+
+      - name: Static analysis (PHPStan, level 6)
+        run: cms/vendor/bin/phpstan analyse -c cms/phpstan.neon --no-progress --memory-limit=1G
+
+      - name: Dependency audit (Composer)
+        run: composer audit --working-dir=cms
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tests/package-lock.json
+
+      - name: Test tooling
+        run: |
+          npm --prefix tests ci
+          npx --prefix tests playwright install --with-deps webkit
+
+      - name: Dependency audit (npm, dev tools)
+        run: npm --prefix tests audit --audit-level=high
+
+      - name: API tests
+        run: npm --prefix tests test
+
+      - name: Browser tests (Chrome desktop and tablet, iPhone WebKit)
+        run: npm --prefix tests run test:e2e
+
+      - name: Keep screenshots of failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-artifacts
+          path: tests/e2e/.artifacts
+          retention-days: 7

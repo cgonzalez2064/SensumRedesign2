@@ -15,7 +15,7 @@ const PAGES = [
   ['dashboard', '#/'], ['texts', '#/textos'], ['hero', '#/textos/hero'], ['faq', '#/textos/faq'], ['details', '#/contacto'],
   ['photos-about', '#/fotos/nosotros'], ['photos-projects', '#/fotos/proyectos'], ['documents', '#/fotos/documentos'],
   ['users', '#/usuarios'], ['reports', '#/reportes'], ['account', '#/cuenta'], ['help', '#/ayuda'], ['monitor', '#/monitoreo'], ['site-report', '#/informe'],
-  ['email', '#/correo'], ['form', '#/formulario'], ['ticket', '#/reportes/1'],
+  ['email', '#/correo'], ['form', '#/formulario'], ['ticket', '#/reportes/1'], ['security', '#/seguridad'],
 ];
 
 /** Collects console errors, CSP violations, page errors and failed requests. */

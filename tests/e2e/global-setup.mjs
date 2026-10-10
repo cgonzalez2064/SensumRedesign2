@@ -7,6 +7,8 @@ export const EDITOR = { name: 'Elena Editora', email: 'elena.editora@example.tes
 export const OTHER_ADMIN = { name: 'Omar Administrador', email: 'omar.admin@example.test', password: 'Clave-Omar-2026' };
 // An account that may only change the website text.
 export const TEXTS_ONLY = { name: 'Tere Textos', email: 'tere.textos@example.test', password: 'Clave-Tere-2026' };
+// An account that sets up two-step sign-in in the browser tests.
+export const TWO_STEP = { name: 'Tomás Dos Pasos', email: 'tomas.2fa@example.test', password: 'Clave-Tomas-2FA-2026' };
 
 export default async function globalSetup() {
   const server = await startServer({ port: PORT });
@@ -14,6 +16,8 @@ export default async function globalSetup() {
   createAdmin(server, EDITOR);
   createAdmin(server, OTHER_ADMIN);
   createAdmin(server, TEXTS_ONLY);
+  createAdmin(server, TWO_STEP);
+  server.sql(`UPDATE users SET role='editor', permissions='texts' WHERE email='${TWO_STEP.email}'`);
   server.sql(`UPDATE users SET role='editor', permissions='texts' WHERE email='${TEXTS_ONLY.email}'`);
   server.sql(`UPDATE users SET role='editor' WHERE email='${EDITOR.email}'`);
   // A few error-log entries so Monitoring shows real content (one of each severity).

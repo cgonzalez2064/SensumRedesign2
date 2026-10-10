@@ -75,7 +75,7 @@ test('Monitoring lists the automatic alerts and the file check', async ({ page }
   await page.goto('/admin/#/monitoreo');
   const rules = page.locator('section[aria-labelledby="rules-title"]');
   await expect(rules.getByRole('heading', { name: 'Alertas automáticas' })).toBeVisible();
-  await expect(rules.getByRole('switch')).toHaveCount(12);
+  await expect(rules.getByRole('switch')).toHaveCount(15);
   const weekly = rules.getByRole('switch', { name: 'Resumen técnico semanal' });
   await expect(weekly).toBeChecked();
   await weekly.uncheck();

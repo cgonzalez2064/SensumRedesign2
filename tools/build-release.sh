@@ -39,6 +39,7 @@ mkdir -p "$OUT/public_html/assets/uploads"   # .htaccess inside comes from git
 # ---- sensum-cms: private application (outside the web root) ----
 git archive HEAD cms | tar -x -C "$OUT" && mv "$OUT/cms/"* "$OUT/cms/".htaccess "$OUT/sensum-cms/" && rmdir "$OUT/cms"
 rm -rf "$OUT/sensum-cms/dev"                       # local development router
+rm -f "$OUT/sensum-cms/phpstan.neon"                # static-analysis config (dev only)
 rm -rf "$OUT/sensum-cms/storage" && mkdir -p "$OUT/sensum-cms/storage"
 cp cms/storage/.htaccess "$OUT/sensum-cms/storage/.htaccess"
 (cd "$OUT/sensum-cms" && composer install --no-dev --optimize-autoloader --no-interaction --quiet)

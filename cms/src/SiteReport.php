@@ -307,6 +307,13 @@ final class SiteReport
                 ? self::fill($s['sr.security.httpsUntil'], ['date' => $this->date($f['certificateUntil'], $lang)])
                 : $s['sr.security.https'];
         }
+        $dh = $this->app->domainHealth()->latest();
+        if (!empty($dh['spf']['ok']) && !empty($dh['dkim']['ok']) && !empty($dh['dmarc']['ok'])) {
+            $security[] = $s['sr.security.emailAuth'];
+        }
+        if (!empty($dh['expiry']['validTo']) && (int) $dh['expiry']['validTo'] > time()) {
+            $security[] = self::fill($s['sr.security.domainUntil'], ['domain' => (string) $dh['domain'], 'date' => $this->date((int) $dh['expiry']['validTo'], $lang)]);
+        }
         $security[] = $f['blocked'] > 0 ? self::plural($s['sr.security.blocked'], $f['blocked']) : $s['sr.security.noThreats'];
         if ($f['lastBackup']) {
             $security[] = self::fill($s['sr.security.backup'], ['date' => $this->date($f['lastBackup'], $lang)]);
@@ -339,8 +346,10 @@ final class SiteReport
             $f['checks'] > 0 ? self::plural($s['sr.auto.checks'], $f['checks'], ['count' => self::number($f['checks'], $lang)]) : null,
             $m['integrity'] > 0 ? self::plural($s['sr.auto.integrity'], $m['integrity'], ['count' => self::number($m['integrity'], $lang)]) : null,
             $m['backups'] > 0 ? self::plural($s['sr.auto.backups'], $m['backups']) : null,
+            $m['offsite'] > 0 ? self::plural($s['sr.auto.offsite'], $m['offsite']) : null,
             $m['certificate'] > 0 ? self::plural($s['sr.auto.certificate'], $m['certificate']) : null,
             $m['pagespeed'] > 0 ? self::plural($s['sr.auto.pagespeed'], $m['pagespeed']) : null,
+            $m['dns'] > 0 ? self::plural($s['sr.auto.dns'], $m['dns']) : null,
             $f['contact']['blocked'] > 0 ? self::plural($s['sr.auto.spam'], $f['contact']['blocked']) : null,
             $m['alerts'] > 0 ? self::plural($s['sr.auto.alerts'], $m['alerts']) : null,
         ]));

@@ -178,7 +178,7 @@ Re-run on commit `c8e709c` (and again for the final release):
 
 | Risk | Rating | Notes / mitigation |
 |---|---|---|
-| Single-factor authentication | Medium | Strong passwords + throttling. **Recommended next:** TOTP 2FA for admins. |
+| Second factor optional for editors | Low | Two-step sign-in (TOTP) is mandatory for the owner by default; the owner can require it for everyone (Seguridad). |
 | Account lockout as nuisance (5 wrong passwords → 15 min) | Low | Reset by e-mail still works; trade-off accepted against brute force. |
 | Throttling uses `REMOTE_ADDR` | Low | Correct on Namecheap shared hosting. If a proxy/CDN is placed in front, trust its client-IP header first. |
 | Compromised editor account can deface content or host a PDF | Low–Medium | Limited to escaped text, re-encoded images and real PDFs; everything is logged with old values and backed up; disable the account to stop it. |
@@ -197,13 +197,16 @@ Re-run on commit `c8e709c` (and again for the final release):
 5. Use a dedicated SMTP mailbox (e.g. `notificaciones@sensumconstrucciones.com`) with a
    unique password; publish SPF, DKIM and DMARC (cPanel → Email Deliverability).
 6. PHP 8.2+ in cPanel with `pdo_sqlite`, `gd`, `fileinfo`, `mbstring`, `exif`,
-   `intl`; `memory_limit` 256M, `upload_max_filesize` 16M, `post_max_size` 20M,
+   `intl`, `curl`, `zip`, `sodium`; `memory_limit` 256M, `upload_max_filesize` 16M, `post_max_size` 20M,
    `display_errors` Off.
 7. Keep at least two administrators (one from IT) and remove accounts that are
    no longer needed.
 8. Set up the external uptime/SSL monitor; review the dashboard's errors and
    activity monthly; keep PHP and PHPMailer updated (`composer audit`).
-9. Back up the database and uploads as described in `NAMECHEAP_DEPLOYMENT.md`.
+9. Back up the database and uploads as described in `NAMECHEAP_DEPLOYMENT.md`, and
+   turn on the encrypted off-server backup (Seguridad) to a mailbox outside the hosting.
+11. Activate two-step sign-in on the owner account at the first sign-in (forced)
+    and store the recovery codes in a password manager.
 10. After deployment, verify headers (command in `NAMECHEAP_DEPLOYMENT.md` §10).
 
 ## 7. Change review — automatic translation (DeepL), added after Audit 2
@@ -294,3 +297,22 @@ with write access to `sensum-cms/` could also alter the manifest — the check i
 meant to catch web-root tampering (the usual shared-hosting compromise), not a full
 account takeover.
 
+## 12. Change review — two-step sign-in, off-server backups, domain checks, CI
+
+| Area | Design | Verified by |
+|---|---|---|
+| Two-step sign-in (TOTP) | RFC 6238 (SHA-1, 6 digits, 30 s, ±1 step for clock drift). 160-bit secret from `random_bytes`, stored encrypted (`Secrets`, purpose-separated key); a code is accepted once (last used step stored — no replay). Setup needs the password and a valid code before it is switched on; turning it off or regenerating codes needs the password **and** a code. | `17-protection` |
+| Login flow | The password step never creates a session for 2FA accounts: it returns a random 256-bit challenge (only its SHA-256 is stored), valid 5 minutes, max 5 code attempts, single use. The password-step throttling and lockout still apply; failed codes are logged. | `17-protection`, `protection.spec` |
+| Recovery codes | 10 random codes, shown once, stored as keyed HMAC-SHA256, each single use; using one notifies the account holder by e-mail. | `17-protection` |
+| Enforcement | Policy `owner` (default) / `all` / `none`, changed only by the owner with the password. A required account without 2FA gets a session that can only reach the setup routes (`403 two_factor_setup_required` everywhere else) until it enrols. The owner can reset another person's 2FA (password re-check, logged, e-mail notice); the owner's own reset is CLI-only (`2fa:reset`). | `17-protection`, `protection.spec` |
+| QR code | Rendered on the server as an SVG data URI (bacon/bacon-qr-code) — the secret never goes to a third-party QR service; `img-src data:` was already allowed. | `protection.spec` |
+| Off-server backup | ZIP encrypted with AES-256 (`ZipArchive::EM_AES_256`) using an owner-chosen password (≥ 12 characters, stored encrypted, never e-mailed or returned to the browser). Contains a consistent SQLite copy (`VACUUM INTO`), uploads (optional, skipped above the size limit with a notice) and restore instructions; no `.env`, keys or logs. Sent to an owner-chosen address on a schedule; download needs the password again. Failures and overdue backups raise an alert. | `17-protection` (decrypts the ZIP with the password and fails without it) |
+| Domain and e-mail checks | Read-only public lookups: DNS (`dns_get_record`) and RDAP over HTTPS (redirects limited to HTTPS, timeouts, 500 KB cap). Test overrides (`DNS_STUB_FILE`, `RDAP_URL`) ignored in production. Alerts for missing/permissive SPF, missing DKIM, DMARC absent or `p=none`, no MX, and expiry within 60/30/14/7/1 days. | `17-protection` |
+| Fonts | Self-hosted WOFF2; CSP narrowed to `style-src 'self'; font-src 'self'` — no request to Google from visitors' browsers. | `00-static`, `site-functional`, `apache` |
+| Supply chain | PHPStan level 6 (0 errors), `composer audit` and `npm audit` in CI on every push; Dependabot weekly for Composer, npm and Actions. PHPStan is a dev dependency (not in the release). | CI workflow |
+
+Accepted limitations: TOTP protects against stolen passwords, not against a
+compromised device or a real-time phishing proxy (WebAuthn would; not supported by
+the hosting's PHP stack without extra libraries). E-mail is the delivery channel for
+the off-server backup, so very large photo libraries exceed mailbox limits — the
+backup then omits photos and says so, and the full download remains available.

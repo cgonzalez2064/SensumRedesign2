@@ -206,6 +206,30 @@ final class App
         return new ContactForm($this);
     }
 
+    /** Two-step sign-in (TOTP) and its policy. */
+    public function twoFactor(): TwoFactor
+    {
+        return new TwoFactor($this);
+    }
+
+    /** Encryption of secrets stored in the database. */
+    public function secrets(): Secrets
+    {
+        return new Secrets($this);
+    }
+
+    /** Encrypted copies of the site sent or downloaded off the server. */
+    public function offsiteBackup(): OffsiteBackup
+    {
+        return new OffsiteBackup($this);
+    }
+
+    /** Daily SPF/DKIM/DMARC/MX and domain-expiry check. */
+    public function domainHealth(): DomainHealth
+    {
+        return new DomainHealth($this);
+    }
+
     /** Monthly counts of automatic maintenance (for the client report). */
     public function maintenanceLog(): MaintenanceLog
     {

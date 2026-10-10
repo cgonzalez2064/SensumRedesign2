@@ -96,7 +96,7 @@ final class Auth
         }
         $db = $this->app->db();
         $row = $db->one(
-            'SELECT s.*, u.id AS uid, u.email, u.name, u.role, u.status, u.lang, u.theme, u.last_login_at, u.permissions
+            'SELECT s.*, u.id AS uid, u.email, u.name, u.role, u.status, u.lang, u.theme, u.last_login_at, u.permissions, u.totp_enabled_at
                FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id_hash = ?',
             [hash('sha256', $raw)]
         );
@@ -157,7 +157,7 @@ final class Auth
     // Login / logout
     // ------------------------------------------------------------------
 
-    /** @return array{user:array, csrf:string} */
+    /** @return array{user:array, csrf:string}|array{challenge:string} the session, or a challenge for the second step */
     public function login(Request $req, string $email, string $password): array
     {
         $email = mb_strtolower(trim($email), 'UTF-8');
@@ -183,13 +183,47 @@ final class Auth
             throw new ApiError(401, 'invalid_credentials');
         }
 
-        $rl->clear('login_email', $email);
         if (Passwords::needsRehash((string) $user['password_hash'])) {
             $this->app->db()->run('UPDATE users SET password_hash = ? WHERE id = ?', [Passwords::hash($password), $user['id']]);
         }
+        // Two-step sign-in: the password was right; the session starts after the code.
+        if ($this->app->twoFactor()->enabled($user)) {
+            return ['challenge' => $this->app->twoFactor()->createChallenge((int) $user['id'])];
+        }
+        $rl->clear('login_email', $email);
+        return $this->finishLogin($req, $user, []);
+    }
+
+    /**
+     * Second step: the code from the authenticator app (or a recovery code).
+     * @return array{user:array, csrf:string}
+     */
+    public function loginSecondStep(Request $req, string $challenge, string $code): array
+    {
+        $ip = $req->ip();
+        $rl = $this->app->rateLimiter();
+        if (!$rl->hit('login_2fa_ip', $ip, 30, self::LOGIN_IP_WINDOW)) {
+            throw new ApiError(429, 'too_many_attempts');
+        }
+        $r = $this->app->twoFactor()->completeChallenge($challenge, $code);
+        $user = $this->app->db()->one('SELECT * FROM users WHERE id = ?', [$r['userId']]);
+        if (!$user || $user['status'] !== 'active') {
+            throw new ApiError(401, 'invalid_credentials');
+        }
+        $rl->clear('login_email', (string) $user['email']);
+        if ($r['method'] === 'recovery') {
+            $this->app->watchdog()->twoFactorNotice($user, 'recovery_used');
+        }
+        return $this->finishLogin($req, $user, ['twoFactor' => $r['method']]);
+    }
+
+    /** @return array{user:array, csrf:string} */
+    private function finishLogin(Request $req, array $user, array $details): array
+    {
+        $ip = $req->ip();
         $this->app->db()->run('UPDATE users SET last_login_at = ? WHERE id = ?', [time(), $user['id']]);
         $session = $this->startSession($req, (int) $user['id']);
-        $this->app->activity((int) $user['id'], 'login', '', [], $ip);
+        $this->app->activity((int) $user['id'], 'login', '', $details, $ip);
         $this->app->watchdog()->onLogin($user, $req->userAgent(), $ip);
         return ['user' => $user, 'csrf' => $session['csrf']];
     }
@@ -295,6 +329,8 @@ final class Auth
             'permissions' => $this->isOwner($u) ? Users::PERMISSIONS : Users::permissionsOf($u),
             'lang' => (string) $u['lang'],
             'theme' => (string) $u['theme'],
+            'twoFactor' => !empty($u['totp_enabled_at']),
+            'twoFactorRequired' => $this->app->twoFactor()->required($u),
         ];
     }
 }

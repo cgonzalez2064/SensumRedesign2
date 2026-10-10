@@ -12,7 +12,7 @@ namespace Sensum\Cms;
 final class MaintenanceLog
 {
     private const KEY = 'maintenance_log';
-    public const ITEMS = ['backups', 'integrity', 'certificate', 'pagespeed', 'alerts'];
+    public const ITEMS = ['backups', 'integrity', 'certificate', 'pagespeed', 'alerts', 'dns', 'offsite'];
 
     public function __construct(private App $app)
     {

@@ -108,7 +108,8 @@ cPanel → **Select PHP Version** (sección *Exclusive for Namecheap Customers* 
 
 1. **Current PHP version:** 8.2 u 8.3 → *Apply*.
 2. Pestaña **Extensions**: marca `pdo_sqlite`, `sqlite3`, `gd`, `fileinfo`,
-   `mbstring`, `exif`, `intl`, `curl`, `openssl`, `json` (algunas ya vienen marcadas).
+   `mbstring`, `exif`, `intl`, `curl`, `openssl`, `json`, `zip` (respaldos cifrados),
+   `sodium` e `iconv` (algunas ya vienen marcadas).
 3. Pestaña **Options**:
 
 | Opción | Valor |
@@ -330,7 +331,18 @@ aleatorio (de tu gestor de contraseñas), abre
 `https://sensumconstrucciones.com/admin/#/configurar`, escribe ese valor, el nombre,
 `it@gruposensum.com` y la contraseña. Al terminar, **borra la línea `SETUP_TOKEN`**.
 
-Entra a `https://sensumconstrucciones.com/admin/` con esa cuenta.
+Entra a `https://sensumconstrucciones.com/admin/` con esa cuenta. **La primera vez el
+panel te pedirá activar la verificación en dos pasos** (obligatoria para la cuenta
+propietaria):
+
+1. Instala en tu celular Google Authenticator, Microsoft Authenticator o 1Password.
+2. Escribe tu contraseña, escanea el código QR y escribe el código de 6 dígitos.
+3. Guarda los **10 códigos de recuperación** en tu gestor de contraseñas: sirven si
+   pierdes el celular (cada uno funciona una vez).
+
+Si algún día pierdes el celular **y** los códigos, desde la Terminal de cPanel:
+`php ~/sensum-cms/bin/console 2fa:reset it@gruposensum.com` (la vuelves a configurar
+al entrar).
 
 ---
 
@@ -400,6 +412,26 @@ de prueba**: deben llegar a `it@gruposensum.com` y a `contacto@` (revisa spam).
 
 ---
 
+### 13.4 Seguridad: respaldo cifrado fuera del servidor
+
+Panel → **Administración → Seguridad**:
+
+1. **Respaldo cifrado fuera del servidor:** activa *Enviar respaldos automáticamente*,
+   frecuencia **Semanal**, y en *Enviar a* un correo que **no** dependa de este hosting
+   (por ejemplo una cuenta de Gmail de la empresa o de Grupo Sensum).
+2. Define la **contraseña de respaldos** (mínimo 12 caracteres) y guárdala en tu gestor
+   de contraseñas: sin ella los respaldos no se pueden abrir. Nunca se envía por correo.
+3. **Guardar cambios** (te pide tu contraseña) → **Enviar respaldo ahora**. Llega un
+   ZIP cifrado (AES-256) con la base de datos, las fotos y `LEEME-RESTAURAR.txt`.
+   Ábrelo una vez para comprobarlo: 7-Zip (Windows) o Keka / The Unarchiver (Mac).
+4. **Verificación en dos pasos:** elige si se exige solo a la cuenta propietaria
+   (predeterminado) o a todo el equipo. Desde la misma lista puedes **restablecerla** a
+   quien pierda su celular.
+
+También puedes **Descargar respaldo completo** en cualquier momento (pide tu contraseña).
+
+---
+
 ## 14. Crear los usuarios del equipo
 
 Solo la cuenta propietaria puede crear y modificar usuarios.
@@ -465,6 +497,9 @@ Cada uno se activa o desactiva en panel → **Monitoreo → Alertas automáticas
 | Intentos de acceso sospechosos (10+ contraseñas incorrectas en una hora) | Al detectarlo, máx. cada 6 h |
 | Inicio de sesión desde un dispositivo nuevo (a la persona que entró) | Al iniciar sesión |
 | Certificado HTTPS por vencer | 21, 7 y 1 día antes |
+| Vencimiento del dominio (consulta pública RDAP) | 60, 30, 14, 7 y 1 día antes |
+| Configuración de correo: SPF, DKIM, DMARC y MX (revisión diaria) | Al detectar un problema; recordatorio semanal |
+| Respaldo fuera del servidor fallido o atrasado | Una vez al día mientras siga así |
 | Respaldo atrasado (más de 48 h) | Una vez al día |
 | Revisión automática detenida (cron sin correr más de 2 h) | Máx. 1 por día |
 | Poco espacio en disco (menos de 500 MB) | Una vez al día |
@@ -532,7 +567,10 @@ Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a
 - [ ] (Opcional) Panel → **Formulario de contacto**: ajusta las opciones de «Servicio de interés» a los servicios que ofreces hoy y pulsa **Guardar y publicar**; compruébalo en el sitio (español e inglés).
 - [ ] **Correo del panel:** panel → Correo → **Enviar correo de prueba** → llega a it@gruposensum.com.
 - [ ] Inicias sesión en `/admin/` como it@gruposensum.com; ves Usuarios, Monitoreo, Informe mensual y Correo.
-- [ ] Monitoreo → **Alertas automáticas**: las 12 activadas. **Archivos del sitio → Revisar ahora**: «Todo en orden».
+- [ ] Monitoreo → **Alertas automáticas**: todas activadas. **Archivos del sitio → Revisar ahora**: «Todo en orden».
+- [ ] Monitoreo → **Correo y dominio → Revisar ahora**: SPF, DKIM, DMARC y MX en verde, y la fecha de vencimiento del dominio.
+- [ ] Verificación en dos pasos activa en la cuenta propietaria (y códigos de recuperación guardados).
+- [ ] Seguridad → **Enviar respaldo ahora**: el ZIP llega al correo elegido y se abre con la contraseña de respaldos.
 - [ ] **Reportar un problema** (botón arriba en el panel) → llega a it@gruposensum.com con el nuevo diseño.
 - [ ] **Monitoreo → Enviar correo de prueba** → llega la alerta de prueba.
 - [ ] **Informe mensual → Enviarme una prueba** → llega.
@@ -570,6 +608,10 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
 - **Solo el sitio público:** sube y extrae el zip del paso 2 en `public_html`.
 - **La base de datos:** reemplaza `sensum-cms/storage/database.sqlite` por una copia
   de `sensum-cms/storage/backups/db/`.
+- **Si el hosting se perdió por completo:** abre el último respaldo cifrado (correo o
+  descarga) con la contraseña de respaldos, sube un paquete nuevo (paso 3–5), reemplaza
+  `sensum-cms/storage/database.sqlite` por el del respaldo, copia las fotos a
+  `public_html/assets/uploads/` y pulsa **Volver a publicar el sitio**.
 - **Las páginas publicadas:** hay copias automáticas en
   `sensum-cms/storage/backups/published/` (las últimas 30 publicaciones): copia los
   archivos de la carpeta de la fecha que quieras a `public_html`.
@@ -588,6 +630,9 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
 | El formulario de contacto no llega | Panel → Correo → **Enviar mensaje de prueba**. Verifica que exista `contacto@` y SPF/DKIM. Si el servidor rechaza el remitente `formulario@`, usa `notificaciones@` como «Correo que envía los mensajes». |
 | El visitante ve «No pudimos completar la verificación anti-spam» | Navegador muy antiguo o sin JavaScript: puede escribir por WhatsApp/teléfono (aparecen bajo el formulario). Si le pasa a todos: revisa que `assets/contact-handler.php` y `assets/main.js` sean los del último paquete y que `/home/USUARIO/sensum-rl-data` o `public_html/assets/.rl-data` se puedan escribir. |
 | Llega «Alerta de seguridad: cambios en los archivos del sitio» | Si nadie del equipo cambió archivos: cambia la contraseña de cPanel, borra los archivos desconocidos y vuelve a subir el paquete. Si fue un cambio tuyo: Monitoreo → Archivos del sitio → **Marcar como esperados**. |
+| Perdí el celular de la verificación en dos pasos | Entra con un **código de recuperación** («Usar un código de recuperación»). Sin códigos: otra persona propietaria no existe, así que usa la Terminal: `php ~/sensum-cms/bin/console 2fa:reset it@gruposensum.com`. A otras personas se la restablece la cuenta propietaria en Seguridad. |
+| No llega el respaldo cifrado | Puede ser muy grande para el correo: desactiva «Incluir fotos» (la base de datos sigue incluida) o usa «Descargar respaldo completo». Revisa también la carpeta de spam del correo de destino. |
+| Monitoreo → Correo y dominio muestra un problema | cPanel → **Email Deliverability** → *Repair* (SPF/DKIM). Para DMARC, paso 6.3. |
 | Llegan correos de «Nuevo inicio de sesión» | Es normal la primera vez en cada navegador. Si no fuiste tú: cambia la contraseña y usa «Cerrar sesión en otros dispositivos». |
 | «Demasiados píxeles» o falla al subir fotos | Sube `memory_limit` a 256M (paso 4). |
 | «El archivo es demasiado grande» | `upload_max_filesize` 16M y `post_max_size` 20M (paso 4). |

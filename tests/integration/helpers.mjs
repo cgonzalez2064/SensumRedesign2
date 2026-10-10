@@ -47,6 +47,7 @@ export async function startServer({ port, smtpDown = false, env = {}, reuseDir =
     SETUP_TOKEN: 'test-setup-token-0123456789abcdef',
     OWNER_EMAIL: ADMIN.email, // the test administrator is the owner unless a test says otherwise
     ALERT_EMAIL: ALERTS_TO,
+    TWO_FACTOR_POLICY: 'none', // two-step sign-in has its own tests (17-protection)
     ...env,
   };
   const proc = spawn(PHP, ['-d', 'upload_max_filesize=16M', '-d', 'post_max_size=20M', '-d', 'memory_limit=256M',
@@ -165,3 +166,20 @@ export async function solveCaptcha(base) {
   }
   throw new Error('captcha not solved');
 }
+
+// ------------------------------------------------------------------ two-step sign-in
+/** The current 6-digit code for a base32 secret (what an authenticator app shows). */
+export async function totp(secret, offsetSteps = 0) {
+  const { createHmac } = await import('node:crypto');
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const bits = secret.replace(/[^A-Z2-7]/gi, '').toUpperCase().split('').map((c) => alphabet.indexOf(c).toString(2).padStart(5, '0')).join('');
+  const key = Buffer.from((bits.match(/.{8}/g) || []).map((b) => parseInt(b, 2)));
+  const step = Math.floor(Date.now() / 1000 / 30) + offsetSteps;
+  const msg = Buffer.alloc(8);
+  msg.writeUInt32BE(Math.floor(step / 2 ** 32), 0);
+  msg.writeUInt32BE(step >>> 0, 4);
+  const h = createHmac('sha1', key).update(msg).digest();
+  const o = h[19] & 15;
+  return String(((h.readUInt32BE(o) & 0x7fffffff) % 1e6)).padStart(6, '0');
+}
+

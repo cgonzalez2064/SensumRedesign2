@@ -18,8 +18,11 @@ export class ApiError extends Error {
   }
 }
 
+let twoFactorHandler = null;
 export const setCsrf = (token) => { csrf = token || null; };
 export const onSessionExpired = (fn) => { reloginHandler = fn; };
+/** Called when the server says this account must set up two-step sign-in first. */
+export const onTwoFactorRequired = (fn) => { twoFactorHandler = fn; };
 
 async function parse(res) {
   const type = res.headers.get('Content-Type') || '';
@@ -47,7 +50,38 @@ async function raw(method, path, body, { timeout = 30000, auth = true } = {}) {
   const data = await parse(res);
   if (res.ok && data && data.ok !== false) return { status: res.status, data };
   const code = (data && data.error) || (res.status >= 500 ? 'service_unavailable' : 'unknown');
+  if (code === 'two_factor_setup_required' && twoFactorHandler) twoFactorHandler();
   throw new ApiError(res.status, code, data || {});
+}
+
+/**
+ * POST that answers with a file (e.g. the encrypted backup). Resolves with
+ * { blob, filename }; JSON error answers become ApiError like everything else.
+ */
+export async function download(path, body = {}) {
+  const res = await fetch(BASE + path, {
+    method: 'POST', credentials: 'same-origin', cache: 'no-store',
+    headers: { Accept: 'application/zip, application/json', 'Content-Type': 'application/json', ...(csrf ? { 'X-CSRF-Token': csrf } : {}) },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const data = await parse(res);
+    throw new ApiError(res.status, (data && data.error) || 'unknown', data || {});
+  }
+  const name = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '');
+  return { blob: await res.blob(), filename: name ? name[1] : 'descarga' };
+}
+
+/** Saves a Blob with a file name (no navigation). */
+export function saveBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
 async function requestFull(method, path, body, opts = {}) {

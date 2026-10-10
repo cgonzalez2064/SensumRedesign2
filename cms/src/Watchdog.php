@@ -26,7 +26,7 @@ namespace Sensum\Cms;
  */
 final class Watchdog
 {
-    public const RULES = ['critical_errors', 'integrity', 'login_attack', 'new_device', 'certificate', 'backup', 'scheduler',
+    public const RULES = ['critical_errors', 'integrity', 'login_attack', 'new_device', 'certificate', 'domain_expiry', 'email_dns', 'backup', 'offsite_backup', 'scheduler',
         'disk_space', 'error_spike', 'weekly_digest', 'monthly_review', 'report_reminder'];
 
     /** PHP security-support end dates (php.net/supported-versions). Update when new versions ship. */
@@ -128,6 +128,9 @@ final class Watchdog
             'integrity' => fn () => $this->checkIntegrity($now),
             'login_attack' => fn () => $this->checkLoginAttack($now),
             'certificate' => fn () => $this->checkCertificate($now),
+            'domain_expiry' => fn () => $this->checkDomainExpiry($now),
+            'offsite_backup' => fn () => $this->checkOffsite($now),
+            'email_dns' => fn () => $this->checkEmailDns($now),
             'backup' => fn () => $this->checkBackup($now),
             'disk_space' => fn () => $this->checkDisk($now),
             'error_spike' => fn () => $this->checkErrorSpike($now),
@@ -292,6 +295,96 @@ final class Watchdog
         return "expires in {$days} day(s), notified";
     }
 
+    private function checkDomainExpiry(int $now): string
+    {
+        $h = $this->app->domainHealth()->latest();
+        $validTo = (int) ($h['expiry']['validTo'] ?? 0);
+        if ($validTo <= 0) {
+            return 'not checked';
+        }
+        $days = (int) floor(($validTo - $now) / 86400);
+        $threshold = null;
+        foreach ([1, 7, 14, 30, 60] as $t) {
+            if ($days <= $t) {
+                $threshold = $t;
+                break;
+            }
+        }
+        if ($threshold === null) {
+            return "valid for {$days} days";
+        }
+        $key = 'domain:' . $validTo . ':' . $threshold;
+        if (in_array($key, (array) ($this->state()['cert'] ?? []), true)) {
+            return "expires in {$days} day(s), already notified";
+        }
+        $this->state();
+        $this->state['cert'][] = $key;
+        $s = $this->strings();
+        $this->sendToOwner('domain_expiry', [
+            'subject' => self::fill($s['wd.domain.subject'], ['days' => max(0, $days), 'domain' => (string) $h['domain']]),
+            'title' => self::fill($s['wd.domain.title'], ['date' => date('Y-m-d', $validTo), 'domain' => (string) $h['domain']]),
+            'intro' => $s['wd.domain.intro'], 'action' => $s['wd.domain.action'], 'cta' => [$s['wd.cta.monitor'], 'monitoreo'], 'severity' => $days <= 14 ? 'bad' : 'warn',
+        ], $now);
+        return "expires in {$days} day(s), notified";
+    }
+
+    /** SPF/DKIM/DMARC/MX problems: alert when they appear or change, remind weekly. */
+    private function checkEmailDns(int $now): string
+    {
+        $h = $this->app->domainHealth()->latest();
+        if (!isset($h['checkedAt'])) {
+            return 'not checked';
+        }
+        $issues = [];
+        foreach (['spf', 'dkim', 'dmarc', 'mx'] as $k) {
+            if (empty($h[$k]['ok'])) {
+                $issues[$k] = (string) ($h[$k]['issue'] ?? 'missing');
+            }
+        }
+        if (!$issues) {
+            $this->state();
+            unset($this->state['fp']['email_dns']);
+            $this->saveState();
+            return 'ok';
+        }
+        $fp = hash('sha256', (string) json_encode($issues));
+        $changed = ($this->state()['fp']['email_dns'] ?? '') !== $fp;
+        if (!$changed && !$this->due('email_dns', 7 * 86400, $now)) {
+            return implode(', ', array_keys($issues)) . ', already notified';
+        }
+        $this->state();
+        $this->state['fp']['email_dns'] = $fp;
+        $s = $this->strings();
+        $items = [];
+        foreach ($issues as $k => $issue) {
+            $items[] = $s['wd.dns.' . $k . '.' . $issue] ?? $s['wd.dns.' . $k . '.missing'];
+        }
+        $this->sendToOwner('email_dns', [
+            'subject' => self::fill($s['wd.dns.subject'], ['domain' => (string) $h['domain']]), 'title' => $s['wd.dns.title'], 'intro' => $s['wd.dns.intro'],
+            'items' => $items, 'action' => $s['wd.dns.action'], 'cta' => [$s['wd.cta.monitor'], 'monitoreo'], 'severity' => isset($issues['mx']) || isset($issues['spf']) ? 'bad' : 'warn',
+        ], $now);
+        return implode(', ', array_keys($issues)) . ', notified';
+    }
+
+    private function checkOffsite(int $now): string
+    {
+        $ob = $this->app->offsiteBackup();
+        if (!$ob->overdue($now)) {
+            return $ob->settings()['enabled'] ? 'ok' : 'off';
+        }
+        if (!$this->due('offsite_backup', 86400, $now)) {
+            return 'overdue, already notified';
+        }
+        $cfg = $ob->settings();
+        $s = $this->strings();
+        $this->sendToOwner('offsite_backup', [
+            'subject' => $s['wd.offsite.subject'],
+            'title' => $cfg['lastSentAt'] ? self::fill($s['wd.offsite.title'], ['date' => date('Y-m-d', $cfg['lastSentAt'])]) : $s['wd.offsite.titleNever'],
+            'intro' => $s['wd.offsite.intro'], 'action' => $s['wd.offsite.action'], 'cta' => [$s['wd.cta.security'], 'seguridad'], 'severity' => 'warn',
+        ], $now);
+        return 'overdue, notified';
+    }
+
     private function checkBackup(int $now): string
     {
         $files = glob($this->app->storage('backups/db') . '/database-*.sqlite') ?: [];
@@ -386,6 +479,9 @@ final class Watchdog
             $s['wd.week.contact'] => self::fill($s['wd.week.contactValue'], $this->app->contactForm()->stats($since)),
             $s['wd.week.backup'] => $backups ? date('Y-m-d H:i', max(array_map('filemtime', $backups))) : $s['wd.week.noBackup'],
             $s['wd.week.cert'] => isset($tls['validTo']) && $tls['validTo'] ? self::fill($s['wd.week.certDays'], ['days' => (int) floor(((int) $tls['validTo'] - $now) / 86400)]) : $s['wd.none'],
+            $s['wd.week.domain'] => ($dh = $this->app->domainHealth()->latest()) && !empty($dh['expiry']['validTo'])
+                ? self::fill($s['wd.week.certDays'], ['days' => (int) floor(((int) $dh['expiry']['validTo'] - $now) / 86400)]) . ' · ' . ($dh['problems'] && array_diff($dh['problems'], ['expiry']) ? $s['wd.week.dnsIssues'] : $s['wd.week.dnsOk'])
+                : $s['wd.none'],
             $s['wd.week.report'] => $report['sentAt'] ? $s['wd.week.reportSent'] : $s['wd.week.reportPending'],
         ];
         $top = $db->all('SELECT event, message, COUNT(*) AS n FROM error_log WHERE created_at > ? GROUP BY fingerprint ORDER BY n DESC LIMIT 3', [$since]);
@@ -519,6 +615,23 @@ final class Watchdog
             'facts' => [$s['wd.settings.what'] => $labels ? implode(', ', $labels) : $s['wd.none'], $s['wd.device.when'] => date('Y-m-d H:i T')],
             'action' => $s['wd.settings.action'], 'cta' => [$s['wd.cta.email'], 'correo'], 'severity' => 'warn', 'tag' => $s['wd.tag.security'],
         ]);
+    }
+
+    /** Security notice to the person: two-step sign-in enabled, disabled, reset by IT, or a recovery code used. */
+    public function twoFactorNotice(array $user, string $kind): void
+    {
+        try {
+            $lang = ($user['lang'] ?? 'es') === 'en' ? 'en' : 'es';
+            $s = $this->strings($lang);
+            $this->send((string) $user['email'], $lang, 'two_factor', [
+                'subject' => $s['wd.2fa.' . $kind . '.subject'], 'title' => $s['wd.2fa.' . $kind . '.title'],
+                'intro' => self::fill($s['wd.2fa.' . $kind . '.intro'], ['name' => explode(' ', (string) $user['name'])[0]]),
+                'facts' => [$s['wd.device.when'] => date('Y-m-d H:i T')],
+                'action' => $s['wd.2fa.action'], 'cta' => [$s['wd.cta.account'], 'cuenta'], 'severity' => $kind === 'enabled' ? 'info' : 'warn', 'tag' => $s['wd.tag.security'],
+            ], true);
+        } catch (\Throwable $e) {
+            $this->app->logger()->error('watchdog_failed', ['rule' => 'two_factor', 'type' => get_class($e)]);
+        }
     }
 
     /** "Chrome en Windows" from a User-Agent (browser family + operating system only). */
@@ -668,7 +781,7 @@ final class Watchdog
         $link = (new Emails($this->app))->adminUrl($msg['cta'][1]);
         $body .= Emails::cta($msg['cta'][0], $link);
         $text .= $link . "\n";
-        $footer = $e(in_array($rule, ['new_device', 'settings_changed'], true) ? $s['wd.footer.security'] : $s['wd.footer.rule']);
+        $footer = $e(in_array($rule, ['new_device', 'settings_changed', 'two_factor'], true) ? $s['wd.footer.security'] : $s['wd.footer.rule']);
         $layout = (new Emails($this->app))->branded($lang, $msg['tag'] ?? $s['wd.tag.alert'], $msg['intro'], $body, $footer);
         $mail = ['to' => $to, 'subject' => $msg['subject'], 'text' => $text, 'html' => $layout['html'], 'embedded' => $layout['embedded']];
         if (!$deferred || PHP_SAPI === 'cli') {
