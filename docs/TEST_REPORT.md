@@ -268,6 +268,10 @@ Full re-run: API **197/197**, browser **117 passed / 51 skipped**; PHPStan 0 err
 | The simulated form's labels were not tied to their fields (Spanish-only names in English) | real `<label for>`, error text via `aria-describedby`, `aria-invalid`, named list |
 
 
+| Production build on Apache | release `3ab8a4a` (68 public + 251 private files, 1.2 MB zip) under Apache + PHP-FPM; migration `011_access_profiles` applied on first request; `/api/reports/analytics` and `/api/monitor/overview` refuse anonymous requests (401); the new admin views served | 6/6 |
+
+Full re-run: API **203/203**, browser **135 passed / 51 skipped**; PHPStan 0 errors.
+
 ## Other audits
 
 | Audit | Result |
@@ -279,7 +283,7 @@ Full re-run: API **197/197**, browser **117 passed / 51 skipped**; PHPStan 0 err
 | Accessibility — public | identical before/after; pre-existing contrast findings on the approved orange labels reported as an optional recommendation |
 | Performance | Lighthouse before/after: equal (desktop 99, mobile 84–85 locally with network throttling); +7 KB (main.js/css additions), no extra requests; with photos the LCP stays the hero heading (photos lazy, responsive `srcset`). Outliers were traced to slow Google Fonts responses (affects the approved site equally). Fonts are now self-hosted (no requests to Google; the two Latin files are preloaded). |
 | Visual regression | 20/22 identical to `main` (desktop 1440/1280, tablet 768, phones 390/320, ES and EN, modal, menu, form errors, FAQ, 404); the 2 privacy-notice states differ only by the paragraphs that now describe the built-in statistics and the retention period |
-| Production build | `tools/build-release.sh` → 48 public files + 133 private files (≈ 700 KB zip), no secrets/dev files; verified under Apache |
+| Production build | `tools/build-release.sh` → 68 public files + 251 private files (≈ 1.2 MB zip), no secrets/dev files; verified under Apache |
 
 ## How to re-run
 
