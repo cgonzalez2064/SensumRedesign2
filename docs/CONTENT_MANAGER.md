@@ -97,6 +97,8 @@ so a slow screen can never write into the next one).
 | Dashboard | Site status, last publish, sync check + republish (admins), recent activity, monitoring status; diagnostics and recent errors for the owner |
 | Monitoring (owner) | Error log with filters and details, key figures (24 h / 7 d / 30 d), most frequent errors, system details, e-mail alerts for critical errors + test e-mail (§9a) |
 | Monthly report (owner) | Short plain-language site-health and visibility report for clients; recipients (owner always copied), preview, test, send, history; reminder after day 5 (§9b) |
+| Support tickets | Reports become tickets: status (new, in progress, waiting for information, resolved, closed), priority, conversation; the owner edits, replies, adds internal notes, asks for information, resolves/closes/reopens with optional e-mail to the reporter; reporters follow and answer their own tickets (an answer reopens); menu badge; screenshot viewer |
+| Monthly report value | Support summary (received, resolved, average resolution time, resolved items, pending) and automatic maintenance (health checks, file-security scans, backups, certificate checks, Google measurements, blocked spam, notices) + messages received through the form |
 | Contact-form options | "Servicio de interés" list: add, rename (ES/EN), reorder, remove (up to 20), live preview, restore the approved options; published at once; stable ids so renaming never breaks open pages (access: contact details) |
 | E-mail settings (owner) | Panel's SMTP sending account (+ Reply-To), contact-form receivers/sender/method, problem-report and alert recipients, optional Cloudflare Turnstile keys; password re-check, secrets encrypted at rest, security notice, test buttons; `EMAIL_SETTINGS_LOCKED` for .env-only setups |
 | Contact-form captcha | Built-in invisible proof-of-work captcha (always on, no keys) + optional Cloudflare Turnstile; counts of messages and blocked spam in the weekly summary |
@@ -228,7 +230,9 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 | `POST /api/content/translate` | user | machine-translate field text ES⇄EN for review (saves nothing; off without `DEEPL_API_KEY`) |
 | `GET /api/media` · `POST /api/media/{slot}/upload` · `PUT /api/media/{slot}/order` · `PUT`/`DELETE /api/media/item/{id}` | user | photos & PDF |
 | `PUT /api/account/profile` · `POST /api/account/password` · `POST /api/account/sessions/revoke-others` | user | own account |
-| `GET`/`POST /api/reports` · `POST /api/reports/{id}/retry` | user | support reports |
+| `GET /api/reports?status=&q=` · `POST /api/reports` · `POST /api/reports/{id}/retry` · `GET /api/reports/badge` | user | tickets (owner: all, filters, search; others: own) |
+| `GET /api/reports/{id}` · `POST /api/reports/{id}/messages` · `GET /api/reports/{id}/screenshot` | user (own) / owner | ticket, conversation (owner: `internal` notes), screenshot |
+| `PUT /api/reports/{id}` · `POST /api/reports/{id}/status` | owner | edit fields/priority; status with optional `message` and `notify` |
 | `GET`/`POST /api/users` · `POST /api/users/{id}/resend` · `PUT`/`DELETE /api/users/{id}` | owner | user management, access types |
 | `GET /api/site-report` · `GET /api/site-report/preview?period=&lang=` · `PUT /api/site-report/settings` · `POST /api/site-report/send` | owner | monthly client report |
 
@@ -425,7 +429,8 @@ generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`,
 `mail:test <email>` · `translate:test` (checks the DeepL key, shows usage) ·
 `monitor` (scheduled check + automatic alerts, cron) · `alert:test` ·
 `reports:retry` · `backup` (consistent DB copy, keeps 14) ·
-`integrity:accept` (record the current public files as expected)
+`integrity:accept` (record the current public files as expected) ·
+`demo-users [--reports]` (local demo accounts per access profile; refused in production)
 
 ## 12. Logs, backups and recovery
 

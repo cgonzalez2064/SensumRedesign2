@@ -100,8 +100,10 @@ export function openReportDialog() {
       });
       dlg.foot.append(retry, again);
     } else {
+      // Follow-up happens on the ticket: status, replies from IT.
+      const view = h('a', { class: 'btn', href: '#/reportes/' + reportId, onclick: () => dlg.close() }, icon('chat-square-text'), t('tickets.viewTicket', { id: reportId }));
       const done = button(t('report.done'), { variant: 'primary', onClick: () => dlg.close() });
-      dlg.foot.append(done);
+      dlg.foot.append(view, done);
       done.focus();
     }
   };

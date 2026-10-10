@@ -127,14 +127,14 @@ final class Reports
 
         $db = $this->app->db();
         $id = $db->insert(
-            'INSERT INTO support_reports (user_id, reporter_name, reporter_email, type, title, description, area, page, context, screenshot, fingerprint, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO support_reports (user_id, reporter_name, reporter_email, type, title, description, area, page, context, screenshot, fingerprint, created_at, updated_at, status, owner_unread)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, \'new\', 1)',
             [$userId, $session['name'], $session['email'], $type, $title, $description, $area, $page,
-                json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $file, $fingerprint, time()]
+                json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $file, $fingerprint, time(), time()]
         );
         $this->app->activity($userId, 'report_submitted', (string) $id, ['type' => $type]);
         $delivered = $this->deliver($id);
-        return ['report' => $this->present($this->find($id)), 'delivered' => $delivered];
+        return ['report' => (new Tickets($this->app))->present($this->find($id), false), 'delivered' => $delivered];
     }
 
     private function sanitizeContext(mixed $raw): array
@@ -217,16 +217,7 @@ final class Reports
             throw new ApiError(429, 'too_many_attempts');
         }
         $delivered = $this->deliver($id);
-        return ['report' => $this->present($this->find($id)), 'delivered' => $delivered];
-    }
-
-    /** Recent reports: own for everyone, all for the owner. */
-    public function list(array $session): array
-    {
-        $rows = $this->app->auth()->isOwner($session)
-            ? $this->app->db()->all('SELECT * FROM support_reports ORDER BY id DESC LIMIT 50')
-            : $this->app->db()->all('SELECT * FROM support_reports WHERE user_id = ? ORDER BY id DESC LIMIT 50', [$session['uid']]);
-        return array_map(fn ($r) => $this->present($r), $rows);
+        return ['report' => (new Tickets($this->app))->present($this->find($id), $this->app->auth()->isOwner($session)), 'delivered' => $delivered];
     }
 
     public function present(array $r): array
@@ -333,7 +324,7 @@ final class Reports
             . $detail('Reportado por', $e($r['reporter_name'])) . $detail('Correo', '<a href="mailto:' . $e($r['reporter_email']) . '" style="color:#c25500;text-decoration:none">' . $e($r['reporter_email']) . '</a>')
             . '</tr></table>'
             . Emails::cta('Responder a ' . $firstName, $reply)
-            . '<div style="font-size:13px;margin:0 0 4px"><a href="' . $e((new Emails($this->app))->adminUrl('reportes')) . '" style="color:#c25500;text-decoration:none">Ver todos los reportes en el panel →</a></div>'
+            . '<div style="font-size:13px;margin:0 0 4px"><a href="' . $e((new Emails($this->app))->adminUrl('reportes/' . (int) $r['id'])) . '" style="color:#c25500;text-decoration:none">Abrir el ticket #' . (int) $r['id'] . ' en el panel (estado, respuestas, notas) →</a></div>'
             . '<div style="margin:22px 0 6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7a7a82">Información técnica (automática)</div>'
             . '<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:12px;line-height:1.5">' . $techRows . '</table>';
         $footer = 'Enviado automáticamente por el Administrador de contenido de sensumconstrucciones.com. '

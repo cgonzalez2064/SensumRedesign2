@@ -274,6 +274,17 @@ removed from the temporary folder); all API (117) and browser (74) tests pass.
 | Automatic alerts | Owner-only toggles (`PUT /api/monitor/alerts`, allow-listed rule names and booleans). De-duplication state in the database; each rule has a minimum period. New-device notice uses only browser family + OS (no fingerprinting data stored; the IP is shown to the account holder, stored only as a keyed pseudonym in the activity log). | `13-email-alerts` |
 | File integrity | SHA-256 of public files vs the release manifest (`release-manifest.json`, built by `tools/build-release.sh`) or the owner-accepted state (trust on first use when no manifest). Flags modified/missing files, new executable/config files (`.php`, `.phtml`, `.phar`, `.htaccess`, `.user.ini`…), unexpected files among uploads (name pattern), and published pages that differ from the saved content. cPanel-generated `.htaccess` blocks are ignored. Accepting needs the owner's password and is logged with the findings. | `13-email-alerts` |
 
+## 11. Change review — support tickets, demo accounts, report figures
+
+| Area | Design | Verified by |
+|---|---|---|
+| Ticket access | Owner: all tickets; everyone else: only their own — another person's ticket, conversation or screenshot answers 404 (no existence leak). Status, priority and edits are owner-only (403); internal notes are owner-only and never returned to the reporter, nor are edit events or e-mail delivery details | `16-tickets` |
+| Input | Messages and descriptions keep line breaks but drop control and bidi-override characters, ≤ 4000; titles ≤ 120; type/area/priority/status allow-listed; search is a parameterised `LIKE` with escaped wildcards; reporter messages limited to 20/hour | `16-tickets` |
+| Output | The panel renders all ticket text with `textContent`; e-mails escape every value (HTML payloads verified escaped); the screenshot endpoint serves only generated file names with the stored type, `nosniff`, `no-store` and a sandboxing CSP | `16-tickets`, `admin.spec` (HTML in titles/descriptions shown as text) |
+| Notifications | Reporter e-mails go to the account's current address with Reply-To = support; support e-mails carry Reply-To = reporter; both link to the ticket in the panel (no tokens in links; sign-in required) | `16-tickets` |
+| Demo accounts | `demo-users` refuses to run unless `APP_ENV=development`; random passwords written only to `storage/LOCAL-TEST-USERS.txt` (0600, git-ignored, web-denied); a rerun resets passwords and ends their sessions | `16-tickets` |
+| Report figures | Counts only (no personal data); resolved ticket titles appear in the client report — they are written by the client's own team | `12-site-report` |
+
 Accepted limitations: proof of work raises the cost of automated submissions but a
 determined attacker running a full browser can still pay it — that is what the
 optional Turnstile layer, the rate limit and the honeypot are for. Visitors without

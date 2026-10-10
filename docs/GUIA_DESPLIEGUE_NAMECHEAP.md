@@ -423,6 +423,10 @@ Solo la cuenta propietaria puede crear y modificar usuarios.
 
 ---
 
+> **Cuentas de prueba:** el comando `demo-users` (cuentas `demo.*@example.test`)
+> es solo para pruebas en tu computadora y **se niega a funcionar en producción**.
+> No lo ejecutes en el servidor; crea las cuentas reales con **Invitar usuario**.
+
 ## 15. Cargar las fotografías
 
 Las fotos se suben desde el panel → **Fotos y archivos** (pestañas *Nosotros*,
@@ -524,6 +528,7 @@ Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a
 - [ ] `https://sensumconstrucciones.com/api/health` → `"status":"ok"`.
 - [ ] **Formulario de contacto:** envía un mensaje real desde el sitio (en celular y computadora). Bajo el botón aparece «Verificación anti-spam completa.» y el mensaje llega a `contacto@sensumconstrucciones.com` con remitente `formulario@`; al responderlo, la respuesta va al visitante.
 - [ ] (Si activaste Turnstile) el formulario sigue enviando y no muestra errores; en Cloudflare → Turnstile aparecen las verificaciones.
+- [ ] **Reportes de soporte:** con otra cuenta envía un reporte de prueba; como it@gruposensum.com ábrelo, usa **Pedir más información** y luego **Marcar como resuelto**; la persona recibe ambos correos.
 - [ ] (Opcional) Panel → **Formulario de contacto**: ajusta las opciones de «Servicio de interés» a los servicios que ofreces hoy y pulsa **Guardar y publicar**; compruébalo en el sitio (español e inglés).
 - [ ] **Correo del panel:** panel → Correo → **Enviar correo de prueba** → llega a it@gruposensum.com.
 - [ ] Inicias sesión en `/admin/` como it@gruposensum.com; ves Usuarios, Monitoreo, Informe mensual y Correo.

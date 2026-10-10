@@ -171,8 +171,16 @@ issue** (at the top of every panel screen; on phones it's the life-buoy icon).
 5. Optionally attach a **screenshot** (JPG, PNG or WebP, up to 5 MB).
 6. Tap **Send report**.
 
-The report goes straight to the technical support team (it@gruposensum.com). If
-they need more information, they'll reply to your email.
+The report goes straight to the technical support team (it@gruposensum.com).
+
+**Follow-up:** each report has its own page under **Support reports** with its
+status (New, In progress, Waiting for information, Resolved, Closed) and the
+conversation with support. You get an e-mail when support replies, asks for more
+information or resolves it, and the menu shows a number next to "Support reports"
+when there's a new reply. To answer, write in **Your reply** and tap **Send
+reply**: if you were asked for information, or it was marked resolved but the
+problem persists, your reply moves it back to "In progress". Closed reports take
+no more replies (you can send a new one).
 
 **Technical information sent automatically:** browser and version, operating
 system, device type, window and screen size, panel language and theme, time zone,
@@ -291,3 +299,27 @@ sent. Tick or untick each box to turn it on or off; it is saved at once.
 If you get a change alert and **don't** recognise the changes, don't accept them:
 tell technical support. If you made them, press **Mark as expected** (asks for your
 password).
+
+## 15. For the owner account: support tickets
+
+Under **Support reports** the owner account sees **everyone's** reports as tickets:
+
+* **Filters** by status (Open, New, In progress, Waiting for information,
+  Resolved, Closed, All) with their counts, and **search** by title, text, person
+  or number (`#12`). Unread tickets are bold and listed first; the menu shows how
+  many need attention.
+* On each ticket: the description, the **screenshot**, the technical information
+  and the **conversation**.
+* **Actions:** *Mark in progress*, *Ask for more information* (write what you
+  need; the person gets an e-mail and the ticket stays "Waiting for
+  information"), *Mark as resolved* (with a message about what was done),
+  *Close* and *Reopen*. For each you choose whether to notify by e-mail.
+* **Reply** to the person (with or without e-mail) or write an **Internal note**
+  only technical support sees.
+* **Priority** (low, normal, high, urgent) and **Edit** the title, description,
+  type and where it was noticed. Everything is recorded in the conversation.
+* When the person replies, you get an e-mail and the ticket goes back to "In progress".
+
+The **monthly report** includes a summary of the month's tickets (received,
+resolved, average time, pending) and of the automatic maintenance (checks,
+security scans, backups, certificate, Google, blocked spam, notices).

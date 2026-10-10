@@ -3,15 +3,69 @@ declare(strict_types=1);
 
 namespace Sensum\Cms\Api;
 
+use Sensum\Cms\Http\ApiError;
 use Sensum\Cms\Http\Response;
 use Sensum\Cms\Reports;
+use Sensum\Cms\Tickets;
 
-/** "Reportar un problema" endpoints (signed-in users only). */
+/**
+ * "Reportar un problema" and the support tickets (signed-in users). Everyone
+ * sees and answers their own tickets; the owner account (IT) sees all of them
+ * and manages status, priority, edits, replies and internal notes.
+ */
 final class ReportsController extends Controller
 {
+    private function tickets(): Tickets
+    {
+        return new Tickets($this->app);
+    }
+
     public function index(): never
     {
-        Response::ok(['reports' => (new Reports($this->app))->list($this->session), 'supportEmail' => $this->app->mailSettings()->supportEmail()]);
+        $list = $this->tickets()->list((array) $this->session, $this->req->query('status') ?: 'open', $this->req->query('q'));
+        Response::ok($list + ['supportEmail' => $this->app->mailSettings()->supportEmail(), 'canManage' => $this->isOwner()]);
+    }
+
+    public function badge(): never
+    {
+        Response::ok(['count' => $this->tickets()->badge((array) $this->session)]);
+    }
+
+    public function show(int $id): never
+    {
+        Response::ok($this->tickets()->detail((array) $this->session, $id));
+    }
+
+    public function update(int $id): never
+    {
+        $in = $this->req->json();
+        Response::ok($this->tickets()->edit((array) $this->session, $id, array_intersect_key($in, array_flip(['title', 'description', 'type', 'area', 'priority']))));
+    }
+
+    public function status(int $id): never
+    {
+        $in = $this->req->json();
+        Response::ok($this->tickets()->setStatus((array) $this->session, $id, $this->str('status'), $this->str('message'), ($in['notify'] ?? true) === true));
+    }
+
+    public function message(int $id): never
+    {
+        $in = $this->req->json();
+        Response::ok($this->tickets()->addMessage((array) $this->session, $id, $this->str('body'), ($in['internal'] ?? false) === true, ($in['notify'] ?? true) === true));
+    }
+
+    /** The screenshot sent with a ticket (its author or the owner). */
+    public function screenshot(int $id): never
+    {
+        $file = $this->tickets()->screenshot((array) $this->session, $id);
+        header('Content-Type: ' . $file['mime']);
+        header('Content-Length: ' . filesize($file['path']));
+        header('Cache-Control: private, no-store');
+        header('X-Content-Type-Options: nosniff');
+        header('Content-Disposition: inline; filename="captura-reporte-' . $id . '.' . ($file['mime'] === 'image/webp' ? 'webp' : 'jpg') . '"');
+        header("Content-Security-Policy: default-src 'none'; img-src 'self'; sandbox");
+        readfile($file['path']);
+        exit;
     }
 
     public function create(): never

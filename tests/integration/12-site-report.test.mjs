@@ -88,7 +88,8 @@ test('content: plain-language summary built from the month\'s figures, without e
   assert.deepEqual(r.kpis.map((k) => k.label), ['Disponibilidad', 'Actualizaciones', 'Seguridad'], 'no Google score yet → no Google tile');
   assert.equal(r.kpis[1].value, '5');
   assert.equal(r.kpis[2].note, '1 intento de acceso bloqueado');
-  assert.deepEqual(r.sections.map((x) => x.title), ['Contenido', 'Seguridad y respaldo', 'Soporte']);
+  assert.deepEqual(r.sections.map((x) => x.title), ['Contenido', 'Seguridad y respaldo', 'Soporte', 'Mantenimiento y análisis automáticos']);
+  assert.deepEqual(r.sections[3].items, ['100 revisiones automáticas de funcionamiento (cada 15 minutos)'], 'only what is known');
   // An incident turns it into "Con observaciones".
   const [y, m] = prev.split('-').map(Number);
   s.sql(`INSERT INTO error_log (created_at, severity, source, event, message, fingerprint) VALUES (${Math.floor(new Date(y, m - 1, 15).getTime() / 1000)}, 'critical', 'server', 'unhandled_exception', 'x', 'sr-${RUN}')`);
@@ -101,6 +102,46 @@ test('content: plain-language summary built from the month\'s figures, without e
   assert.match(en.summary, /available in 99% of the automatic checks/);
   // Only the last 13 months are accepted.
   assert.equal((await owner.get('/api/site-report/preview?period=2001-01')).status, 422);
+});
+
+test('support tickets and automatic maintenance of the month show the value of the service', async () => {
+  const [y, m] = prev.split('-').map(Number);
+  const at = (d, h = 10) => Math.floor(new Date(y, m - 1, d, h).getTime() / 1000);
+  const day = (d) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  // Two tickets resolved (6 h and 30 h), one still open; one resolved from an earlier month.
+  s.sql(`INSERT INTO support_reports (user_id, reporter_name, reporter_email, type, title, description, area, fingerprint, email_status, created_at, updated_at, status, resolved_at) VALUES
+    (1, 'Ed', 'ed@example.test', 'problem', 'No se guardaba el texto de servicios', 'x', 'admin', 'sr1-${RUN}', 'sent', ${at(3)}, ${at(3, 16)}, 'resolved', ${at(3, 16)}),
+    (1, 'Ed', 'ed@example.test', 'content', 'Cambiar el horario de atención', 'x', 'website', 'sr2-${RUN}', 'sent', ${at(8)}, ${at(9, 16)}, 'closed', ${at(9, 16)}),
+    (1, 'Ed', 'ed@example.test', 'improvement', 'Agregar testimonios', 'x', 'website', 'sr3-${RUN}', 'sent', ${at(20)}, ${at(20)}, 'in_progress', NULL)`);
+  s.sql(`INSERT INTO settings (key, value, updated_at) VALUES ('contact_stats', '${JSON.stringify({ [day(5)]: { sent: 9, blocked: 30 }, [day(6)]: { sent: 3, blocked: 12 } })}', 0)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value`);
+  s.sql(`INSERT INTO settings (key, value, updated_at) VALUES ('maintenance_log', '${JSON.stringify({ [prev]: { backups: 30, integrity: 2880, certificate: 30, pagespeed: 30, alerts: 2 } })}', 0)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value`);
+  const r = (await owner.get('/api/site-report/preview?period=' + prev)).data.report;
+  assert.match(r.summary, /El equipo de soporte resolvió 2 solicitudes\./);
+  const leads = r.kpis.find((k) => k.label === 'Mensajes recibidos');
+  assert.equal(leads.value, '12');
+  const support = r.sections.find((x) => x.title === 'Soporte').items;
+  assert.ok(support.includes('Se recibieron 3 solicitudes de soporte del equipo (2 resueltas)'), JSON.stringify(support));
+  assert.ok(support.includes('Tiempo promedio de resolución: 18 horas'));
+  assert.ok(support.includes('Resuelto: «No se guardaba el texto de servicios»'));
+  assert.ok(support.includes('Resuelto: «Cambiar el horario de atención»'));
+  assert.ok(support.includes('1 solicitud sigue en atención'));
+  const auto = r.sections.find((x) => x.title === 'Mantenimiento y análisis automáticos');
+  assert.ok(auto.intro);
+  for (const line of ['2.880 análisis de seguridad de los archivos del sitio', '30 copias de seguridad de la base de datos', 'Certificado de seguridad (HTTPS) verificado 30 veces',
+    'Velocidad y preparación para Google medidas 30 veces', '42 mensajes de spam bloqueados en el formulario de contacto']) assert.ok(auto.items.includes(line), line);
+  assert.ok(auto.items.some((x) => /^\d+ avisos automáticos enviados al equipo técnico$/.test(x)), 'watchdog + critical alerts');
+  // English.
+  const en = (await owner.get('/api/site-report/preview?lang=en&period=' + prev)).data.report;
+  assert.ok(en.sections.find((x) => x.title === 'Automatic maintenance and checks').items.includes('2,880 security scans of the site files'));
+  assert.ok(en.sections.find((x) => x.title === 'Support').items.includes('Average resolution time: 18 hours'));
+  // And in the e-mail.
+  const mail = (await owner.post('/api/site-report/send', { period: prev, test: true }));
+  assert.equal(mail.status, 200, mail.text);
+  const [msg] = (await waitForMail(ADMIN.email, 1)).filter((x) => /Informe mensual/.test(x.Subject));
+  const html = (await message(msg.ID)).HTML;
+  assert.ok(html.includes('Mantenimiento y análisis automáticos') && html.includes('Resuelto: «No se guardaba el texto de servicios»'));
 });
 
 test('the scheduled check records availability, Google scores and the certificate step', async () => {

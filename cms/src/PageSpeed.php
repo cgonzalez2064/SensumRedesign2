@@ -57,6 +57,7 @@ final class PageSpeed
             $result[$strategy] = $scores;
         }
         $this->app->settings()->setJson('pagespeed', $result);
+        $this->app->maintenanceLog()->add('pagespeed');
         return "mobile {$result['mobile']['performance']} · desktop {$result['desktop']['performance']} (performance)";
     }
 

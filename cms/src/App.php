@@ -206,6 +206,12 @@ final class App
         return new ContactForm($this);
     }
 
+    /** Monthly counts of automatic maintenance (for the client report). */
+    public function maintenanceLog(): MaintenanceLog
+    {
+        return new MaintenanceLog($this);
+    }
+
     /** The contact form's "Servicio de interés" options (editable in the panel). */
     public function contactServices(): ContactServices
     {

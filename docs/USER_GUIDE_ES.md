@@ -182,7 +182,16 @@ salvavidas).
 6. Toca **Enviar reporte**.
 
 El reporte llega directamente al equipo de soporte técnico (it@gruposensum.com).
-Si necesitan más información, te responderán a tu correo.
+
+**Seguimiento:** cada reporte tiene su página en **Reportes de soporte** con su
+estado (Nuevo, En progreso, Esperando información, Resuelto, Cerrado) y la
+conversación con soporte. Te llega un correo cuando soporte te responde, te pide
+más información o lo resuelve, y el menú muestra un número junto a «Reportes de
+soporte» cuando tienes una respuesta nueva. Para contestar, escribe en **Tu
+respuesta** y toca **Enviar respuesta**: si te pidieron información o lo
+marcaron como resuelto pero el problema sigue, tu respuesta lo vuelve a poner
+«En progreso». Los reportes cerrados ya no reciben respuestas (puedes enviar uno
+nuevo).
 
 **Qué información técnica se envía automáticamente:** navegador y versión,
 sistema operativo, tipo de dispositivo, tamaño de la ventana y de la pantalla,
@@ -306,3 +315,29 @@ Marca o desmarca cada casilla para activarlo o desactivarlo; se guarda al instan
 versión instalada. Si recibes una alerta de cambios y **no** los reconoces, no los
 aceptes: avisa a soporte técnico. Si los hiciste tú, pulsa **Marcar como esperados**
 (te pide tu contraseña).
+
+## 15. Para la cuenta propietaria: tickets de soporte
+
+En **Reportes de soporte** la cuenta propietaria ve los reportes de **todas** las
+personas como tickets:
+
+* **Filtros** por estado (Abiertos, Nuevos, En progreso, Esperando información,
+  Resueltos, Cerrados, Todos) con su cantidad, y **búsqueda** por título, texto,
+  persona o número (`#12`). Los tickets sin leer aparecen en negrita y primero;
+  el menú muestra cuántos esperan atención.
+* En cada ticket: la descripción, la **captura de pantalla**, la información
+  técnica y la **conversación**.
+* **Acciones:** *Marcar en progreso*, *Pedir más información* (escribe qué
+  necesitas; la persona recibe un correo y el ticket queda «Esperando
+  información»), *Marcar como resuelto* (con un mensaje de lo que se hizo),
+  *Cerrar* y *Reabrir*. En cada una eliges si se avisa por correo.
+* **Responder** a la persona (con o sin correo) o escribir una **Nota interna**
+  que solo ve soporte técnico.
+* **Prioridad** (baja, normal, alta, urgente) y **Editar** el título, la
+  descripción, el tipo y dónde se notó. Todo queda registrado en la conversación.
+* Cuando la persona responde, te llega un correo y el ticket vuelve a «En progreso».
+
+El **informe mensual** incluye un resumen de los tickets del mes (recibidos,
+resueltos, tiempo promedio, pendientes) y de las tareas automáticas de
+mantenimiento (revisiones, análisis de seguridad, respaldos, certificado, Google,
+spam bloqueado, avisos).

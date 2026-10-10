@@ -68,6 +68,12 @@ final class Kernel
         ['GET', '/api/reports', ReportsController::class, 'index', 'user'],
         ['POST', '/api/reports', ReportsController::class, 'create', 'user'],
         ['POST', '/api/reports/{id}/retry', ReportsController::class, 'retry', 'user'],
+        ['GET', '/api/reports/badge', ReportsController::class, 'badge', 'user'],
+        ['GET', '/api/reports/{id}', ReportsController::class, 'show', 'user'],
+        ['PUT', '/api/reports/{id}', ReportsController::class, 'update', 'user'],
+        ['POST', '/api/reports/{id}/status', ReportsController::class, 'status', 'user'],
+        ['POST', '/api/reports/{id}/messages', ReportsController::class, 'message', 'user'],
+        ['GET', '/api/reports/{id}/screenshot', ReportsController::class, 'screenshot', 'user'],
 
         ['GET', '/api/users', UsersController::class, 'index', 'owner'],
         ['POST', '/api/users', UsersController::class, 'invite', 'owner'],

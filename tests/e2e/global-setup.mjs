@@ -22,6 +22,12 @@ export default async function globalSetup() {
     (${now - 60}, 'critical', 'server', 'unhandled_exception', 'RuntimeException: publish_write_failed', 'Publisher.php:372', 'PUT /api/content/footer', 'A1B2C3', 'e2e1', 'sent', '{}'),
     (${now - 3600}, 'error', 'server', 'mail_failed', 'Exception', '', '', NULL, 'e2e2', NULL, '{"driver":"smtp"}'),
     (${now - 7200}, 'warning', 'system', 'publish_drift_detected', 'Live pages differ from the saved content', '', '', NULL, 'e2e3', NULL, '{}')`);
+  // One support ticket with a conversation, so the ticket screen has content.
+  server.sql(`INSERT INTO support_reports (user_id, reporter_name, reporter_email, type, title, description, area, page, context, fingerprint, email_status, email_attempts, created_at, updated_at, status, priority, owner_unread)
+    VALUES ((SELECT id FROM users WHERE email='${EDITOR.email}'), '${EDITOR.name}', '${EDITOR.email}', 'problem', 'La galería no abre en el celular', 'Toco «Ver detalles» y no pasa nada.', 'website', '/#proyectos', '{"browser":"Safari 17","device":"mobile"}', 'e2e-ticket', 'sent', 1, ${now - 7200}, ${now - 3600}, 'waiting', 'high', 0)`);
+  server.sql(`INSERT INTO report_messages (report_id, user_id, author_name, author_role, kind, body, details, email_status, created_at) VALUES
+    (1, (SELECT id FROM users WHERE email='${ADMIN.email}'), '${ADMIN.name}', 'support', 'event', '', '{"action":"status","from":"new","to":"waiting"}', NULL, ${now - 3700}),
+    (1, (SELECT id FROM users WHERE email='${ADMIN.email}'), '${ADMIN.name}', 'support', 'message', '¿Qué modelo de celular usas?', '{}', 'sent', ${now - 3600})`);
   server.cli(['publish']);
   process.env.E2E_BASE = server.base;
   process.env.E2E_STORAGE = server.storage();

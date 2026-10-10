@@ -15,7 +15,7 @@ const PAGES = [
   ['dashboard', '#/'], ['texts', '#/textos'], ['hero', '#/textos/hero'], ['faq', '#/textos/faq'], ['details', '#/contacto'],
   ['photos-about', '#/fotos/nosotros'], ['photos-projects', '#/fotos/proyectos'], ['documents', '#/fotos/documentos'],
   ['users', '#/usuarios'], ['reports', '#/reportes'], ['account', '#/cuenta'], ['help', '#/ayuda'], ['monitor', '#/monitoreo'], ['site-report', '#/informe'],
-  ['email', '#/correo'], ['form', '#/formulario'],
+  ['email', '#/correo'], ['form', '#/formulario'], ['ticket', '#/reportes/1'],
 ];
 
 /** Collects console errors, CSP violations, page errors and failed requests. */
@@ -269,13 +269,18 @@ test('report text containing HTML is shown as text, never executed', async ({ pa
   await login(page);
   await page.locator('.topbar .report-btn').click();
   const dlg = page.getByRole('dialog', { name: /Reportar un problema/ });
-  await dlg.getByLabel('Título').fill('<img src=x onerror=alert(1)> ' + Date.now());
+  const title = '<img src=x onerror=alert(1)> ' + Date.now();
+  await dlg.getByLabel('Título').fill(title);
   await dlg.getByLabel('Descripción').fill('<script>alert(2)</script> descripción de prueba');
   await dlg.getByRole('button', { name: 'Enviar reporte' }).click();
   await expect(dlg.getByText(/Tu reporte fue enviado/)).toBeVisible();
   await dlg.getByRole('button', { name: 'Listo' }).click();
+  // In the list of tickets and on the ticket itself: text, never markup.
   await page.goto('/admin/#/reportes');
-  await page.getByText('Ver detalle').first().click();
+  await expect(page.locator('.ticket-row', { hasText: title })).toBeVisible();
+  expect(await page.locator('main img[src="x"], main script').count()).toBe(0);
+  await page.locator('.ticket-row', { hasText: title }).click();
+  await expect(page.locator('main h1')).toHaveText(title);
   await expect(page.getByText('<script>alert(2)</script> descripción de prueba')).toBeVisible();
   expect(await page.locator('main img[src="x"], main script').count()).toBe(0);
   expect(dialogs).toBe(0);

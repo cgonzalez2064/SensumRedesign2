@@ -52,6 +52,7 @@ const PRIVATE = [
   { re: /^\/informe$/, mod: V.siteReport, fn: 'render', nav: 'siteReport', owner: true },
   { re: /^\/correo$/, mod: V.email, fn: 'render', nav: 'email', owner: true },
   { re: /^\/reportes$/, mod: V.reports, fn: 'render', nav: 'reports' },
+  { re: /^\/reportes\/([1-9][0-9]{0,8})$/, mod: V.reports, fn: 'detail', nav: 'reports' },
   { re: /^\/cuenta$/, mod: V.account, fn: 'render', nav: 'account' },
   { re: /^\/ayuda$/, mod: V.help, fn: 'render', nav: 'help' },
 ];
@@ -160,8 +161,27 @@ function navLink(path, key, ic, active) {
   const route = PRIVATE.find((r) => r.nav === key);
   const prefetch = () => { if (route) route.mod().catch(() => {}); };
   return h('a', { href: '#' + path, 'data-nav': key, 'aria-current': active === key ? 'page' : null, onclick: closeNav, onpointerenter: prefetch, onfocus: prefetch },
-    icon(ic), h('span', { text: t('nav.' + key) }));
+    icon(ic), h('span', { text: t('nav.' + key) }), key === 'reports' ? h('span', { class: 'nav-badge', hidden: true }) : null);
 }
+
+/**
+ * Number next to "Reportes de soporte": tickets that need IT (owner) or
+ * replies the person hasn't read yet. Refreshed when the frame is built,
+ * after ticket actions, and when the window regains focus (at most every 30 s).
+ */
+let badgeAt = 0;
+export async function refreshReportsBadge(force = true) {
+  if (!state.shell || (!force && Date.now() - badgeAt < 30000)) return;
+  badgeAt = Date.now();
+  let n = 0;
+  try { n = (await api.get('/reports/badge')).count; } catch (e) { return; }
+  const el = state.shell && state.shell.sidebar.querySelector('.nav a[data-nav="reports"] .nav-badge');
+  if (!el) return;
+  el.hidden = !n;
+  el.textContent = n > 99 ? '99+' : String(n);
+  el.setAttribute('aria-label', t(state.session && state.session.user.owner ? 'tickets.badgeOwner' : 'tickets.badgeReporter', { n }));
+}
+window.addEventListener('focus', () => refreshReportsBadge(false));
 
 function closeNav() {
   if (!state.shell) return;
@@ -262,6 +282,7 @@ function renderShell(activeNav, force = false) {
   fill(app, h('a', { class: 'skip-link', href: '#main', onclick: (e) => { e.preventDefault(); state.shell.main.focus(); } }, t('app.skip')),
     h('div', { class: 'app' }, sidebar, topbar, h('div', null, offline, main)), scrim);
   state.shell = { main, sidebar, scrim, openBtn, active, offline, key };
+  refreshReportsBadge();
   return main;
 }
 

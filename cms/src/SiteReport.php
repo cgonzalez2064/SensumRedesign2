@@ -147,6 +147,16 @@ final class SiteReport
         return number_format($n, $decimals, $lang === 'en' ? '.' : ',', $lang === 'en' ? ',' : '.');
     }
 
+    /** "6 horas", "2 días" — readable resolution time. */
+    private function duration(int $hours, string $lang): string
+    {
+        $s = $this->strings($lang);
+        if ($hours < 1) {
+            return $s['sr.time.lessHour'];
+        }
+        return $hours < 48 ? self::plural($s['sr.time.hours'], $hours) : self::plural($s['sr.time.days'], (int) round($hours / 24));
+    }
+
     private function grade(int $score, string $lang): string
     {
         $s = $this->strings($lang);
@@ -166,6 +176,31 @@ final class SiteReport
         }
         $backups = glob($this->app->storage('backups/db') . '/database-*.sqlite') ?: [];
         $psi = $this->app->pageSpeed()->latest();
+        // Support tickets of the month (received, resolved, still open at the end).
+        $tickets = ['received' => 0, 'resolved' => 0, 'open' => 0, 'avgHours' => null, 'resolvedTitles' => []];
+        try {
+            $tickets['received'] = $count('SELECT COUNT(*) FROM support_reports WHERE created_at >= ? AND created_at < ?');
+            $resolved = $db->all("SELECT title, created_at, resolved_at FROM support_reports WHERE resolved_at >= ? AND resolved_at < ? AND status IN ('resolved', 'closed') ORDER BY resolved_at", [$start, $end]);
+            $tickets['resolved'] = count($resolved);
+            if ($resolved) {
+                $tickets['avgHours'] = (int) round(array_sum(array_map(fn ($r) => max(0, (int) $r['resolved_at'] - (int) $r['created_at']), $resolved)) / count($resolved) / 3600);
+                $tickets['resolvedTitles'] = array_slice(array_column($resolved, 'title'), 0, 5);
+            }
+            $tickets['open'] = (int) $db->value("SELECT COUNT(*) FROM support_reports WHERE created_at < ? AND (status IN ('new', 'in_progress', 'waiting') OR (resolved_at IS NOT NULL AND resolved_at >= ?))", [$end, $end]);
+        } catch (\Throwable) {
+            // tickets not available (older database)
+        }
+        // Contact form messages and blocked spam (daily counts, last 60 days).
+        $contact = ['sent' => 0, 'blocked' => 0];
+        foreach ($this->app->settings()->getJson('contact_stats') as $day => $c) {
+            $ts = is_string($day) ? strtotime($day . ' 12:00') : false;
+            if ($ts !== false && $ts >= $start && $ts < $end && is_array($c)) {
+                $contact['sent'] += (int) ($c['sent'] ?? 0);
+                $contact['blocked'] += (int) ($c['blocked'] ?? 0);
+            }
+        }
+        $maintenance = $this->app->maintenanceLog()->month($period);
+        $maintenance['alerts'] += $count("SELECT COUNT(*) FROM error_log WHERE created_at >= ? AND created_at < ? AND alert = 'sent'");
         $tls = $this->app->settings()->getJson('tls_expiry');
         return [
             'checks' => (int) ($runs['n'] ?? 0),
@@ -182,6 +217,9 @@ final class SiteReport
             'lastPublished' => ((int) $this->app->settings()->get('last_published_at', '0')) ?: null,
             // Scores older than ~6 weeks are not shown as this month's.
             'pagespeed' => isset($psi['fetchedAt'], $psi['mobile'], $psi['desktop']) && time() - (int) $psi['fetchedAt'] < 45 * 86400 ? $psi : null,
+            'tickets' => $tickets,
+            'contact' => $contact,
+            'maintenance' => $maintenance,
         ];
     }
 
@@ -216,6 +254,9 @@ final class SiteReport
         } else {
             $summary .= ' ' . $s['sr.summary.noChanges'];
         }
+        if ($f['tickets']['resolved'] > 0) {
+            $summary .= ' ' . self::plural($s['sr.summary.resolved'], $f['tickets']['resolved']);
+        }
 
         $kpis = [];
         if ($pct !== null) {
@@ -225,6 +266,9 @@ final class SiteReport
             $kpis[] = ['label' => $s['sr.kpi.google'], 'value' => $f['pagespeed']['mobile']['performance'] . '/100', 'note' => $this->grade((int) $f['pagespeed']['mobile']['performance'], $lang)];
         }
         $kpis[] = ['label' => $s['sr.kpi.updates'], 'value' => (string) $changes, 'note' => $s['sr.kpi.updatesNote']];
+        if ($f['contact']['sent'] > 0) {
+            $kpis[] = ['label' => $s['sr.kpi.leads'], 'value' => self::number($f['contact']['sent'], $lang), 'note' => $s['sr.kpi.leadsNote']];
+        }
         $kpis[] = ['label' => $s['sr.kpi.security'], 'value' => $f['https'] ? $s['sr.kpi.secure'] : $s['sr.kpi.review'], 'note' => $f['blocked'] > 0
             ? self::plural($s['sr.kpi.blocked'], $f['blocked']) : $s['sr.kpi.noThreats']];
 
@@ -270,10 +314,39 @@ final class SiteReport
         $sections[] = ['title' => $s['sr.sec.security'], 'intro' => null, 'items' => $security];
 
         $support = [$f['incidents'] === 0 ? $s['sr.support.noIncidents'] : self::plural($s['sr.support.incidents'], $f['incidents'])];
-        if ($f['supportRequests'] > 0) {
+        $tk = $f['tickets'];
+        if ($tk['received'] > 0 || $tk['resolved'] > 0) {
+            $support[] = $tk['received'] > 0
+                ? self::plural($s['sr.support.received'], $tk['received'], ['resolved' => self::plural($s['sr.support.resolvedPart'], $tk['resolved'])])
+                : self::plural($s['sr.support.resolvedOnly'], $tk['resolved']);
+            if ($tk['avgHours'] !== null) {
+                $support[] = self::fill($s['sr.support.avg'], ['time' => $this->duration($tk['avgHours'], $lang)]);
+            }
+            foreach ($tk['resolvedTitles'] as $title) {
+                $support[] = self::fill($s['sr.support.done'], ['title' => $title]);
+            }
+            if ($tk['open'] > 0) {
+                $support[] = self::plural($s['sr.support.open'], $tk['open']);
+            }
+        } elseif ($f['supportRequests'] > 0) {
             $support[] = self::plural($s['sr.support.requests'], $f['supportRequests']);
         }
         $sections[] = ['title' => $s['sr.sec.support'], 'intro' => null, 'items' => $support];
+
+        // The maintenance that happened on its own this month (only what is known).
+        $m = $f['maintenance'];
+        $auto = array_values(array_filter([
+            $f['checks'] > 0 ? self::plural($s['sr.auto.checks'], $f['checks'], ['count' => self::number($f['checks'], $lang)]) : null,
+            $m['integrity'] > 0 ? self::plural($s['sr.auto.integrity'], $m['integrity'], ['count' => self::number($m['integrity'], $lang)]) : null,
+            $m['backups'] > 0 ? self::plural($s['sr.auto.backups'], $m['backups']) : null,
+            $m['certificate'] > 0 ? self::plural($s['sr.auto.certificate'], $m['certificate']) : null,
+            $m['pagespeed'] > 0 ? self::plural($s['sr.auto.pagespeed'], $m['pagespeed']) : null,
+            $f['contact']['blocked'] > 0 ? self::plural($s['sr.auto.spam'], $f['contact']['blocked']) : null,
+            $m['alerts'] > 0 ? self::plural($s['sr.auto.alerts'], $m['alerts']) : null,
+        ]));
+        if ($auto) {
+            $sections[] = ['title' => $s['sr.sec.auto'], 'intro' => $s['sr.sec.autoIntro'], 'items' => $auto];
+        }
 
         return [
             'period' => $period,
@@ -476,6 +549,7 @@ final class SiteReport
             fclose($conn);
         }
         $this->app->settings()->setJson('tls_expiry', ['checkedAt' => time(), 'validTo' => $validTo]);
+        $this->app->maintenanceLog()->add('certificate');
         if ($validTo !== null && $validTo - time() < 21 * 86400) {
             $this->app->logger()->warning('certificate_expiring', ['message' => 'HTTPS certificate expires on ' . date('Y-m-d', $validTo)]);
         }

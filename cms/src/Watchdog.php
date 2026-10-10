@@ -205,6 +205,7 @@ final class Watchdog
 
     private function checkIntegrity(int $now): string
     {
+        $this->app->maintenanceLog()->add('integrity', 1, $now);
         if ($this->manifest() === null) {
             // No release manifest (site uploaded without tools/build-release.sh): the
             // first check records the files as they are and later checks compare to it.
@@ -693,5 +694,8 @@ final class Watchdog
     {
         $ok = $this->app->mailer()->send($mail);
         $this->app->logger()->info($ok ? 'watchdog_sent' : 'watchdog_not_sent', ['rule' => $rule]);
+        if ($ok && !in_array($rule, ['weekly_digest', 'monthly_review', 'new_device', 'settings_changed'], true)) {
+            $this->app->maintenanceLog()->add('alerts');
+        }
     }
 }

@@ -183,6 +183,17 @@ differ by that line and should be regenerated once approved.
 
 Full re-run: API **146/146**, browser **86 passed / 31 skipped**.
 
+## Change — support tickets, demo accounts, monthly report value
+
+| Suite | What it covers | Result |
+|---|---|---|
+| API (`16-tickets`) | owner sees all with counts, filters and literal search; others only their own (404 for anything else, screenshot included); owner-only edit/status/notes (403); edits validated and recorded (hidden from the reporter); "ask for information" needs a message, e-mails the reporter (escaped HTML, link to the ticket, Reply-To support); notes never reach the reporter; reporter answer reopens and e-mails IT (Reply-To reporter); resolve → e-mail; reopen; close without e-mail; closed takes no replies (409); unread markers and menu badge; first public answer moves "new" to "in progress"; screenshot served with safe headers; `demo-users`: 7 profiles, private 0600 file, permissions per profile, disabled account cannot sign in, reruns reset passwords and add no tickets, refused in production | 11/11 |
+| API (`12-site-report`, extended) | tickets of the month (received, resolved, average time, resolved titles, still open), messages received KPI, automatic maintenance section (health checks, file scans, backups, certificate, Google, blocked spam, notices) in Spanish, English and in the e-mail; only known figures shown | 9/9 |
+| Browser (`tickets`) | two people in separate sessions: report → IT sees it unread with the menu badge → asks for information (required) → the person sees the guidance and answers → IT adds an internal note and resolves → the person sees "resolved", no note; axe on the ticket screen | 1/1 (desktop) |
+| Existing suites | ticket screen added to every-screen checks (3 devices × 2 themes); HTML in report titles/descriptions shown as text in the list and on the ticket | passing |
+
+Full re-run: API **158/158**, browser **87 passed / 33 skipped**.
+
 ## Other audits
 
 | Audit | Result |

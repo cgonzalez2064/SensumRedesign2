@@ -103,6 +103,20 @@ php cms/bin/console check
 
 Every required line must say `OK`. (`mail` shows OK only while Mailpit is running.)
 
+**Demo accounts for trying every access profile** (local only; refused when
+`APP_ENV=production`):
+
+```bash
+php cms/bin/console demo-users --reports
+```
+
+Creates or resets `demo.completo`, `demo.editor`, `demo.textos`, `demo.fotos`,
+`demo.contacto`, `demo.personalizado` and `demo.desactivado` (`@example.test`),
+each with a fresh random password, and writes them to
+`cms/storage/LOCAL-TEST-USERS.txt` (git-ignored, `0600`, blocked from the web).
+`--reports` also adds four sample support tickets in different states. Run it again
+to reset the passwords. The owner account is the one in `LOCAL-TEST-ADMIN.txt`.
+
 ## 5. Start everything
 
 ```bash

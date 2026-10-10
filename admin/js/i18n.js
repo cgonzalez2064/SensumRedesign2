@@ -79,9 +79,9 @@ export function fmtRelative(ts) {
   if (!ts) return t('common.never');
   const diff = Math.max(0, Date.now() / 1000 - ts);
   if (diff < 60) return t('common.justNow');
-  if (diff < 3600) return t('common.minutesAgo', { n: Math.round(diff / 60) });
-  if (diff < 86400) return t('common.hoursAgo', { n: Math.round(diff / 3600) });
-  if (diff < 86400 * 7) return t('common.daysAgo', { n: Math.round(diff / 86400) });
+  if (diff < 3600) return tp('common.minutesAgo', Math.round(diff / 60));
+  if (diff < 86400) return tp('common.hoursAgo', Math.round(diff / 3600));
+  if (diff < 86400 * 7) return tp('common.daysAgo', Math.round(diff / 86400));
   return fmtDate(ts, false);
 }
 
