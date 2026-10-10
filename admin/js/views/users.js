@@ -2,8 +2,8 @@
 import { h, icon, clear, initials, fill } from '../dom.js';
 import { t, fmtRelative, fmtDate } from '../i18n.js';
 import { api } from '../api.js';
-import { pageHead, loading, loadError, textField, alertBox, toast, errorText, fieldErrorText, openDialog, confirmDialog, setBusy, button, dropdown, copyText } from '../ui.js';
-import { accessPicker, accessLabel } from '../access.js';
+import { pageHead, loading, loadError, textField, alertBox, toast, errorText, fieldErrorText, openDialog, confirmDialog, setBusy, button, dropdown, copyText, emptyState } from '../ui.js';
+import { accessPicker, accessLabel, accessTypeOf } from '../access.js';
 import { viewAs, pickViewAs } from '../viewas.js';
 import { reloadSession } from '../app.js';
 
@@ -18,6 +18,9 @@ export async function render({ main }) {
   main.append(body);
 
   let presets = null;
+  // Search and filters (kept while the list reloads after a change).
+  const filters = { q: '', status: '', access: '' };
+  const fold = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const load = async () => {
     let data;
     try { data = await api.get('/users'); } catch (err) { fill(body, loadError(err, load)); return; }
@@ -47,20 +50,55 @@ export async function render({ main }) {
     const statusBadge = (u) => h('div', { class: 'stack-sm' }, h('span', { class: ['badge', STATUS_BADGE[u.status]], text: t('users.status.' + u.status) }),
       statusText(u) ? h('span', { class: 'tiny muted', text: statusText(u) }) : null);
 
-    const table = h('div', { class: 'table-wrap responsive hide-sm' }, h('table', { class: 'table' },
+    // ---- search & filters
+    const typeOf = (u) => (u.isOwner ? 'owner' : accessTypeOf(u.permissions || [], presets));
+    const search = h('input', { class: 'input', type: 'search', value: filters.q, placeholder: t('users.search'), 'aria-label': t('users.search'), autocomplete: 'off' });
+    const statusSel = h('select', { class: 'select', 'aria-label': t('users.filterStatus') },
+      [['', t('users.allStatuses')], ['active', t('users.status.active')], ['invited', t('users.status.invited')], ['disabled', t('users.status.disabled')]]
+        .map(([v, l]) => h('option', { value: v, text: l, selected: v === filters.status || null })));
+    const accessSel = h('select', { class: 'select', 'aria-label': t('users.filterAccess') },
+      h('option', { value: '', text: t('users.allAccess') }), h('option', { value: 'owner', text: t('users.ownerAccess'), selected: filters.access === 'owner' || null }),
+      [...Object.keys(presets), 'custom'].map((k) => h('option', { value: k, text: t('access.types.' + k)[0], selected: k === filters.access || null })));
+    const count = h('p', { class: 'small muted users-count', 'aria-live': 'polite' });
+    const listBox = h('div');
+    const matches = (u) => {
+      const q = fold(filters.q.trim());
+      if (q && !fold(u.name + ' ' + u.email + ' ' + accessLabel(u, presets)).includes(q)) return false;
+      if (filters.status && u.status !== filters.status) return false;
+      if (filters.access && typeOf(u) !== filters.access) return false;
+      return true;
+    };
+    const renderList = () => {
+      const shown = users.filter(matches);
+      count.textContent = shown.length === users.length ? t('users.countAll', { n: users.length }) : t('users.countSome', { n: shown.length, total: users.length });
+      if (!shown.length) {
+        fill(listBox, h('div', { class: 'card' }, emptyState('people', t('users.noMatchTitle'), t('users.noMatchBody'),
+          button(t('users.clearFilters'), { small: true, onClick: () => { filters.q = ''; filters.status = ''; filters.access = ''; search.value = ''; statusSel.value = ''; accessSel.value = ''; renderList(); } }))));
+        return;
+      }
+      fill(listBox, tableOf(shown), cardsOf(shown));
+    };
+    let timer = 0;
+    search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { filters.q = search.value; renderList(); }, 150); });
+    statusSel.addEventListener('change', () => { filters.status = statusSel.value; renderList(); });
+    accessSel.addEventListener('change', () => { filters.access = accessSel.value; renderList(); });
+    const toolbar = h('div', { class: 'users-toolbar' }, h('div', { class: 'users-search' }, icon('search'), search), statusSel, accessSel);
+
+    const tableOf = (list) => h('div', { class: 'table-wrap responsive hide-sm' }, h('table', { class: 'table' },
       h('thead', null, h('tr', null, ['name', 'access', 'status', 'lastLogin'].map((c) => h('th', { scope: 'col', text: t('users.cols.' + c) })), h('th', { scope: 'col' }, h('span', { class: 'sr-only', text: t('users.cols.actions') })))),
-      h('tbody', null, users.map((u) => h('tr', null,
+      h('tbody', null, list.map((u) => h('tr', null,
         h('td', null, person(u)),
         h('td', { class: 'small', text: accessLabel(u, presets) }),
         h('td', null, statusBadge(u)),
         h('td', { class: 'small muted', text: u.lastLoginAt ? fmtRelative(u.lastLoginAt) : t('users.neverLoggedIn') }),
         h('td', { class: 'nowrap' }, actionsMenu(u)))))));
-    const cards = h('div', { class: 'list-cards only-sm' }, users.map((u) => h('div', { class: 'card stack-sm' },
+    const cardsOf = (list) => h('div', { class: 'list-cards only-sm' }, list.map((u) => h('div', { class: 'card stack-sm' },
       h('div', { class: 'row-between' }, person(u), actionsMenu(u)),
       h('div', { class: 'small', text: accessLabel(u, presets) }),
       h('div', { class: 'row' }, statusBadge(u)),
       h('div', { class: 'tiny muted', text: u.lastLoginAt ? t('users.lastLogin', { when: fmtRelative(u.lastLoginAt) }) : t('users.neverLoggedIn') }))));
-    fill(body, table, cards);
+    fill(body, h('div', { class: 'stack' }, toolbar, count, listBox));
+    renderList();
   };
 
   const menuItem = (ic, label, onClick, danger) => h('button', { type: 'button', class: ['menu-item', danger && 'danger'], onclick: onClick }, icon(ic), label);

@@ -205,12 +205,14 @@ final class Cli
 
     /** Demo accounts, one per access profile (development only). id => [name, permissions, status] */
     private const DEMO_USERS = [
-        'demo.completo' => ['Demo Acceso Completo', ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'monitor'], 'active', 'Acceso completo al contenido'],
+        'demo.completo' => ['Demo Administrador del Sitio', ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor'], 'active', 'Administrador del sitio'],
         'demo.editor' => ['Demo Editor de Contenido', ['texts', 'contact', 'photos', 'documents'], 'active', 'Editor de contenido'],
-        'demo.textos' => ['Demo Solo Textos', ['texts'], 'active', 'Solo textos'],
-        'demo.fotos' => ['Demo Solo Fotos', ['photos', 'documents'], 'active', 'Solo fotos y portafolio'],
-        'demo.contacto' => ['Demo Solo Contacto', ['contact'], 'active', 'Solo datos de contacto y formulario'],
-        'demo.ventas' => ['Demo Ventas', ['leads'], 'active', 'Ventas: prospectos y estadísticas'],
+        'demo.textos' => ['Demo Redactor', ['texts'], 'active', 'Redactor (solo textos)'],
+        'demo.fotos' => ['Demo Fotos y Portafolio', ['photos', 'documents'], 'active', 'Fotos y portafolio'],
+        'demo.contacto' => ['Demo Datos de Contacto', ['contact'], 'active', 'Datos de contacto y formulario'],
+        'demo.ventas' => ['Demo Ventas', ['leads', 'stats'], 'active', 'Ventas: prospectos y estadísticas'],
+        'demo.gerencia' => ['Demo Gerencia', ['stats', 'monitor'], 'active', 'Gerencia: estadísticas y salud del sitio (consulta)'],
+        'demo.soporte' => ['Demo Soporte Técnico', ['support', 'monitor', 'site'], 'active', 'Soporte técnico: solicitudes, salud del sitio y publicación'],
         'demo.personalizado' => ['Demo Personalizado', ['texts', 'photos'], 'active', 'Personalizado: textos + fotos'],
         'demo.desactivado' => ['Demo Cuenta Desactivada', ['texts'], 'disabled', 'Desactivada (no puede entrar)'],
     ];
@@ -236,13 +238,13 @@ final class Cli
             $id = $db->value('SELECT id FROM users WHERE email = ?', [$email]);
             if ($id) {
                 $db->run('UPDATE users SET name = ?, role = ?, status = ?, permissions = ?, password_hash = ?, password_changed_at = ?, updated_at = ? WHERE id = ?',
-                    [$name, 'editor', $status, implode(',', $perms), Passwords::hash($password), $now, $now, $id]);
+                    [$name, 'editor', $status, implode(',', array_intersect(Users::PERMISSIONS, $perms)), Passwords::hash($password), $now, $now, $id]);
                 $db->run('DELETE FROM sessions WHERE user_id = ?', [$id]);
             } else {
                 $id = $db->insert(
                     "INSERT INTO users (email, name, role, status, password_hash, lang, theme, created_at, updated_at, password_changed_at, permissions)
                      VALUES (?, ?, 'editor', ?, ?, 'es', 'system', ?, ?, ?, ?)",
-                    [$email, $name, $status, Passwords::hash($password), $now, $now, $now, implode(',', $perms)]
+                    [$email, $name, $status, Passwords::hash($password), $now, $now, $now, implode(',', array_intersect(Users::PERMISSIONS, $perms))]
                 );
             }
             $rows[] = [$label, $email, $password, $status];
@@ -253,7 +255,7 @@ final class Cli
             . 'Panel: ' . $this->app->config->appUrl() . "/admin/\n\n"
             . "Owner (IT): see LOCAL-TEST-ADMIN.txt (" . $this->app->config->ownerEmail() . ")\n\n";
         foreach ($rows as [$label, $email, $password]) {
-            $text .= str_pad($label, 38) . str_pad($email, 36) . $password . "\n";
+            $text .= str_pad($label, 62) . str_pad($email, 36) . $password . "\n";
         }
         $text .= "\nRun the command again to reset every password. Delete these accounts before going live\n"
             . "(they only exist in this local database: cms/storage/database.sqlite).\n";

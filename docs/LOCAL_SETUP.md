@@ -113,9 +113,11 @@ Every required line must say `OK`. (`mail` shows OK only while Mailpit is runnin
 php cms/bin/console demo-users --reports
 ```
 
-Creates or resets `demo.completo`, `demo.editor`, `demo.textos`, `demo.fotos`,
-`demo.contacto`, `demo.ventas` (Prospectos and Estadísticas only), `demo.personalizado`
-and `demo.desactivado` (`@example.test`),
+Creates or resets one account per ready-made access type — `demo.completo`
+(Administrador del sitio), `demo.editor`, `demo.textos` (Redactor), `demo.fotos`,
+`demo.contacto`, `demo.ventas` (Prospectos and Estadísticas), `demo.gerencia`
+(basic Estadísticas and Salud del sitio), `demo.soporte` (manages every support
+request) — plus `demo.personalizado` and `demo.desactivado` (`@example.test`),
 each with a fresh random password, and writes them to
 `cms/storage/LOCAL-TEST-USERS.txt` (git-ignored, `0600`, blocked from the web).
 `--reports` also adds four sample support tickets in different states. Run it again
@@ -205,7 +207,7 @@ Use the button in the top bar. The report is stored and e-mailed to
 `SUPPORT_EMAIL`; locally it lands in Mailpit addressed to `it@gruposensum.com`.
 To test a delivery failure, stop Mailpit (`pkill mailpit`) and send a report:
 the panel says it was saved but not sent; restart Mailpit and use
-**Reportes de soporte → Reintentar envío** (or `php cms/bin/console reports:retry`).
+**Solicitudes de soporte → Reintentar envío** (or `php cms/bin/console reports:retry`).
 
 ### SMTP configuration
 Any SMTP server works through the `SMTP_*` values. Send a test message with the

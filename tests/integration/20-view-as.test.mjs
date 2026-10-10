@@ -13,7 +13,7 @@ before(async () => {
   s = await startServer({ port: 8311 });
   createAdmin(s); createAdmin(s, EDITOR); createAdmin(s, SALES); createAdmin(s, OFF);
   s.sql(`UPDATE users SET role='editor', permissions='texts' WHERE email='${EDITOR.email}'`);
-  s.sql(`UPDATE users SET role='editor', permissions='leads' WHERE email='${SALES.email}'`);
+  s.sql(`UPDATE users SET role='editor', permissions='leads,stats' WHERE email='${SALES.email}'`);
   s.sql(`UPDATE users SET status='disabled' WHERE email='${OFF.email}'`);
   s.sql(`INSERT INTO users (email, name, role, status, password_hash, permissions, lang, theme, created_at, updated_at) VALUES ('ivan.invitado@example.test', 'Iván Invitado', 'editor', 'invited', '', 'photos,documents', 'es', 'system', strftime('%s','now'), strftime('%s','now'))`);
   ids = Object.fromEntries(s.sql('SELECT email, id FROM users').split('\n').map((l) => l.split('|')).map(([e, i]) => [e, Number(i)]));

@@ -46,7 +46,7 @@ test('the owner views the panel as other accounts, switches, and goes back', asy
   // Their panel, with the bar.
   const bar = page.getByRole('region', { name: 'Modo «Ver como»' });
   await expect(bar).toContainText(`Viendo el panel como ${TEXTS_ONLY.name}`);
-  await expect(bar).toContainText('Solo textos · solo lectura');
+  await expect(bar).toContainText('Redactor · solo lectura');
   await expect(bar).toContainText(/quedan (29|30) min/);
   await expect(page.locator('main h1')).toHaveText(`Hola, ${TEXTS_ONLY.name.split(' ')[0]}`);
   const links = await navLinks(page);
@@ -70,7 +70,7 @@ test('the owner views the panel as other accounts, switches, and goes back', asy
   await bar.getByRole('button', { name: 'Cambiar de persona' }).click();
   await page.getByRole('dialog', { name: 'Cambiar a otra persona' }).getByRole('button', { name: `Ver el panel como ${SALES.name}` }).click();
   await expect(bar).toContainText(`Viendo el panel como ${SALES.name}`);
-  await expect(bar).toContainText('Ventas: prospectos');
+  await expect(bar).toContainText('Ventas · solo lectura');
   const salesLinks = await navLinks(page);
   expect(salesLinks).toEqual(expect.arrayContaining(['#/prospectos', '#/estadisticas']));
   expect(salesLinks).not.toContain('#/textos');

@@ -99,7 +99,7 @@ test('summary version: only for the "monitor" access; counts and dates, no messa
 test('"monitor" is a regular access: part of full access and of custom choices', async () => {
   const list = (await owner.get('/api/users')).data;
   assert.ok(list.permissions.includes('monitor'));
-  assert.ok(list.accessTypes.full.includes('monitor'));
+  assert.ok(list.accessTypes.admin.includes('monitor'));
   const id = Number(s.sql(`SELECT id FROM users WHERE email='${PHOTOS.email}'`));
   assert.equal((await owner.put(`/api/users/${id}`, { permissions: ['photos', 'monitor'] })).status, 200);
   const again = new Client(s.base); await again.login(PHOTOS.email, PHOTOS.password);

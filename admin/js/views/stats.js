@@ -47,7 +47,7 @@ function dailyChart(days) {
   const locale = getLang() === 'en' ? 'en-US' : 'es-GT';
   const d = (x) => new Date(x + 'T12:00:00');
   return chart({
-    type: 'line', area: true, labels: days.map((x) => x.day), ariaLabel: t('stats.dailyAria'),
+    type: 'line', area: true, integer: true, labels: days.map((x) => x.day), ariaLabel: t('stats.dailyAria'),
     xFormat: (x) => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(d(x)),
     titleFormat: (x) => new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long' }).format(d(x)),
     series: [
@@ -79,16 +79,21 @@ export async function render({ main }) {
     const v = d.visits; const p = d.previous; const l = d.leads; const pl = d.previousLeads;
     const contactClicks = v.clicks.whatsapp + v.clicks.phone + v.clicks.email;
     const prevClicks = p.clicks.whatsapp + p.clicks.phone + p.clicks.email;
-    const rate = v.visitors > 0 ? Math.round((1000 * (contactClicks + l.received)) / v.visitors) / 10 : 0;
+    // Basic version ("stats" access): visits only, no contact-form figures.
+    const basic = !l;
+    const rate = v.visitors > 0 ? Math.round((1000 * (contactClicks + (basic ? 0 : l.received))) / v.visitors) / 10 : 0;
+    const mobile = Object.values(v.devices).reduce((a, b) => a + b, 0);
 
     const off = !d.enabled ? alertBox('info', t('stats.offTitle'), t(d.canConfigure ? 'stats.offOwner' : 'stats.offOther')) : null;
     const noData = d.enabled && v.views === 0 ? alertBox('info', t('stats.noVisitsTitle'), t('stats.noVisitsBody')) : null;
 
     const kpis = h('div', { class: 'kpi-grid' },
-      kpi(t('stats.visitors'), num(v.visitors), t('stats.viewsN', { n: num(v.views) }), trend(v.visitors, p.visitors)),
+      kpi(t('stats.visitors'), num(v.visitors), basic ? t('stats.visitorsNote') : t('stats.viewsN', { n: num(v.views) }), trend(v.visitors, p.visitors)),
       kpi(t('stats.contactClicks'), num(contactClicks), t('stats.contactClicksNote'), trend(contactClicks, prevClicks)),
-      kpi(t('stats.formMessages'), num(l.received), t('stats.formMessagesNote'), trend(l.received, pl.received)),
-      kpi(t('stats.contactRate'), dec(rate) + (getLang() === 'en' ? '%' : ' %'), t('stats.contactRateNote'), null));
+      basic ? kpi(t('stats.views'), num(v.views), t('stats.viewsPerVisit', { n: dec(v.visitors ? v.views / v.visitors : 0) }), trend(v.views, p.views))
+        : kpi(t('stats.formMessages'), num(l.received), t('stats.formMessagesNote'), trend(l.received, pl.received)),
+      basic ? kpi(t('stats.mobileShare'), (mobile ? Math.round((100 * (v.devices.mobile || 0)) / mobile) : 0) + (getLang() === 'en' ? '%' : ' %'), t('stats.mobileShareNote'), null)
+        : kpi(t('stats.contactRate'), dec(rate) + (getLang() === 'en' ? '%' : ' %'), t('stats.contactRateNote'), null));
 
     if (dayChart) dayChart.destroy();
     dayChart = dailyChart(v.days);
@@ -105,7 +110,7 @@ export async function render({ main }) {
     const clicks = h('section', { class: 'card', 'aria-labelledby': 'st-clk' },
       cardHead({ id: 'st-clk', icon: 'whatsapp', title: t('stats.clicks'), lead: t('stats.clicksLead') }),
       bars(v.clicks, Math.max(1, Object.values(v.clicks).reduce((a, b) => a + b, 0)), { labelOf: (k) => t('stats.click.' + k), empty: t('stats.noClicks') }));
-    const funnel = h('section', { class: 'card', 'aria-labelledby': 'st-leads' },
+    const funnel = basic ? null : h('section', { class: 'card', 'aria-labelledby': 'st-leads' },
       cardHead({ id: 'st-leads', icon: 'inbox', title: t('stats.leadsTitle'), badge: h('a', { class: 'btn btn-sm btn-ghost', href: '#/prospectos' }, t('stats.openLeads'), icon('chevron-right')) }),
       l.received ? h('ol', { class: 'funnel' }, [['received', l.received], ['contacted', l.contacted + l.quoted + l.won], ['quoted', l.quoted + l.won], ['won', l.won]].map(([k, n]) => h('li', null,
         h('span', { class: 'funnel-num', text: num(n) }), h('span', { class: 'small', text: t('stats.funnel.' + k) }),

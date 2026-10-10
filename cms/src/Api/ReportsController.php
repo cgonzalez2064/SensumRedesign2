@@ -23,7 +23,8 @@ final class ReportsController extends Controller
     public function index(): never
     {
         $list = $this->tickets()->list((array) $this->session, $this->req->query('status') ?: 'open', $this->req->query('q'));
-        Response::ok($list + ['supportEmail' => $this->app->mailSettings()->supportEmail(), 'canManage' => $this->isOwner(), 'slaHours' => $this->isOwner() ? $this->tickets()->slaHours() : null]);
+        $manages = $this->tickets()->manages((array) $this->session);
+        Response::ok($list + ['supportEmail' => $this->app->mailSettings()->supportEmail(), 'canManage' => $manages, 'slaHours' => $manages ? $this->tickets()->slaHours() : null]);
     }
 
     public function badge(): never
@@ -54,6 +55,13 @@ final class ReportsController extends Controller
         Response::ok($this->tickets()->addMessage((array) $this->session, $id, $this->str('body'), ($in['internal'] ?? false) === true, ($in['notify'] ?? true) === true));
     }
 
+    /** Charts for whoever manages the tickets: 30, 90 or 365 days. */
+    public function analytics(): never
+    {
+        $days = (int) $this->req->query('days');
+        Response::ok($this->tickets()->analytics((array) $this->session, in_array($days, [30, 90, 365], true) ? $days : 30));
+    }
+
     /** The reporter rates the help on a resolved ticket (1–5, optional comment). */
     public function rate(int $id): never
     {
@@ -64,7 +72,7 @@ final class ReportsController extends Controller
     /** Owner: response-time target used in the figures and the monthly report. */
     public function settings(): never
     {
-        if (!$this->isOwner()) {
+        if (!$this->tickets()->manages((array) $this->session)) {
             throw new ApiError(403, 'forbidden');
         }
         $in = $this->req->json();

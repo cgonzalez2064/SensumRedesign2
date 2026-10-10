@@ -224,7 +224,7 @@ install/repair the suggested **SPF** and **DKIM** records, and add a **DMARC**
 record (`_dmarc` TXT, e.g. `v=DMARC1; p=quarantine; rua=mailto:dmarc@sensumconstrucciones.com`).
 Without these, invitations, resets and support reports may land in spam.
 
-**Support reports** go to the panel's *Reportes de problemas* address (**it@gruposensum.com**). Make sure that
+**Support requests** go to the panel's *Solicitudes de soporte* address (**it@gruposensum.com**). Make sure that
 mailbox accepts mail from `sensumconstrucciones.com` (whitelist the sender if it
 uses aggressive filtering).
 
@@ -315,7 +315,7 @@ Do these on the live site and tick them in `docs/PRODUCTION_CHECKLIST.md`:
     **it@gruposensum.com** with subject `[Sensum Website] …`.
 11. Report failure handling: temporarily set a wrong `SMTP_PASSWORD`, send a
     report → the panel says it was saved but not sent → restore the password →
-    **Reportes de soporte → Reintentar envío** → it arrives.
+    **Solicitudes de soporte → Reintentar envío** → it arrives.
 12. Upload restrictions: try a `.svg` or a renamed text file → friendly refusal.
 13. Dashboard → *Diagnóstico técnico*: all green (the "Carpeta privada fuera del
     sitio público" check confirms the folder layout).
@@ -326,7 +326,12 @@ Do these on the live site and tick them in `docs/PRODUCTION_CHECKLIST.md`:
     press **Deshacer** and leave without saving.
 16. Monitoring: sign in as it@gruposensum.com → **Monitoreo** loads; **Enviar
     correo de prueba** arrives; after the cron job's first run, *Última revisión
-    automática* shows a time. Sign in as another administrator → no Monitoreo menu.
+    automática* shows a time, and *Disponibilidad (uptime)* / *Incidentes (30 días)*
+    fill in. Sign in as another administrator → no Monitoreo menu, but **Salud del
+    sitio** (the summary: uptime, charts, incidents — no error details).
+17. Access profiles: Usuarios → **Ver como…** each team member; the menu matches the
+    access type (e.g. *Gerencia (consulta)* sees only basic Estadísticas and Salud del
+    sitio; *Soporte técnico* sees every support request and the overview charts).
 
 ## 11. Updating later (new release)
 
@@ -337,6 +342,9 @@ Do these on the live site and tick them in `docs/PRODUCTION_CHECKLIST.md`:
    - `public_html`: everything **except** `assets/uploads/` (keep its contents).
    - `sensum-cms`: everything **except** `.env` and `storage/`.
 4. Migrations run automatically on the next request (or `bin/console migrate`).
+   Migration `011_access_profiles` gives the new **stats** permission to every
+   account that had **leads** (they kept seeing Estadísticas); the **support**
+   permission (manage all support requests) is never granted automatically.
 5. Republish (§9) so the new templates are combined with the current content —
    the uploaded pages contain default content until you do.
 6. Re-run the post-deployment tests that relate to the change.
@@ -411,8 +419,13 @@ the admin API stops. Then disable accounts / reset passwords and restore.
   e-mail settings changed (always on).
 * **Errors:** Monitoreo → *Registro de errores* (server, panel and — if
   `PUBLIC_ERROR_REPORTING=true` — public-site errors; critical ones are e-mailed).
+* **Summary for the team:** the **monitor** permission ("Salud del sitio") shows
+  uptime for 24 h / 7 / 30 / 90 days, the daily-uptime chart, response time and
+  incidents (periods of consecutive failed checks) without error messages or
+  settings. The owner's Monitoreo shows the same plus which checks failed.
 * **Visit statistics:** built in and cookie-free (panel → Estadísticas; owner can
-  turn them off). Leads from the contact form: panel → Prospectos (retention chosen
+  turn them off). The **stats** permission alone gives the basic version (no
+  contact-form figures); with **leads** it is complete. Leads from the contact form: panel → Prospectos (retention chosen
   by the owner). See `docs/CONTENT_MANAGER.md` §9 and §9c. Cloudflare Web Analytics
   remains optional (needs a privacy-notice update and a CSP change).
 * **Logs:** `sensum-cms/storage/logs/` (application) and cPanel → *Errors* /

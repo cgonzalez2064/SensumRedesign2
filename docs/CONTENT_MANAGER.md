@@ -95,15 +95,16 @@ so a slow screen can never write into the next one).
 | Account | Name, panel language, theme; change password (signs out other devices); sign out other sessions |
 | Support | "Reportar un problema" from every screen; history with delivery status and retry |
 | Dashboard | Site status, last publish, sync check + republish (admins), recent activity, monitoring status; diagnostics and recent errors for the owner |
-| Monitoring (owner) | Error log with filters and details, key figures (24 h / 7 d / 30 d), most frequent errors, system details, e-mail alerts for critical errors + test e-mail (§9a) |
+| Monitoring (owner) | Uptime (24 h / 7 / 30 / 90 days), incidents with the checks that failed, interactive trend charts (daily uptime, response time, errors, sign-ins), error log with filters and details, key figures, most frequent errors, system details, e-mail alerts for critical errors + test e-mail (§9a, §9d) |
+| Salud del sitio (`monitor`) | Summary of Monitoring for the team: status, uptime, charts, incidents, error counts and key dates — no messages or settings (§9d) |
 | Monthly report (owner) | Short plain-language site-health and visibility report for clients; recipients (owner always copied), preview, test, send, history; reminder after day 5 (§9b) |
-| Support tickets | Reports become tickets: status (new, in progress, waiting for information, resolved, closed), priority, conversation; the owner edits, replies, adds internal notes, asks for information, resolves/closes/reopens with optional e-mail to the reporter; reporters follow and answer their own tickets (an answer reopens); menu badge; screenshot viewer |
+| Support requests | Reports become requests: status (new, in progress, waiting for information, resolved, closed), priority, conversation; the owner and the `support` access edit, reply, add internal notes, ask for information, resolve/close/reopen with optional e-mail to the reporter, and see the *Panorama de soporte* charts (30/90/365 days); reporters follow and answer their own (an answer reopens); menu badge; screenshot viewer |
 | Monthly report value | Support summary (received, resolved, average resolution time, resolved items, pending) and automatic maintenance (health checks, file-security scans, backups, certificate checks, Google measurements, blocked spam, notices) + messages received through the form |
-| Contact-form options | "Servicio de interés" list: add, rename (ES/EN), reorder, remove (up to 20), live preview, restore the approved options; published at once; stable ids so renaming never breaks open pages (access: contact details) |
+| Contact-form options | "Servicio de interés" list: add, rename (ES/EN), reorder, remove (up to 20), restore the approved options; published at once; stable ids so renaming never breaks open pages (access: contact details). The preview is a working replica of the site's form: phone / tablet / computer widths (scaled to fit), ES/EN, the list opens with unsaved options tagged *Nueva* / *Modificada*, and «Enviar mensaje» shows the site's validation messages without sending anything |
 | E-mail settings (owner) | Panel's SMTP sending account (+ Reply-To), contact-form receivers/sender/method, problem-report and alert recipients, optional Cloudflare Turnstile keys; password re-check, secrets encrypted at rest, security notice, test buttons; `EMAIL_SETTINGS_LOCKED` for .env-only setups |
 | Contact-form captcha | Built-in invisible proof-of-work captcha (always on, no keys) + optional Cloudflare Turnstile; counts of messages and blocked spam in the weekly summary |
 | Automatic alerts (owner) | 12 rules with their own periods and de-duplication (critical errors, file integrity, sign-in attack, new device, certificate, backup, scheduler, disk, error spike, weekly digest, monthly security review, report reminder), on/off per rule; file-integrity check with "accept" (password) |
-| Users (owner) | Invite, change access type, disable/enable, delete (§2b) |
+| Users (owner) | Invite, change access type (8 ready-made jobs or custom, §2b), disable/enable, delete; search by name, e-mail or access (accent-insensitive) and filter by status and access type; «Ver como» |
 | Interface | Spanish by default, English optional; light/dark/system theme; responsive from 320 px phones to large monitors; reduced-motion aware |
 
 ### 2a. Automatic translation ES ⇄ EN
@@ -162,17 +163,37 @@ what an account cannot use.
 | Permission | Allows |
 |---|---|
 | `texts` | Textos del sitio (and automatic translation) |
-| `contact` | Datos de contacto |
+| `contact` | Datos de contacto and the contact-form options |
 | `photos` | Photos: "Nosotros", project cards and galleries |
 | `documents` | The PDF portfolio |
-| `site` | Site status: recent activity and *Volver a publicar el sitio* |
+| `site` | Publishing and activity: recent activity and *Volver a publicar el sitio* |
+| `leads` | Prospectos (personal data from the contact form) and the complete Estadísticas |
+| `stats` | Estadísticas, basic version: visits, sources, devices, clicks — no contact-form figures (`leads`/`previousLeads` are `null`) |
+| `monitor` | *Salud del sitio*: status, uptime 24 h/7/30/90 days, charts, incidents (without check names), error counts, key dates |
+| `support` | Manage **everyone's** support requests (status, priority, internal notes, response target) and the *Panorama de soporte* charts |
 
-Ready-made types: *Acceso completo al contenido* (all five), *Editor de
-contenido* (all but `site`), *Solo textos*, *Solo fotos y portafolio*, *Solo
-datos de contacto* — or *Personalizado*. Everyone can manage their own account
-and send support reports. Existing accounts were migrated in `003_access.sql`
-(former administrators: all five; former editors: all but `site`). The old
-`role` column is kept only for compatibility; it grants nothing.
+Ready-made types (`Users::ACCESS_TYPES`, one concrete job each), or *Personalizado*:
+
+| Type | Permissions |
+|---|---|
+| *Administrador del sitio* (`admin`) | texts, contact, photos, documents, site, leads, stats, monitor |
+| *Editor de contenido* (`content`) | texts, contact, photos, documents |
+| *Redactor* (`texts`) | texts |
+| *Fotos y portafolio* (`media`) | photos, documents |
+| *Datos de contacto* (`contact`) | contact |
+| *Ventas* (`sales`) | leads, stats |
+| *Gerencia (consulta)* (`management`) | stats, monitor |
+| *Soporte técnico* (`support`) | support, monitor, site |
+
+`Users::accessTypeOf()` maps a permission set to its type (order-insensitive;
+anything else is `custom`). `bin/console create-admin` gives the *Administrador del
+sitio* set. Everyone can manage their own account and send support requests (and
+sees only their own unless they have `support`). Existing accounts were migrated in
+`003_access.sql` (former administrators: the first five; former editors: all but
+`site`), `009_monitor_lite.sql` (`site` → `+monitor`) and `011_access_profiles.sql`
+(`leads` → `+stats`, so nobody lost Estadísticas; `support` is never granted
+automatically). The old `role` column is kept only for compatibility; it grants
+nothing.
 
 ## 3. Editable content model
 
@@ -231,11 +252,11 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 | `POST /api/auth/invitation/verify` · `/invitation/accept` | public | invitation |
 | `POST /api/setup` | public, one-time | first admin with `SETUP_TOKEN` |
 | `GET /api/dashboard` | user | dashboard data (admins get activity; the owner also gets diagnostics and errors) |
-| `GET /api/monitor/summary` · `GET /api/monitor/errors?severity=&source=&days=&q=&page=` · `POST /api/monitor/test-alert` | owner | Monitoring page, error log, test alert |
+| `GET /api/monitor/summary` · `GET /api/monitor/errors?severity=&source=&days=&q=&page=` · `POST /api/monitor/test-alert` | owner | Monitoring page (also `uptime` and `incidents` with the `failed` check names), error log, test alert |
 | `PUT /api/monitor/alerts` · `GET /api/monitor/integrity` · `POST /api/monitor/integrity/accept` | owner | automatic-alert toggles; site-file findings; accept current files (password) |
 | `POST /api/monitor/domain-check` | owner | SPF/DKIM/DMARC/MX and domain-expiry check now |
 | `GET /api/monitor/series?days=7|30|90` | `monitor` (owner: + sign-ins) | daily figures for the trend charts: checks, availability, average home-page response time, errors by severity |
-| `GET /api/monitor/overview` | `monitor` | summary version of Monitoring: status, 30-day availability, 7-day response time, error counts, last check, publish/certificate/domain/e-mail/backup dates — no messages or settings |
+| `GET /api/monitor/overview` | `monitor` | *Salud del sitio*: status, `uptime` (`24h`/`7d`/`30d`/`90d` → `pct`, `checks`, `failed`), `incidents` (30 days: `start`, `end`, `ongoing`, `minutes`, `checks` — no check names), 7-day response time, error counts, last check, publish/certificate/domain/e-mail/backup dates — no messages or settings |
 | `GET`/`PUT /api/settings/translation` · `POST /api/settings/translation/test` | owner | DeepL key (encrypted, never returned; password to save), on/off, connection test with usage |
 | `GET /api/security` · `PUT /api/security/backup` · `POST /api/security/backup/send` · `POST /api/security/backup/download` · `PUT /api/security/policy` | owner | off-server encrypted backup settings (password), send now, download (password); who must use two-step sign-in (password) |
 | `POST /api/users/{id}/2fa-reset` | owner | turn off someone else's two-step sign-in (password; ends their sessions; never your own) |
@@ -248,16 +269,17 @@ and send support reports. Existing accounts were migrated in `003_access.sql`
 | `GET /api/media` · `POST /api/media/{slot}/upload` · `PUT /api/media/{slot}/order` · `PUT`/`DELETE /api/media/item/{id}` | user | photos & PDF |
 | `PUT /api/account/profile` · `POST /api/account/password` · `POST /api/account/sessions/revoke-others` | user | own account |
 | `GET /api/account/2fa` · `POST /api/account/2fa/setup` · `/enable` · `/recovery-codes` · `/disable` | user | own two-step sign-in: setup (password → secret + QR), enable (code → recovery codes), new codes and disable (password + code). The only routes open to an account that must still enrol |
-| `GET /api/reports?status=&q=` · `POST /api/reports` · `POST /api/reports/{id}/retry` · `GET /api/reports/badge` | user | tickets (owner: all, filters, search; others: own) |
-| `GET /api/reports/{id}` · `POST /api/reports/{id}/messages` · `GET /api/reports/{id}/screenshot` | user (own) / owner | ticket, conversation (owner: `internal` notes), screenshot |
+| `GET /api/reports?status=&q=` · `POST /api/reports` · `POST /api/reports/{id}/retry` · `GET /api/reports/badge` | user | support requests (owner and `support`: all, filters, search, `canManage: true`; others: own) |
+| `GET /api/reports/{id}` · `POST /api/reports/{id}/messages` · `GET /api/reports/{id}/screenshot` | user (own) / owner · `support` | request, conversation (managers: `internal` notes), screenshot |
+| `GET /api/reports/analytics?days=30|90|365` | owner · `support` | *Panorama de soporte*: per-day `created`/`resolved`, totals, `avgResolutionHours`, counts by `status` (all requests), `byType`, `byPriority`, `byArea`, `open` and the service levels |
 | `POST /api/reports/{id}/rating` | reporter | rate a resolved/closed ticket once: `rating` 1–5, optional `comment` (≤ 500) |
-| `PUT /api/reports/settings` | owner | response-time target `slaHours` (4, 8, 24, 48, 72) |
+| `PUT /api/reports/settings` | owner · `support` | response-time target `slaHours` (4, 8, 24, 48, 72) |
 | `GET /api/leads?status=&q=&service=` · `GET /api/leads/badge` · `GET`/`PUT`/`DELETE /api/leads/{id}` · `POST /api/leads/{id}/notes` · `POST /api/leads/export` | `leads` | Prospectos: list with counts, unread badge, one lead (marks read), status/amount, notes, delete, CSV |
 | `PUT /api/leads/settings` | owner | retention `retention` (6, 12, 24, 36 months); republishes the privacy notice |
-| `GET /api/stats?period=30d|YYYY-MM` · `PUT /api/stats/settings` | `leads` · owner | visit statistics with the previous period; on/off (`enabled`, republishes) |
+| `GET /api/stats?period=30d|YYYY-MM` · `PUT /api/stats/settings` | `stats` or `leads` · owner | visit statistics with the previous period (without `leads`: `leads`/`previousLeads` are `null`); on/off (`enabled`, republishes) |
 | `POST /api/collect` | public, origin-checked | visit/click beacon from `assets/stats.js`; always 204 |
 | `POST /api/site-report/pdf` | owner | the report as a PDF (`period`, `lang`, optional `note`) |
-| `PUT /api/reports/{id}` · `POST /api/reports/{id}/status` | owner | edit fields/priority; status with optional `message` and `notify` |
+| `PUT /api/reports/{id}` · `POST /api/reports/{id}/status` | owner · `support` | edit fields/priority; status with optional `message` and `notify` |
 | `GET`/`POST /api/users` · `POST /api/users/{id}/resend` · `PUT`/`DELETE /api/users/{id}` | owner | user management, access types |
 | `GET /api/view-as` · `POST /api/view-as` · `POST /api/view-as/switch` · `POST /api/view-as/stop` | owner (really) | "Ver como": candidates (active/invited, never the owner); start with `userId` + `currentPassword`; switch without password while active; stop. While active the session answers as that account, read-only (`403 view_only` for any change except switch/stop and the leads CSV), with `X-View-As: <id>` (0 otherwise) so the panel notices changes |
 | `GET /api/site-report` · `GET /api/site-report/preview?period=&lang=` · `PUT /api/site-report/settings` · `POST /api/site-report/send` | owner | monthly client report |
@@ -328,7 +350,7 @@ admins can republish with one click (or `php bin/console publish`).
   `[Sensum Website] <Tipo>: <Título>`, Reply-To = reporter, plain text + escaped
   HTML, screenshot attached. HTTP 201 = sent, 202 = saved but not sent.
 * Failure handling: status `failed`, the text stays on screen, the user can
-  retry immediately or later from **Reportes de soporte**; admins see failures on
+  retry immediately or later from **Solicitudes de soporte**; admins see failures on
   the dashboard; `php bin/console reports:retry` resends all pending.
 * Abuse limits: 5 reports per 10 minutes and 20 per day per user; identical
   reports within 15 minutes are recognized as duplicates; retries 10 per 10 min.
@@ -400,22 +422,31 @@ Stack / UptimeRobot on the site and `/api/health`).
 Owner-only page **Informe mensual**. A short report in plain language (Spanish
 or English) for people who aren't technical:
 
-* Headline and status (*Todo en orden* / *Con observaciones*: any critical
-  incident, or availability below 99 %), one-paragraph summary.
-* Figures: availability (share of the month's scheduled checks that passed),
-  Google mobile speed score, content updates, security (HTTPS, blocked sign-in
-  attempts).
-* Sections: *Visibilidad en Google* (PageSpeed performance on phones and
-  computers, SEO, accessibility), *Contenido*, *Seguridad y respaldo* (HTTPS
-  certificate date, latest backup), *Soporte*. Sections without data are left
-  out rather than shown empty.
+* Headline and status (*Todo en orden* / *Requiere atención*: any critical
+  incident, availability below 99 %, or a security issue), one-paragraph summary
+  that mentions the interruptions (count and total time) when there were any.
+* Figures: *Disponibilidad* (share of the month's scheduled checks that passed,
+  with the downtime), *Visitas*, *Clientes potenciales*, *Tiempo de carga* (average
+  home-page response; the Google mobile score when there are no measurements),
+  *Cambios publicados* and *Seguridad*: **Protegido**, or **Requiere atención** with
+  the exact reasons — HTTPS not active (only checked for public addresses, never
+  `localhost`/`127.x`/`*.test`), no backup or the latest older than 7 days, the
+  certificate expiring within 7 days; the note says how many sign-ins were blocked
+  (or that there were no unauthorized attempts).
+* Sections, in order: *Lo más destacado del mes* (up to 3), *Visitas y clientes
+  potenciales*, *Funcionamiento y velocidad* (incidents from `monitor_runs`, response
+  time), *Visibilidad en Google* (PageSpeed on phones and computers, SEO,
+  accessibility), *Contenido del sitio*, *Seguridad y respaldos*, *Soporte técnico*,
+  *Mantenimiento automático* and *Recomendaciones para el próximo mes* (pending
+  potential clients, backups, open support requests, speed…). Sections without data
+  are left out rather than shown empty.
 * Optional message from the team; the branded e-mail embeds the logo (no remote
   images) and replies go to the owner.
 * Comparison with the previous month on each figure (`trend`: direction, text,
   good/bad/neutral — green ▲ / red ▼ in the e-mail, PDF and preview).
-* *Visitas y contactos* (first-party statistics and Prospectos: visits, sources,
+* *Visitas y clientes potenciales* (first-party statistics and Prospectos: visits, sources,
   share from phones, contact clicks, messages by service, follow-up, won amount,
-  time to first contact) and service levels under *Soporte* (first-response time
+  time to first contact) and service levels under *Soporte técnico* (first-response time
   against the owner's target, satisfaction 1–5) plus tickets closed automatically.
 * **PDF version** (`cms/src/Pdf.php`, a ~300-line writer with the standard
   Helvetica fonts and Windows-1252 text — no external library): attached to every
@@ -445,11 +476,18 @@ certificate expiry is checked daily; under 3 weeks it is logged as a warning.
   redraw on resize, reduced-motion aware, CSP-safe). Used by Monitoreo → *Tendencias*
   (response time with failed-check markers, errors per day by severity, owner-only
   sign-ins; 7/30/90 days) and Estadísticas (visits per day).
-* Access `monitor` ("Monitoreo del sitio (resumen)", part of *full* and of custom
-  choices; existing accounts with `site` received it in `009_monitor_lite.sql`):
-  page `#/monitoreo-basico` with status, availability, response time, error counts,
-  key dates and the same charts. The endpoints return counts and dates only — never
-  error messages, references, settings or sign-in figures.
+* Access `monitor` (*Salud del sitio*; part of the *Administrador del sitio*,
+  *Gerencia* and *Soporte técnico* types and of custom choices): page
+  `#/salud-del-sitio` (the old `#/monitoreo-basico` still works) with status, uptime
+  for 24 h / 7 / 30 / 90 days (`Monitor::uptime`), the daily-uptime chart (stacked
+  bars: ≥ 99.9 % green, 99–99.9 % yellow, < 99 % red), response time, error counts,
+  incidents of the last 30 days (`Monitor::incidents`: runs of consecutive failed
+  checks, at most 50) and key dates. The endpoints return counts and dates only —
+  never error messages, references, settings, sign-in figures or which checks failed
+  (the owner's Monitoreo shows those).
+* Support requests (`support` and the owner): *Panorama de soporte* on top of the
+  list (`Tickets::analytics`, 30/90/365 days) with KPIs, a received/resolved-per-day
+  chart and bar lists by status, type, priority and area (`charts.js` `barList`).
 
 ### 9c. Prospectos (leads), statistics and service levels
 
@@ -462,11 +500,12 @@ certificate expiry is checked daily; under 3 weeks it is logged as a warning.
   export is UTF-8 with BOM and formula-safe (cells starting with `= + - @` tab/CR get
   an apostrophe). Retention 6/12/24/36 months (owner; default 24): the scheduled
   check deletes older leads and the privacy notice states the period. Access: owner
-  and the `leads` permission (access type "Ventas").
+  and the `leads` permission (access type "Ventas"). The `stats` permission alone
+  gives the basic Estadísticas (no contact-form figures).
 * **Tickets.** `first_response_at` = first public answer or status change by IT
   (notes don't count); the reporter rates resolved tickets once (1–5 + comment; 1–2
   marks it unread for IT); resolved tickets close automatically after 7 days
-  (`closed_auto`). The owner sets the response target (4/8/24/48/72 h).
+  (`closed_auto`). The owner (or `support`) sets the response target (4/8/24/48/72 h).
 
 **Turning on Cloudflare Web Analytics** (all three steps are required):
 1. Update the privacy notice §2 (`cms/templates/privacy-notice.html.tpl`) — it

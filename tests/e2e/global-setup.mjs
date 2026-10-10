@@ -9,6 +9,10 @@ export const OTHER_ADMIN = { name: 'Omar Administrador', email: 'omar.admin@exam
 export const TEXTS_ONLY = { name: 'Tere Textos', email: 'tere.textos@example.test', password: 'Clave-Tere-2026' };
 // An account that only sees Prospectos and Estadísticas (sales).
 export const SALES = { name: 'Vera Ventas', email: 'vera.ventas@example.test', password: 'Clave-Vera-Ventas-2026' };
+// "Gerencia (consulta)": basic statistics and Salud del sitio, nothing to edit.
+export const MANAGER = { name: 'Gael Gerente', email: 'gael.gerente@example.test', password: 'Clave-Gael-Gerente-2026' };
+// "Soporte técnico": manages everyone's support requests.
+export const SUPPORT = { name: 'Iris Soporte', email: 'iris.soporte@example.test', password: 'Clave-Iris-Soporte-2026' };
 // An account that sets up two-step sign-in in the browser tests.
 export const TWO_STEP = { name: 'Tomás Dos Pasos', email: 'tomas.2fa@example.test', password: 'Clave-Tomas-2FA-2026' };
 
@@ -20,7 +24,11 @@ export default async function globalSetup() {
   createAdmin(server, TEXTS_ONLY);
   createAdmin(server, TWO_STEP);
   createAdmin(server, SALES);
-  server.sql(`UPDATE users SET role='editor', permissions='leads' WHERE email='${SALES.email}'`);
+  createAdmin(server, MANAGER);
+  createAdmin(server, SUPPORT);
+  server.sql(`UPDATE users SET role='editor', permissions='leads,stats' WHERE email='${SALES.email}'`);
+  server.sql(`UPDATE users SET role='editor', permissions='stats,monitor' WHERE email='${MANAGER.email}'`);
+  server.sql(`UPDATE users SET role='editor', permissions='site,monitor,support' WHERE email='${SUPPORT.email}'`);
   server.sql(`UPDATE users SET role='editor', permissions='texts' WHERE email='${TWO_STEP.email}'`);
   server.sql(`UPDATE users SET role='editor', permissions='texts' WHERE email='${TEXTS_ONLY.email}'`);
   server.sql(`UPDATE users SET role='editor' WHERE email='${EDITOR.email}'`);
@@ -61,6 +69,7 @@ export default async function globalSetup() {
     runs.push(`(${ts}, ${failed ? 0 : 1}, '${failed ? 'database' : ''}', ${failed ? 'NULL' : 180 + ((i * 37) % 160)}, ${failed ? 'NULL' : 200})`);
   }
   server.sql(`INSERT INTO monitor_runs (created_at, ok, failed, response_ms, http_status) VALUES ${runs.join(', ')}`);
+  server.sql(`INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('monitor_last_run', '${now}', ${now})`);
   server.cli(['publish']);
   process.env.E2E_BASE = server.base;
   process.env.E2E_STORAGE = server.storage();

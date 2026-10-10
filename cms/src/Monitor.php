@@ -100,6 +100,8 @@ final class Monitor
                 'lastCheckAt' => ((int) $this->app->settings()->get('monitor_last_run', '0')) ?: null,
             ],
             'domain' => $this->app->domainHealth()->latest() ?: null,
+            'uptime' => $this->uptime($now),
+            'incidents' => $this->incidents(30, true, $now),
             'alerts' => [
                 'enabled' => $alerts->enabled(),
                 'recipient' => $alerts->recipient(),
@@ -302,6 +304,74 @@ final class Monitor
     }
 
     /**
+     * Uptime: share of scheduled checks that passed in the last 24 hours, 7,
+     * 30 and 90 days (null where there were no checks).
+     * @return array<string,array{pct:float|null,checks:int,failed:int}>
+     */
+    public function uptime(?int $now = null): array
+    {
+        $now ??= time();
+        $out = [];
+        foreach (['24h' => 86400, '7d' => 7 * 86400, '30d' => 30 * 86400, '90d' => 90 * 86400] as $k => $span) {
+            $r = $this->app->db()->one('SELECT COUNT(*) AS n, SUM(ok) AS ok FROM monitor_runs WHERE created_at > ?', [$now - $span]);
+            $n = (int) ($r['n'] ?? 0);
+            $ok = (int) ($r['ok'] ?? 0);
+            $out[$k] = ['pct' => $n > 0 ? round(100 * $ok / $n, 2) : null, 'checks' => $n, 'failed' => $n - $ok];
+        }
+        return $out;
+    }
+
+    /**
+     * Incidents: runs of consecutive failed scheduled checks, newest first.
+     * Each lasts from the first failed check to the next one that passed (or
+     * "now" while it is still happening). The failed checks' names only with
+     * $details (owner).
+     * @return list<array{start:int,end:int,ongoing:bool,minutes:int,checks:int,failed?:list<string>}>
+     */
+    public function incidents(int $days = 30, bool $details = false, ?int $now = null): array
+    {
+        $now ??= time();
+        return $this->incidentsBetween($now - $days * 86400, $now, $details);
+    }
+
+    /** Incidents between two times (e.g. a report month), newest first. */
+    public function incidentsBetween(int $from, int $to, bool $details = false): array
+    {
+        $now = $to;
+        $rows = $this->app->db()->all('SELECT created_at, ok, failed FROM monitor_runs WHERE created_at > ? AND created_at <= ? ORDER BY created_at, id', [$from, $to]);
+        $out = [];
+        $cur = null;
+        foreach ($rows as $r) {
+            if ((int) $r['ok'] === 0) {
+                if ($cur === null) {
+                    $cur = ['start' => (int) $r['created_at'], 'checks' => 0, 'names' => []];
+                }
+                $cur['checks']++;
+                foreach (array_filter(explode(',', (string) $r['failed'])) as $name) {
+                    $cur['names'][$name] = true;
+                }
+            } elseif ($cur !== null) {
+                $out[] = $this->incident($cur, (int) $r['created_at'], false, $details);
+                $cur = null;
+            }
+        }
+        if ($cur !== null) {
+            $out[] = $this->incident($cur, $now, true, $details);
+        }
+        return array_slice(array_reverse($out), 0, 50);
+    }
+
+    /** @param array{start:int,checks:int,names:array<string,bool>} $c */
+    private function incident(array $c, int $end, bool $ongoing, bool $details): array
+    {
+        $i = ['start' => $c['start'], 'end' => $end, 'ongoing' => $ongoing, 'minutes' => max(1, (int) round(($end - $c['start']) / 60)), 'checks' => $c['checks']];
+        if ($details) {
+            $i['failed'] = array_keys($c['names']);
+        }
+        return $i;
+    }
+
+    /**
      * The summary version of Monitoring for the "monitor" access: is the site
      * working, availability, speed, error counts and key dates. No error
      * messages, settings or server details.
@@ -335,6 +405,8 @@ final class Monitor
             'lastBackupAt' => $backups ? max(array_map('filemtime', $backups)) : null,
             'offsiteBackupAt' => !empty($ob['enabled']) && !empty($ob['lastSentAt']) && ($ob['lastStatus'] ?? '') !== 'failed' ? (int) $ob['lastSentAt'] : null,
             'pagespeedMobile' => isset($psi['mobile']['performance'], $psi['fetchedAt']) && $now - (int) $psi['fetchedAt'] < 45 * 86400 ? (int) $psi['mobile']['performance'] : null,
+            'uptime' => $this->uptime($now),
+            'incidents' => $this->incidents(30, false, $now),
         ];
     }
 

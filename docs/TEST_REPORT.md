@@ -9,8 +9,8 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 
 | Suite | Location | Size |
 |---|---|---|
-| API integration | `tests/integration/*.test.mjs` | 197 tests in 21 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
-| Browser E2E | `tests/e2e/*.spec.js` | 56 specs × 3 browser profiles (168 runs, 51 skipped by design: phone-only, desktop-only or single-submission tests) |
+| API integration | `tests/integration/*.test.mjs` | 203 tests in 22 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
+| Browser E2E | `tests/e2e/*.spec.js` | 62 specs × 3 browser profiles (186 runs, 51 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
 | Production build | `tests/apache/apache.test.mjs` | 6 checks of the built release under Apache + PHP-FPM |
 
@@ -242,6 +242,31 @@ Full re-run: API **191/191**, browser **113 passed / 49 skipped**; PHPStan 0 err
 | Production build on Apache | release `aee2a4c` (68 public + 250 private files, 1.1 MB zip) under Apache + PHP-FPM; `/api/view-as` answers through the rewrite (401 without a session); `admin/js/viewas.js` served | 6/6 |
 
 Full re-run: API **197/197**, browser **117 passed / 51 skipped**; PHPStan 0 errors.
+
+## Change — access profiles, Salud del sitio, basic statistics, support charts, report wording, form preview, user search
+
+| Suite | Added | Result |
+|---|---|---|
+| API (`21-profiles-health`, new) | the 9 permissions and 8 ready-made jobs (*Administrador del sitio* without `support`; *Gerencia* = stats + monitor; *Soporte técnico* = support + monitor + site; *Ventas* = leads + stats); terminal-created accounts get the administrator set; basic statistics: visits without contact-form figures (`leads` null, no personal data), Prospectos 403, texts-only 403; uptime 24 h / 7 / 30 / 90 days (percent, checks, failed; `null` without checks), incidents as runs of failed checks (start, end, minutes, checks, ongoing), check names only for the owner; the `support` access lists everyone's requests, changes status, writes internal notes and sets the target, while reporters see only their own (no internal notes); ticket analytics (30 days by day, status mix, type, area, service levels; 30/90/365 only) for managers only; support managers are not administrators (Usuarios and Monitoreo 403); report security note names the reason and the recommendations list the pending clients, backups and open requests; migration `011` adds `stats` only to `leads` holders, once | 6/6 |
+| API (updated) | `12-site-report` (new sections, «Protegido» / «Requiere atención» with the reason, local addresses not required to use HTTPS, English subject), `18-value`, `17-protection` (domain lines in *Seguridad y respaldos*), `16-tickets` (10 demo accounts), `04-users`, `19-monitor-translation`, `20-view-as` (the sales account uses the *Ventas* set) | passing |
+| Browser (`profiles`, new) | *Gerencia*: menu shows Estadísticas and Salud del sitio only, basic statistics (phone share, page views, no funnel/leads), Prospectos refused; Salud del sitio: 4 uptime tiles, daily-uptime chart, one incident without check names, axe, no horizontal overflow; owner Monitoreo: uptime, «Fallaron: database», daily chart (30 rows, keyboard tooltip), link to the summary; *Soporte técnico*: everyone's requests, *Panorama de soporte* open with KPIs, flow chart (30 → 90 rows), 4 bar lists, fold, axe, Usuarios refused; an administrator sees only their own requests and no overview; Usuarios search (accents/case ignored, e-mail, access label), access and status filters, empty state and «Quitar filtros» | 15/15 (3 devices) |
+| Browser (`contact-services`, extended) | the preview replica: phone layout stacks name/phone, tablet puts them side by side, every size scaled to fit the card; unsaved options tagged *Modificada* / *Nueva* in the open list, axe; choosing an option closes the list; «Enviar mensaje» shows the site's messages (`aria-invalid`), then the success note; English keeps the values; nothing is sent to the contact handler; leaving asks first and discards | passing (3 devices) |
+| Browser (`profiles`, support) | the response target is chosen inside the overview (8 h saved, back to 24 h) | passing |
+| Existing suites | renamed screens and types (*Salud del sitio*, *Redactor*, *Fotos y portafolio*, *Ventas · solo lectura*), Salud del sitio figures, the response chart scrolled into view before hovering (it is now below the uptime section on tablets); the rating test reads satisfaction from the overview | passing |
+
+**Visual review (screenshots of every new screen, desktop and phone) — found and fixed:**
+
+| Issue | Fix |
+|---|---|
+| Ticket chart axis showed «1, 1, 1, 0, 0» (fractional steps rounded) | whole-number ticks for counts (tickets, errors, sign-ins, visits) |
+| Service-level figures shown twice (overview and a separate strip) | one place: the response target moved into *Panorama de soporte*; the strip removed |
+| Uptime tiles on phones laid out 1 + 2 + 1 | 2 × 2 grid; the support KPIs also two per row |
+| Priority/status badges cut off in the request list on phones | badges wrap under the title |
+| «Computadora» preview stacked name and phone, unlike the site | same rule as `assets/main.css` (side by side above 560 px) |
+| Basic statistics repeated the page views in two figures | visits note says what a visit is |
+| «0 sin atender todavía» | «todas ya tienen atención» |
+| The simulated form's labels were not tied to their fields (Spanish-only names in English) | real `<label for>`, error text via `aria-describedby`, `aria-invalid`, named list |
+
 
 ## Other audits
 

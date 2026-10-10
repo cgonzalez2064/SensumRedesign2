@@ -107,7 +107,11 @@ from in "Service of interest":
   in Spanish.
 * **Reorder:** the ↑ ↓ arrows of each option.
 * **Remove:** the bin icon; **Undo** appears for a few seconds.
-* The **Preview** shows the list as visitors will see it, in Spanish or English.
+* The **Preview** is a working copy of the website's form (nothing is sent): switch
+  between **Phone**, **Tablet** and **Computer** to see how it adapts, and between
+  Spanish and English. Tap "Service of interest" (or **Open the list**) to see the
+  options: those not saved yet say **New** or **Edited**. You can type in the fields
+  and press **Send message** to see the error messages visitors would see.
 * **Save and publish** updates the website right away. **Restore the original
   options** brings back the 7 approved options (then press Save).
 
@@ -191,10 +195,10 @@ issue** (at the top of every panel screen; on phones it's the life-buoy icon).
 
 The report goes straight to the technical support team (it@gruposensum.com).
 
-**Follow-up:** each report has its own page under **Support reports** with its
+**Follow-up:** each report has its own page under **Support requests** with its
 status (New, In progress, Waiting for information, Resolved, Closed) and the
 conversation with support. You get an e-mail when support replies, asks for more
-information or resolves it, and the menu shows a number next to "Support reports"
+information or resolves it, and the menu shows a number next to "Support requests"
 when there's a new reply. To answer, write in **Your reply** and tap **Send
 reply**: if you were asked for information, or it was marked resolved but the
 problem persists, your reply moves it back to "In progress". Closed reports take
@@ -214,7 +218,7 @@ other forms are **never** sent.
 > **Don't include passwords or sensitive information in the report.**
 
 If the email couldn't be sent at that moment, the panel tells you: your report
-**is saved** and you can retry right away or later from **Support reports**,
+**is saved** and you can retry right away or later from **Support requests**,
 where you can also see your report history.
 
 ## 8. If a change doesn't appear on the website
@@ -240,11 +244,19 @@ Only the owner account (it@gruposensum.com) sees **Users** and can invite, chang
 disable or delete accounts.
 * **Invite user:** name, email, **access type** and email language. The person
   receives a link to create their password.
-  * **Full content access:** text, contact details, photos, portfolio and site
-    status (activity and "Republish the website").
-  * **Content editor:** text, contact details, photos and portfolio.
-  * **Text only**, **Photos and portfolio only**, **Contact details only**.
-  * **Custom:** tick exactly what they can change.
+  * **Site administrator:** all the content, publishing and activity, **Leads**,
+    **Statistics** and **Site health** (does not manage support).
+  * **Content editor:** text, contact details and form, photos and portfolio.
+  * **Copywriter** (text only), **Photos and portfolio**, **Contact details**.
+  * **Sales:** Leads and full Statistics; does not change the website.
+  * **Management (view only):** Statistics (basic version, no personal data) and
+    Site health; changes nothing.
+  * **Technical support:** manages **all** support requests (with their charts),
+    Site health, and publishing and activity.
+  * **Custom:** tick exactly what they need; each box explains what it includes.
+* **Search:** above the list type a name, e-mail or access type (accents and capitals
+  don't matter) and filter by **status** or **access type**. **Clear filters** shows
+  everyone again.
 * Each person's "⋮" menu: **Resend invitation**, **Change access type** (applies right
   away), **Disable / Re-enable** (signs them out) and **Delete user**.
 * Everyone only sees in the menu what they can change; **My account** shows "Your access".
@@ -261,8 +273,14 @@ Only the **it@gruposensum.com** account sees **Monitoring** in the menu
   days with failed checks), errors per day by severity, and successful and failed
   sign-ins. Choose 7, 30 or 90 days; hover, tap or use the arrow keys to read each
   day; tap a legend name to hide or show that series; "Show data" shows the table.
-* **Summary version:** the button at the top shows what people with the "Site
-  monitoring (summary)" access see.
+* **Availability (uptime):** the share of scheduled checks without failures over the
+  last 24 hours, 7, 30 and 90 days (green ≥ 99.9 %, yellow ≥ 99 %, red below). Under
+  Trends, **Daily availability** shows each day as a coloured bar.
+* **Incidents (30 days):** each period when the check found failures: when it started,
+  how long it lasted, how many checks failed and **what failed** (for example the
+  database or storage). "Ongoing" means it is still happening.
+* **Site health (summary):** the button at the top shows what people with the "Site
+  health" access see.
 * **Error log:** every server, panel and website error, newest first. Filter by
   severity (Critical, Error, Warning), source and period, or search by text or
   by the **reference code** a user saw. "Technical details" shows the code
@@ -294,11 +312,20 @@ availability, Google score, updated content, security and support.
 If last month's report isn't sent in the **first 5 days of the month**, you get a
 **reminder** email (once) and a notice on **Home**.
 
-The report compares each figure with the **previous month** (▲ in green when it
-improved, ▼ in red when it got worse), includes **Visits and contacts** (visits,
-where they come from, WhatsApp and phone clicks, contact-form messages and their
-follow-up) and, under Support, the **first-answer time** and **satisfaction**. The
-e-mail carries the **PDF version** attached; **Download PDF** lets you print or share it.
+**What it includes** (only what has data): a one-sentence summary; the key figures
+(**Availability**, **Visits**, **Potential clients**, **Load time**, **Published
+changes** and **Security**) compared with the **previous month** (▲ in green when it
+improved, ▼ in red when it got worse); **Highlights of the month**; **Visits and
+potential clients**; **Uptime and speed** (interruptions and how long they lasted);
+**Visibility on Google**; **Website content**; **Security and backups**; **Technical
+support** (requests, first answer and satisfaction); **Automatic maintenance** and
+**Recommendations for next month**. The e-mail carries the **PDF version** attached;
+**Download PDF** lets you print or share it.
+
+**Security: "Protected" or "Needs attention".** When it says "Needs attention", the
+note says exactly why: the site doesn't use **HTTPS**, there are **no backups** (or the
+latest is older than 7 days), or the **certificate expires soon**. It also says whether
+any **sign-ins were blocked** (suspicious attempts) or none were.
 
 ## 13. For the owner account: e-mail and the form's captcha
 
@@ -339,9 +366,15 @@ password).
 correctly (SPF, DKIM, DMARC and MX: without them the site's e-mails land in spam or
 can be forged) and shows when the domain expires. It is also checked once a day.
 
-## 15. For the owner account: support tickets
+## 15. Managing support requests (owner account and "Technical support")
 
-Under **Support reports** the owner account sees **everyone's** reports as tickets:
+Under **Support requests** the owner account —and anyone with the **Support request
+management** access ("Technical support" type)— sees **everyone's** requests:
+
+* **Support overview** (at the top, can be folded away): choose 30, 90 or 365 days and
+  see the **open**, **received** and **resolved** requests (with the average time to
+  resolve), the average first answer, satisfaction, the **Received and resolved per
+  day** chart, and bars **by status, type, priority and where it was noticed**.
 
 * **Filters** by status (Open, New, In progress, Waiting for information,
   Resolved, Closed, All) with their counts, and **search** by title, text, person
@@ -363,10 +396,10 @@ The **monthly report** includes a summary of the month's tickets (received,
 resolved, average time, pending) and of the automatic maintenance (checks,
 security scans, backups, certificate, Google, blocked spam, notices).
 
-**Service level:** above the list you see the average **first answer** of the last
-30 days, the **% within target** (choose 4, 8, 24, 48 or 72 hours) and the average
-**satisfaction** from ratings. Internal notes don't count as an answer. A 1- or
-2-star rating marks the ticket as unread.
+**Service level:** the Support overview shows the period's average **first answer**,
+the **% within target** and the average **satisfaction** from ratings. The **Response
+target** (4, 8, 24, 48 or 72 hours) is chosen right there. Internal notes don't count
+as an answer. A 1- or 2-star rating marks the request as unread.
 
 ## 16. For the owner account: Security
 
@@ -407,6 +440,10 @@ Visible to the owner account and to people with the **Leads and statistics** acc
 
 * **Visits**, **clicks to get in touch** (WhatsApp, phone and e-mail), **contact-form
   messages** and **contact rate**, compared with the previous period.
+* With the **Visit statistics** access but not **Leads** (for example "Management
+  (view only)") you see the **basic version**: visits, page views, visits from phones,
+  where visitors come from, devices and clicks — no contact-form messages or personal
+  data.
 * **Visits per day** (chart), **where visitors come from** (Google, Facebook, direct…),
   **devices** and language, **actions** on the site (map, portfolio, social media) and
   the path **from message to project** (contacted, quoted, won).
@@ -415,17 +452,21 @@ Visible to the owner account and to people with the **Leads and statistics** acc
   people asking "Do Not Track" and robots are not counted, so figures are somewhat
   lower than other tools show. The owner account can turn them off.
 
-## 19. Site monitoring (summary version)
+## 19. Site health
 
-For people with the **Site monitoring (summary)** access (part of "Full content
-access", or chosen under "Custom"). In the menu: **Status → Site monitoring**.
+For people with the **Site health** access (part of "Site administrator", "Management
+(view only)" and "Technical support", or chosen under "Custom"). In the menu: **Site
+status → Site health**.
 
 * A notice at the top says whether **everything works**, whether there **was a
   problem** in the last 24 hours, or whether **there is a problem now** (technical
   support is already notified).
-* 30-day **availability**, average **response time**, this week's **errors** (counts
-  only) and the last scheduled **check**.
-* The same trend **charts** (response time and errors per day).
+* **Availability (uptime)** over the last 24 hours, 7, 30 and 90 days; average
+  **response time**, this week's **errors** (counts only) and the last scheduled
+  **check**.
+* **Charts:** daily availability (one coloured bar per day), response time and errors
+  per day.
+* **Incidents (30 days):** when there were failures and how long they lasted.
 * **Security and backups:** published site up to date, certificate and domain expiry,
   domain e-mail, latest backup and off-server backup.
 * It shows no error messages or settings: if something looks wrong, use **Report a

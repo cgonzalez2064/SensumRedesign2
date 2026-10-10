@@ -41,19 +41,87 @@ export async function render({ main, session }) {
     const countBadge = h('span', { class: 'badge' });
     const addBtn = button(t('form.add'), { icon: 'plus-lg' });
     const resetBtn = button(t('form.reset'), { variant: 'link', small: true });
-    const previewList = h('ul', { class: 'svc-preview-list', role: 'presentation' });
-    const previewBox = h('div', { class: 'svc-preview' },
-      h('div', { class: 'svc-preview-label', text: t('form.previewLabel') }),
-      h('div', { class: 'svc-preview-select', 'aria-hidden': 'true' }, h('span', { class: 'svc-preview-placeholder' }), icon('chevron-down')),
-      previewList);
+    // ---- Preview: a working copy of the site's contact form (nothing is sent) ----
+    let device = 'phone';
+    let open = false;
+    let chosen = '';
+    const sim = (k) => t('form.sim.' + k + (previewLang === 'en' ? 'En' : 'Es'));
+    // Each control is labelled by the visible label (it follows the preview language).
+    const simField = (control, cls) => h('div', { class: ['sim-field', cls] }, h('label', { for: control.id, id: control.id + '-label' }), control, h('small', { class: 'sim-err', id: control.id + '-err', hidden: true }));
+    const simName = h('input', { type: 'text', id: 'sim-name', autocomplete: 'off', 'aria-describedby': 'sim-name-err' });
+    const simPhone = h('input', { type: 'tel', id: 'sim-phone', autocomplete: 'off', 'aria-describedby': 'sim-phone-err' });
+    const simEmail = h('input', { type: 'email', id: 'sim-email', autocomplete: 'off', 'aria-describedby': 'sim-email-err' });
+    const simMsg = h('textarea', { rows: 3, id: 'sim-message', 'aria-describedby': 'sim-message-err' });
+    // The select as the site shows it: closed (with the choice) or open (the list).
+    const simSelect = h('button', { type: 'button', id: 'sim-service', class: 'sim-select', 'aria-haspopup': 'listbox', 'aria-expanded': 'false', 'aria-controls': 'sim-list', 'aria-describedby': 'sim-service-err' }, h('span', { class: 'sim-select-text' }), icon('chevron-down'));
+    const simList = h('ul', { class: 'sim-list', id: 'sim-list', role: 'listbox', 'aria-labelledby': 'sim-service-label', hidden: true });
+    simSelect.addEventListener('click', () => { open = !open; renderPreview(); });
+    const simStatus = h('p', { class: 'sim-status', role: 'status' });
+    const simSubmit = h('button', { type: 'button', class: 'sim-submit' });
+    simSubmit.addEventListener('click', () => {
+      // Same checks the site does, so you can see the error states.
+      const checks = [[simName, simName.value.trim().length >= 2], [simPhone, /^[0-9+\-\s()]{8,30}$/.test(simPhone.value.trim())], [simEmail, /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(simEmail.value.trim())], [simSelect, !!chosen], [simMsg, simMsg.value.trim().length >= 10]];
+      for (const [el, ok] of checks) { el.closest('.sim-field').classList.toggle('invalid', !ok); el.closest('.sim-field').querySelector('.sim-err').hidden = ok; el.setAttribute('aria-invalid', String(!ok)); }
+      simStatus.textContent = checks.every(([, ok]) => ok) ? sim('sent') : sim('fix');
+      simStatus.className = 'sim-status ' + (checks.every(([, ok]) => ok) ? 'ok' : 'bad');
+    });
+    const svcField = simField(simSelect, 'sim-service');
+    simSelect.after(simList);
+    const simForm = h('div', { class: 'form-sim', lang: 'es' },
+      h('h3', { class: 'sim-title' }),
+      h('div', { class: 'sim-row' }, simField(simName), simField(simPhone)),
+      simField(simEmail),
+      svcField,
+      simField(simMsg),
+      simSubmit, simStatus,
+      h('p', { class: 'sim-note' }));
+    const frame = h('div', { class: 'sim-frame' }, simForm);
+    const stage = h('div', { class: 'sim-stage' }, frame);
+    // Scale the device width to the space available (the layout inside stays the device's).
+    const fit = () => {
+      // The form card's real width on the site: phone ≈ 360 px, tablet (one column) ≈ 720 px, computer (half of the contact section) ≈ 540 px.
+      const w = { phone: 360, tablet: 720, desktop: 540 }[device];
+      frame.dataset.device = device;
+      frame.style.width = w + 'px';
+      const scale = Math.min(1, stage.clientWidth / w);
+      frame.style.transform = scale < 1 ? `scale(${scale})` : '';
+      stage.style.height = Math.ceil(frame.offsetHeight * scale) + 'px';
+    };
+    new ResizeObserver(() => requestAnimationFrame(fit)).observe(stage);
+    const previewBox = h('div', { class: 'svc-preview' }, stage);
 
     const renderPreview = () => {
-      previewBox.querySelector('.svc-preview-placeholder').textContent = t(previewLang === 'en' ? 'form.placeholderEn' : 'form.placeholderEs');
-      fill(previewList, rows.filter((r) => r.es.trim()).map((r) => {
-        const text = previewLang === 'en' ? (r.en.trim() || r.es.trim()) : r.es.trim();
-        return h('li', { class: ['svc-preview-item', previewLang === 'en' && !r.en.trim() && 'fallback'], text });
-      }));
-      if (!previewList.childElementCount) previewList.append(h('li', { class: 'svc-preview-item muted', text: t('form.previewEmpty') }));
+      const opts = rows.filter((r) => r.es.trim());
+      simForm.lang = previewLang === 'en' ? 'en' : 'es';
+      simForm.querySelector('.sim-title').textContent = sim('title');
+      const labels = simForm.querySelectorAll('.sim-field > label');
+      [sim('name'), sim('phone'), sim('email'), sim('service'), sim('message')].forEach((txt, i) => { labels[i].textContent = txt; });
+      const errs = simForm.querySelectorAll('.sim-err');
+      [sim('nameErr'), sim('phoneErr'), sim('emailErr'), sim('serviceErr'), sim('messageErr')].forEach((txt, i) => { errs[i].textContent = txt; });
+      simSubmit.textContent = sim('submit');
+      simForm.querySelector('.sim-note').textContent = sim('note');
+      const label = (r) => (previewLang === 'en' ? (r.en.trim() || r.es.trim()) : r.es.trim());
+      if (chosen && !opts.some((r) => r.key === chosen)) chosen = '';
+      const current = opts.find((r) => r.key === chosen);
+      simSelect.querySelector('.sim-select-text').textContent = current ? label(current) : t(previewLang === 'en' ? 'form.placeholderEn' : 'form.placeholderEs');
+      simSelect.classList.toggle('placeholder', !current);
+      simSelect.setAttribute('aria-expanded', String(open));
+      simSelect.classList.toggle('open', open);
+      simList.hidden = !open;
+      const changed = (r) => (!r.id ? 'new' : r.saved && (r.saved.es !== r.es || r.saved.en !== r.en) ? 'edited' : null);
+      fill(simList, h('li', { class: 'sim-option placeholder', role: 'option', 'aria-disabled': 'true', 'aria-selected': String(!current), text: t(previewLang === 'en' ? 'form.placeholderEn' : 'form.placeholderEs') }),
+        opts.map((r) => {
+          const c = changed(r);
+          const li = h('li', { class: ['sim-option', r.key === chosen && 'chosen', previewLang === 'en' && !r.en.trim() && 'fallback'], role: 'option', 'aria-selected': String(r.key === chosen), tabindex: '0' },
+            h('span', { text: label(r) }), c ? h('span', { class: ['sim-tag', c], text: t('form.sim.' + c) }) : null);
+          const pick = () => { chosen = r.key; open = false; simSelect.closest('.sim-field').classList.remove('invalid'); simSelect.closest('.sim-field').querySelector('.sim-err').hidden = true; simSelect.removeAttribute('aria-invalid'); renderPreview(); simSelect.focus(); };
+          li.addEventListener('click', pick);
+          li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+          return li;
+        }));
+      if (!opts.length) simList.append(h('li', { class: 'sim-option muted', role: 'option', 'aria-disabled': 'true', 'aria-selected': 'false', text: t('form.previewEmpty') }));
+      openToggle.lastChild.textContent = t(open ? 'form.sim.closeList' : 'form.sim.openList');
+      fit();
     };
 
     const renderList = (focus) => {
@@ -211,6 +279,9 @@ export async function render({ main, session }) {
     });
 
     const langSwitch = segmented([{ value: 'es', label: 'Español' }, { value: 'en', label: 'English' }], 'es', (v) => { previewLang = v; renderPreview(); }, t('form.previewLang'));
+    const deviceSwitch = segmented([{ value: 'phone', label: t('form.sim.phone'), icon: 'phone' }, { value: 'tablet', label: t('form.sim.tablet'), icon: 'laptop' }, { value: 'desktop', label: t('form.sim.desktop'), icon: 'globe2' }],
+      device, (v) => { device = v; fit(); }, t('form.sim.device'));
+    const openToggle = button(t('form.sim.openList'), { small: true, variant: 'ghost', icon: 'chevron-down', onClick: () => { open = !open; renderPreview(); } });
 
     const editor = h('section', { class: 'card', 'aria-labelledby': 'svc-title' },
       cardHead({ id: 'svc-title', icon: 'card-text', title: t('form.servicesTitle'), lead: t('form.servicesLead'), badge: countBadge }),
@@ -219,8 +290,9 @@ export async function render({ main, session }) {
       h('div', { class: 'card-foot' }, resetBtn, addBtn));
     const preview = h('section', { class: 'card svc-preview-card', 'aria-labelledby': 'svc-prev' },
       cardHead({ id: 'svc-prev', icon: 'eye', title: t('form.previewTitle'), lead: t('form.previewLead') }),
-      h('div', { class: 'row' }, langSwitch),
+      h('div', { class: 'sim-controls' }, langSwitch, deviceSwitch, openToggle),
       previewBox,
+      h('p', { class: 'tiny muted', text: t('form.sim.legend') }),
       h('ul', { class: 'tips' }, ['tip1', 'tip2', 'tip3'].map((k) => h('li', null, icon('info-circle-fill'), h('span', { text: t('form.' + k) })))));
 
     fill(body, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, editor), h('div', { class: 'stack-lg svc-side' }, preview)), saveRow);

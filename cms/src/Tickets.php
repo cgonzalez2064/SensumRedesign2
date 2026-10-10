@@ -38,14 +38,18 @@ final class Tickets
         return new Reports($this->app);
     }
 
-    private function isOwner(array $session): bool
+    /**
+     * Who manages tickets (all of them, status, notes, figures): the owner (IT)
+     * and accounts with the "support" access.
+     */
+    public function manages(array $session): bool
     {
-        return $this->app->auth()->isOwner($session);
+        return $this->app->auth()->can($session, 'support');
     }
 
-    private function requireOwner(array $session): void
+    private function requireManager(array $session): void
     {
-        if (!$this->isOwner($session)) {
+        if (!$this->manages($session)) {
             throw new ApiError(403, 'forbidden');
         }
     }
@@ -54,7 +58,7 @@ final class Tickets
     public function visible(array $session, int $id): array
     {
         $r = $this->reports()->find($id);
-        if (!$this->isOwner($session) && (int) $r['user_id'] !== (int) $session['uid']) {
+        if (!$this->manages($session) && (int) $r['user_id'] !== (int) $session['uid']) {
             throw new ApiError(404, 'not_found'); // never reveal other people's tickets
         }
         return $r;
@@ -66,7 +70,7 @@ final class Tickets
     public function list(array $session, string $filter = 'open', string $q = ''): array
     {
         $db = $this->app->db();
-        if (!$this->isOwner($session)) {
+        if (!$this->manages($session)) {
             $rows = $db->all('SELECT * FROM support_reports WHERE user_id = ? ORDER BY COALESCE(updated_at, created_at) DESC, id DESC LIMIT 100', [$session['uid']]);
             return [
                 'reports' => array_map(fn ($r) => $this->present($r, false), $rows),
@@ -107,10 +111,10 @@ final class Tickets
             'service' => $this->serviceLevels($since, time() + 1)];
     }
 
-    /** Number shown next to "Reportes de soporte" in the menu. */
+    /** Number shown next to "Solicitudes de soporte" in the menu. */
     public function badge(array $session): int
     {
-        return $this->isOwner($session)
+        return $this->manages($session)
             ? (int) $this->app->db()->value("SELECT COUNT(*) FROM support_reports WHERE owner_unread = 1 OR status = 'new'")
             : (int) $this->app->db()->value('SELECT COUNT(*) FROM support_reports WHERE user_id = ? AND reporter_unread = 1', [$session['uid']]);
     }
@@ -119,7 +123,7 @@ final class Tickets
     public function detail(array $session, int $id): array
     {
         $r = $this->visible($session, $id);
-        $owner = $this->isOwner($session);
+        $owner = $this->manages($session);
         $mine = (int) $r['user_id'] === (int) $session['uid'];
         // "Ver como" changes nothing for the person, not even what they have read.
         $markRead = !$this->app->viewOnly();
@@ -172,6 +176,62 @@ final class Tickets
             'rating' => isset($r['rating']) ? (int) $r['rating'] : null,
             'ratingComment' => isset($r['rating']) ? (string) ($r['rating_comment'] ?? '') : null,
             'closedAuto' => (bool) ($r['closed_auto'] ?? 0),
+        ];
+    }
+
+    // ------------------------------------------------------------------ figures for the charts
+
+    /**
+     * Ticket figures for managers over the last $days days: per-day created
+     * and resolved, current status mix, type/priority/area of the period's
+     * tickets, and the service levels.
+     */
+    public function analytics(array $session, int $days, ?int $now = null): array
+    {
+        $this->requireManager($session);
+        $now ??= time();
+        $start = (int) strtotime('today', $now) - ($days - 1) * 86400;
+        $offset = (int) date('Z', $now);
+        $db = $this->app->db();
+        $series = [];
+        for ($i = 0; $i < $days; $i++) {
+            $d = date('Y-m-d', $start + $i * 86400 + 43200);
+            $series[$d] = ['day' => $d, 'created' => 0, 'resolved' => 0];
+        }
+        $day = fn (string $col) => "date(({$col} + {$offset}), 'unixepoch')";
+        foreach ($db->all('SELECT ' . $day('created_at') . ' AS d, COUNT(*) AS n FROM support_reports WHERE created_at >= ? GROUP BY d', [$start]) as $r) {
+            if (isset($series[$r['d']])) {
+                $series[$r['d']]['created'] = (int) $r['n'];
+            }
+        }
+        foreach ($db->all('SELECT ' . $day('resolved_at') . " AS d, COUNT(*) AS n FROM support_reports WHERE resolved_at >= ? AND status IN ('resolved', 'closed') GROUP BY d", [$start]) as $r) {
+            if (isset($series[$r['d']])) {
+                $series[$r['d']]['resolved'] = (int) $r['n'];
+            }
+        }
+        $group = function (string $col) use ($db, $start): array {
+            $out = [];
+            foreach ($db->all("SELECT {$col} AS k, COUNT(*) AS n FROM support_reports WHERE created_at >= ? GROUP BY {$col}", [$start]) as $r) {
+                $out[(string) $r['k']] = (int) $r['n'];
+            }
+            return $out;
+        };
+        $status = array_fill_keys(self::STATUSES, 0);
+        foreach ($db->all('SELECT status, COUNT(*) AS n FROM support_reports GROUP BY status') as $r) {
+            $status[$r['status']] = (int) $r['n'];
+        }
+        $resolved = $db->one("SELECT COUNT(*) AS n, AVG(resolved_at - created_at) AS secs FROM support_reports WHERE resolved_at >= ? AND status IN ('resolved', 'closed')", [$start]);
+        return [
+            'days' => array_values($series),
+            'created' => (int) $db->value('SELECT COUNT(*) FROM support_reports WHERE created_at >= ?', [$start]),
+            'resolved' => (int) ($resolved['n'] ?? 0),
+            'avgResolutionHours' => $resolved['secs'] !== null ? round((float) $resolved['secs'] / 3600, 1) : null,
+            'status' => $status,
+            'open' => $status['new'] + $status['in_progress'] + $status['waiting'],
+            'byType' => $group('type'),
+            'byPriority' => $group('priority'),
+            'byArea' => $group('area'),
+            'service' => $this->serviceLevels($start, $now + 1),
         ];
     }
 
@@ -285,7 +345,7 @@ final class Tickets
     /** Edits the ticket's title, description, type, area or priority (owner). */
     public function edit(array $session, int $id, array $in): array
     {
-        $this->requireOwner($session);
+        $this->requireManager($session);
         $r = $this->visible($session, $id);
         $errors = [];
         $changes = [];
@@ -346,7 +406,7 @@ final class Tickets
      */
     public function setStatus(array $session, int $id, string $status, string $message, bool $notify): array
     {
-        $this->requireOwner($session);
+        $this->requireManager($session);
         $r = $this->visible($session, $id);
         if (!in_array($status, self::STATUSES, true)) {
             throw ApiError::validation(['status' => 'invalid']);
@@ -393,7 +453,7 @@ final class Tickets
     public function addMessage(array $session, int $id, string $body, bool $internal, bool $notify): array
     {
         $r = $this->visible($session, $id);
-        $owner = $this->isOwner($session);
+        $owner = $this->manages($session);
         $body = self::multiline($body);
         if ($body === '') {
             throw ApiError::validation(['body' => 'required']);

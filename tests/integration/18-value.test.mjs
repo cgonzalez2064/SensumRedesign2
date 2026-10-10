@@ -342,29 +342,29 @@ test('the monthly report compares with the previous month and adds visits, leads
   assert.equal(visits.trend.dir, 'up');
   assert.equal(visits.trend.good, true);
   assert.match(visits.trend.text, /^\+50 % vs\. [a-z]+$/);
-  const leads = r.kpis.find((k) => k.label === 'Mensajes recibidos');
+  const leads = r.kpis.find((k) => k.label === 'Clientes potenciales');
   assert.ok(Number(leads.value) >= 1);
   assert.match(leads.note, /15 clics en WhatsApp, teléfono o correo/);
-  const reach = r.sections.find((x) => x.title === 'Visitas y contactos');
+  const reach = r.sections.find((x) => x.title === 'Visitas y clientes potenciales');
   assert.ok(reach, 'visits and contacts section');
   const items = reach.items.join('\n');
   assert.match(items, /150 visitas y 400 páginas vistas \(\+50 % vs\. [a-z]+\)\./);
-  assert.match(items, /Llegaron principalmente desde Google \(60 %\) y acceso directo \(40 %\)\./);
+  assert.match(items, /Las visitas llegaron principalmente desde Google \(60 %\) y acceso directo \(40 %\)\./);
   assert.match(items, /El 80 % de las visitas fue desde un celular\./);
   assert.match(items, /Clics para contactar a la empresa: 12 en WhatsApp y 3 en teléfono\./);
   assert.match(items, /4 descargas del portafolio/);
   assert.match(items, /Proyectos ganados desde el sitio por un total de Q 150\.000\./);
   assert.match(items, /Servicios más solicitados: Remodelaciones/);
   assert.match(r.summary, /El sitio recibió 150 visitas y \d+ mensajes? de/);
-  const support = r.sections.find((x) => x.title === 'Soporte').items.join('\n');
+  const support = r.sections.find((x) => x.title === 'Soporte técnico').items.join('\n');
   assert.match(support, /Primera respuesta en menos de una hora en promedio \(100 % dentro del objetivo de 8 horas\)/);
   assert.match(support, /Satisfacción con la atención: 2,0 de 5 \(1 calificación\)/);
-  const auto = r.sections.find((x) => x.title === 'Mantenimiento y análisis automáticos').items.join('\n');
+  const auto = r.sections.find((x) => x.title === 'Mantenimiento automático').items.join('\n');
   assert.match(auto, /1 solicitud resuelta se cerró sola tras 7 días sin respuesta/);
   // English.
   const en = (await owner.get(`/api/site-report/preview?period=${period}&lang=en`)).data.report;
   assert.match(en.kpis.find((k) => k.label === 'Visits').trend.text, /^\+50% vs\. [A-Z][a-z]+$/);
-  assert.ok(en.sections.some((x) => x.title === 'Visits and contacts'));
+  assert.ok(en.sections.some((x) => x.title === 'Visits and potential clients'));
 });
 
 /** Text drawn in a PDF (its content streams are compressed). */
@@ -397,7 +397,7 @@ test('the report as a PDF: download from the panel and attached to the e-mail', 
   assert.match(text, /Sensum Construcciones/);
   assert.match(text, /VISITAS/);
   assert.match(text, /\+50 % vs\. /);
-  assert.match(text, /Visitas y contactos/);
+  assert.match(text, /Visitas y clientes potenciales/);
   assert.match(text, /renovamos \(las fotos\) del \\ portafolio/, 'the note, escaped');
   assert.ok(Buffer.from(text, 'latin1').includes(Buffer.from('Página 1 de', 'latin1')), 'accents in Windows-1252');
   assert.equal((await dl(sales, { period })).status, 403, 'owner only');

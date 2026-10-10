@@ -112,7 +112,12 @@ visitante en «Servicio de interés»:
   opción elegida en español.
 * **Ordenar:** flechas ↑ ↓ de cada opción.
 * **Eliminar:** ícono de papelera; aparece **Deshacer** por unos segundos.
-* La **Vista previa** muestra la lista como la verá el visitante, en español o inglés.
+* La **Vista previa** es una copia que funciona como el formulario del sitio (no envía
+  nada): cambia entre **Celular**, **Tableta** y **Computadora** para ver cómo se
+  acomoda, y entre español e inglés. Toca «Servicio de interés» (o **Abrir la lista**)
+  para ver las opciones: las que aún no guardas dicen **Nueva** o **Modificada**.
+  Puedes escribir en los campos y pulsar **Enviar mensaje** para ver los mensajes de
+  error que verá el visitante.
 * **Guardar y publicar** actualiza el sitio en ese momento. **Restaurar las opciones
   originales** vuelve a las 7 opciones aprobadas (después pulsa Guardar).
 
@@ -202,10 +207,10 @@ salvavidas).
 
 El reporte llega directamente al equipo de soporte técnico (it@gruposensum.com).
 
-**Seguimiento:** cada reporte tiene su página en **Reportes de soporte** con su
+**Seguimiento:** cada reporte tiene su página en **Solicitudes de soporte** con su
 estado (Nuevo, En progreso, Esperando información, Resuelto, Cerrado) y la
 conversación con soporte. Te llega un correo cuando soporte te responde, te pide
-más información o lo resuelve, y el menú muestra un número junto a «Reportes de
+más información o lo resuelve, y el menú muestra un número junto a «Solicitudes de
 soporte» cuando tienes una respuesta nueva. Para contestar, escribe en **Tu
 respuesta** y toca **Enviar respuesta**: si te pidieron información o lo
 marcaron como resuelto pero el problema sigue, tu respuesta lo vuelve a poner
@@ -227,7 +232,7 @@ verla antes de enviar en «Ver la información técnica que se envía».
 
 Si el correo no se pudo enviar en ese momento, el panel te lo dirá: tu reporte
 **queda guardado** y puedes reintentar el envío ahí mismo o más tarde desde
-**Reportes de soporte**, donde también ves el historial de tus reportes.
+**Solicitudes de soporte**, donde también ves el historial de tus reportes.
 
 ## 8. Si un cambio no aparece en el sitio
 
@@ -255,11 +260,19 @@ Solo la cuenta propietaria (it@gruposensum.com) ve **Usuarios** y puede invitar,
 cambiar, desactivar o eliminar cuentas.
 * **Invitar usuario:** nombre, correo, **tipo de acceso** e idioma de los correos.
   La persona recibe un enlace para crear su contraseña.
-  * **Acceso completo al contenido:** textos, datos de contacto, fotos, portafolio y
-    estado del sitio (actividad y «Volver a publicar el sitio»).
-  * **Editor de contenido:** textos, datos de contacto, fotos y portafolio.
-  * **Solo textos**, **Solo fotos y portafolio**, **Solo datos de contacto**.
-  * **Personalizado:** marca exactamente lo que puede cambiar.
+  * **Administrador del sitio:** todo el contenido, publicación y actividad,
+    **Prospectos**, **Estadísticas** y **Salud del sitio** (no gestiona el soporte).
+  * **Editor de contenido:** textos, datos de contacto y formulario, fotos y portafolio.
+  * **Redactor** (solo textos), **Fotos y portafolio**, **Datos de contacto**.
+  * **Ventas:** Prospectos y Estadísticas completas; no cambia el sitio.
+  * **Gerencia (consulta):** Estadísticas (versión básica, sin datos personales) y
+    Salud del sitio; no cambia nada.
+  * **Soporte técnico:** gestiona **todas** las solicitudes de soporte (con sus
+    gráficas), Salud del sitio y publicación y actividad.
+  * **Personalizado:** marca exactamente lo que necesita; cada casilla explica qué incluye.
+* **Buscar:** arriba de la lista escribe un nombre, correo o tipo de acceso (no importan
+  tildes ni mayúsculas) y filtra por **estado** o **tipo de acceso**. **Quitar filtros**
+  muestra a todas las personas otra vez.
 * Menú «⋮» de cada persona: **Reenviar invitación**, **Cambiar tipo de acceso** (se
   aplica de inmediato), **Desactivar / Reactivar** (cierra su sesión) y **Eliminar usuario**.
 * Cada persona solo ve en el menú lo que puede cambiar; en **Mi cuenta** ve «Tu acceso».
@@ -277,8 +290,14 @@ Solo la cuenta **it@gruposensum.com** ve **Monitoreo** en el menú
   gravedad e inicios de sesión correctos y fallidos. Elige 7, 30 o 90 días; pasa el
   cursor, toca o usa las flechas del teclado para ver cada día; toca un nombre de la
   leyenda para ocultar o mostrar esa serie; «Ver datos» muestra la tabla.
-* **Versión resumida:** el botón arriba muestra lo que ven las personas con el
-  acceso «Monitoreo del sitio (resumen)».
+* **Disponibilidad (uptime):** el porcentaje de revisiones automáticas sin fallas en
+  las últimas 24 horas, 7, 30 y 90 días (verde ≥ 99.9 %, amarillo ≥ 99 %, rojo menos).
+  En Tendencias, **Disponibilidad diaria** muestra cada día como una barra de color.
+* **Incidentes (30 días):** cada periodo en que la revisión encontró fallas: cuándo
+  empezó, cuánto duró, cuántas revisiones fallaron y **qué falló** (por ejemplo,
+  base de datos o almacenamiento). «En curso» indica que sigue pasando.
+* **Salud del sitio (resumen):** el botón arriba muestra lo que ven las personas con
+  el acceso «Salud del sitio».
 * **Registro de errores:** cada error del servidor, del panel y del sitio, del más
   reciente al más antiguo. Filtra por gravedad (Crítico, Error, Advertencia),
   origen y periodo, o busca por texto o por el **código de referencia** que vio
@@ -311,11 +330,20 @@ disponibilidad, calificación de Google, contenido actualizado, seguridad y sopo
 Si el informe del mes anterior no se envía en los **primeros 5 días del mes**, te
 llega un **recordatorio** por correo (una sola vez) y un aviso en **Inicio**.
 
-El informe compara cada cifra con el **mes anterior** (▲ en verde si mejoró, ▼ en
-rojo si empeoró), incluye **Visitas y contactos** (visitas, de dónde llegan, clics en
-WhatsApp y teléfono, mensajes del formulario y su seguimiento) y, en Soporte, el
-**tiempo de primera respuesta** y la **satisfacción**. El correo lleva la **versión
+**Qué incluye** (solo aparece lo que tiene datos): un resumen en una frase; las cifras
+clave (**Disponibilidad**, **Visitas**, **Clientes potenciales**, **Tiempo de carga**,
+**Cambios publicados** y **Seguridad**) comparadas con el **mes anterior** (▲ en verde
+si mejoró, ▼ en rojo si empeoró); **Lo más destacado del mes**; **Visitas y clientes
+potenciales**; **Funcionamiento y velocidad** (interrupciones y cuánto duraron);
+**Visibilidad en Google**; **Contenido del sitio**; **Seguridad y respaldos**;
+**Soporte técnico** (solicitudes, primera respuesta y satisfacción); **Mantenimiento
+automático** y **Recomendaciones para el próximo mes**. El correo lleva la **versión
 en PDF** adjunta; también puedes usar **Descargar PDF** para imprimirlo o compartirlo.
+
+**Seguridad: «Protegido» o «Requiere atención».** Si dice «Requiere atención», la nota
+explica exactamente por qué: el sitio no usa **HTTPS**, **no hay respaldos** (o el
+último tiene más de 7 días) o el **certificado vence pronto**. También indica si hubo
+**inicios de sesión bloqueados** (intentos sospechosos) o si no hubo ninguno.
 
 ## 13. Para la cuenta propietaria: correo y captcha del formulario
 
@@ -357,10 +385,16 @@ aceptes: avisa a soporte técnico. Si los hiciste tú, pulsa **Marcar como esper
 configurado (SPF, DKIM, DMARC y MX: sin ellos los correos del sitio llegan a spam o
 pueden falsificarse) y muestra cuándo vence el dominio. Se revisa solo una vez al día.
 
-## 15. Para la cuenta propietaria: tickets de soporte
+## 15. Gestión de solicitudes de soporte (cuenta propietaria y «Soporte técnico»)
 
-En **Reportes de soporte** la cuenta propietaria ve los reportes de **todas** las
-personas como tickets:
+En **Solicitudes de soporte** la cuenta propietaria —y quien tenga el acceso **Gestión
+de solicitudes de soporte** (tipo «Soporte técnico»)— ve las solicitudes de **todas**
+las personas:
+
+* **Panorama de soporte** (arriba, se puede plegar): elige 30, 90 o 365 días y ve las
+  solicitudes **abiertas**, **recibidas** y **resueltas** (con el tiempo promedio de
+  resolución), la primera respuesta promedio, la satisfacción, la gráfica **Recibidas
+  y resueltas por día** y barras **por estado, tipo, prioridad y dónde se notó**.
 
 * **Filtros** por estado (Abiertos, Nuevos, En progreso, Esperando información,
   Resueltos, Cerrados, Todos) con su cantidad, y **búsqueda** por título, texto,
@@ -383,10 +417,11 @@ resueltos, tiempo promedio, pendientes) y de las tareas automáticas de
 mantenimiento (revisiones, análisis de seguridad, respaldos, certificado, Google,
 spam bloqueado, avisos).
 
-**Nivel de servicio:** arriba de la lista ves la **primera respuesta promedio** de
-los últimos 30 días, el **% dentro del objetivo** (elige 4, 8, 24, 48 o 72 horas) y la
-**satisfacción** promedio de las calificaciones. Las notas internas no cuentan como
-respuesta. Una calificación de 1 o 2 estrellas marca el ticket como no leído.
+**Nivel de servicio:** en el Panorama de soporte ves la **primera respuesta promedio**
+del período, el **% dentro del objetivo** y la **satisfacción** promedio de las
+calificaciones. El **Objetivo de respuesta** (4, 8, 24, 48 o 72 horas) se elige ahí
+mismo. Las notas internas no cuentan como respuesta. Una calificación de 1 o 2
+estrellas marca la solicitud como no leída.
 
 ## 16. Para la cuenta propietaria: Seguridad
 
@@ -431,6 +466,10 @@ estadísticas** (por ejemplo, el tipo «Ventas»).
 
 * **Visitas**, **clics para contactar** (WhatsApp, teléfono y correo), **mensajes
   del formulario** y **tasa de contacto**, comparados con el período anterior.
+* Con el acceso **Estadísticas de visitas** sin **Prospectos** (por ejemplo,
+  «Gerencia (consulta)») ves la **versión básica**: visitas, páginas vistas, visitas
+  desde celular, de dónde llegan, dispositivos y clics, sin mensajes del formulario
+  ni datos personales.
 * **Visitas por día** (gráfica), **de dónde llegan** (Google, Facebook, acceso
   directo…), **dispositivos** e idioma, **acciones** en el sitio (mapa, portafolio,
   redes) y el camino **del mensaje al proyecto** (contactados, cotizados, ganados).
@@ -439,16 +478,20 @@ estadísticas** (por ejemplo, el tipo «Ventas»).
   «No rastrear» y los robots no se cuentan, por eso las cifras son algo menores que las
   de otras herramientas. La cuenta propietaria puede desactivarlas.
 
-## 19. Monitoreo del sitio (versión resumida)
+## 19. Salud del sitio
 
-Para quienes tienen el acceso **Monitoreo del sitio (resumen)** (incluido en «Acceso
-completo», o elegido en «Personalizado»). En el menú: **Estado → Monitoreo del sitio**.
+Para quienes tienen el acceso **Salud del sitio** (incluido en «Administrador del
+sitio», «Gerencia (consulta)» y «Soporte técnico», o elegido en «Personalizado»). En el
+menú: **Estado del sitio → Salud del sitio**.
 
 * Un aviso arriba dice si **todo funciona**, si **hubo un problema** en las últimas
   24 horas o si **hay un problema ahora** (soporte técnico ya recibe el aviso).
-* **Disponibilidad** de 30 días, **tiempo de respuesta** promedio, **errores** de la
-  semana (solo la cantidad) y la **última revisión** automática.
-* Las mismas **gráficas** de tendencias (tiempo de respuesta y errores por día).
+* **Disponibilidad (uptime)** de las últimas 24 horas, 7, 30 y 90 días; **tiempo de
+  respuesta** promedio, **errores** de la semana (solo la cantidad) y la **última
+  revisión** automática.
+* **Gráficas:** disponibilidad diaria (una barra de color por día), tiempo de respuesta
+  y errores por día.
+* **Incidentes (30 días):** cuándo hubo fallas y cuánto duraron.
 * **Seguridad y respaldos:** sitio publicado al día, vencimiento del certificado y del
   dominio, correo del dominio, último respaldo y respaldo fuera del servidor.
 * No muestra mensajes de error ni configuración: si notas algo raro, usa **Reportar un

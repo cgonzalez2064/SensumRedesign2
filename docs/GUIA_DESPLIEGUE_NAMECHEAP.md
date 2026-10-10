@@ -383,7 +383,7 @@ pide tu contraseña otra vez y te envía un aviso de seguridad por correo.
 | Correo que envía los mensajes | `formulario@sensumconstrucciones.com` |
 | Nombre del remitente | `Sitio web Sensum` |
 | Cómo se envía | **Con la cuenta de envío del panel (recomendado)** |
-| Reportes de problemas | `it@gruposensum.com` |
+| Solicitudes de soporte | `it@gruposensum.com` |
 | Alertas automáticas y errores críticos | `it@gruposensum.com` |
 
 Pulsa **Guardar configuración** y luego **Enviar correo de prueba** y **Enviar mensaje
@@ -440,30 +440,51 @@ Solo la cuenta propietaria puede crear y modificar usuarios.
 1. Panel → **Usuarios** → **Invitar usuario**.
 2. Nombre, correo y **Tipo de acceso**:
 
-| Tipo de acceso | Puede cambiar |
-|---|---|
-| Acceso completo al contenido | Textos, datos de contacto, fotos, portafolio, estado del sitio, **Prospectos, Estadísticas y Monitoreo del sitio (resumen)** |
-| Editor de contenido | Textos, datos de contacto, fotos y portafolio |
-| Solo textos | Los textos del sitio (español e inglés) |
-| Solo fotos y portafolio | Fotos de «Nosotros» y proyectos, y el PDF |
-| Solo datos de contacto | Teléfonos, WhatsApp, correo, dirección, mapa, Instagram |
-| Ventas: prospectos | Solo **Prospectos** (mensajes del formulario) y **Estadísticas**; no cambia el sitio |
-| Personalizado | La combinación que elijas (por ejemplo, *Solo textos* + **Monitoreo del sitio (resumen)**) |
+| Tipo de acceso | Para quién | Ve y puede usar |
+|---|---|---|
+| Administrador del sitio | Quien administra el sitio día a día | Textos, datos de contacto y formulario, fotos, portafolio, publicación y actividad, **Prospectos**, **Estadísticas** y **Salud del sitio** |
+| Editor de contenido | Quien actualiza el sitio | Textos, datos de contacto y formulario, fotos y portafolio |
+| Redactor | Quien solo corrige o escribe textos | Los textos del sitio (español e inglés) |
+| Fotos y portafolio | Quien sube fotos de proyectos | Fotos de «Nosotros» y proyectos, y el PDF |
+| Datos de contacto | Recepción / atención | Teléfonos, WhatsApp, correo, dirección, mapa, Instagram y las opciones del formulario |
+| Ventas | Quien atiende clientes | **Prospectos** (mensajes del formulario) y **Estadísticas** completas; no cambia el sitio |
+| Gerencia (consulta) | Dirección / gerencia | **Estadísticas de visitas** (versión básica, sin datos personales) y **Salud del sitio**; no cambia nada |
+| Soporte técnico | Tu equipo de TI o un proveedor | **Gestión de solicitudes de soporte** (todas, con gráficas), **Salud del sitio** y publicación y actividad |
+| Personalizado | Cualquier otra combinación | Marca los permisos uno por uno; cada casilla explica qué incluye |
 
-> **Monitoreo del sitio (resumen)** es una versión ligera del Monitoreo: si el sitio
-> funciona, disponibilidad, tiempo de respuesta, cantidad de errores, fechas del
-> certificado, dominio y respaldos, y las gráficas. **No** muestra mensajes de error,
-> configuración ni detalles del servidor (eso sigue siendo solo de la cuenta propietaria).
-> Dáselo a quien deba saber si el sitio está bien (gerencia, administradores).
+Los permisos que puedes combinar en **Personalizado** son: Textos del sitio · Datos de
+contacto y formulario · Fotos · Portafolio en PDF · Publicación y actividad ·
+Prospectos · **Estadísticas de visitas** · **Salud del sitio** · **Gestión de
+solicitudes de soporte**.
+
+> **Salud del sitio** es la versión resumida del Monitoreo: si el sitio funciona, la
+> **disponibilidad (uptime)** de las últimas 24 horas, 7, 30 y 90 días, la gráfica de
+> disponibilidad diaria, el tiempo de respuesta, los **incidentes** de los últimos 30
+> días (cuándo y cuánto duraron), la cantidad de errores y las fechas del certificado,
+> dominio y respaldos. **No** muestra mensajes de error, configuración ni detalles del
+> servidor (eso sigue siendo solo de la cuenta propietaria).
+
+> **Estadísticas de visitas** sin **Prospectos** muestra la versión básica: visitas,
+> páginas vistas, de dónde llegan, dispositivos y clics para contactar. No muestra
+> mensajes del formulario ni datos personales. Con **Prospectos** se ve completa
+> (mensajes recibidos, tasa de contacto y el embudo hasta «Ganado»).
 
 > **Prospectos contiene datos personales** de quienes escriben por el formulario: dales
-> ese acceso solo a quienes atienden clientes (por ejemplo, ventas o gerencia).
+> ese acceso solo a quienes atienden clientes (ventas).
+
+> **Gestión de solicitudes de soporte** permite ver y responder **todas** las
+> solicitudes del equipo, cambiar su estado y prioridad, agregar notas internas y ver
+> el **Panorama de soporte** (gráficas). Dáselo solo a quien da soporte técnico; las
+> demás personas siguen viendo únicamente sus propias solicitudes.
 
 3. La persona recibe un correo para crear su contraseña (vence en 72 horas). Si el
    correo no sale, el panel te muestra el enlace para compartirlo por otro medio.
 4. Para cambiar el acceso después: menú «⋮» de la persona → **Cambiar tipo de
    acceso**. Se aplica de inmediato.
-5. **Comprueba lo que ve cada persona con «Ver como…»** (arriba en Usuarios, o en el
+5. **Buscar personas:** arriba de la lista hay un buscador (nombre, correo o tipo de
+   acceso; no importan tildes ni mayúsculas) y filtros por **estado** y **tipo de
+   acceso**.
+6. **Comprueba lo que ve cada persona con «Ver como…»** (arriba en Usuarios, o en el
    menú «⋮» de cada persona): pide tu contraseña una vez y muestra el panel exactamente
    como lo ve esa cuenta. Una barra azul arriba permite **Cambiar de persona** (sin
    volver a escribir la contraseña) o **Volver a mi cuenta**. Es **solo lectura** (no
@@ -580,14 +601,19 @@ que **no hace falta banner de cookies**. Quien pide «No rastrear» no se cuenta
   asesoría legal antes de publicar; los párrafos de estadísticas y conservación ya
   describen el funcionamiento real.
 
-### 18.3 Tickets de soporte: tiempo de respuesta y satisfacción
+### 18.3 Solicitudes de soporte: tiempo de respuesta, satisfacción y gráficas
 
-- Panel → **Reportes de soporte** (cuenta propietaria): arriba ves la **primera
-  respuesta promedio**, el **% dentro del objetivo** y la **satisfacción**. Elige el
-  objetivo (recomendado **24 h**; 8 h si el contrato lo promete).
-- Cuando marcas un ticket como **resuelto**, la persona puede **calificar de 1 a 5**.
-  Una calificación de 1–2 marca el ticket como no leído para que lo revises.
-- Los tickets resueltos sin respuesta se **cierran solos a los 7 días** (tarea programada).
+- Panel → **Solicitudes de soporte** (cuenta propietaria o personas con **Gestión de
+  solicitudes de soporte**): arriba está el **Panorama de soporte** con el período
+  (30, 90 o 365 días), las solicitudes **abiertas**, **recibidas** y **resueltas**
+  (con el tiempo promedio de resolución), la **primera respuesta promedio**, el
+  **% dentro del objetivo**, la **satisfacción**, la gráfica **Recibidas y resueltas
+  por día** y barras **por estado, tipo, prioridad y dónde se notó**. Se puede plegar.
+- En el mismo panorama elige el **Objetivo de respuesta** (recomendado **24 h**; 8 h si
+  el contrato lo promete).
+- Cuando marcas una solicitud como **resuelta**, la persona puede **calificar de 1 a 5**.
+  Una calificación de 1–2 la marca como no leída para que la revises.
+- Las solicitudes resueltas sin respuesta se **cierran solas a los 7 días** (tarea programada).
 
 ## 19. Informe mensual para clientes
 
@@ -600,10 +626,25 @@ que **no hace falta banner de cookies**. Quien pide «No rastrear» no se cuenta
 5. El correo lleva **la versión en PDF adjunta** (lista para imprimir o reenviar) y
    compara cada cifra con el **mes anterior** (▲ verde si mejoró, ▼ rojo si empeoró).
    También puedes **Descargar PDF** desde la página del informe.
-6. El informe ahora incluye **Visitas y contactos** (visitas, de dónde llegan, clics en
-   WhatsApp, mensajes recibidos, servicios más pedidos, cotizados y ganados con su
-   monto) y, en Soporte, el **tiempo de primera respuesta** y la **satisfacción**.
-   Solo aparece lo que tiene datos.
+6. **Qué contiene** (solo aparece lo que tiene datos):
+   - **Resumen** en una frase y las cifras clave: **Disponibilidad** (con el tiempo
+     fuera de servicio, si hubo), **Visitas**, **Clientes potenciales**, **Tiempo de
+     carga**, **Cambios publicados** y **Seguridad**.
+   - **Lo más destacado del mes** (hasta 3 logros).
+   - **Visitas y clientes potenciales**: de dónde llegan, clics en WhatsApp y teléfono,
+     mensajes recibidos, servicios más pedidos, cotizados y ganados con su monto.
+   - **Funcionamiento y velocidad**: disponibilidad, interrupciones (cuántas y cuánto
+     duraron) y tiempo de respuesta.
+   - **Visibilidad en Google**, **Contenido del sitio**, **Seguridad y respaldos**,
+     **Soporte técnico** (solicitudes, primera respuesta y satisfacción) y
+     **Mantenimiento automático**.
+   - **Recomendaciones para el próximo mes** (por ejemplo, contactar los clientes
+     potenciales pendientes o dar seguimiento a solicitudes abiertas).
+7. **Seguridad: «Protegido» o «Requiere atención».** Cuando dice «Requiere atención»
+   explica el motivo exacto: el sitio **no usa HTTPS**, **no hay respaldos** o el último
+   tiene **más de 7 días**, o el **certificado vence pronto**. La nota indica además si
+   hubo **inicios de sesión bloqueados** (intentos sospechosos). En una prueba local
+   (`http://localhost` o `127.0.0.1`) no se exige HTTPS; en el servidor real sí.
 
 Para que el informe muestre **«Visibilidad en Google»** (calificaciones de 0 a 100):
 
@@ -643,8 +684,8 @@ también puedes comprobarla: `php ~/sensum-cms/bin/console translate:test`.
 - [ ] `https://sensumconstrucciones.com/api/health` → `"status":"ok"`.
 - [ ] **Formulario de contacto:** envía un mensaje real desde el sitio (en celular y computadora). Bajo el botón aparece «Verificación anti-spam completa.» y el mensaje llega a `contacto@sensumconstrucciones.com` con remitente `formulario@`; al responderlo, la respuesta va al visitante.
 - [ ] (Si activaste Turnstile) el formulario sigue enviando y no muestra errores; en Cloudflare → Turnstile aparecen las verificaciones.
-- [ ] **Reportes de soporte:** con otra cuenta envía un reporte de prueba; como it@gruposensum.com ábrelo, usa **Pedir más información** y luego **Marcar como resuelto**; la persona recibe ambos correos.
-- [ ] (Opcional) Panel → **Formulario de contacto**: ajusta las opciones de «Servicio de interés» a los servicios que ofreces hoy y pulsa **Guardar y publicar**; compruébalo en el sitio (español e inglés).
+- [ ] **Solicitudes de soporte:** con otra cuenta envía un reporte de prueba; como it@gruposensum.com ábrelo, usa **Pedir más información** y luego **Marcar como resuelto**; la persona recibe ambos correos.
+- [ ] (Opcional) Panel → **Formulario de contacto**: ajusta las opciones de «Servicio de interés» a los servicios que ofreces hoy. La **vista previa** funciona como el sitio: cambia entre **Celular, Tableta y Computadora**, abre la lista (las opciones sin guardar dicen «Nueva» o «Modificada») y pulsa «Enviar mensaje» para ver los mensajes de error (no se envía nada). Luego **Guardar y publicar** y compruébalo en el sitio (español e inglés).
 - [ ] **Correo del panel:** panel → Correo → **Enviar correo de prueba** → llega a it@gruposensum.com.
 - [ ] Inicias sesión en `/admin/` como it@gruposensum.com; ves Usuarios, Monitoreo, Informe mensual y Correo.
 - [ ] Monitoreo → **Alertas automáticas**: todas activadas. **Archivos del sitio → Revisar ahora**: «Todo en orden».
@@ -654,18 +695,23 @@ también puedes comprobarla: `php ~/sensum-cms/bin/console translate:test`.
 - [ ] **Reportar un problema** (botón arriba en el panel) → llega a it@gruposensum.com con el nuevo diseño.
 - [ ] **Monitoreo → Enviar correo de prueba** → llega la alerta de prueba.
 - [ ] **Informe mensual → Enviarme una prueba** → llega.
-- [ ] Invitas a una persona con «Solo textos» → solo ve «Textos del sitio».
+- [ ] Invitas a una persona como «Redactor» → solo ve «Textos del sitio».
 - [ ] Cambias un texto, lo ves en el sitio (recarga con Ctrl+F5) y lo restauras.
 - [ ] Subes una foto de proyecto y aparece en la tarjeta.
 - [ ] Monitoreo → «Última revisión automática» muestra una hora reciente (cron funcionando).
 - [ ] Después de enviar el mensaje de prueba del formulario: aparece en **Prospectos** (con el enlace «Prospecto #…» en el correo). Cámbialo a «Contactado» y agrega una nota.
 - [ ] Prospectos → **Conservación de datos** elegida; el aviso de privacidad (`/privacy-notice.html`) dice el mismo número de meses.
 - [ ] Abre el sitio en tu celular (sin «No rastrear») y toca el botón de WhatsApp: al rato, **Estadísticas** muestra la visita y el clic.
-- [ ] Reportes de soporte: objetivo de respuesta elegido; resuelve el ticket de prueba y califícalo con la otra cuenta.
+- [ ] Solicitudes de soporte: objetivo de respuesta elegido; resuelve la solicitud de prueba y califícala con la otra cuenta; el **Panorama de soporte** la cuenta como resuelta.
 - [ ] **Informe mensual → Descargar PDF** se abre bien; la prueba por correo trae el PDF adjunto.
 - [ ] Traducción → **Probar conexión** dice «La clave funciona». En Textos del sitio, escribe en español y mira cómo se llena el inglés (luego descarta el cambio).
 - [ ] Monitoreo → **Tendencias** muestra las gráficas (pasa el cursor para ver cada día) después de la primera hora de revisiones automáticas.
-- [ ] Una persona con «Acceso completo» (o con *Monitoreo del sitio (resumen)*) ve **Monitoreo del sitio** en su menú, sin el registro de errores.
+- [ ] Una persona «Administrador del sitio» o «Gerencia (consulta)» ve **Salud del sitio** en su menú (uptime de 24 h / 7 / 30 / 90 días, gráficas e incidentes), sin el registro de errores.
+- [ ] Monitoreo (cuenta propietaria) → **Disponibilidad (uptime)** e **Incidentes (30 días)** muestran datos después de las primeras revisiones automáticas.
+- [ ] Una persona «Gerencia (consulta)» ve **Estadísticas** sin mensajes del formulario ni el menú Prospectos.
+- [ ] Si alguien da soporte técnico: tipo de acceso «Soporte técnico» → ve todas las solicitudes y el **Panorama de soporte**; no ve Usuarios ni Monitoreo.
+- [ ] **Informe mensual → Vista previa**: «Seguridad» dice «Protegido» (con HTTPS y respaldo reciente); si dice «Requiere atención», la nota explica el motivo.
+- [ ] Usuarios → el **buscador** encuentra a una persona por nombre o correo.
 - [ ] Usuarios → **Ver como…**: revisa cada persona del equipo; su menú solo muestra lo que su tipo de acceso permite. Termina con **Volver a mi cuenta**.
 - [ ] Better Stack muestra ambos monitores en verde.
 
@@ -683,6 +729,13 @@ también puedes comprobarla: `php ~/sensum-cms/bin/console translate:test`.
    vez cambias un archivo del sitio a mano (a propósito), confirma el cambio en panel →
    **Monitoreo → Archivos del sitio → Revisar ahora → Marcar como esperados** (pide tu
    contraseña) o con `php ~/sensum-cms/bin/console integrity:accept`.
+
+**Al actualizar desde una versión anterior (perfiles de acceso nuevos):** las cuentas
+que ya tenían **Prospectos** reciben también **Estadísticas de visitas** (antes iban
+juntas), así nadie pierde lo que veía. **Gestión de solicitudes de soporte** no se le
+da a nadie automáticamente: asígnala tú en Usuarios → «⋮» → **Cambiar tipo de acceso**
+(tipo **Soporte técnico**) si alguien más atiende el soporte. Revisa después con
+**Ver como…** que cada persona vea lo que corresponde.
 
 **Alternativa con Git (cPanel → Git Version Control):** cPanel puede clonar el
 repositorio de GitHub y desplegarlo con un archivo `.cpanel.yml`, pero entonces

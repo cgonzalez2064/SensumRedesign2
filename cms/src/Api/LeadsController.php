@@ -90,10 +90,19 @@ final class LeadsController extends Controller
 
     // ------------------------------------------------------------------ statistics
 
-    /** Visits and leads for a month (YYYY-MM) or the last 30 days, with the previous period to compare. */
+    /**
+     * Visits for a month (YYYY-MM) or the last 30 days, with the previous
+     * period to compare. "stats" access: visits only; "leads" access: plus
+     * the contact-form figures.
+     */
     public function stats(): never
     {
-        $this->requirePermission('leads');
+        $auth = $this->app->auth();
+        $session = (array) $this->session;
+        if (!$auth->can($session, 'stats') && !$auth->can($session, 'leads')) {
+            throw new ApiError(403, 'forbidden');
+        }
+        $withLeads = $auth->can($session, 'leads');
         $period = $this->req->query('period');
         if (preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $period)) {
             [$start, $end] = SiteReport::bounds($period);
@@ -118,8 +127,8 @@ final class LeadsController extends Controller
             'canConfigure' => $this->isOwner(),
             'visits' => $a->summary($start, $end),
             'previous' => $a->summary($pStart, $pEnd),
-            'leads' => $l->stats($start, $end),
-            'previousLeads' => $l->stats($pStart, $pEnd),
+            'leads' => $withLeads ? $l->stats($start, $end) : null,
+            'previousLeads' => $withLeads ? $l->stats($pStart, $pEnd) : null,
             'months' => $months,
         ]);
     }

@@ -31,6 +31,7 @@ test('owner: interactive trends — hover, keyboard, legend and range', async ({
   await expect(response.locator('.chart-marker')).toHaveCount(1); // the day with a failed check
   // Hover (or tap) shows the day's values.
   const plot = response.locator('.chart-plot');
+  await plot.scrollIntoViewIfNeeded(); // below the uptime section on smaller screens
   const box = await plot.boundingBox();
   if (info.project.name === 'iphone-webkit') await plot.tap({ position: { x: box.width * 0.6, y: box.height / 2 } });
   else await page.mouse.move(box.x + box.width * 0.6, box.y + box.height / 2);
@@ -63,13 +64,14 @@ test('owner: interactive trends — hover, keyboard, legend and range', async ({
 test('admins see the summary version: status, figures and charts, without technical details', async ({ page }) => {
   await signIn(page, OTHER_ADMIN);
   if (await page.locator('.open-nav').isVisible()) await page.locator('.open-nav').click();
-  await expect(page.locator('.nav a[href="#/monitoreo-basico"]')).toBeVisible();
+  await expect(page.locator('.nav a[href="#/salud-del-sitio"]')).toBeVisible();
   await expect(page.locator('.nav a[href="#/monitoreo"]')).toHaveCount(0);
-  await page.goto('/admin/#/monitoreo-basico');
-  await expect(page.locator('main h1')).toHaveText('Monitoreo del sitio');
+  await page.goto('/admin/#/salud-del-sitio');
+  await expect(page.locator('main h1')).toHaveText('Salud del sitio');
   await expect(page.locator('main .alert').first()).toContainText(/Todo funciona correctamente|Hubo un problema|El sitio tiene un problema/);
-  await expect(page.locator('.kpi')).toHaveCount(4);
-  await expect(page.locator('.kpi', { hasText: 'Disponibilidad (30 días)' }).locator('.kpi-num')).toHaveText(/\d.*%/);
+  await expect(page.locator('.uptime-tiles .kpi')).toHaveCount(4);
+  await expect(page.locator('.kpi', { hasText: 'Últimos 30 días' }).locator('.kpi-num')).toHaveText(/\d.*%/);
+  await expect(page.locator('.kpi', { hasText: 'Tiempo de respuesta' })).toBeVisible();
   await expect(chartOf(page, 'Tiempo de respuesta del sitio')).toBeVisible();
   await expect(chartOf(page, 'Errores por día')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Inicios de sesión' })).toHaveCount(0);
@@ -79,13 +81,13 @@ test('admins see the summary version: status, figures and charts, without techni
   await axe(page);
 });
 
-test('"Monitoreo del sitio (resumen)" can be given to anyone as part of a custom access', async ({ browser }, info) => {
+test('"Salud del sitio" can be given to anyone as part of a custom access', async ({ browser }, info) => {
   test.skip(info.project.name !== 'desktop-chrome', 'changing access once is enough');
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   await signIn(page, TEXTS_ONLY);
-  await expect(page.locator('.nav a[href="#/monitoreo-basico"]')).toHaveCount(0);
-  await page.goto('/admin/#/monitoreo-basico');
+  await expect(page.locator('.nav a[href="#/salud-del-sitio"]')).toHaveCount(0);
+  await page.goto('/admin/#/salud-del-sitio');
   await expect(page.locator('main h1')).toHaveText('No encontramos esta pantalla');
 
   const it = await browser.newContext();
@@ -97,21 +99,21 @@ test('"Monitoreo del sitio (resumen)" can be given to anyone as part of a custom
   await owner.getByRole('button', { name: 'Cambiar tipo de acceso' }).click();
   const dlg = owner.getByRole('dialog', { name: new RegExp(`Acceso de ${TEXTS_ONLY.name}`) });
   await dlg.getByText('Personalizado').click();
-  await dlg.getByRole('checkbox', { name: 'Monitoreo del sitio (resumen)' }).check();
+  await dlg.getByRole('checkbox', { name: /^Salud del sitio/ }).check();
   await dlg.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(row.getByText('Textos del sitio · Monitoreo del sitio (resumen)')).toBeVisible();
+  await expect(row.getByText('Textos del sitio · Salud del sitio')).toBeVisible();
 
   await page.goto('/admin/#/');
   await page.reload();
-  await expect(page.locator('.nav a[href="#/monitoreo-basico"]')).toBeVisible();
-  await page.goto('/admin/#/monitoreo-basico');
-  await expect(page.locator('main h1')).toHaveText('Monitoreo del sitio');
+  await expect(page.locator('.nav a[href="#/salud-del-sitio"]')).toBeVisible();
+  await page.goto('/admin/#/salud-del-sitio');
+  await expect(page.locator('main h1')).toHaveText('Salud del sitio');
 
   // Put it back.
   await row.getByRole('button', { name: new RegExp(`Acciones para ${TEXTS_ONLY.name}`) }).click();
   await owner.getByRole('button', { name: 'Cambiar tipo de acceso' }).click();
-  await owner.getByRole('dialog').getByText('Solo textos').click();
+  await owner.getByRole('dialog').getByText('Redactor', { exact: true }).click();
   await owner.getByRole('dialog').getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(row.getByText('Solo textos')).toBeVisible();
+  await expect(row.getByText('Redactor', { exact: true })).toBeVisible();
   await ctx.close(); await it.close();
 });

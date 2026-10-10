@@ -13,7 +13,7 @@
  *   card.append(c.el);
  */
 import { h, icon, fill } from './dom.js';
-import { t } from './i18n.js';
+import { t, getLang } from './i18n.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const s = (tag, attrs = {}) => {
@@ -23,12 +23,13 @@ const s = (tag, attrs = {}) => {
 };
 let uid = 0;
 
-/** A "nice" upper bound and step for the y axis (1, 2, 2.5, 5 × 10ⁿ). */
-function niceScale(max, ticks = 4) {
-  if (!(max > 0)) return { max: 1, step: 0.25 };
+/** A "nice" upper bound and step for the y axis (1, 2, 2.5, 5 × 10ⁿ; whole steps for counts). */
+function niceScale(max, ticks = 4, integer = false) {
+  if (!(max > 0)) return integer ? { max: 1, step: 1 } : { max: 1, step: 0.25 };
   const raw = max / ticks;
   const mag = 10 ** Math.floor(Math.log10(raw));
-  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((x) => x >= raw);
+  let step = (integer ? [1, 2, 5, 10] : [1, 2, 2.5, 5, 10]).map((m) => m * mag).find((x) => x >= raw);
+  if (integer) step = Math.max(1, Math.round(step));
   return { max: step * Math.ceil(max / step), step };
 }
 
@@ -40,11 +41,13 @@ function niceScale(max, ticks = 4) {
  * @param {boolean} [o.stacked]         bars stacked
  * @param {boolean} [o.area]            fill under lines
  * @param {number}  [o.yMax]            fixed top (e.g. 100 for percentages)
+ * @param {boolean} [o.integer]         counts: whole-number ticks only
  * @param {number}  [o.yMin]            fixed bottom for lines (default 0)
  * @param {(v:number)=>string} [o.yFormat]
  * @param {(label:string)=>string} [o.xFormat]       short axis label
  * @param {(label:string)=>string} [o.titleFormat]   tooltip title
  * @param {{values:boolean[],label:string|((i:number)=>string)}} [o.markers] red dots on the baseline (e.g. days with failed checks)
+ * @param {boolean} [o.tipSkipEmpty]   leave series without a value out of the tooltip (category bars)
  * @param {number}  [o.height]
  * @param {string}  o.ariaLabel
  * @param {string}  [o.empty]          shown when every value is empty
@@ -103,7 +106,7 @@ export function chart(o) {
       if (o.type === 'bar' && o.stacked) max = Math.max(max, vis.reduce((a, x) => a + (x.values[i] || 0), 0));
       else for (const x of vis) if (x.values[i] !== null && x.values[i] !== undefined) max = Math.max(max, x.values[i]);
     }
-    const scale = niceScale(o.yMax !== undefined ? Math.max(o.yMax, max) - min : max - min);
+    const scale = niceScale(o.yMax !== undefined ? Math.max(o.yMax, max) - min : max - min, 4, !!o.integer);
     const top = min + scale.max;
     const ticks = [];
     for (let v = min; v <= top + 1e-9; v += scale.step) ticks.push(v);
@@ -194,6 +197,7 @@ export function chart(o) {
     const rows = [];
     for (const sx of visible()) {
       const v = sx.values[i];
+      if (o.tipSkipEmpty && (v === null || v === undefined)) continue;
       const txt = v === null || v === undefined ? '—' : (sx.format || yFormat)(v);
       rows.push([sx, txt]);
       if (o.type === 'line' && v !== null && v !== undefined) svgEl.append(s('circle', { class: `chart-hl tone-${sx.tone}`, cx: x, cy: g.yAt(v), r: 4.5 }));
@@ -248,3 +252,17 @@ export function chart(o) {
   ro.observe(plot);
   return { el, destroy: () => { cancelAnimationFrame(frame); ro.disconnect(); } };
 }
+
+/** Labelled horizontal bars (share of a total), e.g. tickets by status or visits by source. */
+export function barList(rows, { labelOf = (k) => k, format = (n) => String(n), total = null, empty = '' } = {}) {
+  const entries = Object.entries(rows).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+  const sum = total ?? entries.reduce((a, [, n]) => a + n, 0);
+  if (!entries.length) return h('p', { class: 'small muted', text: empty });
+  return h('ul', { class: 'bar-list' }, entries.map(([k, n]) => {
+    const share = sum > 0 ? Math.round((100 * n) / sum) : 0;
+    return h('li', null,
+      h('div', { class: 'bar-head' }, h('span', { class: 'break', text: labelOf(k) }), h('span', { class: 'tiny muted', text: format(n) + ' · ' + share + (getLang() === 'en' ? '%' : ' %') })),
+      h('div', { class: 'bar-track', 'aria-hidden': 'true' }, h('span', { class: 'bar-fill', ref: (el) => { el.style.width = Math.max(2, share) + '%'; } })));
+  }));
+}
+

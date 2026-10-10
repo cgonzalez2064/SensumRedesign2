@@ -210,14 +210,14 @@ final class Reports
     public function retry(array $session, int $id): array
     {
         $r = $this->find($id);
-        if ((int) $r['user_id'] !== (int) $session['uid'] && !$this->app->auth()->isOwner($session)) {
+        if ((int) $r['user_id'] !== (int) $session['uid'] && !(new Tickets($this->app))->manages($session)) {
             throw new ApiError(404, 'not_found'); // don't reveal other users' reports
         }
         if (!$this->app->rateLimiter()->hit('report_retry', (string) $session['uid'], 10, 600)) {
             throw new ApiError(429, 'too_many_attempts');
         }
         $delivered = $this->deliver($id);
-        return ['report' => (new Tickets($this->app))->present($this->find($id), $this->app->auth()->isOwner($session)), 'delivered' => $delivered];
+        return ['report' => (new Tickets($this->app))->present($this->find($id), (new Tickets($this->app))->manages($session)), 'delivered' => $delivered];
     }
 
     public function present(array $r): array

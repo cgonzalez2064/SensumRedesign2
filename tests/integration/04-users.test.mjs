@@ -3,7 +3,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startServer, Client, createAdmin, ADMIN, mailpitUp, waitForMail, message, linkToken, unique } from './helpers.mjs';
 
-const ALL = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'monitor'];
+const ALL = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'support'];
 let s; let owner;
 before(async () => {
   assert.ok(await mailpitUp(), 'Mailpit must be running');

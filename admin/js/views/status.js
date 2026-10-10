@@ -1,17 +1,16 @@
 /**
- * Monitoreo del sitio — the summary version of Monitoring for accounts with
- * the "monitor" access (and the owner): is the site working, availability,
- * speed, error counts and key dates, with the same trend charts. No error
+ * Salud del sitio — the summary version of Monitoring for accounts with the
+ * "monitor" access (and the owner): is the site working, uptime, speed,
+ * incidents, error counts and key dates, with the same charts. No error
  * messages, settings or server details (those stay in the owner's Monitoreo).
  */
 import { h, icon, fill } from '../dom.js';
 import { t, tp, fmtDate, fmtRelative, getLang } from '../i18n.js';
 import { api } from '../api.js';
 import { pageHead, loading, loadError, button, alertBox, cardHead } from '../ui.js';
-import { trendsCard } from '../monitorCharts.js';
+import { trendsCard, uptimeTiles, incidentsCard } from '../monitorCharts.js';
 
 const num = (n, d = 1) => new Intl.NumberFormat(getLang() === 'en' ? 'en-US' : 'es-GT', { maximumFractionDigits: d }).format(n);
-const pct = (n) => num(n, 2) + (getLang() === 'en' ? '%' : ' %');
 
 export async function render({ main, isOwner }) {
   const refresh = button(t('monitor.refresh'), { icon: 'arrow-repeat', small: true });
@@ -35,8 +34,6 @@ export async function render({ main, isOwner }) {
       h('span', { class: 'kpi-label', text: label }), h('span', { class: 'kpi-num', text: value }), note ? h('span', { class: 'kpi-label', text: note }) : null);
     const e = d.errors7;
     const tiles = h('div', { class: 'kpi-grid' },
-      tile(t('status.availability'), d.availability30 === null ? '—' : pct(d.availability30), d.checks30 ? t('status.availabilityNote', { n: num(d.checks30, 0) }) : t('status.noChecks'),
-        d.availability30 === null ? null : d.availability30 >= 99 ? 'ok' : 'warn'),
       tile(t('status.response'), d.responseMs7 === null ? '—' : num(d.responseMs7, 0) + ' ms', t('status.responseNote'), d.responseMs7 === null ? null : d.responseMs7 < 1500 ? 'ok' : 'warn'),
       tile(t('status.errors'), num(e.critical + e.error, 0), tp('status.criticalN', e.critical) + ' · ' + tp('status.warningN', e.warning), e.critical ? 'bad' : null),
       tile(t('status.lastCheck'), d.lastCheckAt ? fmtRelative(d.lastCheckAt) : t('status.never'), d.lastCheckAt ? fmtDate(d.lastCheckAt) : t('status.neverNote'), d.lastCheckAt && Date.now() / 1000 - d.lastCheckAt < 3600 ? 'ok' : 'warn'));
@@ -60,7 +57,8 @@ export async function render({ main, isOwner }) {
 
     if (trends) trends.destroy();
     trends = trendsCard({ security: false });
-    fill(body, banner, tiles, trends.el, h('div', { class: 'dash-grid' }, facts, help));
+    fill(body, banner, h('section', { class: 'stack-sm', 'aria-labelledby': 'st-uptime' }, h('h2', { class: 'section-title', id: 'st-uptime', text: t('uptime.title') }), uptimeTiles(d.uptime)),
+      tiles, trends.el, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, incidentsCard(d.incidents), help), facts));
   };
   refresh.addEventListener('click', () => { fill(body, loading()); load(); });
   await load();

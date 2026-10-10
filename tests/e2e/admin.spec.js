@@ -17,7 +17,7 @@ const PAGES = [
   ['users', '#/usuarios'], ['reports', '#/reportes'], ['account', '#/cuenta'], ['help', '#/ayuda'], ['monitor', '#/monitoreo'], ['site-report', '#/informe'],
   ['email', '#/correo'], ['form', '#/formulario'], ['ticket', '#/reportes/1'], ['security', '#/seguridad'],
   ['leads', '#/prospectos'], ['lead', '#/prospectos/2'], ['stats', '#/estadisticas'],
-  ['status', '#/monitoreo-basico'], ['translation', '#/traduccion'],
+  ['status', '#/salud-del-sitio'], ['translation', '#/traduccion'],
 ];
 
 /** Collects console errors, CSP violations, page errors and failed requests. */

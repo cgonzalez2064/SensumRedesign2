@@ -43,7 +43,8 @@ export async function render({ main, session, isOwner, can }) {
       can('photos') || can('documents') ? quick('#/fotos', 'images', 'media') : null,
       can('contact') ? quick('#/contacto', 'telephone', 'details') : null,
       can('leads') ? quick('#/prospectos', 'inbox', 'leads') : null,
-      can('monitor') && !user.owner ? quick('#/monitoreo-basico', 'activity', 'status') : null,
+      can('monitor') && !user.owner ? quick('#/salud-del-sitio', 'heart-pulse', 'status') : null,
+      can('stats') && !can('leads') ? quick('#/estadisticas', 'graph-up', 'stats') : null,
       quick(data.site.url + '/', 'box-arrow-up-right', 'site', true)));
 
     // Website status.

@@ -56,10 +56,10 @@ const PRIVATE = [
   { re: /^\/fotos(?:\/(nosotros|proyectos|documentos))?$/, mod: V.media, fn: 'render', nav: 'media', perm: ['photos', 'documents'] },
   { re: /^\/prospectos$/, mod: V.leads, fn: 'render', nav: 'leads', perm: ['leads'] },
   { re: /^\/prospectos\/([1-9][0-9]{0,8})$/, mod: V.leads, fn: 'detail', nav: 'leads', perm: ['leads'] },
-  { re: /^\/estadisticas$/, mod: V.stats, fn: 'render', nav: 'stats', perm: ['leads'] },
+  { re: /^\/estadisticas$/, mod: V.stats, fn: 'render', nav: 'stats', perm: ['stats', 'leads'] },
   { re: /^\/usuarios$/, mod: V.users, fn: 'render', nav: 'users', owner: true },
   { re: /^\/monitoreo$/, mod: V.monitor, fn: 'render', nav: 'monitor', owner: true },
-  { re: /^\/monitoreo-basico$/, mod: V.status, fn: 'render', nav: 'status', perm: ['monitor'] },
+  { re: /^\/(salud-del-sitio|monitoreo-basico)$/, mod: V.status, fn: 'render', nav: 'status', perm: ['monitor'] },
   { re: /^\/traduccion$/, mod: V.translation, fn: 'render', nav: 'translation', owner: true },
   { re: /^\/informe$/, mod: V.siteReport, fn: 'render', nav: 'siteReport', owner: true },
   { re: /^\/correo$/, mod: V.email, fn: 'render', nav: 'email', owner: true },
@@ -219,7 +219,7 @@ function navLink(path, key, ic, active) {
 }
 
 /**
- * Number next to "Reportes de soporte": tickets that need IT (owner) or
+ * Number next to "Solicitudes de soporte": tickets that need IT (owner) or
  * replies the person hasn't read yet. Refreshed when the frame is built,
  * after ticket actions, and when the window regains focus (at most every 30 s).
  */
@@ -330,9 +330,10 @@ function renderShell(activeNav, force = false) {
       can(user, 'photos') || can(user, 'documents') ? navLink('/fotos', 'media', 'images', active) : null,
       can(user, 'contact') ? navLink('/contacto', 'details', 'telephone', active) : null,
       can(user, 'contact') ? navLink('/formulario', 'form', 'card-text', active) : null,
-      can(user, 'leads') ? [h('div', { class: 'nav-section', text: t('nav.groupClients') }), navLink('/prospectos', 'leads', 'inbox', active),
+      can(user, 'leads') || can(user, 'stats') ? [h('div', { class: 'nav-section', text: t('nav.groupClients') }),
+        can(user, 'leads') ? navLink('/prospectos', 'leads', 'inbox', active) : null,
         navLink('/estadisticas', 'stats', 'graph-up', active)] : null,
-      !user.owner && can(user, 'monitor') ? [h('div', { class: 'nav-section', text: t('nav.groupStatus') }), navLink('/monitoreo-basico', 'status', 'activity', active)] : null,
+      !user.owner && can(user, 'monitor') ? [h('div', { class: 'nav-section', text: t('nav.groupStatus') }), navLink('/salud-del-sitio', 'status', 'heart-pulse', active)] : null,
       user.owner ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active),
         navLink('/monitoreo', 'monitor', 'activity', active), navLink('/informe', 'siteReport', 'bar-chart', active),
         navLink('/correo', 'email', 'envelope', active), navLink('/traduccion', 'translation', 'translate', active), navLink('/seguridad', 'security', 'shield-lock', active)] : null,

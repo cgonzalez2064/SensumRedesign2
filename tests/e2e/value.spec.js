@@ -154,8 +154,10 @@ test('the reporter rates resolved help with stars; IT sees it with the service l
   const owner = await it.newPage();
   await signIn(owner, ADMIN);
   await owner.goto('/admin/#/reportes');
-  await expect(owner.getByRole('region', { name: 'Nivel de servicio' })).toContainText('Satisfacción');
-  await expect(owner.getByRole('region', { name: 'Nivel de servicio' })).toContainText('4/5');
+  // The service level lives in the support overview.
+  await expect(owner.locator('details.ticket-overview .kpi', { hasText: 'Satisfacción' })).toContainText('4/5');
+  await expect(owner.locator('details.ticket-overview .kpi', { hasText: 'Satisfacción' })).toContainText('1 calificación');
+  await expect(owner.getByLabel('Objetivo de respuesta')).toHaveValue('24');
   await owner.goto('/admin/#/reportes/1');
   await expect(owner.getByRole('heading', { name: /Calificación de / })).toBeVisible();
   await expect(owner.getByText('Rápido y claro.')).toBeVisible();
@@ -168,7 +170,7 @@ test('monthly report: trends in the preview and the PDF download', async ({ page
   await signIn(page);
   await page.goto('/admin/#/informe');
   await page.getByLabel('Mes').selectOption({ index: 0 });
-  await expect(page.locator('.report-preview')).toContainText('Visitas y contactos');
+  await expect(page.locator('.report-preview')).toContainText('Visitas y clientes potenciales');
   await expect(page.locator('.report-preview .trend').first()).toBeVisible();
   const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Descargar PDF' }).click()]);
   expect(dl.suggestedFilename()).toMatch(/^informe-sitio-sensum-\d{4}-\d{2}\.pdf$/);

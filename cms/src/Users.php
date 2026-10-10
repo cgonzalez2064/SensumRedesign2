@@ -18,15 +18,31 @@ use Sensum\Cms\Http\ApiError;
 final class Users
 {
     public const ROLES = ['admin', 'editor'];
-    public const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'monitor'];
-    /** Ready-made access types offered when inviting (anything else shows as "Personalizado"). */
+    /**
+     * What an account may use (the owner always has everything, plus users,
+     * settings and the full Monitoring):
+     *   texts      Textos del sitio            contact   Datos de contacto y formulario
+     *   photos     Fotos                       documents Portafolio en PDF
+     *   site       Publicación y actividad (republish, recent activity)
+     *   leads      Prospectos (contact-form messages; includes the statistics)
+     *   stats      Estadísticas de visitas
+     *   monitor    Salud del sitio (uptime, speed, incidents — no technical details)
+     *   support    Gestión de solicitudes de soporte (everyone's tickets)
+     */
+    public const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'support'];
+    /**
+     * Ready-made access types offered when inviting, one per real job
+     * (anything else shows as "Personalizado").
+     */
     public const ACCESS_TYPES = [
-        'full' => ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'monitor'],
+        'admin' => ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor'],
         'content' => ['texts', 'contact', 'photos', 'documents'],
         'texts' => ['texts'],
         'media' => ['photos', 'documents'],
         'contact' => ['contact'],
-        'sales' => ['leads'],
+        'sales' => ['leads', 'stats'],
+        'management' => ['stats', 'monitor'],
+        'support' => ['support', 'monitor', 'site'],
     ];
 
     public function __construct(private App $app)
@@ -121,7 +137,7 @@ final class Users
         return $this->app->db()->insert(
             "INSERT INTO users (email, name, role, status, password_hash, lang, theme, created_at, updated_at, password_changed_at, permissions)
              VALUES (?, ?, ?, 'active', ?, ?, 'system', ?, ?, ?, ?)",
-            [$email, $name, in_array($role, self::ROLES, true) ? $role : 'editor', Passwords::hash($password), $lang === 'en' ? 'en' : 'es', $now, $now, $now, implode(',', self::PERMISSIONS)]
+            [$email, $name, in_array($role, self::ROLES, true) ? $role : 'editor', Passwords::hash($password), $lang === 'en' ? 'en' : 'es', $now, $now, $now, implode(',', self::ACCESS_TYPES['admin'])]
         );
     }
 

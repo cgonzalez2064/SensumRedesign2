@@ -355,3 +355,16 @@ archive is needed.
 | Identity | The owner's session (same cookie, CSRF token and expiry) carries the viewed account id and a 30-minute limit; permission checks, menus and lists use the viewed account, so owner-only routes answer 403 while viewing. Expired, disabled or deleted targets drop back to the owner automatically; signing out ends the owner session. Two-step enrolment is never forced on the owner for the viewed account. | `20-view-as` |
 | Transparency | A bar on every screen states who is being viewed, the access type, "solo lectura" and the time left; the panel reloads when the server says the view changed (`X-View-As` header). | `view-as.spec` |
 
+
+## 16. Change review — access profiles, Salud del sitio, basic statistics, support managers, monthly report wording
+
+| Area | Design | Verified by |
+|---|---|---|
+| Ready-made profiles | Eight concrete jobs (`Users::ACCESS_TYPES`) built from nine allow-listed permissions; anything else is *custom*. Least privilege by default: *Administrador del sitio* does **not** include `support` (other people's requests, screenshots and technical context), and accounts created from the terminal get that administrator set, not every permission. | `21-profiles-health`, `04-users`, `16-tickets` |
+| `support` permission | Replaces the hard-coded owner checks in `Tickets` (`manages()` / `requireManager()`): list, read (incl. internal notes and screenshots), status, priority, edit, reply, retry and the response target. Still 403 for Usuarios, Monitoreo, settings and everything else outside the permission. Never granted automatically (not by migration, not by `create-admin`). Reporters keep seeing only their own requests, without internal notes. | `21-profiles-health`, `profiles.spec` |
+| Support charts | `GET /api/reports/analytics` (managers only; `days` limited to 30/90/365) returns counts and averages — no names, e-mails, texts or screenshots. | `21-profiles-health` |
+| `stats` permission (basic statistics) | Aggregate, cookie-free counts only. Without `leads` the contact-form figures are `null` and every Prospectos endpoint answers 403, so no personal data reaches this access. Migration `011_access_profiles.sql` adds `stats` only to accounts that already had `leads` (idempotent), so nobody gains new data. | `21-profiles-health`, `profiles.spec` |
+| Salud del sitio exposure | Uptime percentages, check counts and incident times/durations only. Which checks failed (database, storage, publishing…) reveals internal components, so it is limited to the owner's `/api/monitor/summary`. | `21-profiles-health`, `profiles.spec` |
+| Monthly report wording | «Seguridad» now states the concrete reason (no HTTPS, no/old backup, certificate expiring) instead of a vague «Revisar». HTTPS is only required for public addresses; the local-address exception is decided from the server's own `APP_URL`, never from request input. The report contains no secrets, IPs or account names. | `12-site-report`, `21-profiles-health` |
+| Users search | Client-side filtering of the list the owner already receives; no new endpoint or query parameter. | `profiles.spec` |
+| Contact-form preview | A local replica: no request to the contact handler, no data stored; validation rules mirror the site's for display only (the server still validates every real message). | `contact-services.spec` |

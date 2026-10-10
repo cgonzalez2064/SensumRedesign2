@@ -3,7 +3,7 @@ import { h, icon, clear, fill } from '../dom.js';
 import { t, tp, fmtDate, fmtRelative, fmtBytes } from '../i18n.js';
 import { api } from '../api.js';
 import { pageHead, loading, loadError, button, setBusy, toast, errorText, emptyState, copyText, askPassword, fieldErrorText, switchInput, cardHead } from '../ui.js';
-import { trendsCard } from '../monitorCharts.js';
+import { trendsCard, uptimeTiles, incidentsCard } from '../monitorCharts.js';
 
 const SEVERITY_BADGE = { critical: 'badge-bad', error: 'badge-warn', warning: 'badge-info' };
 const SEVERITY_ICON = { critical: 'x-circle-fill', error: 'exclamation-triangle-fill', warning: 'info-circle-fill' };
@@ -133,7 +133,7 @@ function kv(rows, tight = false) {
 
 export async function render({ main, session }) {
   const refresh = button(t('monitor.refresh'), { icon: 'arrow-repeat', small: true });
-  const lite = h('a', { class: 'btn btn-sm btn-ghost', href: '#/monitoreo-basico', title: t('monitor.liteHint') }, t('monitor.liteLink'));
+  const lite = h('a', { class: 'btn btn-sm btn-ghost', href: '#/salud-del-sitio', title: t('monitor.liteHint') }, t('monitor.liteLink'));
   main.append(pageHead({ title: t('monitor.title'), lead: t('monitor.lead', { email: session.user.email }), actions: [lite, refresh] }));
   let trends = null;
   const body = h('div', { class: 'stack-lg' }, loading());
@@ -283,7 +283,8 @@ export async function render({ main, session }) {
 
     if (trends) trends.destroy();
     trends = trendsCard({ security: true });
-    fill(body, tiles, trends.el, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, logCard, rulesCard(data.rules), activity), h('div', { class: 'stack-lg' }, checks, alerts, domainCard(data.domain), integrityCard(), top, system, setup)));
+    const uptime = h('section', { class: 'stack-sm', 'aria-labelledby': 'mon-uptime' }, h('h2', { class: 'section-title', id: 'mon-uptime', text: t('uptime.title') }), uptimeTiles(data.uptime));
+    fill(body, tiles, uptime, trends.el, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, incidentsCard(data.incidents, { details: true }), logCard, rulesCard(data.rules), activity), h('div', { class: 'stack-lg' }, checks, alerts, domainCard(data.domain), integrityCard(), top, system, setup)));
     loadLog();
   };
   refresh.addEventListener('click', () => { fill(body, loading()); load(); });

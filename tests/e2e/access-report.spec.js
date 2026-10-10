@@ -20,12 +20,12 @@ test('the owner invites someone with a ready-made access type and changes it lat
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Nombre').fill('Pedro Fotos');
   await dialog.getByLabel('Correo electrónico').fill(`pedro.${Date.now()}@example.test`);
-  await dialog.getByText('Solo fotos y portafolio').click();
+  await dialog.getByText('Fotos y portafolio', { exact: true }).click();
   await expect(dialog.locator('.checks')).toBeHidden();
   await dialog.getByRole('button', { name: 'Enviar invitación' }).click();
   await expect(page.getByText(/Invitación enviada a/)).toBeVisible();
   const row = page.locator('tr', { hasText: 'Pedro Fotos' });
-  await expect(row.getByText('Solo fotos y portafolio')).toBeVisible();
+  await expect(row.getByText('Fotos y portafolio', { exact: true })).toBeVisible();
   // Change to a custom set.
   await row.getByRole('button', { name: /Acciones para Pedro Fotos/ }).click();
   await page.getByRole('button', { name: 'Cambiar tipo de acceso' }).click();

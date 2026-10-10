@@ -6,7 +6,7 @@
 import { h } from './dom.js';
 import { t } from './i18n.js';
 
-export const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'monitor'];
+export const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'support'];
 
 /** The owner can do everything; everyone else only what their access type allows. */
 export const can = (user, permission) => !!user && (user.owner || (user.permissions || []).includes(permission));
@@ -31,9 +31,9 @@ export const permissionList = (perms) => perms.map((p) => t('access.perms.' + p)
  */
 export function accessPicker(presets, initial = presets.content, idPrefix = 'acc') {
   const start = accessTypeOf(initial, presets);
-  const boxes = PERMISSIONS.map((p) => h('label', { class: 'check' },
+  const boxes = PERMISSIONS.map((p) => h('label', { class: 'check check-help' },
     h('input', { type: 'checkbox', value: p, checked: initial.includes(p) || null }),
-    h('span', { text: t('access.perms.' + p) })));
+    h('span', null, h('span', { class: 'check-title', text: t('access.perms.' + p) }), h('span', { class: 'tiny muted check-hint', text: t('access.permHelp.' + p) }))));
   const custom = h('div', { class: 'checks', hidden: start !== 'custom' || null, id: idPrefix + '-custom' }, boxes);
   const radios = [...Object.keys(presets), 'custom'].map((k) => h('label', { class: 'choice' },
     h('input', { type: 'radio', name: idPrefix + '-type', value: k, checked: k === start || null }),
