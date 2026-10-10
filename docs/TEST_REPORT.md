@@ -301,6 +301,8 @@ Full re-run: API **203/203**, browser **145 passed / 53 skipped**; PHPStan 0 err
 | API (updated) | `17-protection` (domain lines only in the technical detail), `18-value` (quick answer for clients, low rating only for the team), `21-profiles-health` (client next steps vs. technical to-dos; Gerencia 403; migration `012` grants `report` once to site + monitor accounts, which still match their type), `04-users`, `16-tickets` | passing |
 | Browser (`access-report`, `value`) | the owner's preview has *Para clientes* / *Detalle técnico* tabs; the client tab never shows backup or security wording; the technical tab is marked *Interno*, axe; trends checked in the technical tab; a site administrator finds *Estado del sitio → Informe mensual*, sees both tabs and no send or recipients controls, on 3 devices | passing |
 
+| Production build on Apache | release `6ca3c18` (68 public + 252 private files, 1.2 MB zip) under Apache + PHP-FPM; migration `012_report_access` applied on first request; the preview refuses anonymous requests (401) | 6/6 |
+
 Full re-run: API **204/204**, browser **148 passed / 53 skipped**; PHPStan 0 errors.
 
 ## Other audits
