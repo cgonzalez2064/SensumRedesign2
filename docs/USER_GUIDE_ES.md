@@ -5,14 +5,15 @@ portafolio en PDF y los datos de contacto del sitio web **sensumconstrucciones.c
 sin conocimientos técnicos. Los cambios se publican en el sitio en cuanto
 presionas **Guardar cambios** o **Publicar**.
 
-Dirección del panel: **https://sensumconstrucciones.com/admin/**
+Dirección del panel: **https://app.sensumconstrucciones.com**
+(el sitio público sigue en https://sensumconstrucciones.com)
 
 ---
 
 ## 1. Entrar y salir
 
 **Entrar**
-1. Abre https://sensumconstrucciones.com/admin/
+1. Abre https://app.sensumconstrucciones.com
 2. Escribe tu correo y tu contraseña y presiona **Iniciar sesión**.
    Puedes tocar el ícono del ojo para ver lo que escribiste.
 

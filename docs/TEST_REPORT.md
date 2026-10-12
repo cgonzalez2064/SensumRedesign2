@@ -317,6 +317,18 @@ Full re-run: API **204/204**, browser **148 passed / 53 skipped**; PHPStan 0 err
 
 Full re-run: API **209/209**, browser **154 passed / 53 skipped**; PHPStan 0 errors.
 
+## Change — Content Manager on its own address (app.sensumconstrucciones.com)
+
+| Suite | Added | Result |
+|---|---|---|
+| API (`23-panel-address`, new) | with `ADMIN_URL` on another origin: the panel and the site are both allowed origins, a foreign origin is refused (sign-in and beacons); "Ver sitio" still points to `APP_URL`; invitation, welcome and lead e-mails link to `ADMIN_URL`; the server check prints both addresses; an invalid `ADMIN_URL` falls back to `APP_URL/admin` | 3/3 |
+| Production build on Apache (`tests/apache/hosts`, new) | release `14a3b98` untouched (real `.htaccess`) over HTTPS (self-signed) and HTTP with real `Host` headers: http/`www.`/unknown names → canonical `https://` (spoofed Host never reflected); `app.` → `/admin/`, panel CSP/HSTS/noindex, icons and API served, public pages → 301 to the site, missing panel file → 404; apex `/admin*` → 301 to `app.`; on the apex only `health`, `collect` and `telemetry/error` reach PHP, sign-in/session/users/content/setup → Apache 404; production sign-in on `app.` sets `__Host-` Secure HttpOnly SameSite=Strict without `Domain`, foreign origin 403 | 5/5 |
+| Existing suites | unchanged behaviour with `ADMIN_URL` empty (local development); the 6 Apache checks on the same release | passing |
+
+Full re-run: API **212/212**, browser **154 passed / 53 skipped**, Apache **11/11**; PHPStan 0 errors.
+Also: GitHub Actions crash in `01-public-site` (undici `assert(!this.paused)` on unread response
+bodies, Node 22) fixed by always reading bodies in the tests (`9120af2`).
+
 ## Other audits
 
 | Audit | Result |

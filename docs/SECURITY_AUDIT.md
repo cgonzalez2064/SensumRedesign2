@@ -386,3 +386,14 @@ archive is needed.
 | Welcome e-mail | Sent once, after the invitation is accepted (answer first, then the e-mail), to the account's own address in its language. It contains the access type and permission names, first steps, the support address and safety advice — never the password, the invitation token or any link with a secret (only the panel address). The send is logged without content. | `22-welcome`, `welcome.spec` |
 | Wording | «Reportar un problema» → «Solicitar soporte», «reporte» → «solicitud» in the panel and e-mails; «Ayuda» → «Guía de uso». Text only: routes, permissions and stored data unchanged. | existing suites |
 
+## 19. Change review — Content Manager on its own address (app.sensumconstrucciones.com)
+
+| Area | Design | Verified by |
+|---|---|---|
+| Host routing | One document root, two names (cPanel subdomain with "Share document root"). The root `.htaccess` sends plain HTTP, `www.` and any unknown Host to the canonical `https://` name with **literal** targets (the Host header is never reflected). `app.` serves only `/admin`, `/api`, `/assets` and `/404.html` (`/` → `/admin/`; public pages → 301 to the site); the apex forwards `/admin*` to `app.`. | `tests/apache/hosts` (HTTP + HTTPS, spoofed Host) |
+| API exposure on the public host | `api/.htaccess` (whose rules replace the root ones) lets only `collect`, `health` and `telemetry/error` reach the application on `sensumconstrucciones.com`; sign-in, password reset, setup and every panel endpoint answer Apache's 404 there. | `tests/apache/hosts` |
+| Session isolation | The session cookie is `__Host-sensum_admin` (Secure, HttpOnly, SameSite=Strict, no `Domain`): it exists only on `app.` and is never sent to the public site, so a script injected into a public page cannot read or replay it. Writes still need the CSRF token, which only the panel origin can read (no CORS). | `tests/apache/hosts` (production mode over TLS) |
+| Allowed origins | `ADMIN_URL` (default `APP_URL/admin`) is added to `APP_URL` (plus `www.`) and `EXTRA_ALLOWED_ORIGINS`; foreign origins stay 403 for sign-in, beacons and the contact form. An invalid `ADMIN_URL` falls back to `APP_URL/admin`. | `23-panel-address` |
+| E-mail links | Every link (invitation, reset, welcome, lead, support request, alerts) is built server-side from `ADMIN_URL`, never from the request. The old `/admin/` links keep working through the 301. | `23-panel-address` |
+| HTTPS | HSTS `includeSubDomains` already covers `app.`; the deploy guide requires AutoSSL for `app.` before the owner account is created, and the server check flags a non-https `ADMIN_URL` in production. | `23-panel-address` (check output) |
+

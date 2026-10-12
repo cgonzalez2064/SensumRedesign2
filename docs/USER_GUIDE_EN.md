@@ -4,7 +4,8 @@ The Content Manager lets you change the text, photos, PDF portfolio and contact
 details of **sensumconstrucciones.com** without technical knowledge. Changes go
 live on the website as soon as you press **Save changes** or **Publish**.
 
-Panel address: **https://sensumconstrucciones.com/admin/**
+Panel address: **https://app.sensumconstrucciones.com**
+(the public website stays at https://sensumconstrucciones.com)
 
 (The panel opens in Spanish by default; switch to English as described in §2.)
 
@@ -13,7 +14,7 @@ Panel address: **https://sensumconstrucciones.com/admin/**
 ## 1. Signing in and out
 
 **Sign in**
-1. Open https://sensumconstrucciones.com/admin/
+1. Open https://app.sensumconstrucciones.com
 2. Enter your email and password and press **Sign in**. Tap the eye icon to see
    what you typed.
 

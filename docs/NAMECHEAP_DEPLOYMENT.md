@@ -17,6 +17,20 @@ static site's DNS, AutoSSL and contact-form details, referenced below).
 ```
 
 `sensum-cms/` must be **next to** `public_html`, never inside it.
+
+**Two hostnames, one document root.** `app.sensumconstrucciones.com` is a cPanel
+subdomain created with **Share document root** (it serves `public_html` too). The
+root `.htaccess` routes by host: `sensumconstrucciones.com` serves the public site
+(`/admin*` → 301 to `app.`), `app.sensumconstrucciones.com` serves the panel (`/` →
+302 `/admin/`; public pages → 301 back to the site; `/admin`, `/api`, `/assets` and
+`/404.html` served), every other name / plain HTTP → 301 to the canonical `https://`
+name (literal targets, never the request's Host). `api/.htaccess` (its rewrite rules
+replace the root ones) limits the API on the public host to `collect`, `health` and
+`telemetry/error`; sign-in and every panel endpoint are 404 there. `.env` sets
+`APP_URL=https://sensumconstrucciones.com` (site) and
+`ADMIN_URL=https://app.sensumconstrucciones.com/admin` (e-mail links; allowed origin
+of the panel). The session cookie is `__Host-` (host-only), so it only ever exists on
+`app.`.
 No MySQL database, Node.js app or Composer on the server is required. Two cron
 jobs are recommended (scheduled check every 15 min, daily database backup — see
 the Spanish guide §15); the cPanel Terminal (Manage Shell → SSH) makes setup easier.
@@ -91,14 +105,15 @@ Result: `dist/release-<date>-<commit>.zip` containing `public_html/` and
 
 1. cPanel → **File Manager** → go to your home directory (`/home/<user>`, one
    level **above** `public_html`).
-2. **Upload** the release zip there, right-click → **Extract**. You get
+2. Empty `public_html` (keep `.well-known` and `cgi-bin`) after the backup in §1, so no
+   unreviewed files from the old site stay online.
+3. **Upload** the release zip there, right-click → **Extract**. You get
    `release-<date>-<commit>/` with `public_html/` and `sensum-cms/` inside.
-3. Move `release-…/sensum-cms` to `/home/<user>/sensum-cms`.
-4. Move **the contents** of `release-…/public_html` into `/home/<user>/public_html`
-   (overwrite the existing site files; the backup from §1 is your safety net).
+4. Move `release-…/sensum-cms` to `/home/<user>/sensum-cms`.
+5. Move **the contents** of `release-…/public_html` into `/home/<user>/public_html`.
    Make sure hidden files came along: `.htaccess`, `admin/.htaccess`,
    `api/.htaccess`, `assets/uploads/.htaccess`.
-5. Delete the empty `release-…` folder and the zip.
+6. Delete the empty `release-…` folder and the zip.
 
 Final layout check:
 
@@ -136,6 +151,7 @@ In File Manager open `sensum-cms/`, create a new file `.env` (or copy
 ```ini
 APP_ENV=production
 APP_URL=https://sensumconstrucciones.com
+ADMIN_URL=https://app.sensumconstrucciones.com/admin
 APP_TIMEZONE=America/Guatemala
 
 # One-time setup code — only if you will create the first admin from the browser (§8B).
@@ -248,13 +264,16 @@ hosting; nothing else needs configuring.
 
 ## 8. HTTPS and first administrator
 
-**HTTPS:** follow `DEPLOY.md` §4 (cPanel → SSL/TLS Status → Run AutoSSL) before
-anything else. The site's `.htaccess` forces `https://sensumconstrucciones.com`;
+**Subdomain + HTTPS:** cPanel → Domains → *Create A New Domain* →
+`app.sensumconstrucciones.com`, **Share document root** checked (Spanish guide §8.1;
+with Namecheap Web Hosting DNS the `app` A record is created automatically). Then
+cPanel → SSL/TLS Status → Run AutoSSL until the apex, `www.` and `app.` are covered.
+The `.htaccess` forces `https://sensumconstrucciones.com` and `https://app.sensumconstrucciones.com`;
 production cookies require HTTPS (`__Host-` / `Secure`), so signing in over
 plain HTTP is impossible by design.
 
-**Check the installation:** open `https://sensumconstrucciones.com/api/health` —
-expected `{"ok":true,"status":"ok",…}` with every check `"ok"`.
+**Check the installation:** open `https://sensumconstrucciones.com/api/health` and
+`https://app.sensumconstrucciones.com/api/health` — expected `{"ok":true,"status":"ok",…}`.
 
 Create the first administrator in **one** of these ways:
 
@@ -271,11 +290,11 @@ php sensum-cms/bin/console create-admin --name="IT Grupo Sensum" --email=it@grup
 Version, e.g. `/opt/alt/php82/usr/bin/php`.)
 
 **B. Browser (no command line).** With `SETUP_TOKEN` set in `.env`, open
-`https://sensumconstrucciones.com/admin/#/configurar`, enter the token, name,
+`https://app.sensumconstrucciones.com/admin/#/configurar`, enter the token, name,
 e-mail and password. Setup closes permanently once an account exists.
 **Then remove the `SETUP_TOKEN` line from `.env`.**
 
-Sign in at `https://sensumconstrucciones.com/admin/`, then **Usuarios → Invitar
+Sign in at `https://app.sensumconstrucciones.com`, then **Usuarios → Invitar
 usuario** for the client's staff (role *Editor* for content-only access).
 
 ## 9. First publish
@@ -296,7 +315,9 @@ Do these on the live site and tick them in `docs/PRODUCTION_CHECKLIST.md`:
 2. Headers — from any computer:
    ```bash
    curl -sI https://sensumconstrucciones.com/ | grep -Ei 'strict-transport|content-security|x-frame|x-content-type'
-   curl -sI https://sensumconstrucciones.com/admin/ | grep -Ei 'content-security|x-robots|referrer'
+   curl -sI https://app.sensumconstrucciones.com/admin/ | grep -Ei 'content-security|x-robots|referrer'
+   curl -sI https://sensumconstrucciones.com/admin/ | grep -i '^location'      # → https://app.sensumconstrucciones.com/admin/
+   curl -s -o /dev/null -w '%{http_code}\n' https://sensumconstrucciones.com/api/auth/session   # → 404
    curl -s  https://sensumconstrucciones.com/api/health
    for p in sensum-cms/.env api/.htaccess assets/uploads/x.php .env.example docs/LOCAL_SETUP.md; do curl -s -o /dev/null -w "%{http_code} $p\n" https://sensumconstrucciones.com/$p; done
    ```

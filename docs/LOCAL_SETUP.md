@@ -59,6 +59,9 @@ example):
 ```ini
 APP_ENV=development
 APP_URL=http://127.0.0.1:8080
+# Locally the panel lives under the site (http://127.0.0.1:8080/admin/); leave empty.
+# In production it is https://app.sensumconstrucciones.com/admin.
+ADMIN_URL=
 EXTRA_ALLOWED_ORIGINS=http://localhost:8080
 
 # Mailpit — nothing leaves your computer
@@ -337,6 +340,25 @@ brew install httpd
 #    AllowOverride All and mod_rewrite/headers/expires/deflate enabled
 APACHE_BASE=http://127.0.0.1:8088 APACHE_HOME=~/sensum-apache node --test "tests/apache/*.test.mjs"
 ```
+
+The two production hostnames (`tests/apache/hosts.test.mjs`) need a second, **untouched**
+copy of the release so the real `.htaccess` rules run:
+
+```bash
+# 1. copy dist/release-*/public_html and sensum-cms again, e.g. to ~/sensum-apache-prod/,
+#    with sensum-cms/.env: APP_ENV=production, APP_URL=https://sensumconstrucciones.com,
+#    ADMIN_URL=https://app.sensumconstrucciones.com/admin, MAIL_DRIVER=log, TWO_FACTOR_POLICY=none
+# 2. a self-signed certificate:
+openssl req -x509 -newkey rsa:2048 -nodes -keyout tls-key.pem -out tls-cert.pem -days 2 -subj "/CN=sensumconstrucciones.com"
+# 3. Apache: load mod_ssl and mod_socache_shmcb; serve that public_html on
+#    127.0.0.1:8089 (HTTP) and 127.0.0.1:8443 (SSLEngine on, the certificate above),
+#    ServerName sensumconstrucciones.com, ServerAlias app.sensumconstrucciones.com
+APACHE_PROD_HTTPS=https://127.0.0.1:8443 APACHE_PROD_HTTP=http://127.0.0.1:8089 \
+  APACHE_PROD_HOME=~/sensum-apache-prod node --test "tests/apache/*.test.mjs"
+```
+
+The test sends the real `Host` headers (`sensumconstrucciones.com`,
+`app.sensumconstrucciones.com`, `www.`, an unknown name), so no DNS changes are needed.
 
 ## 9. Troubleshooting
 

@@ -196,7 +196,7 @@ const CATS = {
 };
 const TREE = N('root', 'Sensum Construcciones', 'Website + Content Manager', {
   cat: 'root',
-  d: 'The approved public website of Sensum Construcciones plus a custom Content Manager at /admin. The team changes texts, photos and contact details without touching code; the panel also handles leads, statistics, support requests and a monthly report, and keeps the site monitored and backed up. No framework and no build step: it runs on shared hosting (cPanel, Apache, PHP 8.1+, SQLite).',
+  d: 'The approved public website of Sensum Construcciones plus a custom Content Manager at app.sensumconstrucciones.com. The team changes texts, photos and contact details without touching code; the panel also handles leads, statistics, support requests and a monthly report, and keeps the site monitored and backed up. No framework and no build step: it runs on shared hosting (cPanel, Apache, PHP 8.1+, SQLite).',
   facts: [['91', 'API endpoints'], ['21', 'database tables'], ['13', 'migrations'], ['17', 'panel screens'], ['209', 'API tests'], ['207', 'browser test runs']],
 }, [
   // ---------------------------------------------------------------- website
@@ -226,8 +226,8 @@ const TREE = N('root', 'Sensum Construcciones', 'Website + Content Manager', {
       files: ['.htaccess', 'sitemap.xml', 'robots.txt', 'site.webmanifest'], rel: ['sec-web'] }),
   ]),
   // ---------------------------------------------------------------- admin SPA
-  N('admin', 'Admin panel', '/admin · single-page app', { cat: 'admin', side: 1,
-    d: 'A single-page app written in plain JavaScript modules: no framework, no bundler. It talks to the PHP API, shows each person only what their access allows, and works on phones, tablets and computers, in Spanish or English, light or dark.',
+  N('admin', 'Admin panel', 'app.sensumconstrucciones.com', { cat: 'admin', side: 1,
+    d: 'A single-page app written in plain JavaScript modules: no framework, no bundler. It opens at app.sensumconstrucciones.com (a subdomain that shares public_html; .htaccess routes each name). It talks to the PHP API, shows each person only what their access allows, and works on phones, tablets and computers, in Spanish or English, light or dark.',
     files: ['admin/index.html', 'admin/js/', 'admin/css/admin.css', 'admin/icons.svg'] }, [
     N('adm-shell', 'App shell & router', 'app.js', {
       d: 'Hash routes (#/textos, #/reportes…), the menu built from the person’s permissions, the fixed top bar and logo block, the unsaved-changes guard, and the gates that come before the panel: two-step sign-in setup and the first-sign-in welcome (language and appearance).',
@@ -376,7 +376,7 @@ const TREE = N('root', 'Sensum Construcciones', 'Website + Content Manager', {
   N('ops', 'Hosting & operations', 'Where it runs', { cat: 'ops', side: -1,
     d: 'Namecheap Stellar Plus shared hosting managed with cPanel, plus a few optional external services.', files: ['docs/GUIA_DESPLIEGUE_NAMECHEAP.md'] }, [
     N('ops-host', 'Namecheap Stellar Plus', 'cPanel · Apache · PHP', {
-      d: 'Apache with PHP 8.1+ (FPM) and SQLite, free AutoSSL certificates. public_html holds the website, /admin, /api and assets; sensum-cms (code, .env, storage) sits next to it, outside the web root.',
+      d: 'Apache with PHP 8.1+ (FPM) and SQLite, free AutoSSL certificates. public_html holds the website, /admin, /api and assets and is shared by two names: sensumconstrucciones.com (site) and app.sensumconstrucciones.com (panel), routed by .htaccess; sensum-cms (code, .env, storage) sits next to it, outside the web root.',
       files: ['public_html/', 'sensum-cms/'] }),
     N('ops-cron', 'Scheduled task', 'Cron every 15 min', {
       d: 'One cron job runs php ~/sensum-cms/bin/console monitor: health checks, alerts, backups when due, Google scores once a day, the report reminder and closing old resolved requests.',

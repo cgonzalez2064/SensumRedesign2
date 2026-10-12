@@ -5,6 +5,11 @@ Administrador de contenido: archivos, base de datos, correo (formulario de
 contacto, alertas, informes), cuenta propietaria, usuarios, fotos, tareas
 programadas y verificación final.
 
+| Dirección | Qué es |
+|---|---|
+| **https://sensumconstrucciones.com** | El sitio web público |
+| **https://app.sensumconstrucciones.com** | El Administrador de contenido (abre el panel) |
+
 Tiempo estimado: 1 a 2 horas la primera vez. No necesitas conocimientos de
 programación; sí acceso a **cPanel** y a la cuenta de **Namecheap**.
 
@@ -13,9 +18,9 @@ programación; sí acceso a **cPanel** y a la cuenta de **Namecheap**.
 > se guardan cifradas), en el archivo `.env` del servidor (paso 9) y en un gestor de
 > contraseñas.
 
-**Novedad:** el correo (cuenta de envío, formulario de contacto, destino de reportes y
+**Novedad:** el panel vive en su propio subdominio, **app.sensumconstrucciones.com**
+(paso 8.1). El correo (cuenta de envío, formulario de contacto, destino de reportes y
 alertas) y el captcha del formulario **se configuran desde el panel**, no en archivos.
-El `.env` queda con 5 líneas obligatorias.
 
 ---
 
@@ -28,7 +33,7 @@ El `.env` queda con 5 líneas obligatorias.
 │   ├── assets/                     ← estilos, scripts, imágenes del diseño
 │   │   ├── contact-handler.php     ← formulario de contacto (captcha + envío según el panel)
 │   │   └── uploads/                ← FOTOS y PDF que se suben desde el panel
-│   ├── admin/                      ← el panel: https://sensumconstrucciones.com/admin/
+│   ├── admin/                      ← el panel (se abre en https://app.sensumconstrucciones.com)
 │   └── api/index.php               ← única puerta de entrada al panel
 └── sensum-cms/                     ← PRIVADO (fuera de public_html; nadie lo ve desde internet)
     ├── .env                        ← configuración y contraseñas (lo creas tú, paso 9)
@@ -39,6 +44,20 @@ El `.env` queda con 5 líneas obligatorias.
         ├── backups/                ← copias de la base de datos y de las páginas
         └── reports/                ← capturas de pantalla de «Solicitar soporte»
 ```
+
+**Un solo `public_html` para los dos dominios.** El subdominio
+`app.sensumconstrucciones.com` se crea **compartiendo** la carpeta `public_html`
+(paso 8.1), así que no hay archivos que copiar dos veces. El `.htaccess` del paquete
+decide qué muestra cada dirección:
+
+| Si visitas… | Ves |
+|---|---|
+| `https://sensumconstrucciones.com` | El sitio público. `…/admin` te lleva al panel en `app.` |
+| `https://app.sensumconstrucciones.com` | El panel (va directo a `/admin/`). Las páginas públicas te devuelven al sitio |
+| `http://…`, `www.…` o cualquier otro nombre | Se redirige a la dirección correcta con `https://` |
+
+En el dominio público la API solo atiende lo que usan las páginas (estadísticas, avisos
+de errores y `/api/health`); iniciar sesión y todo lo del panel solo funciona en `app.`.
 
 **Dónde se guardan las fotografías:** en `public_html/assets/uploads/`. El panel
 las recorta, las optimiza (formato WebP, tamaños de 800 y 1600 px) y les pone un
@@ -69,15 +88,23 @@ usar el comando de respaldo del paso 16).
 | (Opcional) Clave de Google PageSpeed | Google Cloud Console (paso 19) | «Visibilidad en Google» del informe mensual |
 | (Opcional) Cuenta gratuita de Better Stack | https://betterstack.com | Aviso si el sitio deja de responder |
 
-El dominio debe apuntar al hosting de Namecheap (DNS de Namecheap hosting), o el
-certificado HTTPS no se podrá emitir.
+El dominio debe apuntar al hosting de Namecheap, o el certificado HTTPS no se podrá
+emitir. En Namecheap → **Domain List** → *Manage* → **Nameservers** debe decir
+**Namecheap Web Hosting DNS** (así el subdominio `app.` se crea solo en el DNS). Si dice
+otra cosa, revisa el paso 8.2.
+
+> En esta guía, **USUARIO** es tu usuario de cPanel (aparece arriba a la derecha en
+> cPanel y en las rutas `/home/USUARIO/`). No lo publiques ni lo compartas: es la mitad
+> de tu acceso a cPanel.
 
 ---
 
 ## 2. Respaldar el sitio actual
 
-1. cPanel → **File Manager** → abre `public_html`.
-2. Selecciona todo → **Compress** → *Zip Archive* → descarga el zip a tu computadora.
+1. cPanel → **File Manager** → abre `public_html` (activa *Settings → Show Hidden
+   Files (dotfiles)* para ver también `.htaccess`).
+2. Selecciona todo → **Compress** → *Zip Archive* → nombre `sitio-anterior-AAAA-MM-DD.zip`
+   → descarga el zip a tu computadora y ábrelo una vez para comprobar que tiene los archivos.
 3. Opcional y recomendado: cPanel → **Backup** → *Download a Full Account Backup*.
 
 Si algo sale mal, con ese zip vuelves al sitio anterior en minutos (paso 23).
@@ -127,14 +154,22 @@ cPanel → **Select PHP Version** (sección *Exclusive for Namecheap Customers* 
 
 1. cPanel → **File Manager** → ve a tu carpeta principal `/home/USUARIO` (un nivel
    **arriba** de `public_html`). Activa *Settings → Show Hidden Files (dotfiles)*.
-2. **Upload** → sube el zip del paso 3 → clic derecho → **Extract**.
-3. Mueve la carpeta `release-…/sensum-cms` a `/home/USUARIO/sensum-cms`.
-4. Mueve **el contenido** de `release-…/public_html` dentro de `/home/USUARIO/public_html`
-   (reemplaza los archivos del sitio anterior; tu respaldo del paso 2 te protege).
-5. Comprueba que se copiaron los archivos ocultos: `public_html/.htaccess`,
+2. **Vacía `public_html`** (ya tienes el respaldo del paso 2): selecciona todo **excepto**
+   `.well-known` y `cgi-bin` (si existen; los usa cPanel para el certificado) →
+   **Delete**. Así no quedan archivos viejos del sitio anterior (sobre todo `.php`)
+   que nadie revisa: la revisión de archivos del panel los marcaría como sospechosos.
+   El zip descargado en el paso 2 es la copia del sitio anterior.
+3. **Upload** → sube el zip del paso 3 a `/home/USUARIO` → clic derecho → **Extract**.
+4. Mueve la carpeta `release-…/sensum-cms` a `/home/USUARIO/sensum-cms` (junto a
+   `public_html`, **nunca dentro**).
+5. Mueve **el contenido** de `release-…/public_html` dentro de `/home/USUARIO/public_html`.
+6. Comprueba que se copiaron los archivos ocultos: `public_html/.htaccess`,
    `public_html/admin/.htaccess`, `public_html/api/.htaccess`,
    `public_html/assets/uploads/.htaccess`, `sensum-cms/.htaccess`.
-6. Borra la carpeta `release-…` vacía y el zip.
+7. Borra la carpeta `release-…` vacía y el zip.
+
+No subas nada a otra carpeta para `app.sensumconstrucciones.com`: comparte
+`public_html` (paso 8.1).
 
 Comprobación rápida: deben existir `/home/USUARIO/sensum-cms/bootstrap.php`,
 `/home/USUARIO/sensum-cms/vendor/autoload.php` y `/home/USUARIO/public_html/api/index.php`.
@@ -219,16 +254,60 @@ Nunca uses `777`.
 
 ---
 
-## 8. HTTPS (certificado de seguridad)
+## 8. Dominios y HTTPS (sitio y panel)
 
-1. Namecheap incluye un certificado PositiveSSL gratis el primer año. En cPanel →
-   **Namecheap SSL** (o **SSL/TLS Status**), confirma que `sensumconstrucciones.com`
-   y `www.sensumconstrucciones.com` aparecen con certificado activo; si no, pulsa
-   **Run AutoSSL** o instálalo con el plugin. Puede tardar hasta 30 minutos.
-2. Abre `https://sensumconstrucciones.com` y verifica el candado.
+### 8.1 Crear el subdominio del panel: `app.sensumconstrucciones.com`
 
-El sitio obliga a usar `https://sensumconstrucciones.com` (sin www) y el panel solo
-permite iniciar sesión por HTTPS. **Haz este paso antes de crear la cuenta.**
+cPanel → **Domains** → **Create A New Domain**:
+
+| Campo | Valor |
+|---|---|
+| Tipo | **Registered Domain** (no *Temporary Domain*) |
+| Domain | `app.sensumconstrucciones.com` |
+| **Share document root (/home/USUARIO/public_html) with “sensumconstrucciones.com”** | ✅ **Márcala** |
+| Document Root | Al marcar la casilla queda `public_html` (no escribas otra carpeta) |
+
+Pulsa **Submit**. En la lista de **Domains**, `app.sensumconstrucciones.com` debe decir
+*Document Root* `/public_html`.
+
+> **Por qué compartir `public_html`:** el panel, su API y las fotos viven en esa
+> carpeta junto al sitio; el `.htaccess` del paquete hace que `app.` muestre solo el
+> panel y que el dominio principal muestre solo el sitio. Así no hay copias, ni enlaces
+> entre carpetas, ni nada que actualizar dos veces.
+>
+> cPanel advierte que **la opción es permanente**: si algún día quisieras otra carpeta,
+> se borra el subdominio (Domains → *Manage* → *Remove Domain*) y se vuelve a crear.
+> Si ya lo creaste **sin** marcarla, haz eso ahora: bórralo, borra la carpeta
+> `/home/USUARIO/app.sensumconstrucciones.com` que se creó vacía, y créalo de nuevo
+> marcándola.
+
+### 8.2 DNS del subdominio
+
+- Con **Namecheap Web Hosting DNS** (lo normal): cPanel crea solo el registro `app`.
+  Compruébalo en cPanel → **Zone Editor** → `sensumconstrucciones.com` → *Manage*:
+  debe existir un registro **A** `app.sensumconstrucciones.com` con la misma IP que
+  `sensumconstrucciones.com`.
+- Con **otros DNS** (Namecheap BasicDNS, Cloudflare…): crea allí un registro **A** con
+  host `app` y la IP del hosting (cPanel → barra lateral *General Information* →
+  **Shared IP Address**). Si usas Cloudflare, déjalo en *DNS only* (nube gris) hasta
+  que el certificado esté emitido.
+
+Puede tardar de minutos a unas horas en propagarse.
+
+### 8.3 Certificado HTTPS
+
+1. Namecheap incluye un certificado gratis. En cPanel → **SSL/TLS Status**, confirma que
+   `sensumconstrucciones.com`, `www.sensumconstrucciones.com` **y
+   `app.sensumconstrucciones.com`** aparecen con certificado activo (candado verde); si
+   no, pulsa **Run AutoSSL**. Puede tardar hasta 30 minutos (más si el DNS de `app.`
+   aún se está propagando).
+2. Abre `https://sensumconstrucciones.com` y `https://app.sensumconstrucciones.com` y
+   verifica el candado en los dos.
+
+El sitio obliga a usar `https://sensumconstrucciones.com` (sin www) y el panel
+`https://app.sensumconstrucciones.com`; el panel solo permite iniciar sesión por HTTPS.
+**Haz este paso antes de crear la cuenta.** Hasta subir el paquete nuevo (paso 5), `app.`
+puede mostrar el sitio anterior o redirigir al dominio principal: es normal.
 
 > Después del primer año, el certificado se renueva comprándolo en Namecheap (se
 > instala solo). El informe mensual y el monitoreo te avisan cuando falten menos de
@@ -242,9 +321,10 @@ File Manager → `/home/USUARIO/sensum-cms/` → **+ File** → nombre `.env` �
 Pega esto y reemplaza lo que está entre `< >`:
 
 ```ini
-# --- Sitio ---
+# --- Sitio y panel ---
 APP_ENV=production
 APP_URL=https://sensumconstrucciones.com
+ADMIN_URL=https://app.sensumconstrucciones.com/admin
 APP_TIMEZONE=America/Guatemala
 
 # --- Cuenta propietaria (gestiona usuarios, Monitoreo e Informe mensual) ---
@@ -281,6 +361,12 @@ PUBLIC_ERROR_REPORTING=false
 
 Guarda y pon el permiso del archivo en **600**.
 
+`APP_URL` es el sitio público (lo usan «Ver sitio», el informe mensual y las revisiones
+de velocidad y dominio). `ADMIN_URL` es la dirección del panel: con ella salen **todos
+los enlaces de los correos** (invitaciones, bienvenida, contraseñas, prospectos,
+solicitudes de soporte, alertas) y solo desde ella se puede iniciar sesión. Escríbelas
+exactamente así: con `https://`, sin `www.` y sin `/` al final.
+
 > **Alternativa (opcional):** si prefieres que el correo no se pueda cambiar desde el
 > panel, escribe en `.env` los valores `SMTP_HOST`, `SMTP_PORT`, `SMTP_ENCRYPTION`,
 > `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_ADDRESS`, `SMTP_REPLY_TO`,
@@ -288,8 +374,9 @@ Guarda y pon el permiso del archivo en **600**.
 > `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` y agrega `EMAIL_SETTINGS_LOCKED=true`.
 > La página Correo queda en solo lectura.
 
-Comprueba la instalación: abre `https://sensumconstrucciones.com/api/health`. Debe
-mostrar `"status":"ok"`. (Si dice `service_unavailable`, revisa el paso 5.)
+Comprueba la instalación: abre `https://sensumconstrucciones.com/api/health` y
+`https://app.sensumconstrucciones.com/api/health`. Los dos deben mostrar
+`"status":"ok"`. (Si dice `service_unavailable`, revisa el paso 5.)
 
 ---
 
@@ -318,6 +405,8 @@ php ~/sensum-cms/bin/console check
 ```
 
 Todas las líneas obligatorias deben decir `OK` (las opcionales pueden decir `WARN`).
+La línea `https` debe mostrar
+`https://sensumconstrucciones.com · panel https://app.sensumconstrucciones.com/admin`.
 Después:
 
 ```bash
@@ -329,10 +418,10 @@ responder *«This is the owner account…»*.
 
 **Sin Terminal:** agrega al `.env` una línea `SETUP_TOKEN=` con un valor largo
 aleatorio (de tu gestor de contraseñas), abre
-`https://sensumconstrucciones.com/admin/#/configurar`, escribe ese valor, el nombre,
+`https://app.sensumconstrucciones.com/admin/#/configurar`, escribe ese valor, el nombre,
 `it@gruposensum.com` y la contraseña. Al terminar, **borra la línea `SETUP_TOKEN`**.
 
-Entra a `https://sensumconstrucciones.com/admin/` con esa cuenta. **La primera vez el
+Entra a `https://app.sensumconstrucciones.com` con esa cuenta (te lleva al panel). **La primera vez el
 panel te pedirá activar la verificación en dos pasos** (obligatoria para la cuenta
 propietaria):
 
@@ -572,7 +661,9 @@ El panel no puede avisarte si el servidor completo se cae. Para eso:
 1. Crea una cuenta gratuita en **Better Stack** (o UptimeRobot).
 2. Monitor 1: `https://sensumconstrucciones.com` (estado HTTP 200, alerta de vencimiento SSL).
 3. Monitor 2: `https://sensumconstrucciones.com/api/health` (debe contener `"status":"ok"`).
-4. Alertas a `it@gruposensum.com`.
+4. Monitor 3 (opcional): `https://app.sensumconstrucciones.com/api/health` (vigila
+   también el certificado del panel).
+5. Alertas a `it@gruposensum.com`.
 
 ---
 
@@ -694,14 +785,18 @@ también puedes comprobarla: `php ~/sensum-cms/bin/console translate:test`.
 
 ## 21. Verificación final
 
-- [ ] `https://sensumconstrucciones.com` se ve igual que antes, en celular y computadora; el botón EN funciona.
-- [ ] `https://sensumconstrucciones.com/api/health` → `"status":"ok"`.
+- [ ] `https://sensumconstrucciones.com` muestra el sitio nuevo, en celular y computadora; el botón EN funciona.
+- [ ] `https://sensumconstrucciones.com/api/health` y `https://app.sensumconstrucciones.com/api/health` → `"status":"ok"`.
+- [ ] **Cada dirección en su lugar:** `https://app.sensumconstrucciones.com` abre el panel; `https://sensumconstrucciones.com/admin` te lleva a `app.`; `http://sensumconstrucciones.com` y `https://www.sensumconstrucciones.com` terminan en `https://sensumconstrucciones.com`; `https://app.sensumconstrucciones.com/privacy-notice.html` te devuelve al sitio.
+- [ ] `https://sensumconstrucciones.com/api/auth/session` → **404** (en el dominio público no se puede iniciar sesión).
+- [ ] Los dos dominios tienen candado (paso 8.3).
 - [ ] **Formulario de contacto:** envía un mensaje real desde el sitio (en celular y computadora). Bajo el botón aparece «Verificación anti-spam completa.» y el mensaje llega a `contacto@sensumconstrucciones.com` con remitente `formulario@`; al responderlo, la respuesta va al visitante.
 - [ ] (Si activaste Turnstile) el formulario sigue enviando y no muestra errores; en Cloudflare → Turnstile aparecen las verificaciones.
 - [ ] **Soporte (Centro de Ayuda):** con otra cuenta pulsa **Nueva solicitud** y envía una de prueba (aparece en **Mis solicitudes**); como it@gruposensum.com ábrelo, usa **Pedir más información** y luego **Marcar como resuelto**; la persona recibe ambos correos.
 - [ ] (Opcional) Panel → **Formulario de contacto**: ajusta las opciones de «Servicio de interés» a los servicios que ofreces hoy. La **vista previa** funciona como el sitio: cambia entre **Celular, Tableta y Computadora**, abre la lista (las opciones sin guardar dicen «Nueva» o «Modificada») y pulsa «Enviar mensaje» para ver los mensajes de error (no se envía nada). Luego **Guardar y publicar** y compruébalo en el sitio (español e inglés).
 - [ ] **Correo del panel:** panel → Correo → **Enviar correo de prueba** → llega a it@gruposensum.com.
-- [ ] Inicias sesión en `/admin/` como it@gruposensum.com; ves Usuarios, Monitoreo, Informe mensual y Correo.
+- [ ] Inicias sesión en `https://app.sensumconstrucciones.com` como it@gruposensum.com; ves Usuarios, Monitoreo, Informe mensual y Correo. El botón **Ver sitio** abre `https://sensumconstrucciones.com`.
+- [ ] Los enlaces de los correos (invitación, bienvenida, «Prospecto #…», solicitudes) abren `https://app.sensumconstrucciones.com/admin/…`.
 - [ ] Monitoreo → **Alertas automáticas**: todas activadas. **Archivos del sitio → Revisar ahora**: «Todo en orden».
 - [ ] Monitoreo → **Correo y dominio → Revisar ahora**: SPF, DKIM, DMARC y MX en verde, y la fecha de vencimiento del dominio.
 - [ ] Verificación en dos pasos activa en la cuenta propietaria (y códigos de recuperación guardados).
@@ -785,8 +880,12 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
 | Síntoma | Causa probable y solución |
 |---|---|
 | `/api/health` dice `service_unavailable` | Falta `sensum-cms/vendor` o la carpeta no está junto a `public_html`. Revisa el paso 5. |
-| No puedes iniciar sesión (te regresa al inicio) | Falta HTTPS (paso 8) o `APP_URL` no es exactamente `https://sensumconstrucciones.com`. |
-| «No pudimos verificar la solicitud por seguridad» | Entraste por `www.` o `http://`: usa `https://sensumconstrucciones.com/admin/`. |
+| No puedes iniciar sesión (te regresa al inicio) | Falta HTTPS en `app.` (paso 8.3) o `APP_URL` / `ADMIN_URL` del `.env` no son exactamente los del paso 9. |
+| «No pudimos verificar la solicitud por seguridad» | Entraste por otra dirección: usa `https://app.sensumconstrucciones.com`. Revisa que `ADMIN_URL` sea `https://app.sensumconstrucciones.com/admin`. |
+| `app.sensumconstrucciones.com` no abre («no se puede acceder al sitio») | El DNS de `app` aún no existe o no se ha propagado (paso 8.2). |
+| `app.sensumconstrucciones.com` muestra el sitio público o te manda a `sensumconstrucciones.com` | El subdominio no comparte `public_html` (paso 8.1) o falta el `.htaccess` nuevo en `public_html` (paso 5, punto 6). |
+| `app.sensumconstrucciones.com` dice que la conexión no es privada | Falta el certificado de `app.` (paso 8.3 → **Run AutoSSL**). |
+| Los enlaces de los correos abren `sensumconstrucciones.com/admin` | Falta `ADMIN_URL` en el `.env` (paso 9). Igual funcionan: esa dirección redirige a `app.`. |
 | Los correos del panel no llegan | Panel → Correo → **Enviar correo de prueba**. Si falla: revisa servidor, puerto 465/SSL o 587/STARTTLS, usuario (correo completo) y contraseña del buzón `notificaciones@`. Monitoreo → Registro de errores muestra «No se pudo enviar un correo». |
 | Los correos llegan a spam | Completa SPF, DKIM y DMARC (paso 6.3). |
 | El formulario de contacto no llega | Panel → Correo → **Enviar mensaje de prueba**. Verifica que exista `contacto@` y SPF/DKIM. Si el servidor rechaza el remitente `formulario@`, usa `notificaciones@` como «Correo que envía los mensajes». |
