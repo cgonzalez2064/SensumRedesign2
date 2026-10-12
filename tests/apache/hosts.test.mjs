@@ -1,18 +1,31 @@
 // The two names that share public_html in production, checked on the BUILT release with its
 // .htaccess untouched: sensumconstrucciones.com (public site) and app.sensumconstrucciones.com
 // (Content Manager). Needs the release served by Apache over HTTPS and plain HTTP:
-//   APACHE_PROD_HTTPS=https://127.0.0.1:8443 APACHE_PROD_HTTP=http://127.0.0.1:8089 node --test tests/apache/
-// (self-signed certificate; see docs/LOCAL_SETUP.md, "Production build verification").
-import { test } from 'node:test';
+//   APACHE_PROD_HTTPS=https://127.0.0.1:8443 APACHE_PROD_HTTP=http://127.0.0.1:8089 APACHE_PROD_HOME=/path node --test tests/apache/
+// APACHE_PROD_HOME holds that release (public_html/ + sensum-cms/ with a production .env:
+// APP_URL=https://sensumconstrucciones.com, ADMIN_URL=https://app.sensumconstrucciones.com/admin).
+// Self-signed certificate; see docs/LOCAL_SETUP.md, "Production build verification".
+import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import https from 'node:https';
+import { execFileSync } from 'node:child_process';
+import { join } from 'node:path';
+import { ADMIN, PHP } from '../integration/helpers.mjs';
 
 const HTTPS_BASE = process.env.APACHE_PROD_HTTPS;
 const HTTP_BASE = process.env.APACHE_PROD_HTTP;
-const skip = !HTTPS_BASE || !HTTP_BASE;
+const HOME = process.env.APACHE_PROD_HOME;
+const skip = !HTTPS_BASE || !HTTP_BASE || !HOME;
 const SITE = 'sensumconstrucciones.com';
 const APP = 'app.sensumconstrucciones.com';
+
+before(() => {
+  if (skip) return;
+  try {
+    execFileSync(PHP, [join(HOME, 'sensum-cms/bin/console'), 'create-admin', `--name=${ADMIN.name}`, `--email=${ADMIN.email}`], { input: `${ADMIN.password}\n${ADMIN.password}\n`, stdio: ['pipe', 'pipe', 'pipe'] });
+  } catch (e) { /* already exists */ }
+});
 
 /** One request with a chosen Host header; never follows redirects. */
 function req(host, path, { secure = true, method = 'GET', headers = {}, body } = {}) {
@@ -102,4 +115,21 @@ test('on the public site the API only answers what the public pages use', { skip
     assert.equal(r.status, 404, `${method} ${path}`);
     assert.doesNotMatch(r.headers['content-type'] || '', /json/, `${method} ${path} must not reach the application`);
   }
+});
+
+test('signing in works on app. in production mode, with a host-only secure cookie', { skip }, async () => {
+  const body = JSON.stringify({ email: ADMIN.email, password: ADMIN.password });
+  const login = await req(APP, '/api/auth/login', { method: 'POST', body, headers: { 'Content-Type': 'application/json', Origin: `https://${APP}` } });
+  assert.equal(login.status, 200, login.text);
+  const cookie = login.headers['set-cookie'].find((c) => c.startsWith('__Host-sensum_admin='));
+  assert.ok(cookie, 'the __Host- cookie (no Domain: never sent to sensumconstrucciones.com)');
+  assert.match(cookie, /; secure/i);
+  assert.match(cookie, /; httponly/i);
+  assert.match(cookie, /samesite=strict/i);
+  assert.doesNotMatch(cookie, /domain=/i);
+  const session = await req(APP, '/api/auth/session', { headers: { Cookie: cookie.split(';')[0] } });
+  assert.equal(JSON.parse(session.text).user.email, ADMIN.email);
+  // A page on another site cannot use the panel's API.
+  const foreign = await req(APP, '/api/auth/login', { method: 'POST', body, headers: { 'Content-Type': 'application/json', Origin: 'https://evil.example' } });
+  assert.equal(foreign.status, 403);
 });
