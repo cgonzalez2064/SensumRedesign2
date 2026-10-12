@@ -1,0 +1,10 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sensum",
+      "url": "http://127.0.0.1:8080",
+      "port": 8080
+    }
+  ]
+}
