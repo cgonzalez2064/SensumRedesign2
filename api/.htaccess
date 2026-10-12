@@ -2,8 +2,14 @@
 # (This folder contains only index.php; dotfiles are denied by the root
 # .htaccess. Note: a <FilesMatch> deny here would be evaluated against the
 # original URL before this rewrite and would block every API call.)
+# On the public site (sensumconstrucciones.com) the API only answers what the
+# public pages use — visit statistics, error reports and the health check; the
+# panel's API is served on app.sensumconstrucciones.com. (This folder's rewrite
+# rules replace the root ones, so the host is checked here.)
 <IfModule mod_rewrite.c>
   RewriteEngine On
+  RewriteCond %{HTTP_HOST} ^sensumconstrucciones\.com$ [NC]
+  RewriteRule ^(?!(collect|health|telemetry/error|index\.php)$) - [R=404,L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteRule ^ index.php [L,QSA]
 </IfModule>

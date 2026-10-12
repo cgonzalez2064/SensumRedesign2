@@ -60,7 +60,7 @@ final class ContactForm
             . '</tr></table>'
             . Emails::cta('Responder a ' . $first, $reply)
             . ($leadId ? '<p style="margin:16px 0 0;font-size:13px;color:#7a7a82">También quedó guardado en el panel, donde puedes anotar el seguimiento: '
-                . '<a href="' . $e($this->app->config->appUrl() . '/admin/#/prospectos/' . $leadId) . '" style="color:#c25500">Prospecto #' . $leadId . '</a></p>' : '');
+                . '<a href="' . $e($this->app->config->adminUrl() . '/#/prospectos/' . $leadId) . '" style="color:#c25500">Prospecto #' . $leadId . '</a></p>' : '');
         $layout = (new Emails($this->app))->branded('es', 'Formulario de contacto', $lead['service'] . ' — ' . mb_substr($lead['message'], 0, 90), $body,
             'Mensaje enviado desde el formulario de contacto de sensumconstrucciones.com. Responde a este correo para escribirle directamente a ' . $e($lead['name']) . '.');
         return [

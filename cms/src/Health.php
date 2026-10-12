@@ -45,7 +45,9 @@ final class Health
             $c['exif'] = ['ok' => function_exists('exif_read_data'), 'optional' => true, 'detail' => function_exists('exif_read_data') ? '' : 'phone-photo rotation cannot be corrected automatically'];
             $inside = str_starts_with(realpath($app->root()) ?: $app->root(), (realpath($public) ?: $public) . '/');
             $c['private_folder'] = ['ok' => !$inside, 'optional' => true, 'detail' => $inside ? 'cms folder is inside the web root (protected by .htaccess; moving it outside is recommended)' : ''];
-            $c['https'] = ['ok' => str_starts_with($app->config->appUrl(), 'https://'), 'optional' => !$app->config->isProduction(), 'detail' => $app->config->appUrl()];
+            $panel = $app->config->adminUrl();
+            $c['https'] = ['ok' => str_starts_with($app->config->appUrl(), 'https://') && str_starts_with($panel, 'https://'), 'optional' => !$app->config->isProduction(),
+                'detail' => $app->config->appUrl() . ($panel !== $app->config->appUrl() . '/admin' ? ' · panel ' . $panel : '')];
             $tr = $app->translator();
             $canConnect = function_exists('curl_init') || filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN);
             $c['translation'] = ['ok' => $tr->isEnabled() && $canConnect, 'optional' => true, 'detail' => match (true) {

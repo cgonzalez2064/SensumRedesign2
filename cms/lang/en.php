@@ -142,7 +142,7 @@ return [
     'wd.login.failed' => 'Wrong passwords',
     'wd.login.blocked' => 'Blocked attempts',
     'wd.login.ips' => 'Distinct source addresses',
-    'wd.login.action' => 'The blocks are active and nothing else is needed. If it keeps happening for days, ask Namecheap to block the IPs or restrict /admin by IP in cPanel.',
+    'wd.login.action' => 'The blocks are active and nothing else is needed. If it keeps happening for days, ask Namecheap to block the IPs or restrict access to the panel by IP in cPanel.',
     'wd.device.subject' => 'New sign-in to your Content Manager account',
     'wd.device.title' => 'Someone signed in from a new device',
     'wd.device.intro' => "Hi {name}: someone signed in to your account from a browser or device we hadn't seen before.",

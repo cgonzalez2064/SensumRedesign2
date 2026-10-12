@@ -108,10 +108,21 @@ final class Config
         return rtrim($this->string('APP_URL', 'https://sensumconstrucciones.com'), '/');
     }
 
-    /** Origins allowed to make state-changing API requests. */
+    /**
+     * Address of the Content Manager, without trailing slash. By default the
+     * panel lives under the site (APP_URL/admin); ADMIN_URL moves it to its own
+     * address, e.g. https://app.sensumconstrucciones.com/admin.
+     */
+    public function adminUrl(): string
+    {
+        $url = rtrim($this->string('ADMIN_URL'), '/');
+        return $url !== '' && self::originOf($url) !== '' ? $url : $this->appUrl() . '/admin';
+    }
+
+    /** Origins allowed to make state-changing API requests (the site and the panel). */
     public function allowedOrigins(): array
     {
-        $origins = [self::originOf($this->appUrl())];
+        $origins = [self::originOf($this->appUrl()), self::originOf($this->adminUrl())];
         foreach (explode(',', $this->string('EXTRA_ALLOWED_ORIGINS')) as $o) {
             $o = trim($o);
             if ($o !== '') {

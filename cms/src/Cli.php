@@ -252,7 +252,7 @@ final class Cli
         $file = $this->app->storage('LOCAL-TEST-USERS.txt');
         $text = "DEMO ACCOUNTS — Sensum Content Manager (local development only)\n"
             . 'Created: ' . date('Y-m-d H:i') . ' with `php cms/bin/console demo-users`' . "\n"
-            . 'Panel: ' . $this->app->config->appUrl() . "/admin/\n\n"
+            . 'Panel: ' . $this->app->config->adminUrl() . "/\n\n"
             . "Owner (IT): see LOCAL-TEST-ADMIN.txt (" . $this->app->config->ownerEmail() . ")\n\n";
         foreach ($rows as [$label, $email, $password]) {
             $text .= str_pad($label, 62) . str_pad($email, 36) . $password . "\n";

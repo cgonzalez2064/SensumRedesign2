@@ -26,7 +26,7 @@ final class Emails
 
     public function adminUrl(string $route): string
     {
-        return $this->app->config->appUrl() . '/admin/#/' . ltrim($route, '/');
+        return $this->app->config->adminUrl() . '/#/' . ltrim($route, '/');
     }
 
     /** @return array{to:string,subject:string,text:string,html:string} */
@@ -86,7 +86,7 @@ final class Emails
             $stepText .= ($i + 1) . '. ' . $s[$key] . "\n";
         }
         $safety = array_map($f, ['welcome.safe1', 'welcome.safe2', 'welcome.safe3']);
-        $link = $this->app->config->appUrl() . '/admin/';
+        $link = $this->app->config->adminUrl() . '/';
 
         $body = '<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#e8f6ec;color:#166534;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif">' . $e($s['welcome.badge']) . '</td></tr></table>'
             . '<h1 style="margin:14px 0 8px;font-size:24px;line-height:1.3;color:#1c1c1c">' . $e($f('welcome.title')) . '</h1>'

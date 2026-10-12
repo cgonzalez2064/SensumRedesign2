@@ -142,7 +142,7 @@ return [
     'wd.login.failed' => 'Contraseñas incorrectas',
     'wd.login.blocked' => 'Intentos bloqueados',
     'wd.login.ips' => 'Direcciones de origen distintas',
-    'wd.login.action' => 'Los bloqueos están activos y no hace falta nada más. Si se repite durante días, pide a Namecheap que bloquee las IP o restringe /admin por IP en cPanel.',
+    'wd.login.action' => 'Los bloqueos están activos y no hace falta nada más. Si se repite durante días, pide a Namecheap que bloquee las IP o restringe el acceso al panel por IP en cPanel.',
     'wd.device.subject' => 'Nuevo inicio de sesión en tu cuenta del Administrador de contenido',
     'wd.device.title' => 'Se inició sesión desde un dispositivo nuevo',
     'wd.device.intro' => 'Hola {name}: alguien inició sesión en tu cuenta desde un navegador o dispositivo que no habíamos visto antes.',

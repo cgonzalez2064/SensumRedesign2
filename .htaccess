@@ -16,12 +16,35 @@
 # derived from the request — so a bogus Host header just gets sent to
 # the real site instead of being reflected anywhere.
 # ----------------------------------------------------------------
+# Two names share this folder (cPanel: app.sensumconstrucciones.com created
+# with "Share document root"): the public site on sensumconstrucciones.com and
+# the Content Manager on app.sensumconstrucciones.com. Every other name (www.,
+# the server's own name…) goes to the public site.
+# ----------------------------------------------------------------
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  RewriteCond %{HTTPS} off
+  RewriteCond %{HTTP_HOST} ^app\.sensumconstrucciones\.com$ [NC]
+  RewriteRule ^ https://app.sensumconstrucciones.com%{REQUEST_URI} [L,R=301]
+
   RewriteCond %{HTTPS} off [OR]
   RewriteCond %{HTTP_HOST} !^sensumconstrucciones\.com$ [NC]
+  RewriteCond %{HTTP_HOST} !^app\.sensumconstrucciones\.com$ [NC]
   RewriteRule ^ https://sensumconstrucciones.com%{REQUEST_URI} [L,R=301]
+
+  # app.sensumconstrucciones.com is only the panel: its address opens it, and
+  # the public pages stay on the site (assets: icons and photo previews).
+  RewriteCond %{HTTP_HOST} ^app\.sensumconstrucciones\.com$ [NC]
+  RewriteRule ^$ /admin/ [L,R=302]
+  RewriteCond %{HTTP_HOST} ^app\.sensumconstrucciones\.com$ [NC]
+  RewriteCond %{REQUEST_URI} !^/(admin|api|assets)(/|$)
+  RewriteCond %{REQUEST_URI} !^/404\.html$
+  RewriteRule ^ https://sensumconstrucciones.com%{REQUEST_URI} [L,R=301]
+
+  # On the public site the panel's old address forwards to the new one.
+  RewriteCond %{HTTP_HOST} ^sensumconstrucciones\.com$ [NC]
+  RewriteRule ^admin(/|$) https://app.sensumconstrucciones.com/admin/ [L,R=301]
 </IfModule>
 
 # ----------------------------------------------------------------
