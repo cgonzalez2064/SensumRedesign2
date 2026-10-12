@@ -115,7 +115,8 @@ test('content stress test: every field at its maximum length keeps the layout in
       const cardBox = card.getBoundingClientRect();
       return { overflow, spill: [...new Set(spill)].slice(0, 8), cardTextInside: cardText.top >= cardBox.top - 1 };
     });
-    await page.screenshot({ path: join(SCREENS, `stress-${w}.png`), fullPage: true });
+    const tall = await page.evaluate(() => document.documentElement.scrollHeight * window.devicePixelRatio);
+    await page.screenshot({ path: join(SCREENS, `stress-${w}.png`), fullPage: true, ...(tall > 30000 ? { scale: 'css' } : {}) }); // images max out at 32,767 px
     expect(report.overflow, `width ${w}: page overflow`).toBe(false);
     expect(report.spill, `width ${w}: text spilling out of components`).toEqual([]);
     expect(report.cardTextInside, `width ${w}: project title pushed out of its 4:3 card`).toBe(true);

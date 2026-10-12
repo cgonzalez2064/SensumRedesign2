@@ -49,6 +49,12 @@ async function login(page, user = ADMIN) {
 async function shot(page, path, opts = {}) {
   capturing = true;
   try {
+    // Browsers refuse images over 32,767 px: very long pages (Monitoreo on a phone at 3×)
+    // are captured at 1 image pixel per CSS pixel instead.
+    if (opts.fullPage && !opts.scale) {
+      const tall = await page.evaluate(() => document.documentElement.scrollHeight * window.devicePixelRatio);
+      if (tall > 30000) opts = { ...opts, scale: 'css' };
+    }
     await page.screenshot({ path, caret: 'initial', ...opts });
     await page.waitForTimeout(100);
   } finally { capturing = false; }

@@ -259,6 +259,14 @@ button{ cursor:pointer; }
   color:var(--text-2); font-weight:600; font-size:.86rem; transition: background-color var(--t-fast), color var(--t-fast), box-shadow var(--t-fast);
 }
 .segmented button[aria-pressed="true"]{ background:var(--surface); color:var(--text); box-shadow:var(--shadow-1); }
+/* Never wider than the screen (large text, wider fonts): the options shrink and their text is cut with "…". */
+.segmented{ max-width:100%; }
+.segmented button{ min-width:0; }
+.segmented button > span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.segmented button > .icon{ flex:none; }
+/* Buttons with long text may take two lines instead of overflowing the screen. */
+.btn{ max-width:100%; }
+@media (max-width: 600px){ .btn:not(.btn-icon){ white-space:normal; text-align:center; } }
 .segmented button:hover{ color:var(--text); }
 
 .pw-rules{ list-style:none; margin:.2rem 0 0; padding:0; display:grid; gap:.25rem; font-size:.84rem; color:var(--text-2); }
