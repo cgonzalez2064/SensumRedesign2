@@ -63,7 +63,7 @@ final class ContactForm
         }
         $body = '<div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#f6740a">Nuevo contacto desde el sitio web</div>'
             . '<h1 style="margin:8px 0 4px;font-size:22px;line-height:1.3;color:#1c1c1c">' . $e($lead['name']) . '</h1>'
-            . ($lead['service'] !== '' ? '<div style="font-size:14px;color:#7a7a82">Interesado en: <strong style="color:#1f2328">' . $e($lead['service']) . '</strong></div>' : '')
+            . ($lead['service'] !== '' ? '<div style="font-size:14px;color:#7a7a82">Servicio de interés: <strong style="color:#1f2328">' . $e($lead['service']) . '</strong></div>' : '')
             . ($lead['message'] !== '' ? '<div style="margin:20px 0 0;padding:16px 18px;background:#fff8f1;border-left:4px solid #f6740a;border-radius:0 12px 12px 0;white-space:pre-wrap;font-size:15px;color:#1f2328">' . $e($lead['message']) . '</div>' : '')
             . '<table role="presentation" width="100%" cellpadding="0" cellspacing="6" style="margin:18px -6px 0"><tr>'
             . $detail('Correo', $lead['email'] !== '' ? '<a href="mailto:' . $e($lead['email']) . '" style="color:#c25500;text-decoration:none">' . $e($lead['email']) . '</a>' : '—')

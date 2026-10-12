@@ -168,7 +168,7 @@ test('a visitor\'s answers: required, options and formats checked; kept in Prosp
   // The e-mail lists them.
   const [m] = (await waitForMail(inbox, before + 1)).slice(0, 1);
   const mail = await message(m.ID);
-  for (const t of ['Otras respuestas', '¿Cuándo te gustaría iniciar?', 'En 1 a 3 meses', 'Zona 10, Guatemala', 'Google, Recomendación']) assert.ok(mail.HTML.includes(t), t);
+  for (const t of ['Servicio de interés: <strong', 'Otras respuestas', '¿Cuándo te gustaría iniciar?', 'En 1 a 3 meses', 'Zona 10, Guatemala', 'Google, Recomendación']) assert.ok(mail.HTML.includes(t), t);
   assert.ok(mail.Text.includes('¿Cómo nos conociste?: Google, Recomendación'));
   // The CSV too.
   const csv = await fetch(s.base + '/api/leads/export', { method: 'POST', body: JSON.stringify({ status: 'all' }),
@@ -189,7 +189,7 @@ test('a form without e-mail or service still works: the e-mail offers to call', 
   assert.equal(s.sql("SELECT email || '|' || service FROM leads ORDER BY id DESC LIMIT 1"), '|');
   const mail = await message((await waitForMail(inbox, before + 1))[0].ID);
   assert.ok(mail.HTML.includes('Llamar a Pedro') && mail.HTML.includes('href="tel:55550101"'), 'no e-mail: the button calls');
-  assert.ok(!mail.HTML.includes('Interesado en'));
+  assert.ok(!mail.HTML.includes('Servicio de interés:'), 'no service line when the form has no service question');
   assert.equal((await submit({ name: 'Pedro Pérez', phone: '5555-0101', email: 'x@example.test', [start.id]: start.options[0].id })).data.error, 'unexpected_field', 'a removed question is not accepted');
 });
 
