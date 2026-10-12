@@ -11,7 +11,7 @@ PHP_BIN="${PHP_BIN:-php}"
 
 if command -v mailpit >/dev/null 2>&1; then
   if ! curl -s -o /dev/null http://127.0.0.1:8025; then
-    mailpit --listen 127.0.0.1:8025 --smtp 127.0.0.1:1025 >/dev/null 2>&1 &
+    mailpit --listen 127.0.0.1:8025 --smtp 127.0.0.1:1025 --max 10000 >/dev/null 2>&1 &  # the test suites send hundreds of e-mails
     echo "Mailpit started → http://127.0.0.1:8025"
   fi
   # Route PHP's mail() (used by the public contact form) into Mailpit too,

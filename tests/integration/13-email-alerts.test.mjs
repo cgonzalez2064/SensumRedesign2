@@ -110,13 +110,15 @@ test('the owner saves the settings: stored encrypted, logged, and a security not
   assert.match(full.Text, /formulario de contacto/);
 
   // Saving again with an empty password keeps the stored one; no changes → no notice.
-  const count = await countTo(ADMIN.email);
+  // (Compared by message id, not by count: the shared test inbox drops its oldest messages.)
+  const notices = async () => (await messagesTo(ADMIN.email)).filter((m) => /configuración de correo/i.test(m.Subject)).map((m) => m.ID);
+  const seen = new Set(await notices());
   const again = await owner.put('/api/settings/email', settings());
   assert.equal(again.status, 200);
   assert.deepEqual(again.data.changed, []);
   assert.equal(again.data.settings.smtp.passwordSet, true);
   await sleep(600);
-  assert.equal(await countTo(ADMIN.email), count, 'no notice without changes');
+  assert.deepEqual((await notices()).filter((id) => !seen.has(id)), [], 'no notice without changes');
 });
 
 test('panel e-mail uses the saved sender and Reply-To; the test reaches owner, reports and alerts', async () => {
