@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sensum Project Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Roboto:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a drafting table. Top bar · pannable mind map on plan grid · detail sheet (right on wide screens, bottom on phones). */
+:root {
+  --bg: #eef1f2; --grid: rgba(28, 46, 58, .07); --surface: #ffffff; --surface-2: #f6f8f8;
+  --ink: #1c1c1c; --muted: #58626b; --line: #cdd5da; --accent: #f6740a; --accent-ink: #a94600; --focus: #f6740a;
+  --c-site: #d9600a; --c-admin: #2459c7; --c-backend: #0d7a6f; --c-data: #6b46c1; --c-process: #a1610a;
+  --c-security: #b42318; --c-ops: #3f6212; --c-quality: #0e6a8a; --c-stack: #4b5563;
+  --shadow: 0 1px 2px rgba(20, 30, 40, .06), 0 6px 18px rgba(20, 30, 40, .08);
+  --display: "Oswald", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #101315; --grid: rgba(190, 210, 225, .06); --surface: #191d20; --surface-2: #20252a;
+  --ink: #eceff1; --muted: #9aa5ae; --line: #303840; --accent: #ff8a2a; --accent-ink: #ffa25c; --focus: #ffa25c;
+  --c-site: #ff9a4d; --c-admin: #7ea6ff; --c-backend: #4fd1c0; --c-data: #b79cff; --c-process: #f2b34a;
+  --c-security: #ff8a80; --c-ops: #a3d65c; --c-quality: #5cc8ef; --c-stack: #b6bec7;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 22px rgba(0, 0, 0, .35); color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #101315; --grid: rgba(190, 210, 225, .06); --surface: #191d20; --surface-2: #20252a;
+  --ink: #eceff1; --muted: #9aa5ae; --line: #303840; --accent: #ff8a2a; --accent-ink: #ffa25c; --focus: #ffa25c;
+  --c-site: #ff9a4d; --c-admin: #7ea6ff; --c-backend: #4fd1c0; --c-data: #b79cff; --c-process: #f2b34a;
+  --c-security: #ff8a80; --c-ops: #a3d65c; --c-quality: #5cc8ef; --c-stack: #b6bec7;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 22px rgba(0, 0, 0, .35); color-scheme: dark;
+}
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); overflow: hidden; }
+* { box-sizing: border-box; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.app { height: 100%; display: grid; grid-template-rows: auto 1fr; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; padding: .7rem 16px; padding-top: calc(.7rem + env(safe-area-inset-top, 0px)); background: var(--surface); border-bottom: 1px solid var(--line); position: relative; z-index: 5; }
+.brand { display: flex; align-items: center; gap: .6rem; min-width: 0; }
+.brand-mark { width: 30px; height: 30px; flex: none; border-radius: 7px; background: var(--accent); display: grid; place-items: center; color: #1c1c1c; font: 600 15px/1 var(--display); }
+.brand h1 { margin: 0; font: 600 1.15rem/1.1 var(--display); letter-spacing: .02em; text-transform: uppercase; white-space: nowrap; }
+.brand small { display: block; font: 400 .74rem/1.2 var(--body); color: var(--muted); letter-spacing: .01em; text-transform: none; }
+.search { position: relative; flex: 1 1 240px; max-width: 420px; }
+.search input { width: 100%; height: 38px; padding: 0 .8rem 0 2.1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); color: var(--ink); font: inherit; }
+.search svg { position: absolute; left: .65rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--muted); pointer-events: none; }
+.results { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: .3rem; max-height: 60vh; overflow: auto; }
+.results button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: .5rem .6rem; border-radius: 8px; cursor: pointer; }
+.results button:hover, .results button[aria-selected="true"] { background: var(--surface-2); }
+.results b { font-weight: 600; }
+.results span { display: block; font-size: .78rem; color: var(--muted); }
+.results .none { padding: .6rem; color: var(--muted); font-size: .9rem; }
+.tools { display: flex; gap: .4rem; flex-wrap: wrap; margin-left: auto; }
+.tool { height: 36px; padding: 0 .75rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); cursor: pointer; display: inline-flex; align-items: center; gap: .4rem; font-size: .88rem; font-weight: 500; }
+.tool:hover { border-color: var(--muted); }
+.tool[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.tool svg { width: 16px; height: 16px; }
+
+.main { position: relative; min-height: 0; display: grid; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .main { grid-template-columns: minmax(0, 1fr) 390px; } }
+
+.viewport { position: relative; overflow: hidden; touch-action: none; cursor: grab; min-height: 0;
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px; }
+.viewport.dragging { cursor: grabbing; }
+.stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+.stage.animate { transition: transform .45s cubic-bezier(.2, .7, .2, 1); }
+.edges { position: absolute; left: 0; top: 0; overflow: visible; }
+.edges path { fill: none; stroke-width: 2; stroke-linecap: round; opacity: .55; }
+.node { position: absolute; width: max-content; display: flex; align-items: stretch; transition: left .4s cubic-bezier(.2, .7, .2, 1), top .4s cubic-bezier(.2, .7, .2, 1), opacity .3s; }
+.node[hidden] { display: none !important; }
+.node .pick { border: 1.5px solid var(--cc); background: var(--surface); border-radius: 12px; padding: .5rem .75rem; text-align: left; cursor: pointer; max-width: 230px; box-shadow: var(--shadow); line-height: 1.25; }
+.node .pick strong { display: block; font: 500 .9rem/1.25 var(--body); }
+.node .pick small { display: block; font-size: .74rem; color: var(--muted); margin-top: .15rem; }
+.node.d1 .pick { background: var(--cc); border-color: var(--cc); color: #fff; max-width: 240px; padding: .6rem .9rem; }
+.node.d1 .pick strong { font: 600 1rem/1.15 var(--display); letter-spacing: .03em; text-transform: uppercase; }
+.node.d1 .pick small { color: rgba(255, 255, 255, .85); }
+:root[data-theme="dark"] .node.d1 .pick { color: #111; }
+:root[data-theme="dark"] .node.d1 .pick small { color: rgba(0, 0, 0, .7); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .node.d1 .pick { color: #111; } :root:not([data-theme="light"]) .node.d1 .pick small { color: rgba(0, 0, 0, .7); } }
+.node.root .pick { background: var(--ink); color: var(--bg); border: 0; padding: .9rem 1.2rem; max-width: 260px; text-align: center; border-radius: 16px; }
+.node.root .pick strong { font: 600 1.25rem/1.1 var(--display); letter-spacing: .03em; text-transform: uppercase; }
+.node.root .pick small { color: var(--bg); opacity: .75; font-size: .8rem; }
+.node .pick:hover { transform: translateY(-1px); }
+.node.selected .pick { box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--cc); }
+.node.match .pick { box-shadow: 0 0 0 3px var(--accent); }
+.node.dim { opacity: .35; }
+.node .twist { align-self: center; width: 24px; height: 24px; margin: 0 -12px; z-index: 1; border-radius: 50%; border: 1.5px solid var(--cc); background: var(--surface); color: var(--cc); cursor: pointer; display: grid; place-items: center; font: 600 14px/1 var(--body); padding: 0; }
+.node.left { flex-direction: row-reverse; }
+.node .count { font-size: .68rem; }
+
+.panel { background: var(--surface); border-left: 1px solid var(--line); overflow: auto; min-height: 0; padding: 18px 20px 28px; }
+@media (max-width: 899px) {
+  .panel { position: absolute; left: 0; right: 0; bottom: 0; max-height: 52%; border-left: 0; border-top: 1px solid var(--line); border-radius: 18px 18px 0 0; box-shadow: 0 -10px 30px rgba(0, 0, 0, .14); padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 4; }
+  .panel.min { max-height: 64px; overflow: hidden; }
+}
+.panel-head { display: flex; align-items: flex-start; gap: .5rem; }
+.panel-head .grow { flex: 1; min-width: 0; }
+.sheet-toggle { display: none; }
+@media (max-width: 899px) { .sheet-toggle { display: inline-flex; } }
+.crumbs { display: flex; flex-wrap: wrap; gap: .25rem; font-size: .75rem; color: var(--muted); margin-bottom: .35rem; }
+.crumbs button { border: 0; background: none; padding: 0; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.chip { display: inline-flex; align-items: center; gap: .35rem; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--cc); }
+.chip::before { content: ""; width: 9px; height: 9px; border-radius: 3px; background: var(--cc); }
+.panel h2 { margin: .25rem 0 .2rem; font: 600 1.45rem/1.15 var(--display); letter-spacing: .02em; text-wrap: balance; }
+.panel .sub { margin: 0 0 .8rem; color: var(--muted); }
+.panel p { margin: 0 0 .8rem; max-width: 65ch; }
+.panel h3 { margin: 1.2rem 0 .5rem; font: 600 .78rem/1.2 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: .55rem; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 26px 1fr; gap: .6rem; align-items: start; }
+.steps li::before { content: counter(s); width: 24px; height: 24px; border-radius: 50%; background: var(--cc); color: var(--surface); display: grid; place-items: center; font: 700 .75rem/1 var(--body); margin-top: .05rem; }
+.files { margin: 0; padding: 0; list-style: none; display: grid; gap: .3rem; }
+.files li { font: 400 .8rem/1.4 var(--mono); background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px; padding: .3rem .5rem; overflow-wrap: anywhere; }
+.tags { display: flex; flex-wrap: wrap; gap: .35rem; }
+.tags span { font-size: .78rem; padding: .2rem .55rem; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .5rem; margin: .4rem 0 .6rem; }
+.facts div { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: .55rem .65rem; }
+.facts b { display: block; font: 600 1.35rem/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.facts span { font-size: .76rem; color: var(--muted); }
+.links { display: flex; flex-wrap: wrap; gap: .4rem; }
+.links button { border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: .35rem .6rem; font-size: .84rem; cursor: pointer; display: inline-flex; align-items: center; gap: .35rem; }
+.links button::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--cc); }
+.links button:hover { border-color: var(--muted); }
+.legend { display: grid; gap: .35rem; margin-top: .3rem; }
+.legend button { display: flex; align-items: center; gap: .55rem; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: .45rem .6rem; cursor: pointer; text-align: left; }
+.legend button::before { content: ""; width: 12px; height: 12px; border-radius: 4px; background: var(--cc); flex: none; }
+.legend small { color: var(--muted); margin-left: auto; font-size: .75rem; }
+.howto { font-size: .86rem; color: var(--muted); }
+.howto kbd { font: 500 .75rem var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 .3rem; background: var(--surface-2); }
+
+.outline { overflow: auto; padding: 18px 16px 40px; min-height: 0; }
+.outline[hidden] { display: none; }
+.outline ul { list-style: none; margin: 0; padding: 0 0 0 1rem; border-left: 1px dashed var(--line); }
+.outline > ul { padding-left: 0; border-left: 0; max-width: 900px; margin: 0 auto; }
+.outline details { margin: .3rem 0; }
+.outline summary { cursor: pointer; padding: .4rem .55rem; border-radius: 9px; list-style: none; display: flex; gap: .5rem; align-items: baseline; }
+.outline summary::-webkit-details-marker { display: none; }
+.outline summary::before { content: "+"; font: 600 .9rem/1 var(--mono); color: var(--cc); width: 1ch; }
+.outline details[open] > summary::before { content: "–"; }
+.outline summary:hover { background: var(--surface); }
+.outline summary b { font-weight: 600; }
+.outline summary span { color: var(--muted); font-size: .85rem; }
+.outline .body { padding: .2rem .6rem .6rem 1.6rem; }
+.outline .body p { margin: 0 0 .5rem; max-width: 70ch; }
+
+.cat-site { --cc: var(--c-site); } .cat-admin { --cc: var(--c-admin); } .cat-backend { --cc: var(--c-backend); } .cat-data { --cc: var(--c-data); }
+.cat-process { --cc: var(--c-process); } .cat-security { --cc: var(--c-security); } .cat-ops { --cc: var(--c-ops); } .cat-quality { --cc: var(--c-quality); }
+.cat-stack { --cc: var(--c-stack); } .cat-root { --cc: var(--ink); }
+.zoom { position: absolute; right: 12px; top: 12px; display: grid; gap: .35rem; z-index: 3; }
+.zoom button { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font: 600 18px/1 var(--body); box-shadow: var(--shadow); display: grid; place-items: center; padding: 0; }
+.zoom svg { width: 16px; height: 16px; }
+.sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 600px) {
+  .tool .label { display: none; } .brand small { display: none; } .bar { gap: .5rem; }
+  .brand { flex: 1; } .tools { margin-left: 0; } .search { order: 3; flex-basis: 100%; max-width: none; }
+  .zoom button { width: 34px; height: 34px; }
+}
+@media (prefers-reduced-motion: reduce) { .node, .stage.animate { transition: none; } .node .pick:hover { transform: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <div class="brand"><div class="brand-mark" aria-hidden="true">S</div><h1>Project map<small>Sensum Construcciones · website + Content Manager</small></h1></div>
+    <div class="search" role="search">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.8" cy="6.8" r="4.9" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m10.5 10.5 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <input id="q" type="search" placeholder="Search: leads, backups, Tickets.php, cron…" aria-label="Search the map" autocomplete="off" aria-controls="results" aria-expanded="false">
+      <div class="results" id="results" role="listbox" hidden></div>
+    </div>
+    <div class="tools">
+      <button class="tool" id="expand" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="label">Expand all</span></button>
+      <button class="tool" id="collapse" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 10l5-5 5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="label">Collapse</span></button>
+      <button class="tool" id="outlineBtn" type="button" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 4h9M5 8h9M5 12h9M2 4h.01M2 8h.01M2 12h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="label">Outline</span></button>
+    </div>
+  </header>
+  <div class="main">
+    <div class="viewport" id="viewport" aria-label="Mind map. Drag to move, pinch or Ctrl + scroll to zoom.">
+      <div class="stage" id="stage"><svg class="edges" id="edges" width="1" height="1" aria-hidden="true"></svg></div>
+      <div class="zoom"><button type="button" id="zin" aria-label="Zoom in">+</button><button type="button" id="zout" aria-label="Zoom out">−</button><button type="button" id="zfit" aria-label="Fit the map to the screen"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+    </div>
+    <div class="outline" id="outline" hidden></div>
+    <aside class="panel" id="panel" aria-live="polite" aria-label="Details"></aside>
+  </div>
+</div>
+<script>
+// ------------------------------------------------------------------ the project, as data
+const N = (id, t, s, o = {}, kids = []) => ({ id, t, s, ...o, kids });
+const CATS = {
+  site: 'Public website', admin: 'Admin panel', backend: 'CMS backend', data: 'Data & storage', process: 'Processes',
+  security: 'Security', ops: 'Hosting & operations', quality: 'Quality & tests', stack: 'Tech stack',
+};
+const TREE = N('root', 'Sensum Construcciones', 'Website + Content Manager', {
+  cat: 'root',
+  d: 'The approved public website of Sensum Construcciones plus a custom Content Manager at /admin. The team changes texts, photos and contact details without touching code; the panel also handles leads, statistics, support requests and a monthly report, and keeps the site monitored and backed up. No framework and no build step: it runs on shared hosting (cPanel, Apache, PHP 8.1+, SQLite).',
+  facts: [['91', 'API endpoints'], ['21', 'database tables'], ['13', 'migrations'], ['17', 'panel screens'], ['209', 'API tests'], ['207', 'browser test runs']],
+}, [
+  // ---------------------------------------------------------------- website
+  N('site', 'Public website', 'What visitors see', { cat: 'site', side: 1,
+    d: 'Static pages generated by the Content Manager from templates and the saved content. A page view never touches the database, so the site stays fast and keeps working even if the panel is down.',
+    files: ['index.html', '404.html', 'privacy-notice.html', 'assets/', 'cms/templates/*.html.tpl'], rel: ['p-publish'] }, [
+    N('site-pages', 'Pages & sections', 'One-page site + 404 + privacy', {
+      d: 'index.html is one long page: hero, Nosotros, Servicios, Proceso, Tipos de proyectos, Proyectos (cards with a “Ver detalles” photo gallery), call to action, Contacto, Preguntas frecuentes and footer. Plus a 404 page and the privacy notice, which states the real data-retention period.',
+      files: ['cms/templates/index.html.tpl', 'cms/templates/404.html.tpl', 'cms/templates/privacy-notice.html.tpl'], rel: ['p-publish', 'be-content'] }),
+    N('site-i18n', 'Spanish / English', 'Bilingual without reload', {
+      d: 'Every text exists in Spanish and English (bilingual fields in the panel). The language button switches instantly and is remembered on the device. English left empty falls back to Spanish.',
+      files: ['assets/main.js'], tech: ['data-i18n attributes', 'localStorage'], rel: ['p-translate'] }),
+    N('site-js', 'Behaviour', 'main.js', {
+      d: 'Mobile menu (focus trap, Escape, backdrop), project gallery modal (arrows, keyboard, focus return), FAQ accordion, reveal animations that respect reduced motion, the language toggle and the contact-form validation that keeps what the visitor typed.',
+      files: ['assets/main.js', 'assets/main.css'], tech: ['Vanilla JS', 'CSS'] }),
+    N('site-form', 'Contact form', 'Leads with spam protection', {
+      d: 'Name, phone, e-mail, “Servicio de interés” (options managed in the panel) and message. An invisible proof-of-work captcha always runs; Cloudflare Turnstile can be added from the panel. The handler stores the lead first, then e-mails it.',
+      files: ['assets/contact-handler.php', 'cms/src/ContactForm.php', 'cms/src/ContactServices.php'], tech: ['Proof-of-work captcha', 'Cloudflare Turnstile (optional)'], rel: ['p-lead'] }),
+    N('site-stats', 'Visit statistics', 'stats.js · no cookies', {
+      d: 'A tiny script sends one beacon per visit (page, source, device, language) and per contact click (WhatsApp, phone, e-mail, map, portfolio). No cookies, no IP addresses; “Do Not Track” and robots are ignored.',
+      files: ['assets/stats.js', 'cms/src/Analytics.php'], rel: ['p-stats'] }),
+    N('site-assets', 'Assets & media', 'Fonts, images, PDF', {
+      d: 'Self-hosted Oswald and Roboto (no Google requests), responsive photos generated on upload (several widths, WebP + JPEG, srcset), the downloadable PDF portfolio, icons and the Open Graph image.',
+      files: ['assets/fonts/', 'assets/uploads/', 'assets/portfolio/', 'assets/projects/'], tech: ['WebP', 'srcset', 'woff2'] }),
+    N('site-delivery', 'SEO & delivery', '.htaccess, sitemap', {
+      d: 'sitemap.xml, robots.txt, web manifest and Open Graph tags. The root .htaccess forces HTTPS and the canonical domain, sets security headers (CSP, HSTS, frame and MIME protection), caching and compression, and blocks private files.',
+      files: ['.htaccess', 'sitemap.xml', 'robots.txt', 'site.webmanifest'], rel: ['sec-web'] }),
+  ]),
+  // ---------------------------------------------------------------- admin SPA
+  N('admin', 'Admin panel', '/admin · single-page app', { cat: 'admin', side: 1,
+    d: 'A single-page app written in plain JavaScript modules: no framework, no bundler. It talks to the PHP API, shows each person only what their access allows, and works on phones, tablets and computers, in Spanish or English, light or dark.',
+    files: ['admin/index.html', 'admin/js/', 'admin/css/admin.css', 'admin/icons.svg'] }, [
+    N('adm-shell', 'App shell & router', 'app.js', {
+      d: 'Hash routes (#/textos, #/reportes…), the menu built from the person’s permissions, the fixed top bar and logo block, the unsaved-changes guard, and the gates that come before the panel: two-step sign-in setup and the first-sign-in welcome (language and appearance).',
+      files: ['admin/index.html', 'admin/js/boot.js', 'admin/js/app.js'], rel: ['p-access'] }),
+    N('adm-core', 'Core modules', 'api · dom · ui · i18n · theme', {
+      d: 'api.js wraps fetch (CSRF header, timeouts, a sign-in dialog when the session expires that keeps unsaved edits); dom.js builds elements and icons; ui.js holds dialogs, toasts, fields and buttons; i18n.js with 1,700+ keys per language; theme.js handles light, dark and automatic.',
+      files: ['admin/js/api.js', 'admin/js/dom.js', 'admin/js/ui.js', 'admin/js/i18n.js', 'admin/js/i18n/es.js', 'admin/js/i18n/en.js', 'admin/js/theme.js'] }),
+    N('adm-screens', 'Screens', '17 views', {
+      d: 'Sitio web: Textos del sitio, Fotos y archivos, Datos de contacto, Formulario de contacto (with a live preview of the form). Clientes y resultados: Prospectos, Estadísticas. Estado del sitio: Salud del sitio, Informe mensual. Administración (owner): Usuarios, Monitoreo, Informe mensual, Correo, Traducción, Seguridad. Ayuda y soporte: Soporte (Centro de Ayuda), Guía de uso, Mi cuenta. Plus sign-in, password recovery, invitation and welcome screens.',
+      files: ['admin/js/views/*.js'] }),
+    N('adm-parts', 'Shared pieces', 'Charts, access, dialogs', {
+      d: 'charts.js draws interactive SVG charts (tooltip, keyboard, legend, data table); monitorCharts.js adds uptime and incident views; access.js is the access-type and permission picker; report.js is the “Solicitar soporte” dialog; viewas.js the “Ver como” bar; autotranslate.js fills the other language while typing; twofactor.js the authenticator setup; telemetry.js sends panel errors to the error log.',
+      files: ['admin/js/charts.js', 'admin/js/monitorCharts.js', 'admin/js/access.js', 'admin/js/report.js', 'admin/js/viewas.js', 'admin/js/autotranslate.js', 'admin/js/twofactor.js', 'admin/js/telemetry.js'] }),
+    N('adm-ux', 'Design & accessibility', 'Tokens, CSP, WCAG', {
+      d: 'Design tokens in admin.css, an SVG icon sprite, a strict Content-Security-Policy (no inline scripts or style attributes: sizes are set through CSSOM), WCAG 2.1 AA checked with axe on every screen, 44 px touch targets, reduced motion, responsive from 320 px phones to large screens.',
+      files: ['admin/css/admin.css', 'admin/icons.svg'], tech: ['CSS custom properties', 'Container queries', 'axe-core'] }),
+  ]),
+  // ---------------------------------------------------------------- backend
+  N('backend', 'CMS backend', 'PHP application', { cat: 'backend', side: 1,
+    d: 'Plain PHP 8.1+ in cms/, which lives outside the web root in production. One entry point, a small router, controllers and focused services. Composer brings only PHPMailer (runtime) and PHPStan (development).',
+    files: ['api/index.php', 'cms/bootstrap.php', 'cms/src/', 'cms/composer.json'] }, [
+    N('be-flow', 'Request flow', 'api/index.php → Kernel', {
+      d: 'Every panel request goes to /api. The kernel matches one of 91 routes, applies its guard (public, signed-in user, or owner), checks size, origin and the CSRF token, and calls the controller. Unexpected errors are logged privately and answered with a short reference code.',
+      steps: ['api/index.php loads cms/bootstrap.php', 'App::boot reads .env and opens SQLite (pending migrations apply)', 'Kernel matches the route and its guard', 'Origin + CSRF + session checks; “Ver como” blocks changes', 'Controller → services → JSON response'],
+      files: ['api/index.php', 'cms/src/Api/Kernel.php', 'cms/src/Api/*Controller.php', 'cms/src/Http/Request.php', 'cms/src/Http/Response.php'] }),
+    N('be-core', 'Core', 'App, Config, Db, Settings', {
+      d: 'App is the service container; Config reads .env; Db wraps PDO + SQLite with transactions and migrations; Settings stores panel configuration as JSON; Logger writes monthly logs without secrets; Secrets encrypts stored keys and passwords.',
+      files: ['cms/src/App.php', 'cms/src/Config.php', 'cms/src/Db.php', 'cms/src/Settings.php', 'cms/src/Logger.php', 'cms/src/Secrets.php'] }),
+    N('be-content', 'Content & publishing', 'Schema → Publisher', {
+      d: 'The schema defines every editable field (limits, help text, Spanish and English). The repository saves with versions to catch edit conflicts. The Publisher fills the templates and writes the public pages, and can detect when live files drift from the saved content. Media validates uploads and generates responsive images.',
+      files: ['cms/content/schema.php', 'cms/content/defaults.php', 'cms/content/media.php', 'cms/src/Content/', 'cms/src/Publisher.php', 'cms/src/Template.php', 'cms/src/Media/'], rel: ['p-publish'] }),
+    N('be-people', 'People & access', 'Auth, Users, 2FA', {
+      d: 'Server-side sessions, CSRF and same-origin checks, idle and absolute expiry, and “Ver como”. Users holds 10 permissions and 8 ready-made access types, invitations and the welcome flag. Passwords uses Argon2id and a strength policy; TwoFactor handles authenticator codes and recovery codes; RateLimiter slows down guessing.',
+      files: ['cms/src/Auth.php', 'cms/src/Users.php', 'cms/src/Passwords.php', 'cms/src/TwoFactor.php', 'cms/src/RateLimiter.php'], rel: ['p-access', 'sec-auth'] }),
+    N('be-mail', 'E-mail', 'PHPMailer + templates', {
+      d: 'Mailer sends through SMTP with PHPMailer. MailSettings keeps the sending account, form receivers and alert addresses (managed in the panel, password encrypted). Emails builds the branded messages: invitation, welcome, password reset and change, alerts.',
+      files: ['cms/src/Mailer.php', 'cms/src/MailSettings.php', 'cms/src/Emails.php'], tech: ['PHPMailer 6', 'SMTP'] }),
+    N('be-business', 'Business modules', 'Leads, support, report', {
+      d: 'Leads (Prospectos: capture, status, notes, CSV, retention), Analytics (first-party statistics), Reports (support intake and e-mail to IT), Tickets (workflow, service levels, ratings, charts), SiteReport + Pdf (monthly report for clients and the technical detail, with a built-in PDF writer), Translator (DeepL).',
+      files: ['cms/src/Leads.php', 'cms/src/Analytics.php', 'cms/src/Reports.php', 'cms/src/Tickets.php', 'cms/src/SiteReport.php', 'cms/src/Pdf.php', 'cms/src/Translator.php', 'cms/src/TranslationSettings.php'], rel: ['p-lead', 'p-support', 'p-report', 'p-translate'] }),
+    N('be-ops', 'Operations modules', 'Monitor, alerts, backups', {
+      d: 'Monitor (scheduled checks, response time, uptime, incidents), Watchdog (automatic alerts), Alerts (critical errors), ErrorLog (server, panel and site errors with reference codes), Health (/api/health), DomainHealth (SPF, DKIM, DMARC, MX, domain expiry), PageSpeed (Google scores), OffsiteBackup (encrypted ZIP by e-mail), MaintenanceLog (what ran each month).',
+      files: ['cms/src/Monitor.php', 'cms/src/Watchdog.php', 'cms/src/Alerts.php', 'cms/src/ErrorLog.php', 'cms/src/Health.php', 'cms/src/DomainHealth.php', 'cms/src/PageSpeed.php', 'cms/src/OffsiteBackup.php', 'cms/src/MaintenanceLog.php'], rel: ['p-monitor', 'p-backup'] }),
+    N('be-cli', 'Command line', 'bin/console', {
+      d: 'Server commands: check, migrate, create-admin, publish, render, monitor (the scheduled task), backup, mail:test, translate:test, alert:test, reports:retry, integrity:accept, 2fa:reset and demo-users (local only).',
+      files: ['cms/bin/console', 'cms/src/Cli.php'], rel: ['ops-cron'] }),
+    N('be-lang', 'Templates & e-mail texts', 'lang/es.php, en.php', {
+      d: 'The site templates and every server-side text (e-mails, report, alerts) in Spanish and English, kept with identical keys.',
+      files: ['cms/templates/', 'cms/lang/es.php', 'cms/lang/en.php'] }),
+  ]),
+  // ---------------------------------------------------------------- quality
+  N('quality', 'Quality & tests', 'Everything is tested', { cat: 'quality', side: 1,
+    d: 'Every change runs through API tests, browser tests on three devices, a build checked under real Apache, and static analysis. The results and the reasoning are kept in the docs.' }, [
+    N('qa-api', 'API integration tests', '209 tests · 23 files', {
+      d: 'Node’s built-in test runner. Each file starts its own PHP server with a throwaway database; Mailpit receives the e-mails; DeepL and PageSpeed are replaced by local stand-ins.',
+      files: ['tests/integration/*.test.mjs', 'tests/integration/helpers.mjs'], tech: ['node:test', 'Mailpit'] }),
+    N('qa-e2e', 'Browser tests', 'Playwright · 3 devices', {
+      d: '69 specs on desktop Chrome, a Chrome tablet and an iPhone (WebKit): 207 runs. They check flows end to end, accessibility with axe, no horizontal overflow and icon alignment on every screen.',
+      files: ['tests/e2e/*.spec.js', 'tests/e2e/global-setup.mjs'], tech: ['Playwright', 'axe-core'] }),
+    N('qa-visual', 'Visual regression', '22 reference states', {
+      d: 'The public site compared pixel by pixel with the approved design at several widths, both languages, menus, modal, form errors and the 404 page.',
+      files: ['tests/visual/'] }),
+    N('qa-apache', 'Production check', 'Release under Apache', {
+      d: 'The built release runs under Apache + PHP-FPM: headers, rewrites, denied private folders, upload rules and a full sign-in → edit → publish cycle.',
+      files: ['tests/apache/apache.test.mjs', 'tools/build-release.sh'] }),
+    N('qa-static', 'Static analysis & CI', 'PHPStan, audits', {
+      d: 'PHPStan level 6 must report 0 errors; composer audit and npm audit check dependencies. GitHub Actions runs it all on every push.',
+      files: ['cms/phpstan.neon', '.github/workflows/tests.yml'], tech: ['PHPStan', 'GitHub Actions'] }),
+    N('qa-docs', 'Documentation', 'Guides & reports', {
+      d: 'Deploy guide in Spanish (Namecheap), technical deploy reference, Content Manager manual, user guides in Spanish and English, security audit, test report, local setup and production checklist.',
+      files: ['docs/GUIA_DESPLIEGUE_NAMECHEAP.md', 'docs/NAMECHEAP_DEPLOYMENT.md', 'docs/CONTENT_MANAGER.md', 'docs/USER_GUIDE_ES.md', 'docs/USER_GUIDE_EN.md', 'docs/SECURITY_AUDIT.md', 'docs/TEST_REPORT.md', 'docs/LOCAL_SETUP.md'] }),
+  ]),
+  // ---------------------------------------------------------------- processes
+  N('process', 'How it works', 'The main processes', { cat: 'process', side: -1,
+    d: 'The flows that tie the website, the panel and the server together, step by step.' }, [
+    N('p-publish', 'Edit → publish', 'A text or photo change', {
+      d: 'How a change made in the panel reaches the live website.',
+      steps: ['A person with the right access opens Textos, Fotos or Datos de contacto', 'They type; with translation on, the other language fills in for review', 'Save: the API checks permission, limits and that nobody else changed it meanwhile', 'The content is stored in SQLite and logged in the activity', 'The Publisher renders the templates into the public HTML files', 'The site shows the change at once; a check alerts if live files ever drift'],
+      rel: ['be-content', 'site-pages', 'p-translate'] }),
+    N('p-lead', 'Contact form → lead', 'From visitor to project', {
+      d: 'Every message from the website becomes a lead the sales team can follow up.',
+      steps: ['A visitor fills in the form on the website', 'The browser solves the invisible captcha (and Turnstile, if enabled)', 'contact-handler.php validates, limits abuse and filters spam', 'The lead is saved (up to 200 a day) before any e-mail', 'An e-mail goes to the contact inbox with a link to the lead', 'Sales moves it: contacted → quoted → won or lost (with amount) and adds notes', 'It shows in Estadísticas and in the monthly report; old leads are deleted after the chosen retention'],
+      rel: ['site-form', 'be-business', 'data-privacy'] }),
+    N('p-stats', 'Visit statistics', 'Cookie-free, first-party', {
+      steps: ['The page loads stats.js', 'One beacon per visit and per contact click goes to /api/collect (origin checked)', 'Counts are added per day; no cookies, no IP addresses', 'Estadísticas shows visits, sources, devices, clicks and the path to won projects', 'People with the basic statistics access see visits without contact-form data'],
+      rel: ['site-stats'] }),
+    N('p-support', 'Support request', 'Solicitar soporte → resolved', {
+      d: 'The help desk inside the panel (Soporte → Centro de Ayuda).',
+      steps: ['Anyone taps “Solicitar soporte” (a screenshot is optional; browser details are added automatically)', 'The request is saved and e-mailed to IT; a failed e-mail can be retried', 'The owner and the support access handle it: status, priority, internal notes, asking for information', 'The person gets e-mails and replies inside the panel', 'Resolved: they rate the help from 1 to 5; it closes itself after 7 days', 'Response times and ratings feed the Panorama de soporte and the monthly report'],
+      rel: ['be-business', 'adm-parts'] }),
+    N('p-monitor', 'Monitoring & alerts', 'Every 15 minutes', {
+      steps: ['Cron runs “bin/console monitor” every 15 minutes', 'Health checks (database, storage, publishing, disk…) and the home page response time', 'Each run is stored: uptime for 24 h, 7, 30 and 90 days, and incidents', 'Watchdog rules e-mail alerts: critical errors, file changes, sign-in attacks, new devices, certificate, backups, stopped scheduler, disk, error spikes, weekly digest, monthly security review, report reminder', 'Salud del sitio shows the summary to the team; Monitoreo shows everything to the owner'],
+      rel: ['be-ops', 'ops-cron', 'sec-watch'] }),
+    N('p-report', 'Monthly report', 'Value of the support', {
+      d: 'A short report that shows clients what the site achieved and the work behind it.',
+      steps: ['The month’s figures are gathered: uptime, visits, leads, work done, protection', 'Two versions: for clients (positive, plain words, no technical terms) and the technical detail for the team', 'The owner previews it, adds a note and sends it with a PDF attached (owner in copy)', 'If it is not sent by day 5, the owner gets a reminder', 'Administrators can view both versions without sending'],
+      rel: ['be-business'] }),
+    N('p-access', 'Accounts & access', 'Invite → welcome → work', {
+      steps: ['The owner invites a person with an access type (Editor, Ventas, Soporte técnico…)', 'An invitation e-mail with a 72-hour link', 'They create a password and receive the welcome e-mail', 'First sign-in: they choose the language and the appearance', 'The menu shows only what they may use; the server checks every action', 'The owner can check any profile with “Ver como” (read-only, logged)', 'Two-step sign-in for the owner (or everyone, by policy) and new-device alerts'],
+      rel: ['be-people', 'sec-auth', 'adm-shell'] }),
+    N('p-backup', 'Backups & recovery', 'Local + off-server', {
+      steps: ['The database is copied regularly on the server (bin/console backup)', 'Optionally, an encrypted ZIP (AES-256) is e-mailed off-server on a schedule', 'The owner can download a full backup (password required)', 'Restoring follows the guide and the LEEME-RESTAURAR.txt inside the ZIP'],
+      rel: ['be-ops', 'data-files'] }),
+    N('p-translate', 'Automatic translation', 'Spanish ⇄ English', {
+      steps: ['The owner saves a DeepL key in Traducción (encrypted, never shown again)', 'While someone types in Spanish, English fills in after a short pause (and the other way round)', 'The filled text is marked “Traducido automáticamente” with Undo', 'A daily character limit protects the quota; nothing is published until Save'],
+      rel: ['be-business', 'site-i18n'] }),
+    N('p-release', 'Release & deploy', 'From commit to live', {
+      steps: ['Tests and PHPStan pass (also in GitHub Actions)', 'tools/build-release.sh builds public_html + sensum-cms and a zip from a commit', 'Upload to cPanel, keeping .env, storage/ and uploads', 'Database migrations apply themselves on the next request', 'Republish and run the checklist from the deploy guide'],
+      rel: ['ops-host', 'qa-apache'] }),
+  ]),
+  // ---------------------------------------------------------------- data
+  N('data', 'Data & storage', 'SQLite + files', { cat: 'data', side: -1,
+    d: 'One SQLite file holds everything the panel saves; numbered migrations change the schema and apply themselves. Photos and the PDF are files in the public folder; logs and backups stay private.' }, [
+    N('data-db', 'SQLite database', '21 tables', {
+      d: 'cms/storage/database.sqlite. People & access: users, sessions, user_tokens, login_challenges, recovery_codes, known_devices, rate_limits. Content: content, media, settings. Clients & results: leads, lead_notes, analytics_daily, analytics_seen. Support: support_reports, report_messages. Operations: activity_log, error_log, error_events, monitor_runs, site_reports.',
+      files: ['cms/storage/database.sqlite'], tech: ['SQLite 3', 'PDO'] }),
+    N('data-mig', 'Migrations', '001 → 013', {
+      d: '001 initial · 002 monitoring · 003 access types · 004 site report · 005 known devices · 006 tickets · 007 two-step sign-in · 008 leads & statistics · 009 site health · 010 “Ver como” · 011 access profiles · 012 report access · 013 welcome. They run on the next request or with bin/console migrate.',
+      files: ['cms/migrations/*.sql'] }),
+    N('data-files', 'Files on disk', 'Public and private', {
+      d: 'Public: assets/uploads (photos in several sizes) and the PDF portfolio. Private (outside the web root): storage/logs, storage/backups, storage/reports (support screenshots), storage/tmp and the .env configuration.',
+      files: ['assets/uploads/', 'sensum-cms/storage/', 'sensum-cms/.env'] }),
+    N('data-privacy', 'Privacy & retention', 'Only what is needed', {
+      d: 'Leads are kept 6 to 36 months (the owner chooses) and then deleted; statistics are daily counts without cookies or IPs; logs never contain passwords or tokens; the privacy notice is generated with the real retention period.',
+      rel: ['p-lead', 'p-stats'] }),
+  ]),
+  // ---------------------------------------------------------------- security
+  N('security', 'Security', 'Layers of protection', { cat: 'security', side: -1,
+    d: 'Defence in depth: the server checks everything, secrets are encrypted, and the system watches for problems and reports them.', files: ['docs/SECURITY_AUDIT.md'] }, [
+    N('sec-web', 'Web hardening', 'Headers & folders', {
+      d: 'Strict Content-Security-Policy (the panel allows no inline scripts or styles), HSTS, frame and MIME protection, referrer policy. The application code lives outside the web root, private folders are denied, and uploads can never run as code.',
+      files: ['.htaccess', 'api/.htaccess', 'assets/uploads/.htaccess'] }),
+    N('sec-auth', 'Sign-in & sessions', 'Argon2id, CSRF, 2FA', {
+      d: 'Argon2id password hashes; sessions stored only as SHA-256 hashes; idle and absolute expiry; a CSRF token and a same-origin check on every change; rate limits and lockouts; two-step sign-in with authenticator and recovery codes; an e-mail on sign-in from a new device.',
+      rel: ['be-people', 'p-access'] }),
+    N('sec-access', 'Access control', 'Checked on the server', {
+      d: 'Every action is checked against the person’s permissions on the server, not only hidden in the menu. Owner-only areas stay owner-only; “Ver como” is read-only and every step is logged.' }),
+    N('sec-data', 'Secrets & data', 'Encrypted at rest', {
+      d: 'The SMTP password, the DeepL key and the backup password are encrypted in the database. Logs and e-mails never contain passwords or tokens. The contact form has a captcha, rate limits and spam filters.',
+      tech: ['libsodium / AES-GCM'] }),
+    N('sec-watch', 'Detection', 'Integrity & alerts', {
+      d: 'Regular scans of the site files catch unexpected changes; errors are logged with reference codes and critical ones are e-mailed; the domain’s e-mail authentication is checked; a monthly security review arrives by e-mail.',
+      rel: ['p-monitor'] }),
+  ]),
+  // ---------------------------------------------------------------- operations
+  N('ops', 'Hosting & operations', 'Where it runs', { cat: 'ops', side: -1,
+    d: 'Namecheap Stellar Plus shared hosting managed with cPanel, plus a few optional external services.', files: ['docs/GUIA_DESPLIEGUE_NAMECHEAP.md'] }, [
+    N('ops-host', 'Namecheap Stellar Plus', 'cPanel · Apache · PHP', {
+      d: 'Apache with PHP 8.1+ (FPM) and SQLite, free AutoSSL certificates. public_html holds the website, /admin, /api and assets; sensum-cms (code, .env, storage) sits next to it, outside the web root.',
+      files: ['public_html/', 'sensum-cms/'] }),
+    N('ops-cron', 'Scheduled task', 'Cron every 15 min', {
+      d: 'One cron job runs php ~/sensum-cms/bin/console monitor: health checks, alerts, backups when due, Google scores once a day, the report reminder and closing old resolved requests.',
+      rel: ['p-monitor', 'be-cli'] }),
+    N('ops-mail', 'E-mail accounts', 'Who sends and receives', {
+      d: 'notificaciones@ sends for the panel (SMTP); formulario@ is the sender of form messages; contacto@ receives the leads; soporte@ receives replies; it@gruposensum.com is the owner and receives support requests and alerts. SPF, DKIM and DMARC protect the domain.' }),
+    N('ops-ext', 'External services', 'All optional', {
+      d: 'Cloudflare Turnstile (extra captcha), DeepL API (translation), Google PageSpeed Insights API (speed scores), Better Stack (outside uptime check). Mailpit is used only on development machines.',
+      tech: ['Cloudflare Turnstile', 'DeepL', 'PageSpeed Insights', 'Better Stack'] }),
+    N('ops-local', 'Local development', 'dev-server.sh', {
+      d: 'tools/dev-server.sh starts PHP’s built-in server with the development router and Mailpit; demo accounts for every access type come from bin/console demo-users.',
+      files: ['tools/dev-server.sh', 'cms/dev/router.php', 'docs/LOCAL_SETUP.md'] }),
+  ]),
+  // ---------------------------------------------------------------- stack
+  N('stack', 'Tech stack', 'At a glance', { cat: 'stack', side: -1,
+    d: 'Deliberately simple technology that shared hosting runs well and one person can maintain.' }, [
+    N('st-server', 'Server', 'PHP · SQLite · Apache', { tech: ['PHP 8.1+ (tested on 8.2 and 8.5)', 'No framework', 'SQLite 3 via PDO', 'Apache + .htaccess', 'PHPMailer 6', 'Composer'],
+      d: 'A small, framework-free PHP application with one SQLite file: nothing to install on the hosting besides uploading files.' }),
+    N('st-client', 'Browser', 'HTML · CSS · JavaScript', { tech: ['HTML5', 'CSS (custom properties, container queries)', 'Vanilla JavaScript ES modules', 'SVG charts', 'No build step'],
+      d: 'The website and the panel are plain web files; nothing is compiled.' }),
+    N('st-tools', 'Tooling', 'Tests & checks', { tech: ['Node.js test runner', 'Playwright', 'axe-core', 'PHPStan', 'Mailpit', 'GitHub Actions'],
+      d: 'Used only during development and in CI; none of it is uploaded to the hosting.' }),
+  ]),
+]);
+
+// ------------------------------------------------------------------ indexes
+const byId = new Map();
+const parentOf = new Map();
+(function index(n, parent, cat, side, depth) {
+  n.cat = n.cat || cat; n.side = n.side || side; n.depth = depth;
+  byId.set(n.id, n); if (parent) parentOf.set(n.id, parent);
+  n.kids.forEach((k) => index(k, n, n.cat === 'root' ? k.cat : n.cat, n.side || k.side, depth + 1));
+})(TREE, null, 'root', 0, 0);
+const pathTo = (id) => { const p = []; for (let n = byId.get(id); n; n = parentOf.get(n.id)) p.unshift(n); return p; };
+
+// ------------------------------------------------------------------ helpers
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const viewport = $('#viewport'); const stage = $('#stage'); const edges = $('#edges'); const panel = $('#panel');
+const expanded = new Set(['root']);
+let selected = null;
+const view = { x: 0, y: 0, k: 1 };
+
+// ------------------------------------------------------------------ map rendering
+const els = new Map();
+function nodeEl(n) {
+  if (els.has(n.id)) return els.get(n.id);
+  const wrap = document.createElement('div');
+  wrap.className = `node d${Math.min(n.depth, 2)} cat-${n.cat}${n.depth === 0 ? ' root' : ''}${n.side < 0 ? ' left' : ''}`;
+  if (n.depth === 1) wrap.classList.add('d1');
+  const pick = document.createElement('button');
+  pick.type = 'button'; pick.className = 'pick';
+  pick.innerHTML = `<strong>${esc(n.t)}</strong>${n.s ? `<small>${esc(n.s)}</small>` : ''}`;
+  pick.addEventListener('click', (e) => { e.stopPropagation(); onPick(n); });
+  wrap.append(pick);
+  if (n.kids.length && n.depth > 0) {
+    const tw = document.createElement('button');
+    tw.type = 'button'; tw.className = 'twist';
+    tw.addEventListener('click', (e) => { e.stopPropagation(); toggle(n.id); });
+    wrap.append(tw);
+  }
+  stage.append(wrap);
+  els.set(n.id, wrap);
+  return wrap;
+}
+function visible() {
+  const out = [];
+  (function walk(n) { out.push(n); if (expanded.has(n.id)) n.kids.forEach(walk); })(TREE);
+  return out;
+}
+const GAP_X = 56, GAP_Y = 12, BRANCH_GAP = 26;
+function layout() {
+  const vis = visible();
+  const visSet = new Set(vis.map((n) => n.id));
+  for (const [id, el] of els) el.hidden = !visSet.has(id);
+  vis.forEach((n) => { const el = nodeEl(n); el.hidden = false; });
+  // Measure
+  vis.forEach((n) => {
+    const el = els.get(n.id);
+    n.w = el.offsetWidth; n.h = el.offsetHeight;
+    const tw = el.querySelector('.twist');
+    if (tw) { tw.textContent = expanded.has(n.id) ? '−' : String(n.kids.length); tw.setAttribute('aria-label', `${expanded.has(n.id) ? 'Collapse' : 'Expand'} ${n.t} (${n.kids.length})`); tw.setAttribute('aria-expanded', String(expanded.has(n.id))); }
+    el.classList.toggle('selected', selected === n.id);
+  });
+  const root = TREE; root.x = -root.w / 2; root.y = 0;
+  for (const side of [1, -1]) {
+    const branches = root.kids.filter((b) => b.side === side);
+    const colW = [];
+    const widths = (n) => { colW[n.depth] = Math.max(colW[n.depth] || 0, n.w); if (expanded.has(n.id)) n.kids.forEach(widths); };
+    branches.forEach(widths);
+    const xAt = (d) => { let x = root.w / 2 + GAP_X; for (let i = 1; i < d; i++) x += colW[i] + GAP_X; return x; };
+    const size = (n) => { const kids = expanded.has(n.id) ? n.kids : []; const sum = kids.reduce((a, k) => a + size(k), 0) + Math.max(0, kids.length - 1) * GAP_Y; return (n.sh = Math.max(n.h, sum)); };
+    const total = branches.reduce((a, b) => a + size(b), 0) + Math.max(0, branches.length - 1) * BRANCH_GAP;
+    const place = (n, cy) => {
+      n.y = cy; n.ax = side * xAt(n.depth); // inner edge
+      n.x = side > 0 ? n.ax : n.ax - n.w;
+      if (!expanded.has(n.id)) return;
+      const sum = n.kids.reduce((a, k) => a + k.sh, 0) + Math.max(0, n.kids.length - 1) * GAP_Y;
+      let ky = cy - sum / 2;
+      n.kids.forEach((k) => { place(k, ky + k.sh / 2); ky += k.sh + GAP_Y; });
+    };
+    let y = -total / 2;
+    branches.forEach((b) => { place(b, y + b.sh / 2); y += b.sh + BRANCH_GAP; });
+  }
+  // Position + edges
+  let paths = '';
+  vis.forEach((n) => {
+    const el = els.get(n.id);
+    el.style.left = n.x + 'px'; el.style.top = (n.y - n.h / 2) + 'px';
+    const p = parentOf.get(n.id);
+    if (!p) return;
+    const sx = p.depth === 0 ? n.side * p.w / 2 : (n.side > 0 ? p.x + p.w : p.x);
+    const ex = n.side > 0 ? n.x : n.x + n.w;
+    const mx = (sx + ex) / 2;
+    paths += `<path d="M${sx},${p.y} C${mx},${p.y} ${mx},${n.y} ${ex},${n.y}" stroke="var(--c-${n.cat})"/>`;
+  });
+  edges.innerHTML = paths;
+}
+
+// ------------------------------------------------------------------ pan & zoom
+function apply(animate) {
+  stage.classList.toggle('animate', !!animate && !reduceMotion);
+  stage.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.k})`;
+}
+function visibleArea() {
+  const r = viewport.getBoundingClientRect();
+  let h = r.height;
+  if (window.innerWidth < 900 && !panel.classList.contains('min')) h -= panel.getBoundingClientRect().height;
+  return { w: r.width, h: Math.max(120, h) };
+}
+function fit(animate = true) {
+  const vis = visible();
+  const minX = Math.min(...vis.map((n) => n.x)), maxX = Math.max(...vis.map((n) => n.x + n.w));
+  const minY = Math.min(...vis.map((n) => n.y - n.h / 2)), maxY = Math.max(...vis.map((n) => n.y + n.h / 2));
+  const a = visibleArea();
+  view.k = Math.max(.25, Math.min(1.1, (a.w - 48) / (maxX - minX), (a.h - 48) / (maxY - minY)));
+  view.x = a.w / 2 - ((minX + maxX) / 2) * view.k;
+  view.y = a.h / 2 - ((minY + maxY) / 2) * view.k;
+  apply(animate);
+}
+function reveal(n) {
+  const a = visibleArea();
+  const sx = view.x + n.x * view.k, sy = view.y + (n.y - n.h / 2) * view.k;
+  const ex = sx + n.w * view.k, ey = sy + n.h * view.k;
+  if (sx > 16 && ex < a.w - 60 && sy > 16 && ey < a.h - 16) return;
+  view.x = a.w / 2 - (n.x + n.w / 2) * view.k;
+  view.y = a.h / 2 - n.y * view.k;
+  apply(true);
+}
+function focus(n) {
+  const group = [n, ...(expanded.has(n.id) ? n.kids : [])];
+  const minX = Math.min(...group.map((g) => g.x)), maxX = Math.max(...group.map((g) => g.x + g.w));
+  const minY = Math.min(...group.map((g) => g.y - g.h / 2)), maxY = Math.max(...group.map((g) => g.y + g.h / 2));
+  const a = visibleArea();
+  view.k = Math.max(.4, Math.min(view.k, (a.w - 40) / (maxX - minX), (a.h - 40) / (maxY - minY)));
+  view.x = a.w / 2 - ((minX + maxX) / 2) * view.k;
+  view.y = a.h / 2 - ((minY + maxY) / 2) * view.k;
+  apply(true);
+}
+function zoomAt(f, cx, cy) {
+  const k = Math.max(.25, Math.min(2.2, view.k * f));
+  view.x = cx - (cx - view.x) * (k / view.k); view.y = cy - (cy - view.y) * (k / view.k); view.k = k;
+  apply(false);
+}
+const pointers = new Map(); let pinch = null; let moved = false;
+viewport.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('button')) return;
+  viewport.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = false;
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), k: view.k }; }
+  viewport.classList.add('dragging');
+});
+viewport.addEventListener('pointermove', (e) => {
+  if (!pointers.has(e.pointerId)) return;
+  const prev = pointers.get(e.pointerId); const cur = { x: e.clientX, y: e.clientY };
+  pointers.set(e.pointerId, cur);
+  if (pointers.size === 2 && pinch) {
+    const [a, b] = [...pointers.values()]; const r = viewport.getBoundingClientRect();
+    zoomAt((pinch.k * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d) / view.k, (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top);
+  } else if (pointers.size === 1) {
+    view.x += cur.x - prev.x; view.y += cur.y - prev.y; moved = true; apply(false);
+  }
+});
+const endPointer = (e) => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch = null; if (!pointers.size) viewport.classList.remove('dragging'); };
+viewport.addEventListener('pointerup', endPointer);
+viewport.addEventListener('pointercancel', endPointer);
+viewport.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const r = viewport.getBoundingClientRect();
+  if (e.ctrlKey || e.metaKey) zoomAt(Math.exp(-e.deltaY * .01), e.clientX - r.left, e.clientY - r.top);
+  else { view.x -= e.deltaX; view.y -= e.deltaY; apply(false); }
+}, { passive: false });
+$('#zin').addEventListener('click', () => { const a = visibleArea(); zoomAt(1.2, a.w / 2, a.h / 2); });
+$('#zout').addEventListener('click', () => { const a = visibleArea(); zoomAt(1 / 1.2, a.w / 2, a.h / 2); });
+$('#zfit').addEventListener('click', () => fit());
+
+// ------------------------------------------------------------------ interaction
+function toggle(id, open) {
+  const isOpen = expanded.has(id);
+  if (open === true || (open === undefined && !isOpen)) expanded.add(id); else expanded.delete(id);
+  layout();
+  const n = byId.get(id);
+  if (expanded.has(id) && n.kids.length) focus(n); else reveal(n);
+}
+function onPick(n) {
+  select(n.id);
+  if (n.kids.length && !expanded.has(n.id)) toggle(n.id, true); else reveal(n);
+}
+function select(id, { center = false } = {}) {
+  selected = id;
+  pathTo(id).forEach((p) => { if (p.id !== id) expanded.add(p.id); });
+  layout();
+  renderPanel(byId.get(id));
+  if (center) { const n = byId.get(id); const a = visibleArea(); view.k = Math.max(view.k, .9); view.x = a.w / 2 - (n.x + n.w / 2) * view.k; view.y = a.h / 2 - n.y * view.k; apply(true); }
+  try { history.replaceState(null, '', '#' + id); } catch (e) { /* sandboxed */ }
+  if (!outline.hidden) { const d = outline.querySelector(`[data-id="${id}"]`); if (d) { d.open = true; d.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' }); } }
+}
+
+// ------------------------------------------------------------------ detail panel
+function detailHTML(n, compact = false) {
+  let h = '';
+  if (n.d) h += `<p>${esc(n.d)}</p>`;
+  if (n.facts) h += `<div class="facts">${n.facts.map(([v, l]) => `<div><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join('')}</div>`;
+  if (n.steps) h += `<h3>How it works</h3><ol class="steps">${n.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>`;
+  if (n.files) h += `<h3>Key files</h3><ul class="files">${n.files.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>`;
+  if (n.tech) h += `<h3>Technology</h3><div class="tags">${n.tech.map((t) => `<span>${esc(t)}</span>`).join('')}</div>`;
+  if (!compact && n.kids.length) h += `<h3>Inside</h3><div class="links">${n.kids.map((k) => `<button type="button" class="cat-${k.cat}" data-go="${k.id}">${esc(k.t)}</button>`).join('')}</div>`;
+  if (n.rel) h += `<h3>Related</h3><div class="links">${n.rel.map((r) => byId.get(r)).filter(Boolean).map((k) => `<button type="button" class="cat-${k.cat}" data-go="${k.id}">${esc(k.t)}</button>`).join('')}</div>`;
+  return h;
+}
+function renderPanel(n) {
+  const crumbs = pathTo(n.id).slice(0, -1).map((p) => `<button type="button" data-go="${p.id}">${esc(p.t)}</button>`).join('<span aria-hidden="true">›</span>');
+  let html = `<div class="panel-head"><div class="grow">${crumbs ? `<div class="crumbs">${crumbs}</div>` : ''}
+    <span class="chip cat-${n.cat}">${esc(n.cat === 'root' ? 'Overview' : CATS[n.cat])}</span>
+    <h2>${esc(n.t)}</h2>${n.s ? `<p class="sub">${esc(n.s)}</p>` : ''}</div>
+    <button type="button" class="tool sheet-toggle" id="sheet" aria-label="Show or hide the details">${panel.classList.contains('min') ? '▴' : '▾'}</button></div>`;
+  html += detailHTML(n);
+  if (n.id === 'root') {
+    html += `<h3>Areas</h3><div class="legend">${TREE.kids.map((b) => `<button type="button" class="cat-${b.cat}" data-go="${b.id}">${esc(b.t)}<small>${b.kids.length}</small></button>`).join('')}</div>
+      <h3>Using the map</h3><p class="howto">Tap a box to read about it and open what is inside; the round button folds it again. Drag to move, pinch or <kbd>Ctrl</kbd> + scroll to zoom, and use search to jump to any file or topic. “Outline” lists everything as text.</p>`;
+  }
+  panel.innerHTML = html;
+  [...panel.classList].filter((c) => c.startsWith('cat-')).forEach((c) => panel.classList.remove(c));
+  panel.classList.add('cat-' + n.cat);
+  panel.scrollTop = 0;
+  const sheet = $('#sheet');
+  if (sheet) sheet.addEventListener('click', () => { panel.classList.toggle('min'); sheet.textContent = panel.classList.contains('min') ? '▴' : '▾'; });
+}
+document.addEventListener('click', (e) => {
+  const go = e.target.closest('[data-go]');
+  if (!go) return;
+  e.preventDefault();
+  panel.classList.remove('min');
+  select(go.getAttribute('data-go'), { center: true });
+});
+
+// ------------------------------------------------------------------ search
+const q = $('#q'); const results = $('#results');
+const haystack = (n) => [n.t, n.s, n.d, ...(n.steps || []), ...(n.files || []), ...(n.tech || [])].join(' ').toLowerCase();
+let hits = []; let active = -1;
+function runSearch() {
+  const term = q.value.trim().toLowerCase();
+  els.forEach((el) => el.classList.remove('match'));
+  if (term.length < 2) { results.hidden = true; q.setAttribute('aria-expanded', 'false'); return; }
+  hits = [...byId.values()].filter((n) => n.id !== 'root' && haystack(n).includes(term)).slice(0, 12);
+  active = -1;
+  results.innerHTML = hits.length ? hits.map((n, i) => `<button type="button" role="option" id="hit-${i}" data-hit="${n.id}" aria-selected="false"><b>${esc(n.t)}</b><span>${esc(pathTo(n.id).slice(1, -1).map((p) => p.t).join(' › ') || CATS[n.cat])}</span></button>`).join('') : '<div class="none">Nothing found. Try “leads”, “cron” or a file name.</div>';
+  results.hidden = false; q.setAttribute('aria-expanded', 'true');
+  hits.forEach((n) => { const el = els.get(n.id); if (el) el.classList.add('match'); });
+}
+q.addEventListener('input', runSearch);
+q.addEventListener('keydown', (e) => {
+  if (results.hidden || !hits.length) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault(); active = (active + (e.key === 'ArrowDown' ? 1 : -1) + hits.length) % hits.length;
+    results.querySelectorAll('[data-hit]').forEach((b, i) => b.setAttribute('aria-selected', String(i === active)));
+    q.setAttribute('aria-activedescendant', 'hit-' + active);
+  } else if (e.key === 'Enter') { e.preventDefault(); goHit(hits[Math.max(0, active)].id); }
+  else if (e.key === 'Escape') { results.hidden = true; }
+});
+results.addEventListener('click', (e) => { const b = e.target.closest('[data-hit]'); if (b) goHit(b.getAttribute('data-hit')); });
+function goHit(id) { results.hidden = true; q.setAttribute('aria-expanded', 'false'); panel.classList.remove('min'); select(id, { center: true }); }
+document.addEventListener('click', (e) => { if (!e.target.closest('.search')) results.hidden = true; });
+
+// ------------------------------------------------------------------ toolbar & outline
+$('#expand').addEventListener('click', () => { byId.forEach((n) => { if (n.kids.length) expanded.add(n.id); }); layout(); fit(); });
+$('#collapse').addEventListener('click', () => { expanded.clear(); expanded.add('root'); layout(); fit(); });
+const outline = $('#outline');
+function outlineHTML(n) {
+  return `<li><details class="cat-${n.cat}" data-id="${n.id}"${n.depth < 1 ? ' open' : ''}><summary><b>${esc(n.t)}</b>${n.s ? `<span>${esc(n.s)}</span>` : ''}</summary>
+    <div class="body">${detailHTML(n, true)}${n.kids.length ? `<ul>${n.kids.map(outlineHTML).join('')}</ul>` : ''}</div></details></li>`;
+}
+$('#outlineBtn').addEventListener('click', (e) => {
+  const on = outline.hidden;
+  if (on && !outline.firstChild) outline.innerHTML = `<ul>${outlineHTML(TREE)}</ul>`;
+  outline.hidden = !on; viewport.hidden = on;
+  e.currentTarget.setAttribute('aria-pressed', String(on));
+  if (!on) requestAnimationFrame(() => fit(false));
+});
+
+// ------------------------------------------------------------------ start
+function start() {
+  const hash = location.hash.slice(1);
+  layout(); fit(false);
+  if (hash && byId.has(hash)) select(hash, { center: true }); else renderPanel(TREE);
+}
+start();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layout(); if (!selected) fit(false); });
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { layout(); if (!selected) fit(false); }, 120); });
+</script>
+</body>
+</html>
