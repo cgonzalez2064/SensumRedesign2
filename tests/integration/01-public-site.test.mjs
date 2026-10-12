@@ -21,6 +21,7 @@ test('public pages and assets are served', async () => {
     const r = await fetch(s.base + path);
     assert.equal(r.status, 200, path);
     assert.match(r.headers.get('content-type'), new RegExp(type), path);
+    await r.arrayBuffer(); // always read the body: an unread one can crash Node's HTTP client when PHP closes the connection
   }
   const nf = await fetch(s.base + '/no-such-page');
   assert.equal(nf.status, 404);
@@ -33,7 +34,9 @@ test('security headers on the public site and a stricter CSP on the admin', asyn
   assert.doesNotMatch(pub.headers.get('content-security-policy'), /unsafe-inline/);
   assert.equal(pub.headers.get('x-frame-options'), 'DENY');
   assert.equal(pub.headers.get('x-content-type-options'), 'nosniff');
+  await pub.arrayBuffer();
   const adm = await fetch(s.base + '/admin/');
+  await adm.arrayBuffer();
   const csp = adm.headers.get('content-security-policy');
   assert.match(csp, /style-src 'self';/);
   assert.match(csp, /img-src 'self' data: blob:/);

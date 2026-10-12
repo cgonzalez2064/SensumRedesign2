@@ -109,8 +109,11 @@ test('the public site keeps working with the admin API completely down', async (
   await s.stop({ keep: true });
   const staticOnly = await startServer({ port: 8206, reuseDir: s.dir, env: { STORAGE_DIR: '/nonexistent-dir/x' } });
   try {
-    assert.equal((await fetch(staticOnly.base + '/')).status, 200);
+    const home = await fetch(staticOnly.base + '/');
+    assert.equal(home.status, 200);
+    await home.arrayBuffer();
     const health = await fetch(staticOnly.base + '/api/health');
+    await health.arrayBuffer();
     assert.ok([200, 503].includes(health.status));
   } finally { await staticOnly.stop({ keep: true }); }
   s = await startServer({ port: 8205, reuseDir: s.dir });

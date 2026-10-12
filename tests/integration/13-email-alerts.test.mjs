@@ -308,10 +308,10 @@ test('certificate, backup, error spike: each alerts once per period', async () =
 test('a stopped scheduler is noticed from the health check', async () => {
   const before = await countTo(alertsTo);
   setSetting('monitor_last_run', String(now() - 3 * 3600));
-  await fetch(s.base + '/api/health');
+  await (await fetch(s.base + '/api/health')).arrayBuffer();
   const mail = (await waitForMail(alertsTo, before + 1)).find((m) => /dejó de ejecutarse/.test(m.Subject));
   assert.ok(mail, 'scheduler alert');
-  await fetch(s.base + '/api/health');
+  await (await fetch(s.base + '/api/health')).arrayBuffer();
   await sleep(500);
   assert.equal(await countTo(alertsTo), before + 1, 'once a day');
 });

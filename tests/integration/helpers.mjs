@@ -53,7 +53,7 @@ export async function startServer({ port, smtpDown = false, env = {}, reuseDir =
   const proc = spawn(PHP, ['-d', 'upload_max_filesize=16M', '-d', 'post_max_size=20M', '-d', 'memory_limit=256M',
     '-d', 'sendmail_path=/usr/bin/false', '-S', `127.0.0.1:${port}`, 'cms/dev/router.php'], { cwd: ROOT, env: fullEnv, stdio: 'ignore' });
   for (let i = 0; i < 50; i++) {
-    try { if ((await fetch(base + '/api/health')).status) break; } catch (e) { /* not up yet */ }
+    try { const r = await fetch(base + '/api/health'); await r.arrayBuffer(); if (r.status) break; } catch (e) { /* not up yet */ }
     await sleep(100);
   }
   const cli = (args, input) => execFileSync(PHP, ['cms/bin/console', ...args], { cwd: ROOT, env: fullEnv, input, stdio: ['pipe', 'pipe', 'pipe'] }).toString();
