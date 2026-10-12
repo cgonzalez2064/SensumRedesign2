@@ -193,7 +193,7 @@ test('EMAIL_SETTINGS_LOCKED makes the page read-only', async () => {
 
 test('automatic alerts: the owner can list and switch them; nobody else can', async () => {
   const sum = (await owner.get('/api/monitor/summary')).data;
-  assert.equal(Object.keys(sum.rules.enabled).length, 15);
+  assert.equal(Object.keys(sum.rules.enabled).length, 16);
   assert.ok(Object.values(sum.rules.enabled).every((v) => v === true), 'all on by default');
   const off = await owner.put('/api/monitor/alerts', { rules: { weekly_digest: false } });
   assert.equal(off.status, 200);

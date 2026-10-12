@@ -341,6 +341,13 @@ bodies, Node 22) fixed by always reading bodies in the tests (`9120af2`).
 
 Full re-run: API **219/219**, browser **155 passed / 55 skipped**, Apache **11/11**; PHPStan 0 errors.
 
+## Change — DeepL quota alert
+
+| Suite | Added | Result |
+|---|---|---|
+| API (`25-translation-quota`, new; DeepL stand-in with adjustable usage) | below 90 % nothing is sent and DeepL is asked at most every 6 hours; at 90 % one e-mail to the alert address (used / limit / left / plan, what to do, link to Traducción, never the key), not repeated at 95 %, a second one at 100 %; usage going back down starts over; the rule switched off stays quiet; "Probar conexión" checks at once and alerts | 4/4 |
+| Existing suites | the new rule listed in Monitoreo (16 switches), `13-email-alerts` counts 16 rules | passing |
+
 ## Other audits
 
 | Audit | Result |

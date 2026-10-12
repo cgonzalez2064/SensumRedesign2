@@ -25,6 +25,7 @@ export async function startDeepLStub({ port }) {
     mode: 'ok', // ok | quota | busy | error | delay
     requests: [],
     reply: null, // optional fixed translation text (e.g. hostile markup)
+    usage: { character_count: 1234, character_limit: 500000 }, // what /v2/usage answers
   };
   const server = createServer((req, res) => {
     let body = '';
@@ -35,7 +36,7 @@ export async function startDeepLStub({ port }) {
         res.end(JSON.stringify(data));
       };
       if (![`DeepL-Auth-Key ${STUB_KEY}`, `DeepL-Auth-Key ${STUB_PANEL_KEY}`].includes(req.headers.authorization)) return send(403, { message: 'Wrong key' });
-      if (req.method === 'GET' && req.url === '/v2/usage') return send(200, { character_count: 1234, character_limit: 500000 });
+      if (req.method === 'GET' && req.url === '/v2/usage') return send(200, stub.usage);
       if (req.method !== 'POST' || req.url !== '/v2/translate') return send(404, { message: 'Not found' });
       let json;
       try { json = JSON.parse(body); } catch (e) { return send(400, { message: 'Bad JSON' }); }

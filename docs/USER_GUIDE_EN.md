@@ -515,7 +515,8 @@ In **Administration → Translation** you paste the free **DeepL API** key (new 
 include 1,000,000 characters in total; the whole site is about 5,000), switch it on or
 off and press **Test connection** to check it works and see how much is used. The
 site's ES/EN toggle never uses DeepL: if the plan runs out, English is written by hand
-and the site stays the same. The key is stored encrypted and never
+and the site stays the same. When the key reaches **90%** of its characters (and if they
+run out) an e-mail goes to the alert address so it can be changed in time. The key is stored encrypted and never
 shown again; changes ask for your password. With translation on, typing in one
 language fills the other in Website text, contact-form options and photo descriptions.
 

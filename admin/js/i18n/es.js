@@ -844,6 +844,7 @@ export default {
       weekly_digest: { name: 'Resumen técnico semanal', desc: 'Disponibilidad, errores, accesos, cambios, respaldos y certificado de la semana.', when: 'lunes desde las 8:00' },
       monthly_review: { name: 'Revisión mensual de seguridad', desc: 'Cuentas inactivas, invitaciones pendientes, permisos, versión de PHP, respaldos y velocidad.', when: 'día 1 de cada mes desde las 8:00' },
       report_reminder: { name: 'Recordatorio del informe mensual', desc: 'Si el informe para clientes no se envió en los primeros 5 días del mes.', when: 'una vez, desde el día 6' },
+      translation_quota: { name: 'Cuota de traducción automática (DeepL)', desc: 'Cuando la clave de DeepL usó el 90 % de sus caracteres, y cuando se agotan, para cambiarla a tiempo.', when: 'revisión cada 6 horas; una vez por clave al 90 % y al 100 %' },
     },
     domain: {
       title: 'Correo y dominio',

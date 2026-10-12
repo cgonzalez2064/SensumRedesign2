@@ -53,6 +53,15 @@ final class TranslationController extends Controller
         } catch (TranslationError $e) {
             throw new ApiError(503, $e->getMessage());
         }
-        Response::ok(['plan' => $tr->plan(), 'used' => $usage['used'], 'limit' => $usage['limit'], 'sample' => $sample]);
+        Response::okAndContinue(['plan' => $tr->plan(), 'used' => $usage['used'], 'limit' => $usage['limit'], 'sample' => $sample]);
+        // Near or over the limit: the quota alert goes out now, not at the next scheduled check.
+        if ($this->app->watchdog()->enabled('translation_quota')) {
+            try {
+                $this->app->watchdog()->checkTranslationQuota(time(), true);
+            } catch (\Throwable $e) {
+                $this->app->logger()->error('watchdog_failed', ['rule' => 'translation_quota', 'type' => get_class($e)]);
+            }
+        }
+        exit;
     }
 }

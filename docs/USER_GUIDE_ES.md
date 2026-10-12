@@ -540,7 +540,8 @@ En **Administración → Traducción** pegas la clave gratuita de **DeepL API** 
 claves nuevas incluyen 1,000,000 de caracteres en total; todo el sitio son unos 5,000),
 la activas o desactivas y pulsas **Probar conexión** para ver si funciona y cuánto
 llevas usado. El botón ES/EN del sitio no usa DeepL: si el plan se acaba, el inglés se
-escribe a mano y el sitio sigue igual. La clave se guarda cifrada y no se
+escribe a mano y el sitio sigue igual. Cuando la clave llega al **90 %** de sus
+caracteres (y si se agotan) llega un aviso al correo de alertas para cambiarla a tiempo. La clave se guarda cifrada y no se
 vuelve a mostrar; los cambios piden tu contraseña. Con la traducción activada, al
 escribir en un idioma se llena el otro en Textos del sitio, opciones del formulario de
 contacto y descripciones de fotos.

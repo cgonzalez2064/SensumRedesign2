@@ -843,6 +843,7 @@ export default {
       weekly_digest: { name: 'Weekly technical summary', desc: "The week's availability, errors, sign-ins, changes, backups and certificate.", when: 'Mondays from 8:00' },
       monthly_review: { name: 'Monthly security review', desc: 'Inactive accounts, pending invitations, permissions, PHP version, backups and speed.', when: '1st of each month from 8:00' },
       report_reminder: { name: 'Monthly report reminder', desc: "If the client report wasn't sent in the first 5 days of the month.", when: 'once, from day 6' },
+      translation_quota: { name: 'Automatic translation quota (DeepL)', desc: 'When the DeepL key has used 90% of its characters, and when they run out, so it can be changed in time.', when: 'checked every 6 hours; once per key at 90% and 100%' },
     },
     domain: {
       title: 'E-mail and domain',

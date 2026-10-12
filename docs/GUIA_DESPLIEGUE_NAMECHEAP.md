@@ -506,6 +506,12 @@ o el teléfono queda obligatorio. Las respuestas extra llegan en el correo, qued
   3. Copia la **Site Key** y la **Secret Key** en panel → Correo → *Protección contra
      spam (captcha)* → **Guardar configuración**. El sitio se vuelve a publicar solo.
   4. Para desactivarlo: borra la Site Key y guarda.
+  - **Probarlo antes en tu computadora:** Cloudflare publica claves de prueba que
+    funcionan en `localhost` / `127.0.0.1` sin configurar nada: Site Key
+    `1x00000000000000000000AA` con Secret Key `1x0000000000000000000000000000000AA`
+    (siempre aprueba) o `2x00000000000000000000AB` con
+    `2x0000000000000000000000000000000AA` (siempre rechaza). **Nunca** las uses en el
+    servidor real: aceptan cualquier respuesta.
   5. Si Cloudflare no responde, el formulario sigue funcionando con el captcha
      integrado y Monitoreo lo registra. Si la Secret Key es incorrecta, también sigue
      funcionando y llega una alerta para corregirla.
@@ -658,6 +664,7 @@ Cada uno se activa o desactiva en panel → **Monitoreo → Alertas automáticas
 | Resumen técnico semanal (disponibilidad, errores, accesos, formulario y spam bloqueado, respaldos) | Lunes desde las 8:00 |
 | Revisión mensual de seguridad (cuentas inactivas, invitaciones, permisos, versión de PHP, respaldos, velocidad) | Día 1 de cada mes desde las 8:00 |
 | Recordatorio del informe mensual | Desde el día 6 si no se envió |
+| Cuota de traducción automática (DeepL): la clave usó el 90 % de sus caracteres, y cuando se agotan | Revisión cada 6 horas (y al pulsar «Probar conexión»); una vez por clave al 90 % y al 100 % |
 | Cambio en la configuración de correo (siempre activo, a la cuenta propietaria) | Al guardar |
 
 La **primera revisión** guarda la lista de archivos del sitio como referencia (el
@@ -806,6 +813,13 @@ fotos**; la persona lo revisa antes de guardar. Se configura **desde el panel**:
 La clave se guarda cifrada y nunca se vuelve a mostrar. Si ya estaba en `.env`
 (`DEEPL_API_KEY`), sigue funcionando; la del panel tiene prioridad. Desde la Terminal
 también puedes comprobarla: `php ~/sensum-cms/bin/console translate:test`.
+
+**Aviso antes de que se acabe:** cuando la clave haya usado el **90 %** de sus caracteres
+(900,000 de 1,000,000) llega un correo al correo de alertas (`it@gruposensum.com`), y
+otro si se agotan. Así puedes crear una clave nueva y pegarla en **Traducción** a
+tiempo. Se activa o desactiva en **Monitoreo → Alertas automáticas → Cuota de
+traducción automática**; el porcentaje se puede cambiar con `TRANSLATE_ALERT_PERCENT`
+en `.env` (50 a 99).
 
 ---
 

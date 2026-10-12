@@ -22,12 +22,14 @@ namespace Sensum\Cms;
  *   weekly_digest    Mondays from 08:00 — technical summary of the week
  *   monthly_review   1st of the month from 08:00 — security and maintenance checklist
  *   report_reminder  after day 5 — the client report has not been sent (SiteReport)
+ *   translation_quota every 6 h — the DeepL key has used TRANSLATE_ALERT_PERCENT (90 %) or all of
+ *                    its characters: once per key and level, so there is time to change the key
  *   (always on)      e-mail settings changed — to the owner
  */
 final class Watchdog
 {
     public const RULES = ['critical_errors', 'integrity', 'login_attack', 'new_device', 'certificate', 'domain_expiry', 'email_dns', 'backup', 'offsite_backup', 'scheduler',
-        'disk_space', 'error_spike', 'weekly_digest', 'monthly_review', 'report_reminder'];
+        'disk_space', 'error_spike', 'weekly_digest', 'monthly_review', 'report_reminder', 'translation_quota'];
 
     /** PHP security-support end dates (php.net/supported-versions). Update when new versions ship. */
     private const PHP_SUPPORT_UNTIL = ['8.1' => '2025-12-31', '8.2' => '2026-12-31', '8.3' => '2027-12-31', '8.4' => '2028-12-31', '8.5' => '2029-12-31'];
@@ -136,6 +138,7 @@ final class Watchdog
             'error_spike' => fn () => $this->checkErrorSpike($now),
             'weekly_digest' => fn () => $this->weeklyDigest($now),
             'monthly_review' => fn () => $this->monthlyReview($now),
+            'translation_quota' => fn () => $this->checkTranslationQuota($now),
         ] as $rule => $check) {
             if (!$this->enabled($rule)) {
                 $out[] = "{$rule}: off";
@@ -149,6 +152,63 @@ final class Watchdog
             }
         }
         return $out;
+    }
+
+    /**
+     * Automatic translation (DeepL): how much of the key's characters is used.
+     * Asks DeepL at most every 6 hours; alerts once per key and level (the
+     * configured percentage, then 100 %), so the key can be changed in time.
+     * A new key, or usage going back down (a monthly plan renewing), starts over.
+     */
+    public function checkTranslationQuota(int $now, bool $force = false): string
+    {
+        $tr = $this->app->translator();
+        if (!$tr->isEnabled()) {
+            return 'no key';
+        }
+        $this->state();
+        if (!$force && $now - (int) ($this->state['translation']['checkedAt'] ?? 0) < 6 * 3600) {
+            return 'checked recently';
+        }
+        $this->state['translation']['checkedAt'] = $now;
+        $this->saveState();
+        try {
+            $u = $tr->usage();
+        } catch (\Throwable $e) {
+            return 'unreachable';
+        }
+        if ($u['limit'] <= 0) {
+            return 'no limit reported';
+        }
+        $alertAt = $this->app->config->int('TRANSLATE_ALERT_PERCENT', 90, 50, 99);
+        $pct = (int) floor($u['used'] * 100 / $u['limit']);
+        $key = substr(hash('sha256', $tr->currentKey()), 0, 12); // which key, never the key itself
+        $level = $pct >= 100 ? 100 : ($pct >= $alertAt ? $alertAt : 0);
+        $notified = (array) ($this->state['translation']['notified'][$key] ?? []);
+        if ($level === 0) {
+            if ($notified) { // the plan renewed or the usage was reset
+                unset($this->state['translation']['notified'][$key]);
+                $this->saveState();
+            }
+            return "{$pct}% used";
+        }
+        if (in_array($level, $notified, true)) {
+            return "{$pct}% used, already notified";
+        }
+        $this->state['translation']['notified'][$key] = array_values(array_unique([...$notified, $level]));
+        $this->saveState();
+        $s = $this->strings();
+        $full = $level === 100;
+        $n = fn (int $v) => number_format($v, 0, '.', ',');
+        $this->sendToOwner('translation_quota', [
+            'subject' => self::fill($s[$full ? 'wd.tr.fullSubject' : 'wd.tr.subject'], ['pct' => $pct]),
+            'title' => self::fill($s[$full ? 'wd.tr.fullTitle' : 'wd.tr.title'], ['used' => $n($u['used']), 'limit' => $n($u['limit'])]),
+            'intro' => $s[$full ? 'wd.tr.fullIntro' : 'wd.tr.intro'],
+            'facts' => [$s['wd.tr.used'] => $n($u['used']) . ' (' . $pct . ' %)', $s['wd.tr.limit'] => $n($u['limit']), $s['wd.tr.left'] => $n(max(0, $u['limit'] - $u['used'])),
+                $s['wd.tr.plan'] => $tr->plan()],
+            'action' => $s['wd.tr.action'], 'cta' => [$s['wd.cta.translation'], 'traduccion'], 'severity' => $full ? 'bad' : 'warn',
+        ], $now);
+        return "{$pct}% used, notified";
     }
 
     /** Files of the public site compared with the last release (or the last accepted state). */

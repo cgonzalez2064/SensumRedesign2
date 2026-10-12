@@ -244,6 +244,24 @@ quota (the free plan: 1,000,000 characters in total for new keys, 500,000 a mont
 older API Free keys). The automated tests never
 call DeepL — they use a local stand-in (`tests/integration/deepl-stub.mjs`).
 
+### Cloudflare Turnstile (optional captcha) — testing locally
+
+Use Cloudflare's **test keys** (they work on `127.0.0.1` / `localhost`, need no
+account and never reach production): panel → **Administración → Correo → Protección
+contra spam** →
+
+| Case | Site Key | Secret Key |
+|---|---|---|
+| Always passes (visible widget) | `1x00000000000000000000AA` | `1x0000000000000000000000000000000AA` |
+| Always fails | `2x00000000000000000000AB` | `2x0000000000000000000000000000000AA` |
+| Forces a click (interactive) | `3x00000000000000000000FF` | `1x0000000000000000000000000000000AA` |
+
+Save (password) — the site republishes with the widget under the form. Send a
+message: with the passing pair it arrives in Mailpit and Prospectos; with the failing
+pair the page says the anti-spam check failed and Monitoreo logs it. Clear the Site Key
+and save to turn it off. Real keys only work on the hostnames added to the widget in
+Cloudflare (add `127.0.0.1` there if you want to try them locally).
+
 ### Monitoring, error log and critical-error alerts
 The **Monitoreo** page (error log, figures, alert settings) is visible only to
 the owner account — `OWNER_EMAIL`, default `it@gruposensum.com`. Locally, sign in

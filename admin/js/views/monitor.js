@@ -10,7 +10,7 @@ const SEVERITY_ICON = { critical: 'x-circle-fill', error: 'exclamation-triangle-
 const ALERT_BADGE = { sent: 'badge-ok', failed: 'badge-bad', suppressed: 'badge', off: 'badge' };
 
 /** Automatic alerts, in the order shown, with how often each one can arrive. */
-const RULES = ['critical_errors', 'integrity', 'login_attack', 'new_device', 'certificate', 'domain_expiry', 'email_dns', 'backup', 'offsite_backup', 'scheduler', 'disk_space', 'error_spike', 'weekly_digest', 'monthly_review', 'report_reminder'];
+const RULES = ['critical_errors', 'integrity', 'login_attack', 'new_device', 'certificate', 'domain_expiry', 'email_dns', 'backup', 'offsite_backup', 'scheduler', 'disk_space', 'error_spike', 'weekly_digest', 'monthly_review', 'report_reminder', 'translation_quota'];
 
 /** Owner panel: turn each automatic alert on or off (saved at once). */
 function rulesCard(rules) {

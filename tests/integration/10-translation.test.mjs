@@ -1,7 +1,9 @@
 // Automatic ES <-> EN translation through DeepL (a local stand-in, never the real service).
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, mkdtempSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { execFileSync, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { startServer, Client, createAdmin, ROOT, PHP } from './helpers.mjs';
@@ -166,7 +168,9 @@ test('in production the test-only DEEPL_API_URL is ignored (always the official 
     $app = Sensum\\Cms\\App::boot(getcwd() . '/cms');
     $m = new ReflectionMethod(Sensum\\Cms\\Translator::class, 'baseUrl');
     echo $m->invoke($app->translator());`;
-  const run = (env) => execFileSync(PHP, ['-r', script], { cwd: ROOT, env: { ...process.env, DEEPL_API_URL: 'http://127.0.0.1:1', ...env } }).toString();
+  // A throwaway storage folder: a key saved in the developer's own panel must not change the answer.
+  const storage = mkdtempSync(join(tmpdir(), 'sensum-deepl-host-'));
+  const run = (env) => execFileSync(PHP, ['-r', script], { cwd: ROOT, env: { ...process.env, STORAGE_DIR: storage, DEEPL_API_URL: 'http://127.0.0.1:1', ...env } }).toString();
   assert.equal(run({ APP_ENV: 'production', DEEPL_API_KEY: 'abc:fx' }), 'https://api-free.deepl.com');
   assert.equal(run({ APP_ENV: 'production', DEEPL_API_KEY: 'abc' }), 'https://api.deepl.com');
   assert.equal(run({ APP_ENV: 'development', DEEPL_API_KEY: 'abc:fx' }), 'http://127.0.0.1:1');
