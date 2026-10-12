@@ -132,6 +132,9 @@
       "form.service_err": "Selecciona el servicio que te interesa.",
       "form.message_label": "Cuéntanos sobre tu proyecto",
       "form.message_err": "Cuéntanos un poco más sobre tu proyecto (mínimo 10 caracteres).",
+      "form.optional": "(opcional)", "form.choose": "Selecciona una opción",
+      "form.err_required": "Completa este campo.", "form.err_choose": "Elige una opción.",
+      "form.err_number": "Ingresa un número válido.", "form.err_date": "Elige una fecha válida.",
       "form.hp_label": "No completar este campo",
       "form.submit": "Enviar mensaje",
       "form.note": "Usaremos tus datos únicamente para responder a tu solicitud y dar seguimiento a tu proyecto. Consulta nuestro <a href=\"privacy-notice.html\">Aviso de Privacidad</a>.",
@@ -292,6 +295,9 @@
       "form.service_err": "Select the service you're interested in.",
       "form.message_label": "Tell us about your project",
       "form.message_err": "Tell us a bit more about your project (minimum 10 characters).",
+      "form.optional": "(optional)", "form.choose": "Select an option",
+      "form.err_required": "Please fill in this field.", "form.err_choose": "Please choose an option.",
+      "form.err_number": "Enter a valid number.", "form.err_date": "Choose a valid date.",
       "form.hp_label": "Leave this field blank",
       "form.submit": "Send Message",
       "form.note": "We will only use your information to respond to your request and follow up on your project. See our <a href=\"privacy-notice.html\">Privacy Notice</a>.",
@@ -1130,29 +1136,52 @@
   }
 
   if (form){
-    var FIELD_IDS = ['name', 'phone', 'email', 'service', 'message'];
+    /* The questions come from the Content Manager (Sitio web → Formulario de
+       contacto): each .field holds one question — an input, select or
+       textarea, or a group of radio buttons / checkboxes. */
+    var questionFields = function(){
+      return Array.prototype.filter.call(form.querySelectorAll('.field'), function(f){
+        return !f.classList.contains('hp-field') && f.querySelector('input[name],select[name],textarea[name]');
+      });
+    };
+    var fieldName = function(field){
+      return field.querySelector('input[name],select[name],textarea[name]').name.replace(/\[\]$/, '');
+    };
+    var controlsOf = function(field){ return field.querySelectorAll('input[name],select[name],textarea[name]'); };
+    var fieldValid = function(field){
+      var controls = controlsOf(field);
+      if (controls[0].type === 'checkbox'){
+        if (!field.hasAttribute('data-required')) return true;
+        return Array.prototype.some.call(controls, function(c){ return c.checked; });
+      }
+      return controls[0].checkValidity(); /* a radio's validity covers its whole group */
+    };
+    var markField = function(field, ok){
+      field.classList.toggle('invalid', !ok);
+      Array.prototype.forEach.call(controlsOf(field), function(c){ c.setAttribute('aria-invalid', ok ? 'false' : 'true'); });
+    };
+    var fieldByName = function(name){
+      var found = null;
+      questionFields().forEach(function(f){ if (!found && fieldName(f) === name) found = f; });
+      return found;
+    };
+    /* Dates that must be from today on (the page is static: today is set here). */
+    var today = new Date();
+    var todayIso = today.getFullYear() + '-' + ('0' + (today.getMonth() + 1)).slice(-2) + '-' + ('0' + today.getDate()).slice(-2);
+    Array.prototype.forEach.call(form.querySelectorAll('input[type="date"][data-future]'), function(d){ d.min = todayIso; });
+
     var submitBtn = form.querySelector('button[type="submit"]');
     var submitting = false;
-
-    var setFieldValidity = function(id, ok){
-      var input = document.getElementById(id);
-      if (!input) return;
-      var field = input.closest('.field');
-      if (field) field.classList.toggle('invalid', !ok);
-      input.setAttribute('aria-invalid', ok ? 'false' : 'true');
-    }
 
     var validateAll = function(){
       var valid = true;
       var firstInvalid = null;
-      FIELD_IDS.forEach(function(id){
-        var input = document.getElementById(id);
-        if (!input) return;
-        var ok = input.checkValidity();
-        setFieldValidity(id, ok);
+      questionFields().forEach(function(field){
+        var ok = fieldValid(field);
+        markField(field, ok);
         if (!ok){
           valid = false;
-          if (!firstInvalid) firstInvalid = input;
+          if (!firstInvalid) firstInvalid = controlsOf(field)[0];
         }
       });
       return { valid: valid, firstInvalid: firstInvalid };
@@ -1252,7 +1281,7 @@
             setStatus(t('form.status_ok'), 'ok');
             hideSummary();
             form.reset();
-            FIELD_IDS.forEach(function(id){ setFieldValidity(id, true); });
+            questionFields().forEach(function(f){ markField(f, true); });
             if (loadedAtField) loadedAtField.value = String(Date.now());
             /* Each captcha answer works once: prepare the next one. */
             captchaJob = null;
@@ -1287,9 +1316,10 @@
           if (res.status === 422 && data && Array.isArray(data.fields) && data.fields.length){
             var firstBad = null;
             data.fields.forEach(function(name){
-              if (FIELD_IDS.indexOf(name) === -1) return;
-              setFieldValidity(name, false);
-              if (!firstBad) firstBad = document.getElementById(name);
+              var bad = fieldByName(String(name));
+              if (!bad) return;
+              markField(bad, false);
+              if (!firstBad) firstBad = controlsOf(bad)[0];
             });
             showSummary(t('form.status_invalid'));
             setStatus(t('form.status_invalid'), 'error');
@@ -1323,10 +1353,12 @@
       }
     });
 
-    form.querySelectorAll('input,textarea,select').forEach(function(input){
-      input.addEventListener('blur', function(){
-        if (FIELD_IDS.indexOf(input.id) === -1) return;
-        setFieldValidity(input.id, input.checkValidity());
+    questionFields().forEach(function(field){
+      Array.prototype.forEach.call(controlsOf(field), function(input){
+        var check = function(){ markField(field, fieldValid(field)); };
+        input.addEventListener('blur', check);
+        /* choices: re-check as soon as one is picked */
+        if (input.type === 'radio' || input.type === 'checkbox') input.addEventListener('change', check);
       });
     });
   }

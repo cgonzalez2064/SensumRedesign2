@@ -149,21 +149,29 @@ async function signInHere(page) {
   await expect(page.locator('main h1')).toHaveText(/^Hola, /);
 }
 
-test('contact-form options: Spanish fills English, Undo, and the English you write is kept', async ({ page }, info) => {
+test('contact form: questions and options fill English from Spanish, Undo, and the English you write is kept', async ({ page }, info) => {
   test.skip(info.project.name === 'tablet-chrome', 'desktop and phone are enough');
   const problems = watch(page);
   const tag = info.project.name.split('-')[0]; // each device run saves different text
   await signInHere(page);
   await page.goto(BASE + '/admin/#/formulario');
-  await expect(page.getByText(/Traducción automática activada/)).toBeVisible();
-  const row = page.locator('.svc-row').first();
-  const es = row.getByRole('textbox', { name: /Español/ });
-  const en = row.getByRole('textbox', { name: /Inglés|English/ });
+  await page.getByRole('button', { name: 'Editar «Servicio de interés»' }).click();
+  const ed = page.locator('.fb-row.open');
+  await expect(ed.getByText(/Traducción automática activada/)).toBeVisible();
+  // The question itself.
+  const qEs = ed.locator('input[lang="es"]').first();
+  const qEn = ed.locator('input[lang="en"]').first();
+  await qEs.fill(`Servicio que te interesa ${tag}`);
+  await expect(qEn).toHaveValue(`EN: Servicio que te interesa ${tag}`);
+  // Its options.
+  const es = ed.getByLabel('Opción 1 en español');
+  const en = ed.getByLabel('Opción 1 en inglés');
   const savedEn = await en.inputValue();
   await es.fill(`Remodelación de cocinas ${tag}`);
   await expect(en).toHaveValue(`EN: Remodelación de cocinas ${tag}`);
-  await expect(row.getByText('Traducido automáticamente del español. Revísalo.')).toBeVisible();
-  await row.getByRole('button', { name: 'Deshacer' }).click();
+  const optNote = ed.locator('.fb-opt').first().getByText('Traducido automáticamente del español. Revísalo.');
+  await expect(optNote).toBeVisible();
+  await ed.locator('.fb-opt').first().getByRole('button', { name: 'Deshacer' }).click();
   await expect(en).toHaveValue(savedEn);
   // Once the English is the person's own, Spanish edits no longer replace it.
   await en.fill(`Kitchen remodeling ${tag}`);
@@ -171,13 +179,14 @@ test('contact-form options: Spanish fills English, Undo, and the English you wri
   await page.waitForTimeout(1200);
   await expect(en).toHaveValue(`Kitchen remodeling ${tag}`);
   // A second option: saving right after typing waits for the translation.
-  const row2 = page.locator('.svc-row').nth(1);
-  await row2.getByRole('textbox', { name: /Español/ }).fill(`Diseño de interiores ${tag}`);
+  await ed.getByLabel('Opción 2 en español').fill(`Diseño de interiores ${tag}`);
   await page.getByRole('button', { name: 'Guardar y publicar' }).click();
-  await expect(page.getByText(/Opciones guardadas/)).toBeVisible();
-  const saved = await page.evaluate(async (b) => (await (await fetch(b + '/api/contact-form/services', { credentials: 'same-origin' })).json()), BASE);
-  expect(saved.items[1]).toMatchObject({ es: `Diseño de interiores ${tag}`, en: `EN: Diseño de interiores ${tag}` });
-  expect(saved.items[0]).toMatchObject({ es: `Remodelación de cocinas y baños ${tag}`, en: `Kitchen remodeling ${tag}` });
+  await expect(page.getByText(/Formulario guardado/)).toBeVisible();
+  const saved = await page.evaluate(async (b) => (await (await fetch(b + '/api/contact-form', { credentials: 'same-origin' })).json()), BASE);
+  const service = saved.fields.find((f) => f.id === 'service');
+  expect(service.label).toMatchObject({ es: `Servicio que te interesa ${tag}`, en: `EN: Servicio que te interesa ${tag}` });
+  expect(service.options[1]).toMatchObject({ es: `Diseño de interiores ${tag}`, en: `EN: Diseño de interiores ${tag}` });
+  expect(service.options[0]).toMatchObject({ es: `Remodelación de cocinas y baños ${tag}`, en: `Kitchen remodeling ${tag}` });
   expect(problems).toEqual([]);
 });
 
@@ -202,7 +211,7 @@ test('Traducción page: shows the key in use (from .env) without revealing it, a
   await expect(page.getByText('test-deepl-key-0000')).toHaveCount(0);
   await page.getByRole('button', { name: 'Probar conexión' }).click();
   await expect(page.getByText('La clave funciona (DeepL API Free)')).toBeVisible();
-  await expect(page.getByText(/Este mes: 1,234 de 500,000 caracteres/)).toBeVisible();
+  await expect(page.getByText(/Usados de tu plan de DeepL: 1,234 de 500,000 caracteres/)).toBeVisible();
   const v = (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations.filter((x) => ['serious', 'critical'].includes(x.impact));
   expect(v.map((x) => x.id)).toEqual([]);
 });

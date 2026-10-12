@@ -18,7 +18,7 @@ namespace Sensum\Cms;
 final class Publisher
 {
     /** Bump when assets/main.css or assets/main.js change (cache busting). */
-    public const ASSET_VERSION = '5';
+    public const ASSET_VERSION = '6';
     public const PAGES = ['index.html', '404.html', 'privacy-notice.html'];
     private const BACKUPS_KEPT = 30;
 
@@ -148,24 +148,10 @@ final class Publisher
         $fallback = $this->formFallback($office, $email, $wa);
         $vars['form_fallback_html'] = $fallback['es'];
 
-        // Contact form: "Servicio de interés" options (Sitio web → Formulario de contacto).
-        // The option value is the stable id; texts for the ES/EN toggle travel as
-        // "form.opt_<id>" overrides when they differ from the built-in dictionary.
-        $options = [];
-        $serviceOverrides = ['es' => [], 'en' => []];
-        foreach ($this->app->contactServices()->items() as $svc) {
-            $key = 'form.opt_' . $svc['id'];
-            $options[] = '<option value="' . self::e($svc['id']) . '" data-i18n="' . self::e($key) . '">' . self::e($svc['es']) . '</option>';
-            $builtIn = ContactServices::DEFAULTS[$svc['id']] ?? null;
-            $en = $svc['en'] !== '' ? $svc['en'] : $svc['es'];
-            if ($builtIn === null || $builtIn[0] !== $svc['es']) {
-                $serviceOverrides['es'][$key] = $svc['es'];
-            }
-            if ($builtIn === null || $builtIn[1] !== $en) {
-                $serviceOverrides['en'][$key] = $en;
-            }
-        }
-        $vars['form_service_options'] = implode("\n                ", $options);
+        // Contact form: the questions (Sitio web → Formulario de contacto). Texts for
+        // the ES/EN toggle travel as "form.*" overrides when they differ from the
+        // built-in dictionary of assets/main.js.
+        [$vars['form_fields_html'], $serviceOverrides] = $this->formFields();
         // Optional Cloudflare Turnstile on the contact form (owner → Correo).
         $turnstile = $this->app->mailSettings()->turnstile();
         $flags['turnstile'] = $turnstile['siteKey'] !== '' && $turnstile['secret'] !== '';
@@ -290,6 +276,136 @@ final class Publisher
         return [$vars, $flags];
     }
 
+    /**
+     * The contact form's questions as the page shows them, plus the ES/EN
+     * texts the language toggle needs. With the approved questions the markup
+     * is exactly the hand-written original (core fields keep their ids, names
+     * and messages); extra questions follow the same structure.
+     * @return array{0:string,1:array{es:array<string,string>,en:array<string,string>}}
+     */
+    private function formFields(): array
+    {
+        $over = ['es' => [], 'en' => []];
+        $text = function (string $key, array $pair, ?array $builtIn = null) use (&$over): void {
+            $en = $pair['en'] !== '' ? $pair['en'] : $pair['es'];
+            if ($builtIn === null || $builtIn[0] !== $pair['es']) {
+                $over['es'][$key] = $pair['es'];
+            }
+            if ($builtIn === null || $builtIn[1] !== $en) {
+                $over['en'][$key] = $en;
+            }
+        };
+        $errIcon = '<svg class="err-icon" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/><path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/></svg>';
+        // Error message per question: the core fields keep theirs.
+        $errKey = fn (array $f) => match (true) {
+            $f['core'] !== null => 'form.' . $f['core'] . '_err',
+            $f['type'] === 'email' => 'form.email_err',
+            $f['type'] === 'tel' => 'form.phone_err',
+            $f['type'] === 'number' => 'form.err_number',
+            $f['type'] === 'date' => 'form.err_date',
+            in_array($f['type'], ContactFormFields::WITH_OPTIONS, true) => 'form.err_choose',
+            default => 'form.err_required',
+        };
+        $errText = [
+            'form.name_err' => 'Ingresa tu nombre completo.', 'form.phone_err' => 'Ingresa un número de teléfono válido.',
+            'form.email_err' => 'Ingresa un correo electrónico válido.', 'form.service_err' => 'Selecciona el servicio que te interesa.',
+            'form.message_err' => 'Cuéntanos un poco más sobre tu proyecto (mínimo 10 caracteres).', 'form.err_number' => 'Ingresa un número válido.',
+            'form.err_date' => 'Elige una fecha válida.', 'form.err_choose' => 'Elige una opción.', 'form.err_required' => 'Completa este campo.',
+        ];
+        $render = function (array $f, string $ind, bool $helpSlot) use ($text, $errIcon, $errKey, $errText): string {
+            $id = $f['id'];
+            $core = $f['core'];
+            $e = fn (string $v) => self::e($v);
+            $labelKey = $core !== null ? "form.{$core}_label" : "form.{$id}_label";
+            $text($labelKey, $f['label'], $core !== null ? ContactFormFields::CORE_LABELS[$core] : null);
+            $hasHelp = $f['help']['es'] !== '';
+            if ($hasHelp) {
+                $text("form.{$id}_help", $f['help']);
+            }
+            $describedBy = ($hasHelp ? "{$id}-help " : '') . "{$id}-error";
+            $req = $f['required'] ? ' required' : '';
+            // Optional questions say so; required ones look exactly like the original.
+            $labelInner = $f['required']
+                ? null
+                : '<span data-i18n="' . $e($labelKey) . '">' . $e($f['label']['es']) . '</span> <span class="field-opt" data-i18n="form.optional">(opcional)</span>';
+            $label = $labelInner === null
+                ? '<label for="' . $e($id) . '" data-i18n="' . $e($labelKey) . '">' . $e($f['label']['es']) . '</label>'
+                : '<label for="' . $e($id) . '">' . $labelInner . '</label>';
+            $help = $hasHelp ? '<small class="field-help" id="' . $e($id) . '-help" data-i18n="' . $e("form.{$id}_help") . '">' . $e($f['help']['es']) . '</small>'
+                : ($helpSlot ? '<small class="field-help" aria-hidden="true"></small>' : '');
+            $ek = $errKey($f);
+            $err = '<small class="err" id="' . $e($id) . '-error">' . $errIcon . '<span data-i18n="' . $ek . '">' . $e($errText[$ek]) . '</span></small>';
+            $aria = ' aria-describedby="' . $e($describedBy) . '" aria-invalid="false"';
+            $lines = [];
+            $control = match ($f['type']) {
+                'text' => $core === 'name'
+                    ? '<input type="text" id="name" name="name" autocomplete="name"' . $req . ' minlength="2" maxlength="' . (int) $f['max'] . '"' . $aria . '>'
+                    : '<input type="text" id="' . $e($id) . '" name="' . $e($id) . '" autocomplete="off"' . $req . ' maxlength="' . (int) $f['max'] . '"' . $aria . '>',
+                'tel' => '<input type="tel" id="' . $e($id) . '" name="' . $e($id) . '" autocomplete="' . ($core === 'phone' ? 'tel' : 'off') . '"' . $req . ' pattern="[\d\s\(\)+\-]{8,}" maxlength="30"' . $aria . '>',
+                'email' => '<input type="email" id="' . $e($id) . '" name="' . $e($id) . '" autocomplete="' . ($core === 'email' ? 'email' : 'off') . '"' . $req . ' maxlength="180"' . $aria . '>',
+                'number' => '<input type="number" id="' . $e($id) . '" name="' . $e($id) . '" inputmode="decimal" step="any"' . ($f['min'] !== null ? ' min="' . $e((string) $f['min']) . '"' : '') . ($f['max'] !== null ? ' max="' . $e((string) $f['max']) . '"' : '') . $req . $aria . '>',
+                'date' => '<input type="date" id="' . $e($id) . '" name="' . $e($id) . '"' . ($f['future'] ? ' data-future' : '') . $req . $aria . '>',
+                'textarea' => $core === 'message'
+                    ? '<textarea id="message" name="message"' . $req . ' minlength="10" maxlength="' . (int) $f['max'] . '"' . $aria . '></textarea>'
+                    : '<textarea id="' . $e($id) . '" name="' . $e($id) . '"' . $req . ' maxlength="' . (int) $f['max'] . '"' . $aria . '></textarea>',
+                default => null,
+            };
+            if ($f['type'] === 'select') {
+                $placeholderKey = $core === 'service' ? 'form.opt_placeholder' : 'form.choose';
+                $opts = ['<option value="" selected disabled data-i18n="' . $placeholderKey . '">' . ($core === 'service' ? 'Selecciona un servicio' : 'Selecciona una opción') . '</option>'];
+                foreach ($f['options'] as $o) {
+                    $key = $core === 'service' ? 'form.opt_' . $o['id'] : "form.{$id}_{$o['id']}";
+                    $text($key, $o, $core === 'service' ? (ContactServices::DEFAULTS[$o['id']] ?? null) : null);
+                    $opts[] = '<option value="' . $e($o['id']) . '" data-i18n="' . $e($key) . '">' . $e($o['es']) . '</option>';
+                }
+                $control = '<select id="' . $e($id) . '" name="' . $e($id) . '" autocomplete="off"' . $req . $aria . ">\n{$ind}    " . implode("\n{$ind}    ", $opts) . "\n{$ind}  </select>";
+            }
+            if ($f['type'] === 'radio' || $f['type'] === 'checkbox') {
+                $choices = [];
+                foreach ($f['options'] as $o) {
+                    $key = "form.{$id}_{$o['id']}";
+                    $text($key, $o);
+                    $choices[] = '<label class="choice"><input type="' . $f['type'] . '" name="' . $e($id) . ($f['type'] === 'checkbox' ? '[]' : '') . '" value="' . $e($o['id']) . '"'
+                        . ($f['type'] === 'radio' ? $req : '') . ' aria-invalid="false"><span data-i18n="' . $e($key) . '">' . $e($o['es']) . '</span></label>';
+                }
+                $legend = '<legend' . ($labelInner === null ? ' data-i18n="' . $e($labelKey) . '">' . $e($f['label']['es']) : '>' . $labelInner) . '</legend>';
+                $lines[] = '<div class="field' . ($f['type'] === 'checkbox' && $f['required'] ? '" data-required="true' : '') . '">';
+                $lines[] = '  <fieldset aria-describedby="' . $e($describedBy) . '">';
+                $lines[] = '    ' . $legend;
+                if ($hasHelp) {
+                    $lines[] = '    ' . $help;
+                }
+                $lines[] = '    <div class="choices">';
+                foreach ($choices as $c) {
+                    $lines[] = '      ' . $c;
+                }
+                $lines[] = '    </div>';
+                $lines[] = '  </fieldset>';
+                $lines[] = '  ' . $err;
+                $lines[] = '</div>';
+            } else {
+                $lines = array_values(array_filter(['<div class="field">', '  ' . $label, $help !== '' ? '  ' . $help : null, '  ' . $control, '  ' . $err, '</div>']));
+            }
+            return implode("\n", array_map(fn ($l, $i) => ($i === 0 ? '' : $ind) . $l, $lines, array_keys($lines)));
+        };
+
+        // Half-width questions pair up in a row (two columns on wider screens).
+        $fields = $this->app->contactFormFields()->fields();
+        $blocks = [];
+        for ($i = 0; $i < count($fields); $i++) {
+            $f = $fields[$i];
+            $next = $fields[$i + 1] ?? null;
+            if ($f['width'] === 'half' && $next && $next['width'] === 'half') {
+                $slot = $f['help']['es'] !== '' || $next['help']['es'] !== '';
+                $blocks[] = "<div class=\"form-row\">\n              " . $render($f, '              ', $slot) . "\n              " . $render($next, '              ', $slot) . "\n            </div>";
+                $i++;
+            } else {
+                $blocks[] = $render($f, '            ', false);
+            }
+        }
+        return [implode("\n            ", $blocks), $over];
+    }
+
     /** [es, en] alt text with sensible fallbacks. */
     private function alts(array $row, string $fallbackEs, string $fallbackEn): array
     {
@@ -322,8 +438,7 @@ final class Publisher
     private function privacyTexts(): array
     {
         $stats = $this->app->analytics()->enabled()
-            ? 'Este sitio no utiliza cookies ni herramientas de rastreo de
-      terceros. Para saber cuántas personas lo visitan, el propio sitio
+            ? 'para saber cuántas personas visitan el sitio, el propio sitio
       cuenta las visitas de forma anónima y guarda solo totales por día:
       páginas vistas, desde qué tipo de sitio llegaste (por ejemplo,
       Google o Facebook), tipo de dispositivo, idioma y clics en WhatsApp,
@@ -331,7 +446,7 @@ final class Publisher
       identificador que permita reconocerte de un día a otro. Si tu
       navegador tiene activada la opción «No rastrear» (Do Not Track) o
       Global Privacy Control, tu visita no se cuenta.'
-            : 'Este sitio no utiliza cookies de análisis ni herramientas de
+            : 'este sitio no utiliza cookies de análisis ni herramientas de
       rastreo. Si en el futuro se incorpora alguna herramienta de
       medición, esta sección se actualizará antes de activarla.';
         $months = $this->app->leads()->retentionMonths();

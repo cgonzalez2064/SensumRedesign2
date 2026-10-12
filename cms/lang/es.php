@@ -387,6 +387,7 @@ return [
     'leads.csv.status' => 'Estado',
     'leads.csv.amount' => 'Monto (Q)',
     'leads.csv.message' => 'Mensaje',
+    'leads.csv.answers' => 'Otras respuestas',
     'leads.status.new' => 'Nuevo',
     'leads.status.contacted' => 'Contactado',
     'leads.status.quoted' => 'Cotizado',

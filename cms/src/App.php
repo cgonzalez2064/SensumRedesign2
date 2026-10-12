@@ -269,6 +269,11 @@ final class App
         return new ContactServices($this);
     }
 
+    public function contactFormFields(): ContactFormFields
+    {
+        return new ContactFormFields($this);
+    }
+
     /** E-mail settings: the owner's panel values over .env (see MailSettings). */
     public function mailSettings(): MailSettings
     {

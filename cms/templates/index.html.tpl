@@ -618,36 +618,7 @@
           <div class="form-summary" id="formSummary" role="alert" tabindex="-1" hidden></div>
 
           <form id="contactForm" novalidate action="assets/contact-handler.php" method="post">
-            <div class="form-row">
-              <div class="field">
-                <label for="name" data-i18n="form.name_label">Nombre completo</label>
-                <input type="text" id="name" name="name" autocomplete="name" required minlength="2" maxlength="120" aria-describedby="name-error" aria-invalid="false">
-                <small class="err" id="name-error"><svg class="err-icon" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/><path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/></svg><span data-i18n="form.name_err">Ingresa tu nombre completo.</span></small>
-              </div>
-              <div class="field">
-                <label for="phone" data-i18n="form.phone_label">Teléfono</label>
-                <input type="tel" id="phone" name="phone" autocomplete="tel" required pattern="[\d\s\(\)+\-]{8,}" maxlength="30" aria-describedby="phone-error" aria-invalid="false">
-                <small class="err" id="phone-error"><svg class="err-icon" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/><path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/></svg><span data-i18n="form.phone_err">Ingresa un número de teléfono válido.</span></small>
-              </div>
-            </div>
-            <div class="field">
-              <label for="email" data-i18n="form.email_label">Correo electrónico</label>
-              <input type="email" id="email" name="email" autocomplete="email" required maxlength="180" aria-describedby="email-error" aria-invalid="false">
-              <small class="err" id="email-error"><svg class="err-icon" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/><path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/></svg><span data-i18n="form.email_err">Ingresa un correo electrónico válido.</span></small>
-            </div>
-            <div class="field">
-              <label for="service" data-i18n="form.service_label">Servicio de interés</label>
-              <select id="service" name="service" autocomplete="off" required aria-describedby="service-error" aria-invalid="false">
-                <option value="" selected disabled data-i18n="form.opt_placeholder">Selecciona un servicio</option>
-                {{form_service_options}}
-              </select>
-              <small class="err" id="service-error"><svg class="err-icon" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/><path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/></svg><span data-i18n="form.service_err">Selecciona el servicio que te interesa.</span></small>
-            </div>
-            <div class="field">
-              <label for="message" data-i18n="form.message_label">Cuéntanos sobre tu proyecto</label>
-              <textarea id="message" name="message" required minlength="10" maxlength="4000" aria-describedby="message-error" aria-invalid="false"></textarea>
-              <small class="err" id="message-error"><svg class="err-icon" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/><path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/></svg><span data-i18n="form.message_err">Cuéntanos un poco más sobre tu proyecto (mínimo 10 caracteres).</span></small>
-            </div>
+            {{form_fields_html}}
 
             <!-- Honeypot anti-spam field: hidden from real users via CSS, left blank by them.
                  If it arrives filled, the request is treated as a bot and discarded server-side. -->

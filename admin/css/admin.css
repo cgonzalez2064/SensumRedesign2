@@ -501,7 +501,7 @@ table.table{ width:100%; border-collapse:collapse; font-size:.92rem; }
 @media (max-width: 560px){ .users-toolbar .select{ flex:1 1 calc(50% - .3rem); } }
 /* ---------- Contact-form preview: a working copy of the site's form (light, as on the site) ---------- */
 .sim-controls{ display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; }
-.sim-stage{ position:relative; overflow:hidden; border-radius:var(--r-lg); background:repeating-linear-gradient(45deg, var(--surface-2), var(--surface-2) 8px, var(--surface-3) 8px, var(--surface-3) 16px); padding:0; transition: height var(--t) var(--ease); }
+.sim-stage{ position:relative; overflow:hidden; overflow:clip; border-radius:var(--r-lg); background:repeating-linear-gradient(45deg, var(--surface-2), var(--surface-2) 8px, var(--surface-3) 8px, var(--surface-3) 16px); padding:0; transition: height var(--t) var(--ease); }
 .sim-frame{ transform-origin: top left; transition: width var(--t) var(--ease); }
 .form-sim{ background:#f5f5f5; color:#222; border-radius:14px; padding:1.4rem; font-family:'Roboto', system-ui, sans-serif; box-shadow:0 1px 3px rgba(0,0,0,.08); }
 .sim-frame[data-device="desktop"] .form-sim, .sim-frame[data-device="tablet"] .form-sim{ padding:2rem; }
@@ -552,6 +552,8 @@ table.table{ width:100%; border-collapse:collapse; font-size:.92rem; }
 .empty h3{ font-size:1.02rem; }
 .empty p{ max-width:44ch; margin:0; }
 
+.lead-answers{ margin-top:.1rem; }
+.small-title{ margin:1rem 0 0; font-size:.8rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-2); }
 .report-desc{ white-space:pre-wrap; overflow-wrap:anywhere; background:var(--surface-2); border-radius:var(--r); padding:.75rem .9rem; font-size:.9rem; }
 details.disclosure > summary{ cursor:pointer; font-weight:600; font-size:.88rem; color:var(--accent); list-style:none; display:inline-flex; gap:.35rem; align-items:center; min-height:32px; }
 details.disclosure > summary::-webkit-details-marker{ display:none; }
@@ -819,6 +821,82 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 .tips{ list-style:none; margin:1rem 0 0; padding:0; display:grid; gap:.5rem; font-size:.86rem; color:var(--text-2); }
 .tips li{ display:flex; gap:.5rem; align-items:flex-start; }
 .tips .icon{ color:var(--info); margin-top:.15rem; flex:none; }
+/* Contact form questions (Formulario de contacto) */
+.fb-list{ list-style:none; margin:0; padding:0; display:grid; gap:.6rem; }
+.fb-list > *{ min-width:0; }
+.fb-row{ container-type:inline-size; border:1px solid var(--border); border-radius:var(--r-lg); background:var(--surface-2); transition: border-color var(--t) var(--ease), box-shadow var(--t) var(--ease), background-color var(--t) var(--ease); }
+.fb-row.open, .fb-row:focus-within{ border-color:var(--border-strong); background:var(--surface); box-shadow:var(--shadow-1); }
+.fb-row.is-new{ animation: rise-in 260ms var(--ease) both; border-color:color-mix(in srgb, var(--brand) 45%, var(--border)); }
+.fb-row.dragging{ box-shadow:var(--shadow-2, var(--shadow-1)); border-color:var(--brand); background:var(--surface); position:relative; z-index:2; }
+.fb-row-head{ display:flex; align-items:center; gap:.55rem; padding:.55rem .6rem .55rem .35rem; min-height:60px; }
+.fb-grip{ flex:none; display:grid; place-items:center; width:28px; height:40px; border-radius:8px; color:var(--text-3); cursor:grab; touch-action:none; }
+.fb-grip:hover{ color:var(--text); background:var(--surface-3); }
+.fb-row.dragging .fb-grip{ cursor:grabbing; color:var(--brand); }
+.fb-type{ flex:none; display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:var(--accent-soft); color:var(--accent); }
+.fb-type .icon{ width:18px; height:18px; }
+.fb-summary{ flex:1; min-width:0; display:grid; gap:.15rem; }
+.fb-label{ font-size:.94rem; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fb-label.empty{ color:var(--text-3); }
+.fb-meta{ display:flex; flex-wrap:wrap; align-items:center; gap:.25rem .5rem; font-size:.8rem; color:var(--text-2); }
+.fb-chips{ display:inline-flex; flex-wrap:wrap; gap:.3rem; }
+.fb-chip{ display:inline-flex; align-items:center; gap:.25rem; padding:.05rem .5rem; border-radius:999px; font-size:.72rem; font-weight:700; line-height:1.5; }
+.fb-chip .icon{ width:11px; height:11px; }
+.fb-chip.req{ background:var(--accent-soft); color:var(--accent); }
+.fb-chip.opt{ background:var(--surface-3); color:var(--text-2); }
+.fb-chip.fixed{ background:var(--info-soft); color:var(--info); }
+.fb-actions{ display:flex; gap:.1rem; flex:none; }
+.fb-actions .btn-icon{ width:36px; min-height:36px; color:var(--text-2); }
+.fb-actions .btn-icon:hover:not([disabled]){ color:var(--text); }
+.fb-actions [data-act="edit"][aria-expanded="true"]{ color:var(--accent); background:var(--accent-soft); }
+.fb-actions [data-act="del"]:hover:not([disabled]){ color:var(--bad); background:var(--bad-soft); }
+.fb-editor{ display:grid; gap:.9rem; padding:.2rem .9rem .9rem; border-top:1px solid var(--border); padding-top:.9rem; }
+.fb-pair{ display:grid; gap:.75rem 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); align-items:start; }
+.fb-settings{ display:grid; gap:.9rem 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); align-items:start; }
+.fb-setting{ display:grid; gap:.35rem; align-content:start; }
+.fb-setting .hint{ margin:0; font-size:.8rem; color:var(--text-2); }
+.fb-switch{ display:inline-flex; align-items:center; gap:.6rem; font-weight:600; cursor:pointer; min-height:36px; }
+.fb-options .row{ margin-top:.2rem; }
+.fb-opts{ list-style:none; margin:.2rem 0 0; padding:0; display:grid; gap:.45rem; }
+.fb-opt{ display:grid; grid-template-columns:auto 1fr auto; gap:.5rem; align-items:center; }
+.fb-opt-inputs{ display:grid; gap:.4rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); min-width:0; }
+.fb-opt-in{ display:grid; gap:.2rem; min-width:0; }
+.fb-opt-actions{ display:flex; gap:.1rem; }
+.fb-opt-actions .btn-icon{ width:34px; min-height:34px; color:var(--text-2); }
+.fb-opt.invalid .input{ border-color:var(--bad); }
+.fb-opt > .field-error{ grid-column: 2 / -1; }
+.fb-editor-foot{ display:flex; justify-content:flex-end; }
+/* Narrow rows (phones, or a narrow column): the buttons go on their own line and the question can wrap. */
+@container (max-width: 470px){
+  .fb-row-head{ flex-wrap:wrap; row-gap:.2rem; padding-bottom:.35rem; }
+  .fb-summary{ flex-basis:calc(100% - 80px); }
+  .fb-label{ white-space:normal; overflow-wrap:anywhere; }
+  .fb-actions{ width:100%; justify-content:flex-end; border-top:1px dashed var(--border); padding-top:.25rem; }
+  .fb-opt{ grid-template-columns:auto 1fr; }
+  .fb-opt-actions{ grid-column:2; justify-content:flex-end; }
+}
+.fb-types{ display:grid; gap:.6rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); }
+.fb-type-card{ display:flex; align-items:flex-start; gap:.7rem; padding:.8rem; min-height:72px; border:1px solid var(--border-strong); border-radius:var(--r-lg); background:var(--surface); color:var(--text); text-align:left; cursor:pointer; font:inherit; transition: border-color var(--t-fast), background-color var(--t-fast), transform var(--t-fast); }
+.fb-type-card:hover{ border-color:var(--brand); background:var(--accent-soft); }
+.fb-type-card:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
+.fb-type-text{ display:grid; gap:.15rem; min-width:0; }
+.fb-type-text strong{ font-size:.92rem; }
+.fb-type-text span{ font-size:.8rem; color:var(--text-2); line-height:1.35; }
+.fb-rcpt-add{ display:flex; gap:.5rem; align-items:flex-end; margin-top:.9rem; }
+.fb-rcpt-add .field{ flex:1; min-width:0; }
+/* Preview: optional mark, help, choices */
+.sim-opt{ font-weight:400; text-transform:none; letter-spacing:0; color:#5c5c5c; }
+.sim-legend{ display:block; font-size:.74rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#222; margin-bottom:.35rem; }
+.sim-help{ display:block; margin:-.15rem 0 .4rem; font-size:.76rem; color:#666; }
+.sim-help:empty{ margin:0; }
+/* Half-row pairs share rows (label · help · control · error), so their inputs line up. */
+.sim-row{ grid-template-rows:repeat(4, auto); }
+.sim-row > .sim-field{ display:grid; grid-row:span 4; grid-template-rows:subgrid; align-content:start; }
+.sim-choices{ display:grid; gap:.35rem; }
+.sim-choice{ display:flex; align-items:center; gap:.55rem; min-height:40px; padding:.45rem .7rem; border:1px solid #d9d9d9; border-radius:8px; background:#fff; color:#222; font-size:14px; cursor:pointer; }
+.form-sim .sim-choice input{ width:18px; height:18px; margin:0; padding:0; accent-color:#f6740a; flex:none; }
+.sim-choice:has(input:checked){ border-color:#f6740a; background:#fff3e8; }
+.sim-field.invalid .sim-choice{ border-color:#b3261e; }
+.sim-field .sim-tag{ margin-left:.35rem; vertical-align:1px; }
 /* The preview column follows the list while scrolling (the column, not the card, is the grid item). */
 @media (min-width: 1024px){ .svc-side{ position:sticky; top:calc(var(--topbar-h) + 1rem); } }
 

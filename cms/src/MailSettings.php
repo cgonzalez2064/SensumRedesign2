@@ -159,6 +159,35 @@ final class MailSettings
         ];
     }
 
+    /**
+     * Only who receives the contact form's messages (owner, from Sitio web →
+     * Formulario de contacto); everything else is kept.
+     * @return list<string> the saved addresses
+     */
+    public function saveContactRecipients(mixed $to): array
+    {
+        if ($this->locked()) {
+            throw new ApiError(409, 'settings_locked');
+        }
+        if (!is_array($to) || !array_is_list($to) || !$to || count($to) > 3) {
+            throw ApiError::validation(['to' => $to ? 'too_many' : 'required']);
+        }
+        $clean = [];
+        foreach ($to as $i => $v) {
+            $v = is_string($v) ? strtolower(trim($v)) : '';
+            if ($v === '' || strlen($v) > 120 || !filter_var($v, FILTER_VALIDATE_EMAIL) || preg_match('/[^\x21-\x7E]/', $v)) {
+                throw ApiError::validation(["to.{$i}" => 'invalid_email']);
+            }
+            $clean[] = $v;
+        }
+        $stored = $this->app->settings()->getJson(self::KEY);
+        $stored['contact'] = array_merge(is_array($stored['contact'] ?? null) ? $stored['contact'] : [], ['to' => array_values(array_unique($clean))]);
+        $stored['updatedAt'] = time();
+        $this->app->settings()->setJson(self::KEY, $stored);
+        $this->stored = null;
+        return $this->contact()['to'];
+    }
+
     /** Validates and stores the owner's settings. An empty password keeps the saved one. */
     public function save(array $in): void
     {

@@ -139,9 +139,15 @@ export async function detail({ main, params }) {
 
     const warn = !l.notified ? alertBox('warn', null, t('leads.notNotifiedLong')) : null;
 
+    // The message, and the answers to the form's extra questions (Formulario de contacto).
+    const answers = (l.answers || []).length
+      ? h('div', { class: 'stack-sm' }, h('h3', { class: 'small-title', text: t('leads.answers') }),
+        h('dl', { class: 'kv kv-tight lead-answers' }, l.answers.map((a) => [h('dt', { text: a.label }), h('dd', { text: a.value })])))
+      : null;
     const message = h('section', { class: 'card', 'aria-labelledby': 'ld-msg' },
       cardHead({ id: 'ld-msg', icon: 'chat-square-text', title: t('leads.message') }),
-      h('div', { class: 'report-desc', text: l.message }));
+      l.message ? h('div', { class: 'report-desc', text: l.message }) : h('p', { class: 'muted small', text: t('leads.noMessage') }),
+      answers);
 
     // Notes and history.
     const timeline = h('ol', { class: 'timeline', 'aria-label': t('leads.history') }, notes.length

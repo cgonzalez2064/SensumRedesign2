@@ -37,7 +37,8 @@ final class Leads
      * today's safety limit was reached.
      * @param array{name:string,phone:string,email:string,service:string,message:string} $lead
      */
-    public function capture(array $lead, string $lang = 'es', ?int $now = null): ?int
+    /** @param list<array{id:string,label:string,value:string}> $answers the extra questions' answers */
+    public function capture(array $lead, string $lang = 'es', ?int $now = null, array $answers = []): ?int
     {
         $now ??= time();
         $db = $this->app->db();
@@ -46,9 +47,9 @@ final class Leads
             return null;
         }
         return $db->insert(
-            'INSERT INTO leads (name, email, phone, service, message, lang, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO leads (name, email, phone, service, message, lang, answers, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [self::line($lead['name'], 120), self::line($lead['email'], 180), self::line($lead['phone'], 30), self::line($lead['service'], 120),
-                mb_substr(self::multiline($lead['message']), 0, 4000), $lang === 'en' ? 'en' : 'es', $now, $now]
+                mb_substr(self::multiline($lead['message']), 0, 4000), $lang === 'en' ? 'en' : 'es', self::answersJson($answers), $now, $now]
         );
     }
 
@@ -108,6 +109,7 @@ final class Leads
             'phone' => (string) $l['phone'],
             'service' => (string) $l['service'],
             'message' => (string) $l['message'],
+            'answers' => self::answers($l['answers'] ?? '[]'),
             'lang' => (string) $l['lang'],
             'status' => (string) $l['status'],
             'amount' => $l['amount'] !== null ? (int) $l['amount'] : null,
@@ -249,7 +251,7 @@ final class Leads
         $rows = $this->app->db()->all('SELECT * FROM leads' . ($where ? ' WHERE ' . implode(' AND ', $where) : '') . ' ORDER BY created_at DESC, id DESC', $params);
         $out = fopen('php://temp', 'w+');
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, array_map(fn ($k) => $s['leads.csv.' . $k], ['id', 'date', 'name', 'email', 'phone', 'service', 'status', 'amount', 'message']), ',', '"', '');
+        fputcsv($out, array_map(fn ($k) => $s['leads.csv.' . $k], ['id', 'date', 'name', 'email', 'phone', 'service', 'status', 'amount', 'message', 'answers']), ',', '"', '');
         foreach ($rows as $r) {
             fputcsv($out, array_map([self::class, 'cell'], [
                 (string) $r['id'],
@@ -258,12 +260,36 @@ final class Leads
                 $s['leads.status.' . $r['status']] ?? $r['status'],
                 $r['amount'] !== null ? (string) (int) $r['amount'] : '',
                 $r['message'],
+                implode(' | ', array_map(fn ($a) => $a['label'] . ': ' . $a['value'], self::answers($r['answers'] ?? '[]'))),
             ]), ',', '"', '');
         }
         rewind($out);
         $csv = (string) stream_get_contents($out);
         fclose($out);
         return $csv;
+    }
+
+    /** @param list<array{id:string,label:string,value:string}> $answers */
+    private static function answersJson(array $answers): string
+    {
+        $clean = [];
+        foreach (array_slice($answers, 0, ContactFormFields::MAX_FIELDS) as $a) {
+            $clean[] = ['id' => mb_substr((string) $a['id'], 0, 24), 'label' => self::line((string) $a['label'], ContactFormFields::MAX_LABEL), 'value' => mb_substr(self::multiline((string) $a['value']), 0, 4000)];
+        }
+        return (string) json_encode($clean, JSON_UNESCAPED_UNICODE);
+    }
+
+    /** @return list<array{id:string,label:string,value:string}> */
+    public static function answers(mixed $json): array
+    {
+        $list = json_decode(is_string($json) ? $json : '[]', true);
+        $out = [];
+        foreach (is_array($list) ? $list : [] as $a) {
+            if (is_array($a) && is_string($a['label'] ?? null) && is_string($a['value'] ?? null)) {
+                $out[] = ['id' => (string) ($a['id'] ?? ''), 'label' => $a['label'], 'value' => $a['value']];
+            }
+        }
+        return $out;
     }
 
     public static function cell(mixed $v): string

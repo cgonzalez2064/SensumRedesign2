@@ -135,7 +135,7 @@ test('CSV export: Excel-friendly, filtered, and formula-safe', async () => {
   const buf = Buffer.from(await res.arrayBuffer());
   assert.deepEqual([...buf.subarray(0, 3)], [0xef, 0xbb, 0xbf], 'UTF-8 BOM for Excel');
   const csv = buf.subarray(3).toString('utf8');
-  assert.equal(csv.split("\n")[0], "Número,Fecha,Nombre,Correo,Teléfono,Servicio,Estado,\"Monto (Q)\",Mensaje");
+  assert.equal(csv.split("\n")[0], "Número,Fecha,Nombre,Correo,Teléfono,Servicio,Estado,\"Monto (Q)\",Mensaje,\"Otras respuestas\"");
   assert.ok(csv.includes(`"'=HYPERLINK(""http://evil.example"",""x"")"`), 'formula neutralised');
   assert.ok(csv.includes("'+1 llamar urgente"), 'leading + neutralised');
   assert.ok(csv.includes('Ganado') && csv.includes('150000'));

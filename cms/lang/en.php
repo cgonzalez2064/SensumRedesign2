@@ -386,6 +386,7 @@ return [
     'leads.csv.service' => 'Service',
     'leads.csv.status' => 'Status',
     'leads.csv.amount' => 'Amount (Q)',
+    'leads.csv.answers' => 'Other answers',
     'leads.csv.message' => 'Message',
     'leads.status.new' => 'New',
     'leads.status.contacted' => 'Contacted',

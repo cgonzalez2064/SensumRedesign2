@@ -70,6 +70,9 @@ const ALLOWED_SERVICES = [
     'other' => 'Otro',
 ];
 const ALLOWED_FIELDS = ['name', 'phone', 'email', 'service', 'message', 'website', 'loaded_at', 'captcha', 'cf-turnstile-response', 'lang'];
+// Always accepted besides the questions (the Content Manager may add questions:
+// Sitio web → Formulario de contacto).
+const SYSTEM_FIELDS = ['website', 'loaded_at', 'captcha', 'cf-turnstile-response', 'lang'];
 // Built-in captcha: the browser tries up to this many numbers (about half on
 // average): well under a second on a computer, 1–3 s on a phone, done in
 // the background while the visitor types.
@@ -232,13 +235,26 @@ if (!originAllowed()) {
 }
 
 // ------------------------------------------------------------
-// Reject unexpected fields and non-scalar values up front.
+// Reject unexpected fields and non-scalar values up front. With the Content
+// Manager, the questions are the ones configured in the panel; a question
+// with checkboxes sends a short list.
 // ------------------------------------------------------------
+$questions = null; // id => type, when the Content Manager is available
+if (sensumCmsApp()) {
+    try {
+        $questions = sensumCmsApp()->contactFormFields()->postNames();
+    } catch (\Throwable $e) {
+        error_log('[sensum-contact] questions_unavailable');
+    }
+}
 foreach ($_POST as $key => $value) {
-    if (!in_array($key, ALLOWED_FIELDS, true)) {
+    $known = $questions !== null ? (isset($questions[$key]) || in_array($key, SYSTEM_FIELDS, true)) : in_array($key, ALLOWED_FIELDS, true);
+    if (!$known) {
         respond(400, false, ['error' => 'unexpected_field']);
     }
-    if (!is_scalar($value)) {
+    $isList = $questions !== null && ($questions[$key] ?? '') === 'checkbox' && is_array($value) && array_is_list($value)
+        && count($value) <= 20 && count(array_filter($value, 'is_scalar')) === count($value);
+    if (!is_scalar($value) && !$isList) {
         respond(400, false, ['error' => 'invalid_field_type']);
     }
 }
@@ -541,37 +557,48 @@ if ($cmsApp) {
     }
 }
 
-$name    = field('name');
-$phone   = field('phone');
-$email   = field('email');
-$service = field('service');
-$message = fieldMultiline('message');
+$answers = []; // the extra questions' answers (Content Manager)
+if ($questions !== null) {
+    // The questions, required fields and options configured in the panel.
+    $read = $cmsApp->contactFormFields()->readSubmission($_POST);
+    if ($read['errors']) {
+        respond(422, false, ['error' => 'validation', 'fields' => $read['errors']]);
+    }
+    ['name' => $name, 'phone' => $phone, 'email' => $email, 'service' => $service, 'message' => $message] = $read['lead'];
+    $answers = $read['answers'];
+} else {
+    $name    = field('name');
+    $phone   = field('phone');
+    $email   = field('email');
+    $service = field('service');
+    $message = fieldMultiline('message');
 
-$errors = [];
+    $errors = [];
 
-if (utf8Len($name) < 2 || utf8Len($name) > 120) {
-    $errors[] = 'name';
-}
+    if (utf8Len($name) < 2 || utf8Len($name) > 120) {
+        $errors[] = 'name';
+    }
 
-if (!preg_match('/^[0-9+\-\s()]{8,30}$/u', $phone)) {
-    $errors[] = 'phone';
-}
+    if (!preg_match('/^[0-9+\-\s()]{8,30}$/u', $phone)) {
+        $errors[] = 'phone';
+    }
 
-if (utf8Len($email) > 180 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    $errors[] = 'email';
-}
+    if (utf8Len($email) > 180 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = 'email';
+    }
 
-$service = serviceLabel($service);
-if ($service === null) {
-    $errors[] = 'service';
-}
+    $service = serviceLabel($service);
+    if ($service === null) {
+        $errors[] = 'service';
+    }
 
-if (utf8Len($message) < 10 || utf8Len($message) > 4000) {
-    $errors[] = 'message';
-}
+    if (utf8Len($message) < 10 || utf8Len($message) > 4000) {
+        $errors[] = 'message';
+    }
 
-if (!empty($errors)) {
-    respond(422, false, ['error' => 'validation', 'fields' => $errors]);
+    if (!empty($errors)) {
+        respond(422, false, ['error' => 'validation', 'fields' => $errors]);
+    }
 }
 
 $name  = cleanHeaderValue($name);
@@ -581,16 +608,17 @@ $subject = '=?UTF-8?B?' . base64_encode('Nuevo contacto desde ' . SITE_NAME . ':
 
 $body = "Nuevo mensaje desde el formulario de contacto de " . SITE_NAME . "\n\n"
     . "Nombre: $name\n"
-    . "Teléfono: $phone\n"
-    . "Correo: $email\n"
-    . "Servicio de interés: $service\n\n"
-    . "Mensaje:\n$message\n";
+    . "Teléfono: " . ($phone !== '' ? $phone : '—') . "\n"
+    . "Correo: " . ($email !== '' ? $email : '—') . "\n"
+    . ($service !== '' ? "Servicio de interés: $service\n" : '')
+    . implode('', array_map(function ($a) { return $a['label'] . ': ' . $a['value'] . "\n"; }, $answers))
+    . ($message !== '' ? "\nMensaje:\n$message\n" : '');
 
 // Reply-To is the only place the visitor's email appears in the sent
 // message — the From/Sender domain is always the hardcoded, verified
 // SENDER_DOMAIN, never anything derived from request input.
 $headers = "From: " . SITE_NAME . " <" . FROM_EMAIL . ">\r\n"
-    . "Reply-To: =?UTF-8?B?" . base64_encode($name) . "?= <$email>\r\n"
+    . ($email !== '' ? "Reply-To: =?UTF-8?B?" . base64_encode($name) . "?= <$email>\r\n" : '')
     . "MIME-Version: 1.0\r\n"
     . "Content-Type: text/plain; charset=UTF-8\r\n";
 
@@ -608,7 +636,7 @@ $lead = ['name' => $name, 'phone' => $phone, 'email' => $email, 'service' => $se
 $leadId = null;
 if ($cmsApp) {
     try {
-        $leadId = $cmsApp->leads()->capture($lead, ($_POST['lang'] ?? '') === 'en' ? 'en' : 'es');
+        $leadId = $cmsApp->leads()->capture($lead, ($_POST['lang'] ?? '') === 'en' ? 'en' : 'es', null, $answers);
     } catch (\Throwable $e) {
         error_log('[sensum-contact] lead_store_failed');
     }
@@ -634,7 +662,7 @@ $sent = null;
 // Content Manager settings first (owner → Administración → Correo).
 if ($cmsApp) {
     try {
-        $sent = $cmsApp->contactForm()->deliver($lead, $leadId);
+        $sent = $cmsApp->contactForm()->deliver($lead, $leadId, $answers);
     } catch (\Throwable $e) {
         error_log('[sensum-contact] cms_delivery_threw');
         $sent = null;

@@ -59,7 +59,7 @@ test('with PUBLIC_ERROR_REPORTING=true the reporter is added and reports are sto
   try {
     p.cli(['publish']);
     const html = p.readPublic('index.html');
-    assert.ok(html.includes('<script src="assets/error-reporter.js?v=5" defer></script>'));
+    assert.match(html, /<script src="assets\/error-reporter\.js\?v=\d+" defer><\/script>/);
     assert.ok(html.includes('static.cloudflareinsights.com/beacon.min.js'));
     assert.ok(html.includes('{"token": "0123456789abcdef0123456789abcdef"}'));
     createAdmin(p);
