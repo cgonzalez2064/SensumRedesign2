@@ -478,6 +478,19 @@ pide tu contraseña otra vez y te envía un aviso de seguridad por correo.
 Pulsa **Guardar configuración** y luego **Enviar correo de prueba** y **Enviar mensaje
 de prueba**: deben llegar a `it@gruposensum.com` y a `contacto@` (revisa spam).
 
+> **Quién recibe los mensajes** también se puede cambiar desde **Sitio web →
+> Formulario de contacto → ¿Quién recibe los mensajes?** (solo la cuenta propietaria,
+> con su contraseña; llega un aviso de seguridad). Es el mismo ajuste.
+
+### 13.2b Preguntas del formulario
+
+Panel → **Sitio web → Formulario de contacto**: cambia el texto de cada pregunta,
+márcala obligatoria u opcional, ordénalas, agrega preguntas (texto corto, párrafo,
+correo, teléfono, número, fecha, lista desplegable, opción única o casillas) y edita
+las opciones de «Servicio de interés». El nombre siempre se pide y al menos el correo
+o el teléfono queda obligatorio. Las respuestas extra llegan en el correo, quedan en
+**Prospectos** y salen en el CSV. Al guardar, el sitio se publica solo.
+
 ### 13.3 Captcha del formulario (protección contra spam)
 
 - **Captcha integrado: siempre activo, no requiere nada.** El navegador del visitante
@@ -693,9 +706,13 @@ que **no hace falta banner de cookies**. Quien pide «No rastrear» no se cuenta
   cambiarlo, el sitio se vuelve a publicar y el aviso de privacidad se ajusta solo.
 - Las cifras son algo menores que las de otras herramientas (no cuentan robots ni
   navegadores que piden privacidad): es lo esperado.
-- El aviso de privacidad mantiene los **[PLACEHOLDER]** legales que debe revisar
-  asesoría legal antes de publicar; los párrafos de estadísticas y conservación ya
-  describen el funcionamiento real.
+- El **aviso de privacidad** ya está completo, sin marcadores pendientes: describe lo
+  que el sitio hace de verdad (formulario, estadísticas sin cookies, protección
+  anti-spam, hosting y correo en Namecheap/EE. UU., derechos y plazo de respuesta de 10
+  días hábiles) conforme a la legislación de Guatemala. Las partes de estadísticas,
+  conservación y Turnstile se actualizan solas con la configuración del panel.
+  Recomendado: que asesoría legal lo lea una vez; si cambias de hosting o de correo,
+  hay que actualizar la sección 5.
 
 ### 18.3 Soporte (Centro de Ayuda): tiempo de respuesta, satisfacción y gráficas
 
@@ -769,9 +786,18 @@ Con ella, al escribir un texto en español el inglés se llena solo (y al revés
 **Textos del sitio**, **opciones del formulario de contacto** y **descripciones de
 fotos**; la persona lo revisa antes de guardar. Se configura **desde el panel**:
 
-1. Crea una cuenta **DeepL API Free** en https://www.deepl.com/pro-api (el plan API,
-   no la app; pide tarjeta solo para verificar, no cobra). En *API Keys* copia la
-   clave (termina en `:fx`). Incluye 500,000 caracteres al mes.
+1. Crea una cuenta gratuita de **DeepL API** en https://www.deepl.com/pro-api (el plan
+   API, no la app; pide tarjeta solo para verificar, no cobra). En *API Keys* copia la
+   clave. El plan gratuito actual para desarrolladores incluye **1,000,000 de
+   caracteres en total** (no se renueva; las claves «API Free» anteriores tienen 500,000
+   al mes). Todos los textos del sitio suman unos 5,000 caracteres, así que alcanza
+   para años de ediciones normales.
+
+   > **El botón ES/EN del sitio no usa DeepL.** Los dos idiomas quedan guardados y
+   > publicados en la página; el cambio ocurre en el navegador del visitante. DeepL
+   > solo propone el inglés en el panel mientras alguien escribe (se revisa y se
+   > guarda). Si el plan se acaba, el panel deja de llenarlo solo, el inglés se
+   > escribe a mano y el sitio sigue funcionando igual.
 2. Panel → **Administración → Traducción**: pega la clave, deja activado **Usar
    traducción automática**, **Guardar cambios** (pide tu contraseña).
 3. **Probar conexión**: debe decir «La clave funciona (DeepL API Free)» con el
@@ -793,7 +819,8 @@ también puedes comprobarla: `php ~/sensum-cms/bin/console translate:test`.
 - [ ] **Formulario de contacto:** envía un mensaje real desde el sitio (en celular y computadora). Bajo el botón aparece «Verificación anti-spam completa.» y el mensaje llega a `contacto@sensumconstrucciones.com` con remitente `formulario@`; al responderlo, la respuesta va al visitante.
 - [ ] (Si activaste Turnstile) el formulario sigue enviando y no muestra errores; en Cloudflare → Turnstile aparecen las verificaciones.
 - [ ] **Soporte (Centro de Ayuda):** con otra cuenta pulsa **Nueva solicitud** y envía una de prueba (aparece en **Mis solicitudes**); como it@gruposensum.com ábrelo, usa **Pedir más información** y luego **Marcar como resuelto**; la persona recibe ambos correos.
-- [ ] (Opcional) Panel → **Formulario de contacto**: ajusta las opciones de «Servicio de interés» a los servicios que ofreces hoy. La **vista previa** funciona como el sitio: cambia entre **Celular, Tableta y Computadora**, abre la lista (las opciones sin guardar dicen «Nueva» o «Modificada») y pulsa «Enviar mensaje» para ver los mensajes de error (no se envía nada). Luego **Guardar y publicar** y compruébalo en el sitio (español e inglés).
+- [ ] (Opcional) Panel → **Formulario de contacto**: ajusta las preguntas y las opciones de «Servicio de interés» a lo que necesitas hoy. La **vista previa** funciona como el sitio: cambia entre **Celular, Tableta y Computadora**, las preguntas sin guardar dicen «Nueva» o «Modificada» y «Enviar mensaje» muestra los errores (no se envía nada). Luego **Guardar y publicar**, compruébalo en el sitio (español e inglés) y envía un mensaje de prueba: las respuestas extra aparecen en el correo y en **Prospectos**.
+- [ ] **Aviso de privacidad** (`/privacy-notice.html`): léelo completo; dice el plazo de conservación elegido en Prospectos y, si activaste Turnstile, menciona a Cloudflare. Si cambias de proveedor de hosting o correo, avísanos para actualizarlo.
 - [ ] **Correo del panel:** panel → Correo → **Enviar correo de prueba** → llega a it@gruposensum.com.
 - [ ] Inicias sesión en `https://app.sensumconstrucciones.com` como it@gruposensum.com; ves Usuarios, Monitoreo, Informe mensual y Correo. El botón **Ver sitio** abre `https://sensumconstrucciones.com`.
 - [ ] Los enlaces de los correos (invitación, bienvenida, «Prospecto #…», solicitudes) abren `https://app.sensumconstrucciones.com/admin/…`.

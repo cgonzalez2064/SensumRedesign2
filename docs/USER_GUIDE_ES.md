@@ -114,28 +114,41 @@ aviso de privacidad.
 * **Google Maps:** en Google Maps busca la dirección, toca **Compartir** y copia el
   enlace. Con **Probar enlace** puedes comprobarlo.
 
-### Opciones del formulario («Servicio de interés»)
+### Formulario de contacto: preguntas, orden y quién recibe los mensajes
 
-En **Formulario de contacto** (menú *Sitio web*) decides qué opciones elige el
-visitante en «Servicio de interés»:
+En **Formulario de contacto** (menú *Sitio web*) decides qué le pregunta el sitio al
+visitante:
 
-* **Agregar opción:** escribe el nombre en español; el inglés es opcional (si lo
-  dejas vacío, en la versión en inglés se muestra el texto en español). Las
-  opciones nuevas se colocan antes de «Otro».
-* **Cambiar el nombre:** escribe sobre el texto. El correo que recibes muestra la
-  opción elegida en español.
-* **Ordenar:** flechas ↑ ↓ de cada opción.
+* **Cambiar una pregunta:** toca el lápiz ✎. Escribe la pregunta en español (el inglés
+  es opcional: si lo dejas vacío, en inglés se muestra el español), un **texto de
+  ayuda** opcional (aparece en letra pequeña debajo), si es **Obligatoria** y si ocupa
+  **media fila** o **fila completa** (dos preguntas de media fila seguidas quedan una
+  al lado de la otra en computadora). Pulsa **Listo**.
+* **Agregar pregunta:** elige el tipo de respuesta: **Texto corto**, **Párrafo**,
+  **Correo**, **Teléfono**, **Número** (con mínimo y máximo), **Fecha** (puede pedir
+  solo fechas desde hoy), **Lista desplegable**, **Opción única** (todas las opciones
+  a la vista) o **Casillas** (puede marcar varias). Las listas, opciones únicas y
+  casillas llevan sus **opciones** en español e inglés.
+* **Ordenar:** arrastra con el asa ⋮⋮ o usa las flechas ↑ ↓.
 * **Eliminar:** ícono de papelera; aparece **Deshacer** por unos segundos.
-* La **Vista previa** es una copia que funciona como el formulario del sitio (no envía
-  nada): cambia entre **Celular**, **Tableta** y **Computadora** para ver cómo se
-  acomoda, y entre español e inglés. Toca «Servicio de interés» (o **Abrir la lista**)
-  para ver las opciones: las que aún no guardas dicen **Nueva** o **Modificada**.
-  Puedes escribir en los campos y pulsar **Enviar mensaje** para ver los mensajes de
-  error que verá el visitante.
-* **Guardar y publicar** actualiza el sitio en ese momento. **Restaurar las opciones
-  originales** vuelve a las 7 opciones aprobadas (después pulsa Guardar).
+* **Reglas fijas:** el **nombre** siempre se pide y es obligatorio. El **correo** y el
+  **teléfono** se pueden quitar de uno en uno, pero al menos uno queda y es
+  obligatorio, para poder responderle al cliente.
+* Las opciones de **«Servicio de interés»** se editan igual (lápiz → Opciones).
+* La **Vista previa** funciona como el formulario del sitio (no envía nada): cambia
+  entre **Celular**, **Tableta** y **Computadora** y entre español e inglés; los
+  cambios sin guardar dicen **Nueva** o **Modificada**. Escribe y pulsa **Enviar
+  mensaje** para ver los mensajes de error que verá el visitante.
+* **Guardar y publicar** actualiza el sitio en ese momento. **Restaurar el formulario
+  original** vuelve a las 5 preguntas aprobadas (después pulsa Guardar).
+* **¿Quién recibe los mensajes?** (solo la cuenta propietaria): hasta 3 correos. Al
+  guardar te pide tu contraseña y te llega un aviso de seguridad. Las demás personas
+  solo ven a quién llegan.
 
-Máximo 20 opciones, de 2 a 60 caracteres, sin nombres repetidos.
+Las respuestas llegan en el correo de cada mensaje, quedan en **Prospectos** («Otras
+respuestas del formulario») y salen en el CSV. Hasta 15 preguntas y 20 opciones por
+pregunta. Pide solo lo necesario: los formularios cortos reciben más mensajes, y no
+pidas datos sensibles (salud, documentos de identidad, datos bancarios).
 
 ## 5. Cambiar fotos
 
@@ -523,9 +536,11 @@ menú: **Estado del sitio → Salud del sitio**.
 
 ## 20. Para la cuenta propietaria: Traducción automática
 
-En **Administración → Traducción** pegas la clave de **DeepL API Free** (gratuita,
-500,000 caracteres al mes), la activas o desactivas y pulsas **Probar conexión** para
-ver si funciona y cuánto se ha usado en el mes. La clave se guarda cifrada y no se
+En **Administración → Traducción** pegas la clave gratuita de **DeepL API** (las
+claves nuevas incluyen 1,000,000 de caracteres en total; todo el sitio son unos 5,000),
+la activas o desactivas y pulsas **Probar conexión** para ver si funciona y cuánto
+llevas usado. El botón ES/EN del sitio no usa DeepL: si el plan se acaba, el inglés se
+escribe a mano y el sitio sigue igual. La clave se guarda cifrada y no se
 vuelve a mostrar; los cambios piden tu contraseña. Con la traducción activada, al
 escribir en un idioma se llena el otro en Textos del sitio, opciones del formulario de
 contacto y descripciones de fotos.

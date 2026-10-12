@@ -113,8 +113,10 @@ so a slow screen can never write into the next one).
 Off until the owner adds a DeepL key in **Administración → Traducción** (stored
 encrypted with `Secrets`, purpose `deepl-key`; never returned; password to save;
 on/off switch; connection test with usage) — `DEEPL_API_KEY` in `.env` remains the
-fallback and the panel key wins. DeepL API Free: 500,000 characters/month; all of
-the site's editable text is ≈ 5,000 characters per language. Then, in **Textos del
+fallback and the panel key wins. DeepL's free plan for new keys is 1,000,000 characters in
+total (older "API Free" keys: 500,000 a month); "Test connection" shows what the key
+reports. All of the site's editable text is ≈ 5,000 characters per language. Only the
+panel uses DeepL (while someone types); the public ES/EN toggle never does. Then, in **Textos del
 sitio** — and the same way (`admin/js/autotranslate.js`) in the **contact-form
 options** and **photo descriptions**, which send plain labels without a field key:
 
@@ -262,7 +264,9 @@ nothing.
 | `GET`/`PUT /api/settings/translation` · `POST /api/settings/translation/test` | owner | DeepL key (encrypted, never returned; password to save), on/off, connection test with usage |
 | `GET /api/security` · `PUT /api/security/backup` · `POST /api/security/backup/send` · `POST /api/security/backup/download` · `PUT /api/security/policy` | owner | off-server encrypted backup settings (password), send now, download (password); who must use two-step sign-in (password) |
 | `POST /api/users/{id}/2fa-reset` | owner | turn off someone else's two-step sign-in (password; ends their sessions; never your own) |
-| `GET`/`PUT /api/contact-form/services` | contact | "Servicio de interés" options (PUT: `items` [{id?, es, en}], `version`; publishes; 409 `conflict`) |
+| `GET`/`PUT /api/contact-form` | contact | The form's questions (`ContactFormFields`): `fields` [{id?, core, type, label{es,en}, help{es,en}, required, width, options?, max?, min?, future?}], `version`; publishes; 409 `conflict`; 422 keyed `fields.<n>.<what>` (`name_required`, `contact_required`, …). GET also returns `defaults`, `limits` and `recipients` {to, canEdit (owner), max} |
+| `PUT /api/contact-form/recipients` | owner | Who receives the form's messages: `to` (1–3 addresses) + `currentPassword`; security notice to the owner |
+| `GET`/`PUT /api/contact-form/services` | contact | "Servicio de interés" options only (older endpoint, kept in step: PUT `items` [{id?, es, en}], `version`; publishes; 409 `conflict`) |
 | `GET`/`PUT /api/settings/email` · `POST /api/settings/email/test` | owner | e-mail settings (PUT needs `currentPassword`), test e-mails (`target`: `panel` / `contact`) |
 | `GET /assets/contact-handler.php?challenge=1` | public | signed single-use captcha challenge for the contact form |
 | `POST /api/site/republish` | admin | regenerate pages |

@@ -256,8 +256,9 @@ uses aggressive filtering).
    (shows a sample translation and the characters used this month), or open
    Dashboard → *Diagnóstico técnico* → "Traducción automática (DeepL)".
 
-The free plan allows 500,000 characters per month; all of the site's editable
-text is about 5,000 characters per language. `TRANSLATE_DAILY_CHAR_LIMIT` caps
+DeepL's free developer plan is 1,000,000 characters in total (older API Free keys:
+500,000 a month); all of the site's editable text is about 5,000 characters per
+language, and only the panel calls DeepL (the public ES/EN toggle never does). `TRANSLATE_DAILY_CHAR_LIMIT` caps
 daily use. Without a key the panel works exactly the same, minus automatic
 translation. Outgoing HTTPS from PHP (curl) is enabled on Namecheap shared
 hosting; nothing else needs configuring.

@@ -212,9 +212,9 @@ const TREE = N('root', 'Sensum Construcciones', 'Website + Content Manager', {
     N('site-js', 'Behaviour', 'main.js', {
       d: 'Mobile menu (focus trap, Escape, backdrop), project gallery modal (arrows, keyboard, focus return), FAQ accordion, reveal animations that respect reduced motion, the language toggle and the contact-form validation that keeps what the visitor typed.',
       files: ['assets/main.js', 'assets/main.css'], tech: ['Vanilla JS', 'CSS'] }),
-    N('site-form', 'Contact form', 'Leads with spam protection', {
-      d: 'Name, phone, e-mail, “Servicio de interés” (options managed in the panel) and message. An invisible proof-of-work captcha always runs; Cloudflare Turnstile can be added from the panel. The handler stores the lead first, then e-mails it.',
-      files: ['assets/contact-handler.php', 'cms/src/ContactForm.php', 'cms/src/ContactServices.php'], tech: ['Proof-of-work captcha', 'Cloudflare Turnstile (optional)'], rel: ['p-lead'] }),
+    N('site-form', 'Contact form', 'Configurable questions + spam protection', {
+      d: 'The questions are configured in the panel: name (always), e-mail and/or phone (at least one required), “Servicio de interés”, the message, and up to 15 questions of 9 types (short text, paragraph, e-mail, phone, number, date, drop-down, single choice, checkboxes), each required or optional, in Spanish and English. The handler checks every answer against the saved questions, stores the lead (extra answers included) and then e-mails it. An invisible proof-of-work captcha always runs; Cloudflare Turnstile can be added from the panel.',
+      files: ['assets/contact-handler.php', 'cms/src/ContactFormFields.php', 'cms/src/ContactForm.php', 'cms/src/ContactServices.php'], tech: ['Proof-of-work captcha', 'Cloudflare Turnstile (optional)'], rel: ['p-lead'] }),
     N('site-stats', 'Visit statistics', 'stats.js · no cookies', {
       d: 'A tiny script sends one beacon per visit (page, source, device, language) and per contact click (WhatsApp, phone, e-mail, map, portfolio). No cookies, no IP addresses; “Do Not Track” and robots are ignored.',
       files: ['assets/stats.js', 'cms/src/Analytics.php'], rel: ['p-stats'] }),
@@ -309,7 +309,7 @@ const TREE = N('root', 'Sensum Construcciones', 'Website + Content Manager', {
       rel: ['be-content', 'site-pages', 'p-translate'] }),
     N('p-lead', 'Contact form → lead', 'From visitor to project', {
       d: 'Every message from the website becomes a lead the sales team can follow up.',
-      steps: ['A visitor fills in the form on the website', 'The browser solves the invisible captcha (and Turnstile, if enabled)', 'contact-handler.php validates, limits abuse and filters spam', 'The lead is saved (up to 200 a day) before any e-mail', 'An e-mail goes to the contact inbox with a link to the lead', 'Sales moves it: contacted → quoted → won or lost (with amount) and adds notes', 'It shows in Estadísticas and in the monthly report; old leads are deleted after the chosen retention'],
+      steps: ['A visitor answers the questions configured in the panel (Formulario de contacto)', 'The browser solves the invisible captcha (and Turnstile, if enabled)', 'contact-handler.php checks each answer against the saved questions, limits abuse and filters spam', 'The lead is saved with its extra answers (up to 200 a day) before any e-mail', 'An e-mail goes to the recipients the owner chose, with every answer and a link to the lead', 'Sales moves it: contacted → quoted → won or lost (with amount) and adds notes', 'It shows in Estadísticas and in the monthly report; old leads are deleted after the chosen retention'],
       rel: ['site-form', 'be-business', 'data-privacy'] }),
     N('p-stats', 'Visit statistics', 'Cookie-free, first-party', {
       steps: ['The page loads stats.js', 'One beacon per visit and per contact click goes to /api/collect (origin checked)', 'Counts are added per day; no cookies, no IP addresses', 'Estadísticas shows visits, sources, devices, clicks and the path to won projects', 'People with the basic statistics access see visits without contact-form data'],

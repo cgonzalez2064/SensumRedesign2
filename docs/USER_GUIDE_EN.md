@@ -110,26 +110,39 @@ section, footer, green WhatsApp button, error page and privacy notice.
 * **Google Maps:** search the address in Google Maps, tap **Share** and copy the
   link. Use **Test link** to check it.
 
-### Form options ("Service of interest")
+### Contact form: questions, order and who receives the messages
 
-Under **Contact form** (*Website* menu) you decide which options visitors choose
-from in "Service of interest":
+Under **Contact form** (*Website* menu) you decide what the website asks visitors:
 
-* **Add option:** type the Spanish name; English is optional (if empty, the
-  English version shows the Spanish text). New options go before "Other".
-* **Rename:** type over the text. The e-mail you receive shows the chosen option
-  in Spanish.
-* **Reorder:** the ↑ ↓ arrows of each option.
+* **Change a question:** tap the pencil ✎. Write the question in Spanish (English is
+  optional: if empty, English shows the Spanish), an optional **help text** (small
+  print under it), whether it is **Required**, and whether it takes a **half row** or
+  a **full row** (two half-row questions in a row sit side by side on computers).
+  Press **Done**.
+* **Add a question:** choose the kind of answer: **Short text**, **Paragraph**,
+  **E-mail**, **Phone**, **Number** (with minimum and maximum), **Date** (can ask for
+  dates from today on only), **Drop-down list**, **Single choice** (all options
+  visible) or **Checkboxes** (several can be ticked). Lists, single choices and
+  checkboxes have their **options** in Spanish and English.
+* **Reorder:** drag by the ⋮⋮ handle or use the ↑ ↓ arrows.
 * **Remove:** the bin icon; **Undo** appears for a few seconds.
-* The **Preview** is a working copy of the website's form (nothing is sent): switch
-  between **Phone**, **Tablet** and **Computer** to see how it adapts, and between
-  Spanish and English. Tap "Service of interest" (or **Open the list**) to see the
-  options: those not saved yet say **New** or **Edited**. You can type in the fields
-  and press **Send message** to see the error messages visitors would see.
-* **Save and publish** updates the website right away. **Restore the original
-  options** brings back the 7 approved options (then press Save).
+* **Fixed rules:** the **name** is always asked and required. **E-mail** and **phone**
+  can be removed one at a time, but at least one stays and is required, so the
+  customer can be answered.
+* The **"Service of interest"** options are edited the same way (pencil → Options).
+* The **Preview** works like the website's form (nothing is sent): switch between
+  **Phone**, **Tablet** and **Computer** and between Spanish and English; unsaved
+  changes say **New** or **Edited**. Type and press **Send message** to see the error
+  messages visitors would see.
+* **Save and publish** updates the website right away. **Restore the original form**
+  brings back the 5 approved questions (then press Save).
+* **Who receives the messages?** (owner account only): up to 3 addresses. Saving asks
+  for your password and sends you a security notice. Everyone else only sees them.
 
-Up to 20 options, 2 to 60 characters, no repeated names.
+The answers arrive in each message's e-mail, are kept in **Prospectos** ("Other
+answers from the form") and appear in the CSV. Up to 15 questions and 20 options per
+question. Ask only what you need — short forms get more messages — and never ask for
+sensitive data (health, ID documents, bank details).
 
 ## 5. Changing photos
 
@@ -498,9 +511,11 @@ status → Site health**.
 
 ## 20. For the owner account: automatic translation
 
-In **Administration → Translation** you paste the **DeepL API Free** key (free,
-500,000 characters a month), switch it on or off and press **Test connection** to
-check it works and see this month's usage. The key is stored encrypted and never
+In **Administration → Translation** you paste the free **DeepL API** key (new keys
+include 1,000,000 characters in total; the whole site is about 5,000), switch it on or
+off and press **Test connection** to check it works and see how much is used. The
+site's ES/EN toggle never uses DeepL: if the plan runs out, English is written by hand
+and the site stays the same. The key is stored encrypted and never
 shown again; changes ask for your password. With translation on, typing in one
 language fills the other in Website text, contact-form options and photo descriptions.
 

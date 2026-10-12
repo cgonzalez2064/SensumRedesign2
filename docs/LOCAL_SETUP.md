@@ -240,7 +240,8 @@ php cms/bin/console translate:test
 
 In **Textos del sitio** a blue notice confirms it is on; type in Spanish and the
 English box fills in after a second. Every translation uses your real DeepL
-quota (500,000 characters/month on the free plan). The automated tests never
+quota (the free plan: 1,000,000 characters in total for new keys, 500,000 a month for
+older API Free keys). The automated tests never
 call DeepL — they use a local stand-in (`tests/integration/deepl-stub.mjs`).
 
 ### Monitoring, error log and critical-error alerts

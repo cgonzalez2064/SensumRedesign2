@@ -329,6 +329,18 @@ Full re-run: API **212/212**, browser **154 passed / 53 skipped**, Apache **11/1
 Also: GitHub Actions crash in `01-public-site` (undici `assert(!this.paused)` on unread response
 bodies, Node 22) fixed by always reading bodies in the tests (`9120af2`).
 
+## Change — configurable contact form, recipients in the panel, new privacy notice
+
+| Suite | Added | Result |
+|---|---|---|
+| API (`24-form-builder`, new) | the approved five questions, limits and recipients (owner can edit, `contact` reads, others 403); rules: name required, e-mail or phone kept and required, no markup, too few / duplicate options, unknown type, 15 questions, number min ≤ max, version conflict; new questions of every type published (legend, radios, `name[]` checkboxes, optional phone with "(opcional)", `data-future` date, number limits, half-width row, ES/EN texts in `siteContent`), ids stable on re-save, service options still in their endpoint; submissions: missing required, unknown option, out-of-range number, past date, unexpected field, list on a non-checkbox → refused; a valid one stored with answers (no phone), e-mail with "Otras respuestas", lead API and CSV; form without e-mail/service → "Llamar a…", removed question refused; older options endpoint in step; recipients: owner only, password, invalid / too many addresses, saved lower-case, security notice, other e-mail settings kept | 7/7 |
+| Browser (`contact-form`, new; replaces `contact-services`) | the owner edits service options, adds a required single-choice question, reorders, makes the phone optional (e-mail then locked), removes and undoes, catches a duplicate option, axe with the editor and the "Agregar pregunta" dialog open; the site asks it in ES/EN, checks it, and the visitor's answer appears in Prospectos; the preview (sizes, marked changes, lists, errors, nothing sent, English, leave guard) on 3 devices; recipients with the password | 5 runs |
+| Browser (`translate`) | the question's text and its options fill English from Spanish, Undo, own English kept, save waits for translations | 2/2 |
+| Visual regression | home ES/EN at 5 widths, modal, menu, FAQ, **form validation**: identical to the approved site (the form is generated now, pixel-identical); only the two privacy-notice states differ (new text) | 20/22 identical |
+| Production build on Apache | release `112b540` (68 public + 255 private files): the 11 checks (incl. both hostnames over HTTPS) and a checkbox question saved, published and answered through Apache + PHP-FPM (`q_…[]` list stored as "Google, Recomendación") | 11/11 + smoke |
+
+Full re-run: API **219/219**, browser **155 passed / 55 skipped**, Apache **11/11**; PHPStan 0 errors.
+
 ## Other audits
 
 | Audit | Result |
