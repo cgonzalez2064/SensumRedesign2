@@ -214,6 +214,12 @@ final class Translator
         return [$status, is_string($response) ? $response : false];
     }
 
+    /** The response headers PHP < 8.4 leaves in the calling scope (absent when nothing was received). */
+    private static function headersFrom(array $scope): array
+    {
+        return (array) ($scope['http_response_header'] ?? []);
+    }
+
     /** Fallback when the curl extension is missing (needs allow_url_fopen). @return array{0:int,1:string|false} */
     private function viaStream(string $url, array $headers, ?string $payload): array
     {
@@ -230,7 +236,11 @@ final class Translator
         ]);
         $response = @file_get_contents($url, false, $ctx);
         $status = 0;
-        $lines = function_exists('http_get_last_response_headers') ? (http_get_last_response_headers() ?? []) : $http_response_header;
+        // PHP 8.4+: http_get_last_response_headers(). Older versions only fill the local
+        // $http_response_header, read by name so PHP 8.5 does not flag a deprecated variable.
+        $lines = function_exists('http_get_last_response_headers')
+            ? (http_get_last_response_headers() ?? [])
+            : self::headersFrom(get_defined_vars());
         foreach ($lines as $line) {
             if (preg_match('#^HTTP/\S+\s+(\d{3})#', $line, $m)) {
                 $status = (int) $m[1];
