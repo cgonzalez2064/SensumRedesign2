@@ -276,6 +276,9 @@ support to issue it if it is not listed). Get it before uploading the release: t
 HSTS header (`includeSubDomains`) makes browsers refuse `app.` without a valid certificate.
 The root `.htaccess` lets `/.well-known/(acme-challenge|pki-validation|cpanel-dcv)/` through
 over plain HTTP on every name, so issuing and renewing (paid, via *Reorder*) keep working.
+Free, auto-renewing alternative (Spanish guide §8.3b): Let's Encrypt with acme.sh from the
+cPanel Terminal — `--issue -d app.… -w ~/public_html` then `--deploy --deploy-hook cpanel_uapi`;
+acme.sh's daily cron renews and redeploys. Use one route or the other, not both.
 The `.htaccess` forces `https://sensumconstrucciones.com` and `https://app.sensumconstrucciones.com`;
 production cookies require HTTPS (`__Host-` / `Secure`), so signing in over
 plain HTTP is impossible by design.

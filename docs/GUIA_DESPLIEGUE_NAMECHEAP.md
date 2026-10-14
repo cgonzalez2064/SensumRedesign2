@@ -344,6 +344,47 @@ certificado (`/.well-known/`), y en cuanto quede instalado el panel abre normal.
 > dominio principal (21, 7 y 1 día antes) y el monitor 3 de Better Stack (paso 17)
 > vigila el de `app.`.
 
+### 8.3b Alternativa gratuita y permanente: Let's Encrypt con acme.sh
+
+Úsala si Namecheap no emite el certificado de `app.`, o para no pagar renovaciones.
+Let's Encrypt es gratis; el certificado dura 90 días y **se renueva e instala solo**
+cada 60. Elige **una** vía (8.3 u 8.3b): si las mezclas, se reemplazan entre sí.
+Necesitas la Terminal (paso 10). Escribe los comandos uno por uno.
+
+1. Instala acme.sh en tu carpeta privada (no en `public_html`):
+   ```bash
+   cd ~ && git clone --depth 1 https://github.com/acmesh-official/acme.sh.git acme-src
+   cd ~/acme-src && ./acme.sh --install -m it@gruposensum.com
+   cd ~ && rm -rf ~/acme-src
+   ```
+   (Si dice `git: command not found`: `curl https://get.acme.sh | sh -s email=it@gruposensum.com`.)
+2. Usa Let's Encrypt (por omisión usaría otra autoridad, ZeroSSL):
+   ```bash
+   ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
+   ```
+3. Emite el certificado (comprueba el dominio con un archivo temporal en
+   `public_html/.well-known/acme-challenge/`):
+   ```bash
+   ~/.acme.sh/acme.sh --issue -d app.sensumconstrucciones.com -w ~/public_html --keylength 2048
+   ```
+   Debe terminar en **Cert success**.
+4. Instálalo en cPanel:
+   ```bash
+   ~/.acme.sh/acme.sh --deploy -d app.sensumconstrucciones.com --deploy-hook cpanel_uapi
+   ```
+   Debe decir **Success**. En SSL/TLS Status, `app.` pasa a verde en unos minutos.
+5. Renovación automática: `crontab -l | grep acme` debe mostrar una línea con
+   `acme.sh --cron`. Si no aparece, créala en cPanel → **Cron Jobs** (*Once Per Day*):
+   `/home/USUARIO/.acme.sh/acme.sh --cron --home /home/USUARIO/.acme.sh > /dev/null`.
+   Cada renovación vuelve a instalarlo sola.
+
+La clave privada queda en `~/.acme.sh/` (fuera de `public_html`, solo tu usuario la lee):
+**nunca la copies a un chat ni a un correo**. Si un paso falla, comparte solo el mensaje
+de error. El `.htaccess` del sitio deja pasar `/.well-known/acme-challenge/` en todos los
+nombres, así que las renovaciones funcionan también con el sitio nuevo publicado. El
+mismo método sirve para `sensumconstrucciones.com` antes de que venza su certificado
+(con `-d sensumconstrucciones.com -d www.sensumconstrucciones.com`).
+
 ---
 
 ## 9. Crear el archivo de configuración `.env`
