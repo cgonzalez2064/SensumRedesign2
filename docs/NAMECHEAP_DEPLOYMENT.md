@@ -268,17 +268,17 @@ hosting; nothing else needs configuring.
 **Subdomain + HTTPS:** cPanel → Domains → *Create A New Domain* →
 `app.sensumconstrucciones.com`, **Share document root** checked (Spanish guide §8.1;
 with Namecheap Web Hosting DNS the `app` A record is created automatically). Then
-Namecheap shared hosting does not use cPanel AutoSSL: each domain/subdomain gets a free
-1-year Sectigo certificate (up to 50 per account) from the **Namecheap SSL** cPanel plugin,
-so SSL/TLS Status flags `app.` as "not issued via AutoSSL" — ignore it. Check cPanel →
-Namecheap SSL → *Installed via "Namecheap SSL"* until `app.` is **Active** (ask Namecheap
-support to issue it if it is not listed). Get it before uploading the release: the site's
-HSTS header (`includeSubDomains`) makes browsers refuse `app.` without a valid certificate.
-The root `.htaccess` lets `/.well-known/(acme-challenge|pki-validation|cpanel-dcv)/` through
-over plain HTTP on every name, so issuing and renewing (paid, via *Reorder*) keep working.
-Free, auto-renewing alternative (Spanish guide §8.3b): Let's Encrypt with acme.sh from the
-cPanel Terminal — `--issue -d app.… -w ~/public_html` then `--deploy --deploy-hook cpanel_uapi`;
-acme.sh's daily cron renews and redeploys. Use one route or the other, not both.
+With a shared document root, cPanel adds `app.` as an **alias** of the main domain, so
+one certificate must cover `sensumconstrucciones.com`, `www.` and `app.` (installing an
+`app.`-only certificate leaves the apex without one). Namecheap has no AutoSSL, and its
+free "Namecheap SSL" certificate is single-name and not available for aliases. Use
+Let's Encrypt with acme.sh from the cPanel Terminal (Spanish guide §8.3):
+`--issue -d sensumconstrucciones.com -d www.sensumconstrucciones.com -d app.sensumconstrucciones.com -w ~/public_html`,
+then `--deploy -d sensumconstrucciones.com --deploy-hook cpanel_uapi`; acme.sh's daily cron
+renews and redeploys. Get it before uploading the release: the site's HSTS header
+(`includeSubDomains`) makes browsers refuse `app.` without a valid certificate. The root
+`.htaccess` lets `/.well-known/(acme-challenge|pki-validation|cpanel-dcv)/` through over
+plain HTTP on every name, so renewals keep working.
 The `.htaccess` forces `https://sensumconstrucciones.com` and `https://app.sensumconstrucciones.com`;
 production cookies require HTTPS (`__Host-` / `Secure`), so signing in over
 plain HTTP is impossible by design.
@@ -475,7 +475,7 @@ the admin API stops. Then disable accounts / reset passwords and restore.
 | `/api/health` → `{"error":"service_unavailable"}` | `sensum-cms` not found next to `public_html` (or `vendor/` missing). Check §4 layout or set `SENSUM_CMS_DIR`. |
 | `/api/health` → 503 `degraded` | Permissions (§5) or missing PHP extension (§3); run `bin/console check` or see the dashboard diagnostics. |
 | Every save says the request couldn't be verified | `APP_URL` must be exactly `https://sensumconstrucciones.com`. |
-| Can't stay signed in | The site isn't served over HTTPS (production cookies are `Secure`) — install the certificate from cPanel → Namecheap SSL (not AutoSSL) and open the `https://` address. |
+| Can't stay signed in | The site isn't served over HTTPS (production cookies are `Secure`) — install the three-name Let's Encrypt certificate (Spanish guide §8.3; not AutoSSL) and open the `https://` address. |
 | Photos refused as too large in pixels/bytes | Raise `memory_limit` / `upload_max_filesize` / `post_max_size` (§3). |
 | E-mails not arriving | `bin/console mail:test you@domain`, check logs for `mail_failed`, verify §7 values and SPF/DKIM. |
 | API returns 403 for everything | An old `api/.htaccess` with a `FilesMatch` rule — upload the one from this release. |

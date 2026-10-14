@@ -165,19 +165,32 @@ cPanel → **Select PHP Version** (sección *Exclusive for Namecheap Customers* 
 
 1. cPanel → **File Manager** → ve a tu carpeta principal `/home/USUARIO` (un nivel
    **arriba** de `public_html`). Activa *Settings → Show Hidden Files (dotfiles)*.
-2. **Vacía `public_html`** (ya tienes el respaldo del paso 2): selecciona todo **excepto**
-   `.well-known` y `cgi-bin` (si existen; los usa cPanel para el certificado) →
-   **Delete**. Así no quedan archivos viejos del sitio anterior (sobre todo `.php`)
-   que nadie revisa: la revisión de archivos del panel los marcaría como sospechosos.
-   El zip descargado en el paso 2 es la copia del sitio anterior.
-3. **Upload** → sube el zip del paso 3 a `/home/USUARIO` → clic derecho → **Extract**.
-4. Mueve la carpeta `release-…/sensum-cms` a `/home/USUARIO/sensum-cms` (junto a
+2. **Antes de tocar nada, revisa que `public_html` sea solo de este sitio.** cPanel →
+   **Domains** → columna *Document Root*: si otro dominio de la cuenta (que no sea
+   `sensumconstrucciones.com` ni `app.`) dice `/public_html/algo`, su sitio vive dentro
+   de esta carpeta y el `.htaccess` nuevo lo afectaría (lo mandaría a este sitio y le
+   aplicaría sus reglas de seguridad). Cámbialo primero a una carpeta propia
+   (*Manage* → *Document Root*, por ejemplo `/home/USUARIO/ese-dominio.com`, moviendo
+   su carpeta ahí) y no la muevas con el resto. Desde la Terminal lo ves de una vez
+   (si no imprime nada, no hay ninguno):
+   ```bash
+   uapi DomainInfo domains_data | grep "documentroot: $HOME/public_html/"
+   ```
+3. **Saca el sitio anterior de `public_html`** (sin borrarlo): crea la carpeta
+   `/home/USUARIO/sitio-anterior` → en `public_html` selecciona todo **excepto**
+   `.well-known` y `cgi-bin` (los usa el certificado) → **Move** →
+   `/home/USUARIO/sitio-anterior`. Así no quedan archivos viejos (sobre todo `.php`) que
+   la revisión de archivos del panel marcaría como sospechosos, y fuera de `public_html`
+   nadie los ve desde internet. Para volver atrás, se mueven de regreso (paso 23).
+   Bórrala cuando el sitio nuevo lleve unos días funcionando.
+4. **Upload** → sube el zip del paso 3 a `/home/USUARIO` → clic derecho → **Extract**.
+5. Mueve la carpeta `release-…/sensum-cms` a `/home/USUARIO/sensum-cms` (junto a
    `public_html`, **nunca dentro**).
-5. Mueve **el contenido** de `release-…/public_html` dentro de `/home/USUARIO/public_html`.
-6. Comprueba que se copiaron los archivos ocultos: `public_html/.htaccess`,
+6. Mueve **el contenido** de `release-…/public_html` dentro de `/home/USUARIO/public_html`.
+7. Comprueba que se copiaron los archivos ocultos: `public_html/.htaccess`,
    `public_html/admin/.htaccess`, `public_html/api/.htaccess`,
    `public_html/assets/uploads/.htaccess`, `sensum-cms/.htaccess`.
-7. Borra la carpeta `release-…` vacía y el zip.
+8. Borra la carpeta `release-…` vacía y el zip.
 
 No subas nada a otra carpeta para `app.sensumconstrucciones.com`: comparte
 `public_html` (paso 8.1).
@@ -307,49 +320,23 @@ Pulsa **Submit**. En la lista de **Domains**, `app.sensumconstrucciones.com` deb
 
 Puede tardar de minutos a unas horas en propagarse.
 
-### 8.3 Certificado HTTPS (complemento «Namecheap SSL», no AutoSSL)
+### 8.3 Certificado HTTPS: uno solo para los tres nombres (Let's Encrypt, gratis)
 
-Namecheap **no usa AutoSSL**. Cada dominio y subdominio del hosting recibe un certificado
-gratis de 1 año (hasta 50 por cuenta), que emite e instala el complemento **Namecheap
-SSL** de cPanel. Por eso **SSL/TLS Status** muestra en rojo `app.` (y `mail.app.`,
-`www.app.`) con «*…will not renew via AutoSSL because it was not issued via AutoSSL*»:
-**ignora esa pantalla y no pulses *Run AutoSSL***. Lo que cuenta es el complemento.
+Al compartir `public_html`, cPanel crea `app.` como **alias** del dominio principal:
+los dos son el mismo sitio en el servidor y usan **un solo certificado**, que debe cubrir
+`sensumconstrucciones.com`, `www.sensumconstrucciones.com` **y**
+`app.sensumconstrucciones.com`. Si instalas uno que cubra solo `app.`, el dominio
+principal se queda sin certificado (y al revés).
 
-1. cPanel → **Namecheap SSL** (sección *Exclusive for Namecheap Customers*) → pestaña
-   **Installed via "Namecheap SSL"** → busca `app.sensumconstrucciones.com`:
-   - **Active**: listo.
-   - **In progress**: espera hasta 30 minutos y pulsa **Sync**.
-   - **No aparece** (y *Ready for installation* dice «You don't have any SSLs to
-     install»): el subdominio no recibió el certificado al crearse. Pulsa **Support** (o
-     el chat de Namecheap) y pide: *«Please issue and install the free SSL certificate
-     for app.sensumconstrucciones.com, a subdomain in my cPanel account whose DNS
-     already points to the hosting server.»* No hace falta compartir contraseñas.
-2. Abre `https://sensumconstrucciones.com` y `https://app.sensumconstrucciones.com` y
-   verifica el candado en los dos.
-
-`mail.app.` y `www.app.` los crea cPanel junto con el subdominio; no se usan y no
-necesitan certificado.
-
-El sitio obliga a usar `https://sensumconstrucciones.com` (sin www) y el panel
-`https://app.sensumconstrucciones.com`; el panel solo permite iniciar sesión por HTTPS.
-**Conviene tener el certificado de `app.` antes de subir el paquete (paso 5)**: el sitio
-nuevo pide a los navegadores usar siempre HTTPS también en los subdominios (HSTS), así
-que sin certificado no podrías abrir el panel ni aceptando la advertencia. Si el paquete
-ya está arriba, no pasa nada: el `.htaccess` deja pasar las comprobaciones del
-certificado (`/.well-known/`), y en cuanto quede instalado el panel abre normal.
-
-> El certificado gratis dura un año. Unos 30 días antes de vencer aparece **Reorder** en
-> *Namecheap SSL*: se compra en Namecheap y se instala solo. El de
-> `sensumconstrucciones.com` vence en otra fecha que el de `app.`; el panel avisa del
-> dominio principal (21, 7 y 1 día antes) y el monitor 3 de Better Stack (paso 17)
-> vigila el de `app.`.
-
-### 8.3b Alternativa gratuita y permanente: Let's Encrypt con acme.sh
-
-Úsala si Namecheap no emite el certificado de `app.`, o para no pagar renovaciones.
-Let's Encrypt es gratis; el certificado dura 90 días y **se renueva e instala solo**
-cada 60. Elige **una** vía (8.3 u 8.3b): si las mezclas, se reemplazan entre sí.
-Necesitas la Terminal (paso 10). Escribe los comandos uno por uno.
+- **Namecheap no usa AutoSSL.** **SSL/TLS Status** muestra `app.` (y `mail.app.`,
+  `www.app.`) con «*…will not renew via AutoSSL because it was not issued via
+  AutoSSL*»: ignóralo y **no pulses *Run AutoSSL***.
+- El certificado gratis de Namecheap (complemento **Namecheap SSL**) cubre un solo
+  nombre, no se puede usar con alias y su renovación se paga. Por eso `app.` no aparece
+  en ese complemento: es normal.
+- **Let's Encrypt** sí sirve: gratis, cubre los tres nombres, dura 90 días y **se renueva
+  e instala solo** cada 60. Se hace una vez desde la Terminal (paso 10; actívala ya si
+  aún no lo hiciste). Escribe los comandos **uno por uno**.
 
 1. Instala acme.sh en tu carpeta privada (no en `public_html`):
    ```bash
@@ -362,28 +349,64 @@ Necesitas la Terminal (paso 10). Escribe los comandos uno por uno.
    ```bash
    ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
    ```
-3. Emite el certificado (comprueba el dominio con un archivo temporal en
-   `public_html/.well-known/acme-challenge/`):
+3. Emite **un** certificado para los tres nombres (los comprueba con archivos temporales
+   en `public_html/.well-known/acme-challenge/`):
    ```bash
-   ~/.acme.sh/acme.sh --issue -d app.sensumconstrucciones.com -w ~/public_html --keylength 2048
+   ~/.acme.sh/acme.sh --issue -d sensumconstrucciones.com -d www.sensumconstrucciones.com -d app.sensumconstrucciones.com -w ~/public_html --keylength 2048
    ```
    Debe terminar en **Cert success**.
-4. Instálalo en cPanel:
+4. Revisa que sea el único certificado de este dominio en acme.sh:
    ```bash
-   ~/.acme.sh/acme.sh --deploy -d app.sensumconstrucciones.com --deploy-hook cpanel_uapi
+   ~/.acme.sh/acme.sh --list
    ```
-   Debe decir **Success**. En SSL/TLS Status, `app.` pasa a verde en unos minutos.
-5. Renovación automática: `crontab -l | grep acme` debe mostrar una línea con
+   Debe haber **una sola** línea de `sensumconstrucciones.com` (KeyLength `"2048"`,
+   *SAN_Domains* con `www.` y `app.`, CA `LetsEncrypt.org`). Si hay otras de este dominio
+   (por ejemplo una vieja `"ec-256"` de ZeroSSL, o una de `app.` sola), quítalas antes de
+   seguir: al renovarse instalarían un certificado que no cubre los tres nombres, y si
+   existe una `ec-256` el paso siguiente la elegiría en lugar de la nueva:
+   ```bash
+   ~/.acme.sh/acme.sh --remove -d sensumconstrucciones.com --ecc
+   mv ~/.acme.sh/sensumconstrucciones.com_ecc ~/acme-anterior-sensum-ecc
+   ```
+   (para la de `app.` sola: `~/.acme.sh/acme.sh --remove -d app.sensumconstrucciones.com`).
+   No toques las líneas de otros dominios.
+5. Instálalo (con el dominio principal primero: así cubre también su alias `app.`):
+   ```bash
+   ~/.acme.sh/acme.sh --deploy -d sensumconstrucciones.com --deploy-hook cpanel_uapi
+   ```
+   Debe terminar en **Successfully deployed certificate to 2 of 2 sites via UAPI** y
+   **Success** (los dos «sitios» son el dominio principal y su alias `app.`). Los
+   mensajes intermedios de Namecheap (`NcCustomHooks`, `hc_agent.token: no such file`)
+   son de un aviso interno de su complemento y no afectan la instalación. El servidor lo
+   aplica en unos minutos: un nombre puede seguir mostrando el certificado anterior un
+   rato.
+6. Renovación automática: `crontab -l | grep acme` debe mostrar una línea con
    `acme.sh --cron`. Si no aparece, créala en cPanel → **Cron Jobs** (*Once Per Day*):
    `/home/USUARIO/.acme.sh/acme.sh --cron --home /home/USUARIO/.acme.sh > /dev/null`.
    Cada renovación vuelve a instalarlo sola.
+7. Abre `https://sensumconstrucciones.com`, `https://www.sensumconstrucciones.com` y
+   `https://app.sensumconstrucciones.com`: candado en los tres (emisor *Let's Encrypt*).
 
-La clave privada queda en `~/.acme.sh/` (fuera de `public_html`, solo tu usuario la lee):
-**nunca la copies a un chat ni a un correo**. Si un paso falla, comparte solo el mensaje
-de error. El `.htaccess` del sitio deja pasar `/.well-known/acme-challenge/` en todos los
-nombres, así que las renovaciones funcionan también con el sitio nuevo publicado. El
-mismo método sirve para `sensumconstrucciones.com` antes de que venza su certificado
-(con `-d sensumconstrucciones.com -d www.sensumconstrucciones.com`).
+**Si algo falla, el sitio público no puede quedarse sin certificado:** cPanel → **SSL/TLS**
+→ **Manage SSL sites** → `sensumconstrucciones.com` → **Browse Certificates** → el
+certificado anterior → **Install Certificate**. Luego revisa el mensaje de error del paso
+que falló.
+
+- En **Namecheap SSL**, no pulses *Install* ni *Reorder* para `sensumconstrucciones.com`:
+  reemplazaría el certificado de los tres nombres por uno que no cubre `app.`.
+- La clave privada queda en `~/.acme.sh/` (fuera de `public_html`, solo tu usuario la
+  lee): **nunca la copies a un chat ni a un correo**.
+- `mail.app.` y `www.app.` los crea cPanel con el alias; no se usan y no necesitan
+  certificado.
+
+El sitio obliga a usar `https://sensumconstrucciones.com` (sin www) y el panel
+`https://app.sensumconstrucciones.com`; el panel solo permite iniciar sesión por HTTPS.
+**Ten el certificado listo antes de subir el paquete (paso 5)**: el sitio nuevo pide a
+los navegadores usar siempre HTTPS también en los subdominios (HSTS), así que sin
+certificado no podrías abrir el panel ni aceptando la advertencia. El `.htaccess` del
+paquete deja pasar `/.well-known/` en todos los nombres, así que las renovaciones siguen
+funcionando con el sitio nuevo publicado. Como el certificado es el mismo para el sitio y
+el panel, el aviso de vencimiento del panel (21, 7 y 1 día antes) cubre los dos.
 
 ---
 
@@ -756,9 +779,8 @@ El panel no puede avisarte si el servidor completo se cae. Para eso:
 1. Crea una cuenta gratuita en **Better Stack** (o UptimeRobot).
 2. Monitor 1: `https://sensumconstrucciones.com` (estado HTTP 200, alerta de vencimiento SSL).
 3. Monitor 2: `https://sensumconstrucciones.com/api/health` (debe contener `"status":"ok"`).
-4. Monitor 3 (recomendado): `https://app.sensumconstrucciones.com/api/health`, con la
-   alerta de vencimiento SSL activada: es lo que vigila el certificado del panel, que
-   vence en otra fecha que el del dominio principal (paso 8.3).
+4. Monitor 3 (opcional): `https://app.sensumconstrucciones.com/api/health` (vigila
+   también que el certificado siga cubriendo `app.`, paso 8.3).
 5. Alertas a `it@gruposensum.com`.
 
 ---
@@ -979,7 +1001,9 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
 
 ## 23. Volver atrás (si algo sale mal)
 
-- **Solo el sitio público:** sube y extrae el zip del paso 2 en `public_html`.
+- **Solo el sitio público:** mueve a otra carpeta lo que subiste a `public_html` (deja
+  `.well-known` y `cgi-bin`) y regresa ahí el contenido de `/home/USUARIO/sitio-anterior`
+  (o extrae el zip del paso 2).
 - **La base de datos:** reemplaza `sensum-cms/storage/database.sqlite` por una copia
   de `sensum-cms/storage/backups/db/`.
 - **Si el hosting se perdió por completo:** abre el último respaldo cifrado (correo o
@@ -1000,8 +1024,8 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
 | No puedes iniciar sesión (te regresa al inicio) | Falta HTTPS en `app.` (paso 8.3) o `APP_URL` / `ADMIN_URL` del `.env` no son exactamente los del paso 9. |
 | «No pudimos verificar la solicitud por seguridad» | Entraste por otra dirección: usa `https://app.sensumconstrucciones.com`. Revisa que `ADMIN_URL` sea `https://app.sensumconstrucciones.com/admin`. |
 | `app.sensumconstrucciones.com` no abre («no se puede acceder al sitio») | El DNS de `app` aún no existe o no se ha propagado (paso 8.2). |
-| `app.sensumconstrucciones.com` muestra el sitio público o te manda a `sensumconstrucciones.com` | El subdominio no comparte `public_html` (paso 8.1) o falta el `.htaccess` nuevo en `public_html` (paso 5, punto 6). |
-| `app.sensumconstrucciones.com` dice que la conexión no es privada | Falta el certificado de `app.`: cPanel → **Namecheap SSL** (paso 8.3), no AutoSSL. Si no aparece, pídelo al soporte de Namecheap. |
+| `app.sensumconstrucciones.com` muestra el sitio público o te manda a `sensumconstrucciones.com` | El subdominio no comparte `public_html` (paso 8.1) o falta el `.htaccess` nuevo en `public_html` (paso 5, punto 7). |
+| `app.sensumconstrucciones.com` (o el sitio) dice que la conexión no es privada | El certificado instalado no cubre los tres nombres: repite el paso 8.3 (3 a 5) con Let's Encrypt. No uses AutoSSL ni un certificado de un solo nombre. |
 | Los enlaces de los correos abren `sensumconstrucciones.com/admin` | Falta `ADMIN_URL` en el `.env` (paso 9). Igual funcionan: esa dirección redirige a `app.`. |
 | Los correos del panel no llegan | Panel → Correo → **Enviar correo de prueba**. Si falla: revisa servidor, puerto 465/SSL o 587/STARTTLS, usuario (correo completo) y contraseña del buzón `notificaciones@`. Monitoreo → Registro de errores muestra «No se pudo enviar un correo». |
 | Los correos llegan a spam | Completa SPF, DKIM y DMARC (paso 6.3). |
