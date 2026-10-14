@@ -151,7 +151,7 @@ final class MediaService
                 $ext = ImageProcessor::outputExt();
                 $widths = ImageProcessor::writeVariants($loaded['img'], $rect, $slot['variants'], $dir, $base, $ext);
             } finally {
-                imagedestroy($loaded['img']);
+                unset($loaded['img']);
             }
             $largest = max($widths);
             $bytes = (int) @filesize("{$dir}/{$base}-w{$largest}.{$ext}");

@@ -168,7 +168,7 @@ final class Reports
             $ext = ImageProcessor::outputExt();
             $widths = ImageProcessor::writeVariants($loaded['img'], [0, 0, $loaded['w'], $loaded['h']], [1920], $dir, $base, $ext);
         } finally {
-            imagedestroy($loaded['img']);
+            unset($loaded['img']);
         }
         return "{$base}-w{$widths[0]}.{$ext}";
     }

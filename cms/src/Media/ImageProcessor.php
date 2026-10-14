@@ -115,9 +115,8 @@ final class ImageProcessor
             }
         }
         if (!$img instanceof \GdImage || $warned) {
-            if ($img instanceof \GdImage) {
-                imagedestroy($img);
-            }
+            // GD images are freed by unset() (imagedestroy() does nothing since PHP 8, deprecated in 8.5).
+            unset($img);
             throw ApiError::validation(['file' => 'image_corrupt']);
         }
         if ($type === IMAGETYPE_JPEG) {
@@ -126,7 +125,7 @@ final class ImageProcessor
         $w = imagesx($img);
         $h = imagesy($img);
         if ($w < $min[0] || $h < $min[1]) {
-            imagedestroy($img);
+            unset($img);
             throw ApiError::validation(['file' => 'image_too_small']);
         }
         return ['img' => $img, 'w' => $w, 'h' => $h, 'type' => $type];
@@ -183,7 +182,7 @@ final class ImageProcessor
         if ($angle !== 0) {
             $rotated = imagerotate($img, $angle, 0);
             if ($rotated instanceof \GdImage) {
-                imagedestroy($img);
+                unset($img);
                 return $rotated;
             }
         }
@@ -236,7 +235,7 @@ final class ImageProcessor
             $final = "{$dir}/{$base}-w{$tw}.{$ext}";
             $tmp = "{$dir}/.tmp-" . bin2hex(random_bytes(6));
             $ok = $ext === 'webp' ? imagewebp($dst, $tmp, 82) : imagejpeg($dst, $tmp, 85);
-            imagedestroy($dst);
+            unset($dst);
             if (!$ok || !@rename($tmp, $final)) {
                 @unlink($tmp);
                 throw new \RuntimeException('image_write_failed');
