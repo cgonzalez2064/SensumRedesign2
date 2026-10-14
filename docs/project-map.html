@@ -319,7 +319,7 @@ const TREE = N('root', 'Sensum Construcciones', 'Website + Content Manager', {
       steps: ['Anyone taps “Solicitar soporte” (a screenshot is optional; browser details are added automatically)', 'The request is saved and e-mailed to IT; a failed e-mail can be retried', 'The owner and the support access handle it: status, priority, internal notes, asking for information', 'The person gets e-mails and replies inside the panel', 'Resolved: they rate the help from 1 to 5; it closes itself after 7 days', 'Response times and ratings feed the Panorama de soporte and the monthly report'],
       rel: ['be-business', 'adm-parts'] }),
     N('p-monitor', 'Monitoring & alerts', 'Every 15 minutes', {
-      steps: ['Cron runs “bin/console monitor” every 15 minutes', 'Health checks (database, storage, publishing, disk…) and the home page response time', 'Each run is stored: uptime for 24 h, 7, 30 and 90 days, and incidents', 'Watchdog rules e-mail alerts: critical errors, file changes, sign-in attacks, new devices, certificate, backups, stopped scheduler, disk, error spikes, weekly digest, monthly security review, report reminder', 'Salud del sitio shows the summary to the team; Monitoreo shows everything to the owner'],
+      steps: ['Cron runs “bin/console monitor” every 15 minutes', 'Health checks (database, storage, publishing, disk…) and the home page response time', 'Each run is stored: uptime for 24 h, 7, 30 and 90 days, and incidents', 'Watchdog rules e-mail alerts: critical errors, file changes, sign-in attacks, new devices, certificate, backups, stopped scheduler, disk, error spikes, weekly digest, monthly security review, report reminder, DeepL quota (90 %)', 'Salud del sitio shows the summary to the team; Monitoreo shows everything to the owner'],
       rel: ['be-ops', 'ops-cron', 'sec-watch'] }),
     N('p-report', 'Monthly report', 'Value of the support', {
       d: 'A short report that shows clients what the site achieved and the work behind it.',
@@ -332,7 +332,7 @@ const TREE = N('root', 'Sensum Construcciones', 'Website + Content Manager', {
       steps: ['The database is copied regularly on the server (bin/console backup)', 'Optionally, an encrypted ZIP (AES-256) is e-mailed off-server on a schedule', 'The owner can download a full backup (password required)', 'Restoring follows the guide and the LEEME-RESTAURAR.txt inside the ZIP'],
       rel: ['be-ops', 'data-files'] }),
     N('p-translate', 'Automatic translation', 'Spanish ⇄ English', {
-      steps: ['The owner saves a DeepL key in Traducción (encrypted, never shown again)', 'While someone types in Spanish, English fills in after a short pause (and the other way round)', 'The filled text is marked “Traducido automáticamente” with Undo', 'A daily character limit protects the quota; nothing is published until Save'],
+      steps: ['The owner saves a DeepL key in Traducción (encrypted, never shown again)', 'While someone types in Spanish, English fills in after a short pause (and the other way round)', 'The filled text is marked “Traducido automáticamente” with Undo', 'A daily character limit protects the quota; nothing is published until Save', 'At 90 % of the key’s characters (and when they run out) an alert e-mail asks to change the key — the public ES/EN button never uses DeepL'],
       rel: ['be-business', 'site-i18n'] }),
     N('p-release', 'Release & deploy', 'From commit to live', {
       steps: ['Tests and PHPStan pass (also in GitHub Actions)', 'tools/build-release.sh builds public_html + sensum-cms and a zip from a commit', 'Upload to cPanel, keeping .env, storage/ and uploads', 'Database migrations apply themselves on the next request', 'Republish and run the checklist from the deploy guide'],
@@ -351,7 +351,7 @@ const TREE = N('root', 'Sensum Construcciones', 'Website + Content Manager', {
       d: 'Public: assets/uploads (photos in several sizes) and the PDF portfolio. Private (outside the web root): storage/logs, storage/backups, storage/reports (support screenshots), storage/tmp and the .env configuration.',
       files: ['assets/uploads/', 'sensum-cms/storage/', 'sensum-cms/.env'] }),
     N('data-privacy', 'Privacy & retention', 'Only what is needed', {
-      d: 'Leads are kept 6 to 36 months (the owner chooses) and then deleted; statistics are daily counts without cookies or IPs; logs never contain passwords or tokens; the privacy notice is generated with the real retention period.',
+      d: 'Leads are kept 6 to 36 months (the owner chooses) and then deleted; statistics are daily counts without cookies or IPs; logs never contain passwords or tokens. The privacy notice describes what the site really does (form data, cookie-free statistics, anti-spam, hosting abroad, rights with a 10-business-day answer) under Guatemalan law, and is generated with the real retention period and Turnstile only when it is on.',
       rel: ['p-lead', 'p-stats'] }),
   ]),
   // ---------------------------------------------------------------- security
