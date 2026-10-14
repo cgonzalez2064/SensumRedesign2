@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import https from 'node:https';
 import { execFileSync } from 'node:child_process';
+import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { ADMIN, PHP } from '../integration/helpers.mjs';
 
@@ -57,6 +58,27 @@ test('plain http, www. and any other name end on https, on the right name', { sk
   const spoofed = await req('evil.example', '/');
   assert.equal(spoofed.status, 301);
   assert.equal(spoofed.headers.location, `https://${SITE}/`, 'never reflects the Host header');
+});
+
+test('certificate checks reach their token file over plain http on every name', { skip }, async (t) => {
+  // What Namecheap SSL (Sectigo), cPanel and Let's Encrypt fetch before issuing or renewing.
+  const dir = join(HOME, 'public_html/.well-known/pki-validation');
+  const token = '0123456789ABCDEF0123456789ABCDEF.txt';
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, token), 'dcv-check');
+  t.after(() => rmSync(join(HOME, 'public_html/.well-known'), { recursive: true, force: true }));
+  for (const host of [APP, `www.${APP}`, `mail.${APP}`, SITE, `www.${SITE}`]) {
+    const r = await req(host, `/.well-known/pki-validation/${token}`, { secure: false });
+    assert.equal(r.status, 200, host);
+    assert.equal(r.text, 'dcv-check', host);
+    assert.equal(r.headers.location, undefined, host);
+  }
+  assert.equal((await req(APP, `/.well-known/pki-validation/${token}`)).status, 200, 'https on app.');
+  // A missing token is a plain 404, and nothing else under /.well-known/ skips the redirects.
+  assert.equal((await req(APP, '/.well-known/acme-challenge/missing', { secure: false })).status, 404);
+  const other = await req(APP, '/.well-known/security.txt', { secure: false });
+  assert.equal(other.status, 301);
+  assert.equal(other.headers.location, `https://${APP}/.well-known/security.txt`);
 });
 
 test('app.sensumconstrucciones.com opens the panel and only the panel', { skip }, async () => {

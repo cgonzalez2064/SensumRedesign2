@@ -307,24 +307,42 @@ Pulsa **Submit**. En la lista de **Domains**, `app.sensumconstrucciones.com` deb
 
 Puede tardar de minutos a unas horas en propagarse.
 
-### 8.3 Certificado HTTPS
+### 8.3 Certificado HTTPS (complemento «Namecheap SSL», no AutoSSL)
 
-1. Namecheap incluye un certificado gratis. En cPanel → **SSL/TLS Status**, confirma que
-   `sensumconstrucciones.com`, `www.sensumconstrucciones.com` **y
-   `app.sensumconstrucciones.com`** aparecen con certificado activo (candado verde); si
-   no, pulsa **Run AutoSSL**. Puede tardar hasta 30 minutos (más si el DNS de `app.`
-   aún se está propagando).
+Namecheap **no usa AutoSSL**. Cada dominio y subdominio del hosting recibe un certificado
+gratis de 1 año (hasta 50 por cuenta), que emite e instala el complemento **Namecheap
+SSL** de cPanel. Por eso **SSL/TLS Status** muestra en rojo `app.` (y `mail.app.`,
+`www.app.`) con «*…will not renew via AutoSSL because it was not issued via AutoSSL*»:
+**ignora esa pantalla y no pulses *Run AutoSSL***. Lo que cuenta es el complemento.
+
+1. cPanel → **Namecheap SSL** (sección *Exclusive for Namecheap Customers*) → pestaña
+   **Installed via "Namecheap SSL"** → busca `app.sensumconstrucciones.com`:
+   - **Active**: listo.
+   - **In progress**: espera hasta 30 minutos y pulsa **Sync**.
+   - **No aparece** (y *Ready for installation* dice «You don't have any SSLs to
+     install»): el subdominio no recibió el certificado al crearse. Pulsa **Support** (o
+     el chat de Namecheap) y pide: *«Please issue and install the free SSL certificate
+     for app.sensumconstrucciones.com, a subdomain in my cPanel account whose DNS
+     already points to the hosting server.»* No hace falta compartir contraseñas.
 2. Abre `https://sensumconstrucciones.com` y `https://app.sensumconstrucciones.com` y
    verifica el candado en los dos.
 
+`mail.app.` y `www.app.` los crea cPanel junto con el subdominio; no se usan y no
+necesitan certificado.
+
 El sitio obliga a usar `https://sensumconstrucciones.com` (sin www) y el panel
 `https://app.sensumconstrucciones.com`; el panel solo permite iniciar sesión por HTTPS.
-**Haz este paso antes de crear la cuenta.** Hasta subir el paquete nuevo (paso 5), `app.`
-puede mostrar el sitio anterior o redirigir al dominio principal: es normal.
+**Conviene tener el certificado de `app.` antes de subir el paquete (paso 5)**: el sitio
+nuevo pide a los navegadores usar siempre HTTPS también en los subdominios (HSTS), así
+que sin certificado no podrías abrir el panel ni aceptando la advertencia. Si el paquete
+ya está arriba, no pasa nada: el `.htaccess` deja pasar las comprobaciones del
+certificado (`/.well-known/`), y en cuanto quede instalado el panel abre normal.
 
-> Después del primer año, el certificado se renueva comprándolo en Namecheap (se
-> instala solo). El informe mensual y el monitoreo te avisan cuando falten menos de
-> 3 semanas para que venza.
+> El certificado gratis dura un año. Unos 30 días antes de vencer aparece **Reorder** en
+> *Namecheap SSL*: se compra en Namecheap y se instala solo. El de
+> `sensumconstrucciones.com` vence en otra fecha que el de `app.`; el panel avisa del
+> dominio principal (21, 7 y 1 día antes) y el monitor 3 de Better Stack (paso 17)
+> vigila el de `app.`.
 
 ---
 
@@ -697,8 +715,9 @@ El panel no puede avisarte si el servidor completo se cae. Para eso:
 1. Crea una cuenta gratuita en **Better Stack** (o UptimeRobot).
 2. Monitor 1: `https://sensumconstrucciones.com` (estado HTTP 200, alerta de vencimiento SSL).
 3. Monitor 2: `https://sensumconstrucciones.com/api/health` (debe contener `"status":"ok"`).
-4. Monitor 3 (opcional): `https://app.sensumconstrucciones.com/api/health` (vigila
-   también el certificado del panel).
+4. Monitor 3 (recomendado): `https://app.sensumconstrucciones.com/api/health`, con la
+   alerta de vencimiento SSL activada: es lo que vigila el certificado del panel, que
+   vence en otra fecha que el del dominio principal (paso 8.3).
 5. Alertas a `it@gruposensum.com`.
 
 ---
@@ -941,7 +960,7 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
 | «No pudimos verificar la solicitud por seguridad» | Entraste por otra dirección: usa `https://app.sensumconstrucciones.com`. Revisa que `ADMIN_URL` sea `https://app.sensumconstrucciones.com/admin`. |
 | `app.sensumconstrucciones.com` no abre («no se puede acceder al sitio») | El DNS de `app` aún no existe o no se ha propagado (paso 8.2). |
 | `app.sensumconstrucciones.com` muestra el sitio público o te manda a `sensumconstrucciones.com` | El subdominio no comparte `public_html` (paso 8.1) o falta el `.htaccess` nuevo en `public_html` (paso 5, punto 6). |
-| `app.sensumconstrucciones.com` dice que la conexión no es privada | Falta el certificado de `app.` (paso 8.3 → **Run AutoSSL**). |
+| `app.sensumconstrucciones.com` dice que la conexión no es privada | Falta el certificado de `app.`: cPanel → **Namecheap SSL** (paso 8.3), no AutoSSL. Si no aparece, pídelo al soporte de Namecheap. |
 | Los enlaces de los correos abren `sensumconstrucciones.com/admin` | Falta `ADMIN_URL` en el `.env` (paso 9). Igual funcionan: esa dirección redirige a `app.`. |
 | Los correos del panel no llegan | Panel → Correo → **Enviar correo de prueba**. Si falla: revisa servidor, puerto 465/SSL o 587/STARTTLS, usuario (correo completo) y contraseña del buzón `notificaciones@`. Monitoreo → Registro de errores muestra «No se pudo enviar un correo». |
 | Los correos llegan a spam | Completa SPF, DKIM y DMARC (paso 6.3). |

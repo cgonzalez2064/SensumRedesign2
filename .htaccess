@@ -24,6 +24,14 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  # Certificate checks (Namecheap SSL / Sectigo, cPanel, Let's Encrypt) fetch a
+  # token file over plain http on every name (app., www.app.…). It must answer
+  # right there, without the redirects below, or issuing/renewing would fail
+  # (a missing token gets the plain 404 page, also unredirected).
+  RewriteRule ^\.well-known/(acme-challenge|pki-validation|cpanel-dcv)/[A-Za-z0-9_.-]+$ - [L]
+  RewriteCond %{ENV:REDIRECT_STATUS} =404
+  RewriteRule ^404\.html$ - [L]
+
   RewriteCond %{HTTPS} off
   RewriteCond %{HTTP_HOST} ^app\.sensumconstrucciones\.com$ [NC]
   RewriteRule ^ https://app.sensumconstrucciones.com%{REQUEST_URI} [L,R=301]
