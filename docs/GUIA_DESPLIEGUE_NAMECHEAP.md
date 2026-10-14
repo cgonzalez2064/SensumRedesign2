@@ -133,10 +133,21 @@ necesitas Composer ni Git en el servidor**.
 cPanel → **Select PHP Version** (sección *Exclusive for Namecheap Customers* o
 *Software*):
 
-1. **Current PHP version:** 8.2 u 8.3 → *Apply*.
-2. Pestaña **Extensions**: marca `pdo_sqlite`, `sqlite3`, `gd`, `fileinfo`,
-   `mbstring`, `exif`, `intl`, `curl`, `openssl`, `json`, `zip` (respaldos cifrados),
-   `sodium` e `iconv` (algunas ya vienen marcadas).
+1. **Versión de PHP: 8.4** (o 8.3). El sistema está probado en 8.2 y 8.5; 8.2 deja de
+   recibir parches de seguridad el 31 de diciembre de 2026.
+   - **Si la cuenta tiene otros sitios**, no cambies *Account Global Settings*: eso cambia
+     la versión de **todos** los sitios de la cuenta. Usa la pestaña **Per Domain
+     Settings** y elige la versión solo para `sensumconstrucciones.com` (y
+     `app.sensumconstrucciones.com` si aparece; comparten carpeta).
+   - **Hazlo después de subir el paquete (paso 5)**: cPanel puede escribir la versión
+     en `public_html/.htaccess`, y subir el `.htaccess` del paquete la borraría.
+     Repítelo también después de cada actualización (paso 22) y comprueba con
+     `/api/health`.
+2. Pestaña **Extensions** (de esa versión): marca `pdo_sqlite`, `sqlite3`, `gd`,
+   `fileinfo`, `mbstring`, `exif`, `intl`, `curl`, `openssl`, `json`, `zip` (respaldos
+   cifrados), `sodium`, `iconv` y `xmlwriter` (código QR de la verificación en dos
+   pasos); algunas ya vienen marcadas. Si falta alguna, `bin/console check` (paso 11)
+   la nombra.
 3. Pestaña **Options**:
 
 | Opción | Valor |
@@ -222,8 +233,9 @@ cPanel → **Email Deliverability** → `sensumconstrucciones.com`:
 
 1. **SPF** y **DKIM**: si aparecen como *Problems Exist*, pulsa **Repair** / **Install
    the suggested record**.
-2. **DMARC** (cPanel → Zone Editor → *+ Add Record* → TXT):
-   - Nombre: `_dmarc.sensumconstrucciones.com`
+2. **DMARC** (cPanel → Zone Editor → TXT `_dmarc.sensumconstrucciones.com`):
+   - Si ya existe (por ejemplo `v=DMARC1; p=none;`), **edítalo**; no agregues otro: dos
+     registros DMARC hacen que ninguno valga.
    - Valor: `v=DMARC1; p=quarantine; rua=mailto:dmarc@sensumconstrucciones.com`
 3. Espera de 15 minutos a unas horas a que se propague.
 
@@ -283,7 +295,8 @@ Pulsa **Submit**. En la lista de **Domains**, `app.sensumconstrucciones.com` deb
 
 ### 8.2 DNS del subdominio
 
-- Con **Namecheap Web Hosting DNS** (lo normal): cPanel crea solo el registro `app`.
+- Con **Namecheap Web Hosting DNS** (lo normal): cPanel crea solo el registro `app`
+  (no lo agregues a mano: ya existe aunque no lo veas al principio de la lista).
   Compruébalo en cPanel → **Zone Editor** → `sensumconstrucciones.com` → *Manage*:
   debe existir un registro **A** `app.sensumconstrucciones.com` con la misma IP que
   `sensumconstrucciones.com`.
@@ -391,8 +404,11 @@ Los pasos 11, 12 y 16 son más fáciles con la Terminal:
    ```bash
    which php
    ```
-   Si muestra una versión distinta a la elegida en el paso 4, usa la ruta de esa
-   versión, por ejemplo `/opt/alt/php82/usr/bin/php`.
+   Comprueba la versión con `php -v`. En la Terminal y en las tareas programadas
+   `php` usa la versión **de la cuenta**, no la elegida por dominio: si muestra otra
+   (por ejemplo 7.4), usa siempre la ruta completa de la versión del sitio, por
+   ejemplo `/opt/alt/php84/usr/bin/php` (las disponibles: `ls /opt/alt/`). En los
+   pasos 11, 12 y 16 reemplaza `php` por esa ruta.
 
 ---
 
