@@ -582,7 +582,7 @@ pide tu contraseña otra vez y te envía un aviso de seguridad por correo.
 | Correo remitente | `notificaciones@sensumconstrucciones.com` |
 | Nombre del remitente | `Sensum Construcciones` |
 | Las respuestas llegan a | `soporte@sensumconstrucciones.com` |
-| Servidor / Puerto / Seguridad | Botón **«Completar con los datos de Namecheap»** (`mail.sensumconstrucciones.com`, `465`, `SSL`) o lo que anotaste en el paso 6.1 |
+| Servidor / Puerto / Seguridad | **El nombre del servidor** que anotaste en el paso 6.1 (por ejemplo `server123.web-hosting.com`), `465`, `SSL`. El botón «Completar con los datos de Namecheap» escribe `mail.sensumconstrucciones.com`: solo funciona si ese nombre tiene su propio certificado. Con el certificado de Let's Encrypt del paso 8.3 (que no incluye `mail.`), el servidor de correo presenta el certificado `*.web-hosting.com` y el envío falla por nombre no coincidente; cámbialo por el nombre del servidor. |
 | Usuario | `notificaciones@sensumconstrucciones.com` |
 | Contraseña | La del buzón `notificaciones@` (se guarda cifrada; nunca se vuelve a mostrar) |
 
