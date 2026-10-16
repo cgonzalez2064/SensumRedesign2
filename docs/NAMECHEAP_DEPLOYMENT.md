@@ -93,8 +93,8 @@ Result: `dist/release-<date>-<commit>.zip` containing `public_html/` and
 | Option | Value |
 |---|---|
 | `memory_limit` | `256M` |
-| `upload_max_filesize` | `16M` |
-| `post_max_size` | `20M` |
+| `upload_max_filesize` | `20M` (photos up to 10 MB, portfolio PDF up to 20 MB) |
+| `post_max_size` | `24M` |
 | `max_execution_time` | `60` |
 | `display_errors` | `Off` |
 | `log_errors` | `On` |

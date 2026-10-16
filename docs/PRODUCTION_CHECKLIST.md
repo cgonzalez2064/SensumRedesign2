@@ -27,7 +27,7 @@ Release: `release-________-_______` · Deployed by: __________ · Date: ________
 - [ ] Full account backup downloaded
 - [ ] Database backed up (only for updates: `sensum-cms/storage/database.sqlite` / `bin/console backup`)
 - [ ] PHP 8.2+ selected; extensions `pdo_sqlite`, `gd`, `fileinfo`, `mbstring`, `exif`, `intl` enabled
-- [ ] PHP options: `memory_limit 256M`, `upload_max_filesize 16M`, `post_max_size 20M`
+- [ ] PHP options: `memory_limit 256M`, `upload_max_filesize 20M`, `post_max_size 24M`
 - [ ] `display_errors` Off (debug mode disabled); `APP_ENV=production`
 - [ ] `sensum-cms/` uploaded **outside** `public_html`; hidden `.htaccess` files present
 - [ ] Permissions: storage `700`, `.env` `600`, no `777` anywhere

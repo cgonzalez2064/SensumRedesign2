@@ -153,8 +153,8 @@ cPanel → **Select PHP Version** (sección *Exclusive for Namecheap Customers* 
 | Opción | Valor |
 |---|---|
 | `memory_limit` | `256M` (procesar fotos grandes) |
-| `upload_max_filesize` | `16M` |
-| `post_max_size` | `20M` |
+| `upload_max_filesize` | `20M` (fotos de hasta 10 MB y el portafolio PDF de hasta 20 MB) |
+| `post_max_size` | `24M` |
 | `max_execution_time` | `60` |
 | `display_errors` | `Off` |
 | `log_errors` | `On` |
@@ -1041,7 +1041,7 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
 | Monitoreo → Correo y dominio muestra un problema | cPanel → **Email Deliverability** → *Repair* (SPF/DKIM). Para DMARC, paso 6.3. |
 | Llegan correos de «Nuevo inicio de sesión» | Es normal la primera vez en cada navegador. Si no fuiste tú: cambia la contraseña y usa «Cerrar sesión en otros dispositivos». |
 | «Demasiados píxeles» o falla al subir fotos | Sube `memory_limit` a 256M (paso 4). |
-| «El archivo es demasiado grande» | `upload_max_filesize` 16M y `post_max_size` 20M (paso 4). |
+| «El archivo es demasiado grande» | `upload_max_filesize` 20M y `post_max_size` 24M (paso 4). Con 16M, un PDF de más de 16 MB no sube. |
 | «Última revisión automática: Nunca» | El cron no corre: revisa la ruta de PHP y el comando (paso 16). |
 | Nadie ve «Usuarios» | Falta la cuenta propietaria o `OWNER_EMAIL` no coincide con su correo (paso 11). |
 
