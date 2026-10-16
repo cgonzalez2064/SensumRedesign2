@@ -171,6 +171,11 @@
 <FilesMatch "^\.">
   Require all denied
 </FilesMatch>
+# PHP's own log: on cPanel it is written as "error_log" next to the script
+# (public_html/api/, assets/…) and would otherwise be served as a plain file.
+<FilesMatch "^(error_log|php_errorlog)$">
+  Require all denied
+</FilesMatch>
 <IfModule mod_rewrite.c>
   RewriteRule ^assets/\.rl-data/ - [F,L]
 </IfModule>

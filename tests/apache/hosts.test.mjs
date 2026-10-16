@@ -81,6 +81,20 @@ test('certificate checks reach their token file over plain http on every name', 
   assert.equal(other.headers.location, `https://${APP}/.well-known/security.txt`);
 });
 
+test('PHP error logs written next to the scripts are never served', { skip }, async (t) => {
+  // cPanel's PHP writes "error_log" in the script's folder (server paths, messages).
+  const planted = ['error_log', 'api/error_log', 'assets/error_log', 'admin/error_log', 'api/php_errorlog'];
+  for (const p of planted) writeFileSync(join(HOME, 'public_html', p), 'PHP Warning: /home/someuser/secret-path');
+  t.after(() => { for (const p of planted) rmSync(join(HOME, 'public_html', p), { force: true }); });
+  for (const host of [APP, SITE]) {
+    for (const p of planted) {
+      const r = await req(host, '/' + p);
+      assert.ok([403, 404].includes(r.status), `${host}/${p} returned ${r.status}`);
+      assert.doesNotMatch(r.text, /secret-path/, `${host}/${p}`);
+    }
+  }
+});
+
 test('app.sensumconstrucciones.com opens the panel and only the panel', { skip }, async () => {
   const root = await req(APP, '/');
   assert.equal(root.status, 302);
