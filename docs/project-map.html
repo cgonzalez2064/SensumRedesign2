@@ -376,7 +376,7 @@ const TREE = N('root', 'Sensum Construcciones', 'Website + Content Manager', {
   N('ops', 'Hosting & operations', 'Where it runs', { cat: 'ops', side: -1,
     d: 'Namecheap Stellar Plus shared hosting managed with cPanel, plus a few optional external services.', files: ['docs/GUIA_DESPLIEGUE_NAMECHEAP.md'] }, [
     N('ops-host', 'Namecheap Stellar Plus', 'cPanel · Apache · PHP', {
-      d: 'Apache with PHP 8.1+ (FPM) and SQLite, free AutoSSL certificates. public_html holds the website, /admin, /api and assets and is shared by two names: sensumconstrucciones.com (site) and app.sensumconstrucciones.com (panel), routed by .htaccess; sensum-cms (code, .env, storage) sits next to it, outside the web root.',
+      d: 'Apache with PHP 8.1+ (FPM) and SQLite, one free Let's Encrypt certificate for the site, www. and app. (acme.sh in the cPanel Terminal, renews and installs itself every 60 days). public_html holds the website, /admin, /api and assets and is shared by two names: sensumconstrucciones.com (site) and app.sensumconstrucciones.com (panel), routed by .htaccess; sensum-cms (code, .env, storage) sits next to it, outside the web root.',
       files: ['public_html/', 'sensum-cms/'] }),
     N('ops-cron', 'Scheduled task', 'Cron every 15 min', {
       d: 'One cron job runs php ~/sensum-cms/bin/console monitor: health checks, alerts, backups when due, Google scores once a day, the report reminder and closing old resolved requests.',

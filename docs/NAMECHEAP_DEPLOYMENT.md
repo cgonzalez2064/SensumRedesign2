@@ -6,7 +6,7 @@
 > monthly report, verification). This English guide stays as the technical reference.
 
 It replaces `DEPLOY.md` for this release (`DEPLOY.md` still documents the original
-static site's DNS, AutoSSL and contact-form details, referenced below).
+static site's DNS and contact-form details, referenced below; HTTPS is in §8).
 
 **What you deploy**
 

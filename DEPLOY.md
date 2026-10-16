@@ -2,8 +2,9 @@
 
 > **Content Manager release:** if you are deploying the `content-manager`
 > branch (admin panel at `/admin`), follow **[docs/NAMECHEAP_DEPLOYMENT.md](docs/NAMECHEAP_DEPLOYMENT.md)**.
-> It refers back to this file for DNS (§2), AutoSSL (§4) and the contact-form
-> checks (§5, §7), which are unchanged.
+> It refers back to this file for DNS (§2) and the contact-form checks (§5, §7).
+> For HTTPS use its §8 (one Let's Encrypt certificate for the site, `www.` and `app.`),
+> not §4 below: Namecheap shared hosting has no AutoSSL.
 
 Everything you need to take this folder live on your Namecheap hosting is
 below, in order. Most of it doesn't require the command line — cPanel's
@@ -75,6 +76,10 @@ checklist in the meantime.
    subfolder next to them — not nested inside another folder.
 
 ## 4. Enable SSL (HTTPS)
+
+> **Outdated for this hosting:** Namecheap shared hosting has no AutoSSL. Follow
+> `docs/GUIA_DESPLIEGUE_NAMECHEAP.md` §8.3 (Let's Encrypt with acme.sh, one certificate
+> for `sensumconstrucciones.com`, `www.` and `app.`). The steps below are kept for reference.
 
 1. In cPanel, go to **Security → SSL/TLS Status** (or **AutoSSL**).
 2. Select your domain and click **Run AutoSSL**. Namecheap issues a free
