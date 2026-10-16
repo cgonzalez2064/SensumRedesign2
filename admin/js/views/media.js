@@ -293,7 +293,7 @@ function imageDialog(slot, ctx, current, reload) {
     previewArea.append(
       h('div', { class: 'row-between' }, h('span', { class: 'small', text: `${chosen.file.name} · ${chosen.width} × ${chosen.height} px · ${fmtBytes(chosen.file.size)}` }),
         h('label', { class: 'btn btn-sm', for: 'media-file' }, icon('arrow-repeat'), t('media.chooseOther'))),
-      h('p', { class: 'small muted', text: t('media.previewHelp') }), frames, anchorCtl, ...warnings);
+      h('p', { class: 'small muted', text: t('media.previewHelp') }), frames, ...(anchorCtl ? [anchorCtl] : []), ...warnings);
   }
 
   const dlg = openDialog({

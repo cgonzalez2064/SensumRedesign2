@@ -170,6 +170,27 @@ test('upload a photo through the dialog: preview, framing, alt text, publish', a
   expect(problems).toEqual([]);
 });
 
+test('a photo that already has the right shape: no framing control and no stray text', async ({ page }) => {
+  const problems = watch(page);
+  await login(page);
+  await page.goto('/admin/#/fotos/proyectos');
+  await page.getByRole('button', { name: 'Subir foto' }).first().click();
+  const dlg = page.getByRole('dialog');
+  await dlg.locator('#media-file').setInputFiles(join(FIXTURES, 'photo-1600x1200.webp')); // exactly 4:3
+  await expect(dlg.locator('.frame img')).toHaveCount(1);
+  await expect(dlg.getByText(/se recortarán los bordes/)).toHaveCount(0);
+  await expect(dlg.getByRole('button', { name: 'Centro' })).toHaveCount(0);
+  // A missing optional element must not be printed as the word "null".
+  const stray = await dlg.evaluate((el) => {
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n; (n = w.nextNode());) if (/^\s*(null|undefined)\s*$/.test(n.textContent)) return n.textContent;
+    return '';
+  });
+  expect(stray).toBe('');
+  await dlg.getByRole('button', { name: 'Cancelar' }).click();
+  expect(problems).toEqual([]);
+});
+
 test('unsaved changes are protected when leaving the editor', async ({ page }) => {
   await login(page);
   await page.goto('/admin/#/textos/footer');
