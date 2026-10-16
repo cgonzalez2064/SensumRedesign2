@@ -348,6 +348,21 @@ Full re-run: API **219/219**, browser **155 passed / 55 skipped**, Apache **11/1
 | API (`25-translation-quota`, new; DeepL stand-in with adjustable usage) | below 90 % nothing is sent and DeepL is asked at most every 6 hours; at 90 % one e-mail to the alert address (used / limit / left / plan, what to do, link to Traducción, never the key), not repeated at 95 %, a second one at 100 %; usage going back down starts over; the rule switched off stays quiet; "Probar conexión" checks at once and alerts | 4/4 |
 | Existing suites | the new rule listed in Monitoreo (16 switches), `13-email-alerts` counts 16 rules | passing |
 
+## Final pre-production check (2026-10-15)
+
+Run on the final code (only documentation changed after it) before the first upload.
+
+| Check | Result |
+|---|---|
+| API, PHP 8.2 and PHP 8.5 (production runs 8.4) | 223/223 on each |
+| Browsers: Chrome desktop and tablet, iPhone WebKit | 155 passed, 0 failed (55 skipped by design: checks for other devices) |
+| Visual regression, public site as packaged | 22/22 (privacy-notice baseline updated to the approved new text) |
+| Built release under Apache + PHP-FPM, both production names over HTTP and HTTPS | 12/12, including certificate checks (`/.well-known/`) passing unredirected on every name |
+| PHP syntax (73 files, 8.2 and 8.5), PHPStan level 6 | 0 errors |
+| `composer audit`, `npm audit` | no advisories |
+| Pre-push guard on the outgoing commits | nothing sensitive |
+| Production server (read-only) | PHP 8.4.26; DNS of the site, `www.`, `app.` and mail on the hosting; one Let's Encrypt certificate covering the three names |
+
 ## Other audits
 
 | Audit | Result |
@@ -358,7 +373,7 @@ Full re-run: API **219/219**, browser **155 passed / 55 skipped**, Apache **11/1
 | Accessibility — admin | axe-core WCAG 2.1 AA on 12 screens + drawer + dialog, light and dark, 3 devices: no serious/critical violations; keyboard navigation, focus management, reduced motion and 44 px targets reviewed |
 | Accessibility — public | identical before/after; pre-existing contrast findings on the approved orange labels reported as an optional recommendation |
 | Performance | Lighthouse before/after: equal (desktop 99, mobile 84–85 locally with network throttling); +7 KB (main.js/css additions), no extra requests; with photos the LCP stays the hero heading (photos lazy, responsive `srcset`). Outliers were traced to slow Google Fonts responses (affects the approved site equally). Fonts are now self-hosted (no requests to Google; the two Latin files are preloaded). |
-| Visual regression | 20/22 identical to `main` (desktop 1440/1280, tablet 768, phones 390/320, ES and EN, modal, menu, form errors, FAQ, 404); the 2 privacy-notice states differ only by the paragraphs that now describe the built-in statistics and the retention period |
+| Visual regression | 22/22 (desktop 1440/1280, tablet 768, phones 390/320, ES and EN, modal, menu, form errors, FAQ, 404, privacy notice); identical to `main` except the privacy notice, whose new approved text is the baseline since 2026-10-15 |
 | Production build | `tools/build-release.sh` → 68 public files + 251 private files (≈ 1.2 MB zip), no secrets/dev files; verified under Apache |
 
 ## How to re-run
