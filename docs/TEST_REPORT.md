@@ -348,6 +348,13 @@ Full re-run: API **219/219**, browser **155 passed / 55 skipped**, Apache **11/1
 | API (`25-translation-quota`, new; DeepL stand-in with adjustable usage) | below 90 % nothing is sent and DeepL is asked at most every 6 hours; at 90 % one e-mail to the alert address (used / limit / left / plan, what to do, link to Traducción, never the key), not repeated at 95 %, a second one at 100 %; usage going back down starts over; the rule switched off stays quiet; "Probar conexión" checks at once and alerts | 4/4 |
 | Existing suites | the new rule listed in Monitoreo (16 switches), `13-email-alerts` counts 16 rules | passing |
 
+## Change — moving photos between installations (`tools/export-photos.php`, `importar-fotos.php`)
+
+| Suite | Added | Result |
+|---|---|---|
+| API (`26-photo-transfer`, new; three isolated installations) | export carries only active photos (a deleted one stays out), every width, order and both descriptions, and nothing else (no database, settings or keys); refuses a non-empty folder; import simulates without writing, fills only empty slots (a photo uploaded in the panel is kept), files byte-identical, home page published with them, logged once, a second run adds nothing; a damaged file, a path-traversal name, an unknown slot or an unknown option change nothing | 3/3 |
+| Rehearsal on a production-like copy (final package, real `.htaccess`, Apache + PHP-FPM) | the real 40-photo bundle: simulation, import, re-run; the 80 files served as `image/webp` with long caching, identical to the local site; integrity check quiet | OK |
+
 ## Final pre-production check (2026-10-15)
 
 Run on the final code (only documentation changed after it) before the first upload.

@@ -737,10 +737,34 @@ Prospectos · **Estadísticas de visitas** · **Salud del sitio** · **Informe m
 Las fotos se suben desde el panel → **Fotos y archivos** (pestañas *Nosotros*,
 *Tipos de proyectos*, *Documentos*). Quedan en `public_html/assets/uploads/`.
 
-La selección que hicimos con las fotos de Google Drive está anotada en tu
-computadora en `cms/storage/photo-selection-2026-10-07.tsv` (foto, lugar y
-descripciones en español e inglés): úsala como lista para subir las mismas fotos
-en producción.
+**Pasar las fotos que ya cargaste en otra instalación (por ejemplo, la de tu
+computadora) sin subirlas una por una.** En la computadora, desde la carpeta del proyecto:
+
+```bash
+php tools/export-photos.php dist/fotos-sitio-AAAAMMDD && (cd dist && zip -qr fotos-sitio-AAAAMMDD.zip fotos-sitio-AAAAMMDD)
+```
+
+El zip trae solo las fotos activas (todos sus tamaños), su orden y sus descripciones en
+español e inglés, más el importador `importar-fotos.php`; nada de usuarios, mensajes,
+configuración ni claves. Súbelo a `/home/USUARIO` (nunca a `public_html`) y en la Terminal:
+
+```bash
+cd ~ && unzip -q fotos-sitio-AAAAMMDD.zip
+php ~/fotos-sitio-AAAAMMDD/importar-fotos.php --dry-run
+php ~/fotos-sitio-AAAAMMDD/importar-fotos.php
+rm -rf ~/fotos-sitio-AAAAMMDD ~/fotos-sitio-AAAAMMDD.zip
+```
+
+La simulación (`--dry-run`) muestra qué haría sin cambiar nada. Después debe decir
+*«Listo: N fotos importadas y el sitio publicado»*. Solo llena los espacios que están
+**vacíos** en el sitio: las fotos que ya subiste en el panel nunca se reemplazan (para
+rehacer un espacio, borra sus fotos en el panel y vuelve a correrlo). Copia los archivos
+tal cual (sin volver a comprimirlos), revisa la huella SHA-256 de cada uno y, si algo no
+cuadra, no cambia nada. Correrlo dos veces no duplica fotos.
+
+La selección original de fotos de Google Drive está anotada en tu computadora en
+`cms/storage/photo-selection-2026-10-07.tsv` (foto, lugar y descripciones en español e
+inglés).
 
 ---
 
