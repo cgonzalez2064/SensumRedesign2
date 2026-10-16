@@ -357,7 +357,8 @@ Run on the final code (only documentation changed after it) before the first upl
 | API, PHP 8.2 and PHP 8.5 (production runs 8.4) | 223/223 on each |
 | Browsers: Chrome desktop and tablet, iPhone WebKit | 155 passed, 0 failed (55 skipped by design: checks for other devices) |
 | Visual regression, public site as packaged | 22/22 (privacy-notice baseline updated to the approved new text) |
-| Built release under Apache + PHP-FPM, both production names over HTTP and HTTPS | 12/12, including certificate checks (`/.well-known/`) passing unredirected on every name |
+| Built release under Apache + PHP-FPM 8.5 and 8.2, both production names over HTTP and HTTPS | 13/13 on each, including certificate checks (`/.well-known/`) passing unredirected on every name and PHP `error_log` files never served (new test; it failed before the `.htaccess` fix) |
+| Owner onboarding, production mode (real `.htaccess`, HTTPS on `app.`, the deployment `.env`) | `bin/console check`: required checks OK; `create-admin` rejects short/mismatched passwords and duplicates; first sign-in forces two-step setup (QR, 6-digit code, 10 recovery codes), then the owner manages users; `publish` and the scheduled check run; integrity check quiet with `.well-known/` and `cgi-bin/` kept |
 | PHP syntax (73 files, 8.2 and 8.5), PHPStan level 6 | 0 errors |
 | `composer audit`, `npm audit` | no advisories |
 | Pre-push guard on the outgoing commits | nothing sensitive |

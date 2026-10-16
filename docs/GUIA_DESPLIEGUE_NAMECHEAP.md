@@ -198,6 +198,23 @@ No subas nada a otra carpeta para `app.sensumconstrucciones.com`: comparte
 Comprobación rápida: deben existir `/home/USUARIO/sensum-cms/bootstrap.php`,
 `/home/USUARIO/sensum-cms/vendor/autoload.php` y `/home/USUARIO/public_html/api/index.php`.
 
+**Lo mismo con la Terminal (paso 10), más rápido y sin errores de selección.** Sube el
+zip a `/home/USUARIO` (nunca a `public_html`: mientras esté ahí, cualquiera podría
+descargarlo) y escribe, uno por uno (cambia `release-…` por el nombre del zip):
+
+```bash
+cd ~ && unzip -q release-….zip && ls release-…
+mv ~/release-…/sensum-cms ~/sensum-cms && chmod 700 ~/sensum-cms/storage
+mkdir ~/sitio-anterior && cd ~/public_html && find . -mindepth 1 -maxdepth 1 ! -name .well-known ! -name cgi-bin -exec mv -t ~/sitio-anterior/ {} +
+cp -a ~/release-…/public_html/. ~/public_html/ && cd ~ && rm -rf ~/release-… ~/release-….zip
+ls -A ~/public_html
+```
+
+La última línea debe mostrar `.htaccess`, `.well-known`, `404.html`, `admin`, `api`,
+`assets`, `cgi-bin`, `index.html`, `privacy-notice.html`, `robots.txt`,
+`site.webmanifest` y `sitemap.xml`. Entre el `mv` del sitio anterior y el `cp` el sitio
+queda vacío unos segundos: escríbelos seguidos.
+
 ---
 
 ## 6. Correo electrónico (lo necesario para que TODO envíe y reciba)
@@ -512,7 +529,14 @@ php ~/sensum-cms/bin/console create-admin --name="Soporte IT" --email=it@grupose
 ```
 
 Escribe la contraseña dos veces (no se ve al escribir; mínimo 10 caracteres). Debe
-responder *«This is the owner account…»*.
+responder *«Account created (id 1).»* y *«This is the owner account…»*. Otras respuestas:
+*«Passwords do not match»* (vuelve a correr el comando), *«password_too_short»* (menos
+de 10 caracteres) o *«email_taken»* (la cuenta ya existe: entra con ella o usa
+*¿Olvidaste tu contraseña?* cuando el correo esté configurado).
+
+Hasta configurar el correo (paso 13), los avisos que el panel intenta enviar (por
+ejemplo, «verificación en dos pasos activada») no salen y Monitoreo muestra «No se pudo
+enviar un correo»: es normal en este orden de pasos.
 
 **Sin Terminal:** agrega al `.env` una línea `SETUP_TOKEN=` con un valor largo
 aleatorio (de tu gestor de contraseñas), abre
