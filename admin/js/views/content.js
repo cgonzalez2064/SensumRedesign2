@@ -4,7 +4,7 @@ import { t, tp, fieldText, fmtRelative } from '../i18n.js';
 import { api } from '../api.js';
 import { pageHead, loading, loadError, textField, alertBox, toast, errorText, fieldErrorText, openDialog, setBusy, button } from '../ui.js';
 
-const ICONS = { hero: 'house', about: 'people', services: 'building', process: 'list', projects: 'images', cta: 'send', contact: 'envelope', faq: 'question-circle', footer: 'card-text', details: 'telephone' };
+const ICONS = { hero: 'house', about: 'people', services: 'building', process: 'list', projects: 'images', cta: 'send', contact: 'envelope', faq: 'question-circle', footer: 'card-text', seo: 'search', details: 'telephone' };
 
 const differs = (field) => Object.keys(field.value).some((l) => field.value[l] !== field.default[l]);
 

@@ -18,7 +18,7 @@ namespace Sensum\Cms;
 final class Publisher
 {
     /** Bump when assets/main.css or assets/main.js change (cache busting). */
-    public const ASSET_VERSION = '6';
+    public const ASSET_VERSION = '7';
     public const PAGES = ['index.html', '404.html', 'privacy-notice.html'];
     private const BACKUPS_KEPT = 30;
 
@@ -159,6 +159,7 @@ final class Publisher
 
         // Structured data (JSON-LD) mirrors the visible content.
         $vars['ld:telephones'] = '[' . implode(', ', array_map(fn ($p) => self::ld(self::phoneLd($p)), array_values(array_filter([$office, $mobile])))) . ']';
+        $vars['ld:meta.description'] = self::ld($val('meta.description'));
         $vars['ld:email'] = self::ld($email);
         $vars['ld:street_address'] = self::ld($join([$building, $street, $officeNo]));
         $vars['ld:city'] = self::ld($city);

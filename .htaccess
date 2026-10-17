@@ -53,6 +53,19 @@
   # On the public site the panel's old address forwards to the new one.
   RewriteCond %{HTTP_HOST} ^sensumconstrucciones\.com$ [NC]
   RewriteRule ^admin(/|$) https://app.sensumconstrucciones.com/admin/ [L,R=301]
+
+  # One address for the home page (search engines count each address
+  # separately): /index.html → /
+  RewriteCond %{THE_REQUEST} \s/index\.html[\s?]
+  RewriteRule ^index\.html$ / [L,R=301]
+
+  # Addresses of the previous site (online 2019–2026), so old links and search
+  # results land on the matching section instead of the "not found" page.
+  RewriteRule ^(about|about\.php)$ /#nosotros [L,R=301,NE]
+  RewriteRule ^(services|services\.php|cat|cat\.php)$ /#servicios [L,R=301,NE]
+  RewriteRule ^(proyects|proyects\.php|projects)$ /#proyectos [L,R=301,NE]
+  RewriteRule ^(contact|contact\.php)$ /#contacto [L,R=301,NE]
+  RewriteRule ^(index|index\.php|index2\.php|indexTest\.php)$ / [L,R=301]
 </IfModule>
 
 # ----------------------------------------------------------------

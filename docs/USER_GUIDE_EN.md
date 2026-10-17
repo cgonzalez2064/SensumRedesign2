@@ -98,6 +98,18 @@ Tips:
 * If someone else saved the same section while you were editing, the panel warns
   you so nobody's work is lost.
 
+### Title and description in Google
+
+The **Google (search results)** section holds the title and description that Google and
+link previews (WhatsApp, Facebook) show for the site. **They are not visible on the
+page.**
+
+* **Title:** up to 60 characters, with the words people search for first
+  (e.g. "Constructora en Guatemala…").
+* **Description:** 120 to 160 characters; summarize the services and invite a quote.
+* Google may take days to weeks to show a change.
+* More details in `docs/GUIA_SEO.md` (Spanish).
+
 ## 4. Contact details
 
 Under **Contact details** you change phones, WhatsApp number, email, address,

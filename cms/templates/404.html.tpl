@@ -8,14 +8,14 @@
 <meta name="robots" content="noindex, follow">
 <meta name="theme-color" content="#1c1c1c">
 <meta name="color-scheme" content="light">
-<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
-<link rel="icon" href="assets/favicon-16.png" sizes="16x16" type="image/png">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-<link rel="manifest" href="site.webmanifest">
-<link rel="preload" href="assets/fonts/roboto-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="assets/fonts/oswald-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/fonts/local-fonts.css?v={{asset_version}}">
-<link rel="stylesheet" href="assets/main.css?v={{asset_version}}">
+<link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="preload" href="/assets/fonts/roboto-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/oswald-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/fonts/local-fonts.css?v={{asset_version}}">
+<link rel="stylesheet" href="/assets/main.css?v={{asset_version}}">
 </head>
 <body>
 
@@ -23,7 +23,7 @@
 
 <main id="main" class="error-page">
   <div class="container">
-    <img class="brand-mark" src="assets/logo-icon.png" alt="" aria-hidden="true" width="56" height="56">
+    <img class="brand-mark" src="/assets/logo-icon.png" alt="" aria-hidden="true" width="56" height="56">
     <div class="error-code" aria-hidden="true">404</div>
     <h1>Página no encontrada &nbsp;/&nbsp; Page not found</h1>
     <p>
@@ -31,8 +31,8 @@
       The page you're looking for doesn't exist or has moved.
     </p>
     <div class="error-actions">
-      <a href="index.html" class="btn btn-gold">Volver al inicio / Back home</a>
-      <a href="index.html#contacto" class="btn btn-outline">Contáctanos / Contact us</a>
+      <a href="/" class="btn btn-gold">Volver al inicio / Back home</a>
+      <a href="/#contacto" class="btn btn-outline">Contáctanos / Contact us</a>
     </div>
     <p class="error-fallback">
       Teléfono / Phone: {{phone_office_link}} ·

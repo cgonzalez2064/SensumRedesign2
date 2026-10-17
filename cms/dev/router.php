@@ -78,6 +78,21 @@ if ($path === '/assets/contact-handler.php') {
     exit;
 }
 
+// Same redirects as the root .htaccess: one address for the home page and the
+// previous site's pages sent to the matching section.
+$redirects = [
+    '/index.html' => '/',
+    '/about' => '/#nosotros', '/about.php' => '/#nosotros',
+    '/services' => '/#servicios', '/services.php' => '/#servicios', '/cat' => '/#servicios', '/cat.php' => '/#servicios',
+    '/proyects' => '/#proyectos', '/proyects.php' => '/#proyectos', '/projects' => '/#proyectos',
+    '/contact' => '/#contacto', '/contact.php' => '/#contacto',
+    '/index' => '/', '/index.php' => '/', '/index2.php' => '/', '/indexTest.php' => '/',
+];
+if (isset($redirects[$path])) {
+    header('Location: ' . $redirects[$path], true, 301);
+    exit;
+}
+
 // Local publishing goes to an overlay folder (PUBLIC_DIR in cms/.env, e.g.
 // storage/dev-public) so testing the admin never rewrites the committed
 // index.html. Files published there take precedence over the repository copy.

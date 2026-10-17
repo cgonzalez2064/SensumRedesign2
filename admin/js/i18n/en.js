@@ -343,6 +343,7 @@ export default {
     contact: ['Home → Contact', 'Contact section text, business hours and WhatsApp message.'],
     faq: ['Home → FAQ', 'The six questions and their answers.'],
     footer: ['Footer', 'The short text under the logo at the bottom of the page.'],
+    seo: ['Google (search results)', 'The title and description shown by Google and in link previews. They are not visible on the page.'],
     details: ['Contact details', 'Phones, WhatsApp, email, address and Instagram.'],
   },
   fields: {
@@ -395,6 +396,8 @@ export default {
     'faq.q#': ['Question', null],
     'faq.a#': ['Answer', null],
     'footer.about_desc': ['Short description', 'Shown under the logo in the footer.'],
+    'meta.title': ['Title in Google', 'Shown as the link of each search result and in the browser tab. Recommended: up to 60 characters, with the words people search for first.'],
+    'meta.description': ['Description in Google', 'Text under the title in search results and in WhatsApp or Facebook link previews. Recommended: 120 to 160 characters.'],
     'contact.phone_office': ['Office phone', 'Local format, for example 2256-7954.'],
     'contact.phone_mobile': ['Mobile phone', "Optional. Leave it empty if you don't want to show a second number."],
     'contact.whatsapp': ['WhatsApp number', 'With country code, for example +502 3481-9804. Used by the green button and WhatsApp links.'],

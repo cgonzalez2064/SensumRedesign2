@@ -56,7 +56,7 @@ test('fonts are self-hosted: no Google Fonts anywhere, CSP allows fonts and styl
   for (const f of ['index.html', '404.html', 'privacy-notice.html', 'cms/templates/index.html.tpl', 'cms/templates/404.html.tpl', 'cms/templates/privacy-notice.html.tpl']) {
     const html = readFileSync(join(ROOT, f), 'utf8');
     assert.doesNotMatch(html, /fonts\.googleapis|fonts\.gstatic/, f);
-    assert.match(html, /<link rel="stylesheet" href="assets\/fonts\/local-fonts\.css\?v=/, f);
+    assert.match(html, /<link rel="stylesheet" href="\/?assets\/fonts\/local-fonts\.css\?v=/, f);
   }
   const css = readFileSync(join(ROOT, 'assets/fonts/local-fonts.css'), 'utf8');
   for (const m of css.matchAll(/url\("([^"]+)"\)/g)) assert.ok(existsSync(join(ROOT, 'assets/fonts', m[1])), m[1]);

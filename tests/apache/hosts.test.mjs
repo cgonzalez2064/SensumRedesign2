@@ -169,3 +169,26 @@ test('signing in works on app. in production mode, with a host-only secure cooki
   const foreign = await req(APP, '/api/auth/login', { method: 'POST', body, headers: { 'Content-Type': 'application/json', Origin: 'https://evil.example' } });
   assert.equal(foreign.status, 403);
 });
+
+test('search engines: old-site addresses and /index.html redirect once, to the matching section', { skip }, async () => {
+  for (const [path, location] of [
+    ['/index.html', `https://${SITE}/`], ['/index.php', `https://${SITE}/`], ['/indexTest.php', `https://${SITE}/`],
+    ['/about', `https://${SITE}/#nosotros`], ['/about.php', `https://${SITE}/#nosotros`],
+    ['/services', `https://${SITE}/#servicios`], ['/services.php', `https://${SITE}/#servicios`], ['/cat', `https://${SITE}/#servicios`],
+    ['/proyects', `https://${SITE}/#proyectos`], ['/proyects.php', `https://${SITE}/#proyectos`],
+    ['/contact', `https://${SITE}/#contacto`], ['/contact.php', `https://${SITE}/#contacto`],
+  ]) {
+    const r = await req(SITE, path);
+    assert.equal(r.status, 301, path);
+    assert.equal(r.headers.location, location, path);
+  }
+  // The home page itself answers directly, with the search title.
+  const home = await req(SITE, '/');
+  assert.equal(home.status, 200);
+  assert.match(home.text, /<title id="pageTitle">Constructora en Guatemala: Construcción y Remodelaciones \| Sensum<\/title>/);
+  // A page that never existed is a real 404 whose styles load from any depth.
+  const missing = await req(SITE, '/images/blog/renovation/old.jpg');
+  assert.equal(missing.status, 404);
+  assert.match(missing.text, /href="\/assets\/main\.css\?v=/);
+  assert.match(missing.text, /<meta name="robots" content="noindex, follow">/);
+});

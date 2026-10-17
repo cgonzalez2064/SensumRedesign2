@@ -15,13 +15,9 @@
      ============================================================ */
   var I18N = {
     es: {
-      "meta.title": "Sensum Construcciones | Construcción y Remodelación en Guatemala",
-      "meta.description": "Empresa constructora en Guatemala: diseño arquitectónico, remodelación, ampliación y obra civil, con planificación, precisión y respaldo técnico.",
-      "og.title": "Sensum Construcciones | Construcción y Remodelación en Guatemala",
-      "og.description": "Construcción y remodelación con planificación, precisión y respaldo técnico en Guatemala. Conoce nuestros servicios y proyectos.",
+      "meta.title": "Constructora en Guatemala: Construcción y Remodelaciones | Sensum",
+      "meta.description": "Constructora en Guatemala con servicios de construcción y remodelaciones: diseño arquitectónico, obra civil, impermeabilización, instalaciones y mantenimiento.",
       "og.locale": "es_GT",
-      "twitter.title": "Sensum Construcciones Guatemala",
-      "twitter.description": "Construcción y remodelación con planificación, precisión y respaldo técnico en Guatemala.",
       "brand.aria": "Sensum Construcciones - Inicio",
       "lang.toggle_aria": "Cambiar idioma",
       "menu.open_aria": "Abrir menú de navegación",
@@ -178,13 +174,9 @@
       "whatsapp.message": "Hola, me interesa solicitar información sobre sus servicios."
     },
     en: {
-      "meta.title": "Sensum Construcciones | Construction & Remodeling in Guatemala",
-      "meta.description": "Construction company in Guatemala City: architectural design, remodeling, additions, and civil works, built on planning, precision, and technical support.",
-      "og.title": "Sensum Construcciones | Construction & Remodeling in Guatemala",
-      "og.description": "Construction and remodeling built on planning, precision, and technical support in Guatemala City. See our services and projects.",
+      "meta.title": "Construction Company in Guatemala: Construction & Remodeling | Sensum",
+      "meta.description": "Construction company in Guatemala: construction and remodeling services, architectural design, civil works, waterproofing, building systems, and maintenance.",
       "og.locale": "en_US",
-      "twitter.title": "Sensum Construcciones Guatemala",
-      "twitter.description": "Construction and remodeling built on planning, precision, and technical support in Guatemala City.",
       "brand.aria": "Sensum Construcciones - Home",
       "lang.toggle_aria": "Switch language",
       "menu.open_aria": "Open navigation menu",
@@ -444,11 +436,11 @@
        reads it live (e.g. a browser extension, or the user's own view
        of "Page info"). See the <head> note for the full rationale. */
     if (metaDescriptionEl && dict['meta.description']) metaDescriptionEl.setAttribute('content', dict['meta.description']);
-    if (ogTitleEl && dict['og.title']) ogTitleEl.setAttribute('content', dict['og.title']);
-    if (ogDescriptionEl && dict['og.description']) ogDescriptionEl.setAttribute('content', dict['og.description']);
+    if (ogTitleEl && dict['meta.title']) ogTitleEl.setAttribute('content', dict['meta.title']);
+    if (ogDescriptionEl && dict['meta.description']) ogDescriptionEl.setAttribute('content', dict['meta.description']);
     if (ogLocaleEl && dict['og.locale']) ogLocaleEl.setAttribute('content', dict['og.locale']);
-    if (twitterTitleEl && dict['twitter.title']) twitterTitleEl.setAttribute('content', dict['twitter.title']);
-    if (twitterDescriptionEl && dict['twitter.description']) twitterDescriptionEl.setAttribute('content', dict['twitter.description']);
+    if (twitterTitleEl && dict['meta.title']) twitterTitleEl.setAttribute('content', dict['meta.title']);
+    if (twitterDescriptionEl && dict['meta.description']) twitterDescriptionEl.setAttribute('content', dict['meta.description']);
 
     if (langToggle){
       langToggle.textContent = (lang === 'es') ? 'EN' : 'ES';

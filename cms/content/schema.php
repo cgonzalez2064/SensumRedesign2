@@ -110,6 +110,12 @@ return [
         ['id' => 'footer', 'anchor' => '#contacto', 'fields' => [
             $t('footer.about_desc', 90),
         ]],
+        // What search engines show for the site (title and description in the
+        // results, and in link previews). Not visible on the page itself.
+        ['id' => 'seo', 'anchor' => '', 'fields' => [
+            $t('meta.title', 70),
+            $p('meta.description', 160),
+        ]],
         // Language-independent business details.
         ['id' => 'details', 'anchor' => '#contacto', 'fields' => [
             ['key' => 'contact.phone_office', 'type' => 'phone', 'bilingual' => false, 'default' => '2256-7954'],

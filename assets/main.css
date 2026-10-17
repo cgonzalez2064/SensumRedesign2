@@ -260,7 +260,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .mobile-nav{
   position:fixed; top:0; right:0; bottom:0; width:min(86%, 360px); z-index: 1100;
   background: var(--ink); color:#fff; padding: 6.5rem 2rem 2rem;
-  transform: translateX(100%);
+  /* Closed: parked far enough right that its shadow (58px) is off-screen too. */
+  transform: translateX(calc(100% + 64px));
   transition: transform var(--dur-slow) var(--ease-spring);
   display:flex; flex-direction:column;
   box-shadow: -18px 0 40px rgba(0,0,0,.25);
@@ -755,7 +756,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .footer-social a:hover::after{ transform: scaleX(1); }
 .footer-social a:hover{ color: var(--ink); transform: translateY(-2px); }
 .footer-social svg{ width:18px; height:18px; fill:currentColor; flex:none; }
-.footer h4{ color:#fff; font-size:.95rem; text-transform:uppercase; letter-spacing:.04em; margin-bottom:1.3rem; }
+.site-footer h4{ color:#fff; font-size:.95rem; text-transform:uppercase; letter-spacing:.04em; margin-bottom:1.3rem; }
 .footer-links li{ margin-bottom:.75rem; }
 .footer-links a{ font-size:.9rem; color: rgba(255,255,255,.68); display:flex; align-items:center; gap:.5rem; transition: color var(--dur) var(--ease-out), gap var(--dur) var(--ease-out); }
 .footer-links a svg{ width:12px; height:12px; color: var(--brand-orange); flex:none; }

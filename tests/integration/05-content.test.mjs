@@ -26,7 +26,7 @@ test('content listing describes every editable field with limits and defaults', 
   const r = await c.get('/api/content');
   assert.equal(r.status, 200);
   const fields = r.data.sections.flatMap((x) => x.fields);
-  assert.equal(fields.length, 104);
+  assert.equal(fields.length, 106);
   const title = fields.find((f) => f.key === 'hero.title');
   assert.equal(title.type, 'emphasis');
   assert.equal(title.default.es, 'Construcción y remodelación con planificación, *precisión* y respaldo técnico');

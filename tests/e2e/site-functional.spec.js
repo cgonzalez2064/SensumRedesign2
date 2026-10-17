@@ -86,10 +86,13 @@ test('language toggle switches everything and is remembered', async ({ page }) =
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(page.locator('[data-i18n="nav.cta"]').first()).toHaveText('Get a Quote');
   await expect(page).toHaveTitle(/Construction & Remodeling/);
+  await expect(page.locator('#ogTitle')).toHaveAttribute('content', /^Construction Company in Guatemala/);
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await page.locator('#langToggle').click();
   await expect(page.locator('[data-i18n="nav.cta"]').first()).toHaveText('Cotizar proyecto');
+  await expect(page).toHaveTitle(/^Constructora en Guatemala: Construcción y Remodelaciones/);
+  await expect(page.locator('#metaDescription')).toHaveAttribute('content', /servicios de construcción y remodelaciones/);
   expect(problems).toEqual([]);
 });
 

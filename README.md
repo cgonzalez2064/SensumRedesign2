@@ -52,6 +52,7 @@ Node 20+ only for the automated tests. Full guide: [docs/LOCAL_SETUP.md](docs/LO
 | [docs/GUIA_DESPLIEGUE_NAMECHEAP.md](docs/GUIA_DESPLIEGUE_NAMECHEAP.md) | **guía paso a paso en español** para publicar en Namecheap (cPanel): base de datos, correo, cuenta propietaria, usuarios, fotos, cron, informe mensual |
 | [docs/NAMECHEAP_DEPLOYMENT.md](docs/NAMECHEAP_DEPLOYMENT.md) | production deployment on Namecheap Stellar Plus, backups, rollback (technical reference) |
 | [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) | go-live checklist |
+| [docs/GUIA_SEO.md](docs/GUIA_SEO.md) | **posicionamiento en buscadores**: qué hace el sitio, Google Search Console, Bing y el perfil de empresa en Google |
 | [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) | security audits 1 and 2, risks, recommendations |
 | [docs/TEST_REPORT.md](docs/TEST_REPORT.md) | local test passes 1 and 2 |
 | [docs/USER_GUIDE_ES.md](docs/USER_GUIDE_ES.md) / [docs/USER_GUIDE_EN.md](docs/USER_GUIDE_EN.md) | guides for the people who use the panel |

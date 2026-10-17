@@ -100,6 +100,18 @@ Consejos:
 * Si otra persona guardó cambios en la misma sección mientras editabas, el panel
   te avisará para que no se pierda el trabajo de nadie.
 
+### Título y descripción en Google
+
+La sección **Google (resultados de búsqueda)** guarda el título y la descripción que
+muestran Google y las vistas previas cuando alguien comparte el enlace del sitio
+(WhatsApp, Facebook). **No se ven en la página.**
+
+* **Título:** hasta 60 caracteres, con las palabras que la gente busca al inicio
+  (por ejemplo, «Constructora en Guatemala…»).
+* **Descripción:** entre 120 y 160 caracteres; resume los servicios e invita a cotizar.
+* Google puede tardar de días a semanas en mostrar el cambio.
+* Más detalles en `docs/GUIA_SEO.md`.
+
 ## 4. Datos de contacto
 
 En **Datos de contacto** cambias teléfonos, número de WhatsApp, correo,

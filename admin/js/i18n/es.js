@@ -344,6 +344,7 @@ export default {
     contact: ['Inicio → Contacto', 'Textos de la sección de contacto, horario y mensaje de WhatsApp.'],
     faq: ['Inicio → Preguntas frecuentes', 'Las seis preguntas y sus respuestas.'],
     footer: ['Pie de página', 'El texto breve bajo el logo, al final de la página.'],
+    seo: ['Google (resultados de búsqueda)', 'El título y la descripción que muestran Google y las vistas previas al compartir el enlace. No se ven en la página.'],
     details: ['Datos de contacto', 'Teléfonos, WhatsApp, correo, dirección e Instagram.'],
   },
   fields: {
@@ -396,6 +397,8 @@ export default {
     'faq.q#': ['Pregunta', null],
     'faq.a#': ['Respuesta', null],
     'footer.about_desc': ['Descripción breve', 'Aparece bajo el logo en el pie de página.'],
+    'meta.title': ['Título en Google', 'Aparece como el enlace de cada resultado de búsqueda y en la pestaña del navegador. Recomendado: hasta 60 caracteres, con las palabras que la gente busca al inicio.'],
+    'meta.description': ['Descripción en Google', 'Texto bajo el título en los resultados de búsqueda y en las vistas previas de WhatsApp o Facebook. Recomendado: entre 120 y 160 caracteres.'],
     'contact.phone_office': ['Teléfono de oficina', 'Formato local, por ejemplo 2256-7954.'],
     'contact.phone_mobile': ['Teléfono celular', 'Opcional. Déjalo vacío si no quieres mostrar un segundo número.'],
     'contact.whatsapp': ['Número de WhatsApp', 'Con código de país, por ejemplo +502 3481-9804. Lo usan el botón verde y los enlaces de WhatsApp.'],

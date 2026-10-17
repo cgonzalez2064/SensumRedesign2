@@ -833,6 +833,32 @@ El panel no puede avisarte si el servidor completo se cae. Para eso:
 
 ---
 
+## 17b. Que Google encuentre el sitio (Search Console, Bing y perfil de empresa)
+
+Una vez en línea, registra el sitio en los buscadores. Los pasos completos, con lo que
+le toca a quien administra el perfil de Google de la empresa, están en
+[`GUIA_SEO.md`](GUIA_SEO.md). Lo mínimo:
+
+1. **Google Search Console** → propiedad de tipo **Dominio** `sensumconstrucciones.com`
+   → copia el registro **TXT** que te da Google → cPanel → **Zone Editor** →
+   `sensumconstrucciones.com` → **Add Record** (TXT) → **Verificar**.
+2. Search Console → **Sitemaps** → `sitemap.xml` → **Enviar**; luego **Inspección de
+   URLs** → `https://sensumconstrucciones.com/` → **Solicitar indexación**.
+3. **Bing Webmaster Tools** → **Importar desde Google Search Console**.
+4. El título y la descripción que muestra Google se cambian en el panel: **Textos del
+   sitio → Google (resultados de búsqueda)**. No se ven en la página.
+
+Comprueba que las direcciones del sitio anterior ya no dan error:
+
+```bash
+curl -sI https://sensumconstrucciones.com/services.php | grep -i '^location'
+```
+
+Debe responder `location: https://sensumconstrucciones.com/#servicios` (lo mismo con
+`/about`, `/proyects` y `/contact`, que llevan a su sección).
+
+---
+
 ## 18. Prospectos, estadísticas y tickets: lo que le da valor al cliente
 
 ### 18.1 Prospectos (mensajes del formulario)
@@ -1027,6 +1053,12 @@ en `.env` (50 a 99).
    vez cambias un archivo del sitio a mano (a propósito), confirma el cambio en panel →
    **Monitoreo → Archivos del sitio → Revisar ahora → Marcar como esperados** (pide tu
    contraseña) o con `php ~/sensum-cms/bin/console integrity:accept`.
+
+**Al actualizar a la versión de octubre de 2026 (SEO):** después de **Volver a publicar
+el sitio**, la pestaña del navegador en la portada dice «Constructora en Guatemala:
+Construcción y Remodelaciones | Sensum» y aparece la sección **Textos del sitio →
+Google (resultados de búsqueda)**. Los textos visibles no cambian. Haz luego los pasos
+del 17b si aún no los hiciste.
 
 **Al actualizar desde una versión anterior (perfiles de acceso nuevos):** las cuentas
 que ya tenían **Prospectos** reciben también **Estadísticas de visitas** (antes iban

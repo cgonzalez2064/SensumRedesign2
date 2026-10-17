@@ -95,6 +95,8 @@ return [
         'faq.q6' => '¿El sitio está disponible en inglés?',
         'faq.a6' => 'Sí. Puedes cambiar el idioma del sitio con el botón ES/EN en la parte superior.',
         'footer.about_desc' => 'Diseño y construcción profesional en Guatemala.',
+        'meta.title' => 'Constructora en Guatemala: Construcción y Remodelaciones | Sensum',
+        'meta.description' => 'Constructora en Guatemala con servicios de construcción y remodelaciones: diseño arquitectónico, obra civil, impermeabilización, instalaciones y mantenimiento.',
     ],
     'en' => [
         'hero.eyebrow' => 'Construction and Remodeling in Guatemala City',
@@ -189,5 +191,7 @@ return [
         'faq.q6' => 'Is the site available in English?',
         'faq.a6' => 'Yes. You can switch the site\'s language using the ES/EN button at the top.',
         'footer.about_desc' => 'Professional design and construction in Guatemala City.',
+        'meta.title' => 'Construction Company in Guatemala: Construction & Remodeling | Sensum',
+        'meta.description' => 'Construction company in Guatemala: construction and remodeling services, architectural design, civil works, waterproofing, building systems, and maintenance.',
     ],
 ];

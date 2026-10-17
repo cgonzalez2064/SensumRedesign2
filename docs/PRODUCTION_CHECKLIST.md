@@ -65,6 +65,9 @@ Release: `release-________-_______` · Deployed by: __________ · Date: ________
 - [ ] Dark mode tested
 - [ ] Public visual regression checked on the live site (desktop/tablet/phone look as approved)
 - [ ] Public performance checked (PageSpeed Insights on the live URL)
+- [ ] Search engines: Google Search Console verified (Domain property, DNS TXT), `sitemap.xml` submitted, home page indexing requested; Bing imported from Search Console (`docs/GUIA_SEO.md`)
+- [ ] Old-site addresses redirect (`/services.php`, `/about`, `/proyects`, `/contact` → 301 to their section); `/index.html` → 301 to `/`
+- [ ] Google Business Profile reviewed by whoever manages it: website link, same address/phones/hours as the site (`docs/GUIA_SEO.md` §4)
 
 ## D. Monitoring and operations
 

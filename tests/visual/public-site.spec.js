@@ -17,6 +17,13 @@ async function settle(page) {
     if (y) y.textContent = '2026';
     await document.fonts.ready;
   });
+  // The contact form's anti-spam check starts when the form comes into view
+  // (a full-page capture triggers it at a random moment) and then shows a
+  // note: start it now and wait for its final state so captures match.
+  if (await page.locator('#contactForm').count()) {
+    await page.locator('#contactForm').dispatchEvent('focusin');
+    await page.waitForFunction(() => ['ok', 'error'].includes(document.getElementById('formCaptcha')?.dataset.state), null, { timeout: 15_000 });
+  }
   await page.waitForTimeout(400);
 }
 

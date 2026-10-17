@@ -24,11 +24,11 @@
 
 <header class="site-header is-scrolled static-page-header">
   <div class="header-inner">
-    <a href="index.html" class="brand" aria-label="Sensum Construcciones - Inicio">
+    <a href="/" class="brand" aria-label="Sensum Construcciones - Inicio">
       <img class="brand-mark" src="assets/logo-icon.png" alt="" aria-hidden="true" width="44" height="44">
       <span class="brand-text"><span class="brand-name">Sensum</span><small>Construcciones</small></span>
     </a>
-    <a href="index.html" class="btn btn-outline btn-outline-dark">&larr; Volver al inicio</a>
+    <a href="/" class="btn btn-outline btn-outline-dark">&larr; Volver al inicio</a>
   </div>
 </header>
 
@@ -282,7 +282,7 @@
 </main>
 
 <footer class="footer-bottom">
-  <p class="container">© <span id="year"></span> Sensum Construcciones. <a href="index.html">Volver al inicio</a></p>
+  <p class="container">© <span id="year"></span> Sensum Construcciones. <a href="/">Volver al inicio</a></p>
 </footer>
 
 <!-- Reuses the site's external, same-origin main.js only for the footer

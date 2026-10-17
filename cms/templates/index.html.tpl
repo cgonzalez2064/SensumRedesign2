@@ -2,8 +2,8 @@
 <html lang="es-GT">
 <head>
 <meta charset="UTF-8">
-<title id="pageTitle">Sensum Construcciones | Construcción y Remodelación en Guatemala</title>
-<meta name="description" content="Empresa constructora en Guatemala: diseño arquitectónico, remodelación, ampliación y obra civil, con planificación, precisión y respaldo técnico." id="metaDescription">
+<title id="pageTitle">{{t:meta.title}}</title>
+<meta name="description" content="{{t:meta.description}}" id="metaDescription">
 <meta name="author" content="Sensum Construcciones">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="index, follow, max-image-preview:large">
@@ -28,8 +28,8 @@
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_GT" id="ogLocale">
 <meta property="og:site_name" content="Sensum Construcciones">
-<meta property="og:title" content="Sensum Construcciones | Construcción y Remodelación en Guatemala" id="ogTitle">
-<meta property="og:description" content="Construcción y remodelación con planificación, precisión y respaldo técnico en Guatemala. Conoce nuestros servicios y proyectos." id="ogDescription">
+<meta property="og:title" content="{{t:meta.title}}" id="ogTitle">
+<meta property="og:description" content="{{t:meta.description}}" id="ogDescription">
 <meta property="og:url" content="https://sensumconstrucciones.com/">
 <meta property="og:image" content="https://sensumconstrucciones.com/assets/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -38,8 +38,8 @@
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Sensum Construcciones Guatemala" id="twitterTitle">
-<meta name="twitter:description" content="Construcción y remodelación con planificación, precisión y respaldo técnico en Guatemala." id="twitterDescription">
+<meta name="twitter:title" content="{{t:meta.title}}" id="twitterTitle">
+<meta name="twitter:description" content="{{t:meta.description}}" id="twitterDescription">
 <meta name="twitter:image" content="https://sensumconstrucciones.com/assets/og-image.png">
 
 <!-- Icons -->
@@ -58,6 +58,9 @@
 <link rel="preload" href="assets/fonts/oswald-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/fonts/local-fonts.css?v={{asset_version}}">
 
+<!-- Title and description above: panel → Textos del sitio → «Google». The
+     social-preview tags repeat them, and so does the description below. -->
+
 <!-- Structured data: LocalBusiness / GeneralContractor.
      Fields below (address, phone, email, hours, geo, sameAs) reflect the
      business's previously-confirmed contact details and are left
@@ -73,7 +76,7 @@
   "url": "https://sensumconstrucciones.com/",
   "logo": "https://sensumconstrucciones.com/assets/logo-full-color.png",
   "image": "https://sensumconstrucciones.com/assets/og-image.png",
-  "description": "Empresa guatemalteca de construcción y remodelación en Guatemala: diseño arquitectónico, obra civil, impermeabilización, instalaciones generales y mantenimiento preventivo.",
+  "description": {{ld:meta.description}},
   "slogan": "Tu mejor opción en servicios de construcción",
   "telephone": {{ld:telephones}},
   "email": {{ld:email}},
@@ -93,6 +96,7 @@
     "@type": "City",
     "name": "Guatemala"
   },
+  "knowsAbout": ["Construcción", "Servicios de construcción", {{ld:service1.title}}, {{ld:service2.title}}, {{ld:service3.title}}, {{ld:service4.title}}, {{ld:service5.title}}, {{ld:service6.title}}],
   "sameAs": [
     {{ld:instagram_url}}
   ],
@@ -112,7 +116,7 @@
   ],
 {{/if}}  "hasOfferCatalog": {
     "@type": "OfferCatalog",
-    "name": "Servicios de construcción y remodelación",
+    "name": "Servicios de construcción y remodelaciones en Guatemala",
     "itemListElement": [
       { "@type": "Offer", "itemOffered": { "@type": "Service", "name": {{ld:service1.title}}, "description": {{ld:service1.desc}} } },
       { "@type": "Offer", "itemOffered": { "@type": "Service", "name": {{ld:service2.title}}, "description": {{ld:service2.desc}} } },
@@ -122,6 +126,20 @@
       { "@type": "Offer", "itemOffered": { "@type": "Service", "name": {{ld:service6.title}}, "description": {{ld:service6.desc}} } }
     ]
   }
+}
+</script>
+
+<!-- The site itself: the name search engines show above each result. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": "https://sensumconstrucciones.com/#website",
+  "name": "Sensum Construcciones",
+  "alternateName": "Sensum",
+  "url": "https://sensumconstrucciones.com/",
+  "inLanguage": "es-GT",
+  "publisher": { "@id": "https://sensumconstrucciones.com/#organization" }
 }
 </script>
 
