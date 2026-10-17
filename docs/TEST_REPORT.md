@@ -9,7 +9,7 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 
 | Suite | Location | Size |
 |---|---|---|
-| API integration | `tests/integration/*.test.mjs` | 209 tests in 23 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
+| API integration | `tests/integration/*.test.mjs` | 232 tests in 27 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
 | Browser E2E | `tests/e2e/*.spec.js` | 69 specs × 3 browser profiles (207 runs, 53 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
 | Production build | `tests/apache/apache.test.mjs` | 6 checks of the built release under Apache + PHP-FPM |
@@ -370,6 +370,23 @@ Run on the final code (only documentation changed after it) before the first upl
 | `composer audit`, `npm audit` | no advisories |
 | Pre-push guard on the outgoing commits | nothing sensitive |
 | Production server (read-only) | PHP 8.4.26; DNS of the site, `www.`, `app.` and mail on the hosting; one Let's Encrypt certificate covering the three names |
+
+## Change — search engines (SEO) without changing the visible copy (2026-10-16)
+
+Title, meta description, link-preview tags and structured data now carry the target
+searches (constructora, constructora Guatemala, servicios de construcción, remodelaciones,
+remodelaciones Guatemala); editable in the panel (Textos del sitio → Google). Old-site
+addresses redirect (301) to their section; `/index.html` → `/`; the 404 page uses
+root-relative assets. Two visual defects of the live site fixed: invisible footer headings
+and the closed drawer's shadow at the right edge on desktop.
+
+| Check | Result |
+|---|---|
+| Visible copy unchanged | page text, image `alt` texts, `aria-label`s and `data-i18n` keys of `index.html`, `404.html` and `privacy-notice.html` identical to `802114e` |
+| API integration (27 files) | **232/232**; new `27-seo.test.mjs` (6 tests): target terms in title/description/OG/Twitter/JSON-LD, panel edits reach every tag and both languages without touching the page text, length/HTML limits, dev-router redirects mirror `.htaccess`, 404 at any depth, sitemap/robots/canonical |
+| Browser E2E (3 profiles) | **158 passed**, 55 skipped by design, 0 failed; the language-toggle test now also checks the ES/EN title, description and preview tag |
+| Visual regression | baseline regenerated from the approved `802114e` under identical conditions; the new version differs only in the footer headings (now readable; +12/+24/+36 px height on desktop/tablet/phone) and 2 px of drawer shadow at the right edge → new baseline, **22/22** twice in a row. The visual test now starts the contact-form anti-spam check and waits for its final state (before, a full-page capture could catch its note half the time) |
+| Built release under Apache + PHP-FPM (real `.htaccess`, HTTP and HTTPS, production `Host` names) | **14/14**; new test: `/index.html`, `/index.php`, `/about`, `/services(.php)`, `/cat`, `/proyects(.php)`, `/contact(.php)` → one 301 to `https://sensumconstrucciones.com/` or its `#section` (fragment not escaped); missing pages are real 404s with their styles |
 
 ## Other audits
 
