@@ -1049,6 +1049,26 @@ en `.env` (50 a 99).
    `public_html/assets/uploads/` (ahí están tu configuración, la base de datos y las fotos).
 4. Panel → **Volver a publicar el sitio** (o `bin/console publish`). Las
    actualizaciones de la base de datos se aplican solas.
+
+**Lo mismo con la Terminal (recomendado).** Sube el zip a `/home/USUARIO` (nunca a
+`public_html`) y escribe, uno por uno (cambia `release-…` por el nombre del zip, sin
+`.zip`):
+
+```bash
+cd ~ && php ~/sensum-cms/bin/console backup
+unzip -q release-….zip && ls release-…
+rsync -a --exclude=".env" --exclude="storage/" ~/release-…/sensum-cms/ ~/sensum-cms/
+rsync -a --exclude="assets/uploads/" --exclude="/index.html" --exclude="/404.html" --exclude="/privacy-notice.html" ~/release-…/public_html/ ~/public_html/
+php ~/sensum-cms/bin/console publish
+rm -rf ~/release-… ~/release-….zip
+```
+
+- El primer `rsync` actualiza el programa sin tocar tu configuración (`.env`) ni la base de
+  datos (`storage/`). El segundo actualiza el sitio sin tocar las fotos
+  (`assets/uploads/`) ni las tres páginas que genera el panel.
+- `publish` vuelve a crear esas páginas con tu contenido (textos, fotos, captcha) y las
+  plantillas nuevas; debe responder `Published. Changed: …`.
+- Comprueba el resultado con `cat ~/sensum-cms/BUILD` (el código de la versión nueva).
 5. La revisión de archivos usa automáticamente la lista del nuevo paquete. Si alguna
    vez cambias un archivo del sitio a mano (a propósito), confirma el cambio en panel →
    **Monitoreo → Archivos del sitio → Revisar ahora → Marcar como esperados** (pide tu
