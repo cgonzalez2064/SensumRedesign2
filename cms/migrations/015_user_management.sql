@@ -9,6 +9,17 @@ ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN two_factor_required INTEGER NOT NULL DEFAULT 0;
 
 -- New permission "users" (Gestión de usuarios), part of the "Administrador del
--- sitio" access type. Accounts that already had exactly that access type get it.
+-- sitio" access type. Accounts that already had exactly that access type get it,
+-- in any order: accounts from before 011 have "monitor" before "stats" (each
+-- migration appended its own). Nine entries, all nine of the type.
 UPDATE users SET permissions = permissions || ',users'
- WHERE permissions = 'texts,contact,photos,documents,site,leads,stats,monitor,report';
+ WHERE length(permissions) - length(replace(permissions, ',', '')) = 8
+   AND (',' || permissions || ',') LIKE '%,texts,%'
+   AND (',' || permissions || ',') LIKE '%,contact,%'
+   AND (',' || permissions || ',') LIKE '%,photos,%'
+   AND (',' || permissions || ',') LIKE '%,documents,%'
+   AND (',' || permissions || ',') LIKE '%,site,%'
+   AND (',' || permissions || ',') LIKE '%,leads,%'
+   AND (',' || permissions || ',') LIKE '%,stats,%'
+   AND (',' || permissions || ',') LIKE '%,monitor,%'
+   AND (',' || permissions || ',') LIKE '%,report,%';

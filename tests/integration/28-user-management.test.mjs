@@ -300,6 +300,9 @@ test('upgrading: accounts that were exactly "Administrador del sitio" also manag
   mk('m1@example.test', 'texts,contact,photos,documents,site,leads,stats,monitor,report');
   mk('m2@example.test', 'texts,contact,photos,documents,site,leads,stats,monitor');
   mk('m3@example.test', 'support,monitor,report,site');
+  // Accounts from before 011 have "stats" after "monitor" (each migration appended its own).
+  mk('m4@example.test', 'texts,contact,photos,documents,site,leads,monitor,stats,report');
+  mk('m5@example.test', 'texts,contact,photos,documents,site,leads,monitor,stats,report,support');
   s.sql("DELETE FROM schema_migrations WHERE version='015_user_management'");
   s.sql('ALTER TABLE users DROP COLUMN must_change_password');
   s.sql('ALTER TABLE users DROP COLUMN two_factor_required');
@@ -308,5 +311,7 @@ test('upgrading: accounts that were exactly "Administrador del sitio" also manag
   assert.equal(perms('m1@example.test'), 'texts,contact,photos,documents,site,leads,stats,monitor,report,users');
   assert.equal(perms('m2@example.test'), 'texts,contact,photos,documents,site,leads,stats,monitor', 'custom access stays as it was');
   assert.equal(perms('m3@example.test'), 'support,monitor,report,site');
+  assert.equal(perms('m4@example.test'), 'texts,contact,photos,documents,site,leads,monitor,stats,report,users', 'same access type, other order');
+  assert.equal(perms('m5@example.test'), 'texts,contact,photos,documents,site,leads,monitor,stats,report,support');
   assert.equal(s.sql("SELECT must_change_password || two_factor_required FROM users WHERE email='m1@example.test'"), '00');
 });
