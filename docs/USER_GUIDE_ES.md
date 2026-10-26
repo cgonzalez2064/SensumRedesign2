@@ -294,15 +294,17 @@ Si el correo no se pudo enviar en ese momento, el panel te lo dirá: tu solicitu
   encontrar la causa.
 * Si no puedes entrar al panel, escribe a it@gruposensum.com.
 
-## 10. Para la cuenta propietaria: usuarios y tipos de acceso
+## 10. Usuarios y tipos de acceso
 
-Solo la cuenta propietaria (it@gruposensum.com) ve **Usuarios** y puede invitar,
-cambiar, desactivar o eliminar cuentas.
+Ven **Usuarios** la cuenta propietaria (it@gruposensum.com) y quienes tienen
+**Gestión de usuarios** (incluida en «Administrador del sitio»). Desde ahí se invita,
+cambia, desactiva o elimina cuentas.
 * **Invitar usuario:** nombre, correo, **tipo de acceso** e idioma de los correos.
   La persona recibe un enlace para crear su contraseña.
   * **Administrador del sitio:** todo el contenido, publicación y actividad,
-    **Prospectos**, **Estadísticas**, **Salud del sitio** e **Informe mensual
-    (consulta)** (no gestiona el soporte ni envía el informe).
+    **Prospectos**, **Estadísticas**, **Salud del sitio**, **Informe mensual
+    (consulta)** y **Gestión de usuarios** (no gestiona el soporte, no envía el informe
+    ni cambia la configuración).
   * **Editor de contenido:** textos, datos de contacto y formulario, fotos y portafolio.
   * **Redactor** (solo textos), **Fotos y portafolio**, **Datos de contacto**.
   * **Ventas:** Prospectos y Estadísticas completas; no cambia el sitio.
@@ -314,10 +316,30 @@ cambiar, desactivar o eliminar cuentas.
 * **Buscar:** arriba de la lista escribe un nombre, correo o tipo de acceso (no importan
   tildes ni mayúsculas) y filtra por **estado** o **tipo de acceso**. **Quitar filtros**
   muestra a todas las personas otra vez.
-* Menú «⋮» de cada persona: **Reenviar invitación**, **Cambiar tipo de acceso** (se
-  aplica de inmediato), **Desactivar / Reactivar** (cierra su sesión) y **Eliminar usuario**.
-* Cada persona solo ve en el menú lo que puede cambiar; en **Mi cuenta** ve «Tu acceso».
-* La cuenta propietaria no se puede modificar ni eliminar desde el panel.
+* Menú «⋮» de cada persona:
+  * **Editar nombre y correo.** Un correo nuevo pide tu contraseña; se cierran sus
+    sesiones y avisamos al correo anterior y al nuevo. Si aún no activó su cuenta,
+    la invitación le llega al correo nuevo.
+  * **Enviar enlace para nueva contraseña.** Le llega un correo para crear una contraseña
+    nueva (vence en 24 horas); mientras no lo use, su contraseña actual sigue funcionando.
+  * **Establecer contraseña.** Útil si no le llegan los correos. El panel genera una
+    fácil de leer y dictar (por ejemplo «Lago-Pino-Ruta-472») o puedes escribirla. Pide
+    tu contraseña, cierra sus sesiones y le avisa por correo **sin incluir la contraseña**:
+    compártela tú por un medio seguro. Con la casilla marcada (recomendado), al entrar
+    el panel le pide crear su propia contraseña antes de cualquier otra cosa. Si estaba
+    invitada, su cuenta queda activa.
+  * **Verificación en dos pasos.** Exígesela a esa persona (al entrar deberá
+    configurarla) o **restablécela** si perdió el teléfono (pide tu contraseña).
+  * **Reenviar invitación**, **Cambiar tipo de acceso** (se aplica de inmediato),
+    **Desactivar / Reactivar** (cierra su sesión) y **Eliminar usuario**.
+* Quien gestiona usuarios sin ser la cuenta propietaria solo cambia a personas con
+  **igual o menos acceso** que el suyo y que no gestionan usuarios, y solo da los
+  accesos que tiene. «Gestión de usuarios» solo la da la cuenta propietaria. Las demás
+  personas aparecen con un candado.
+* Cada cambio queda en la actividad del panel. Cada persona solo ve en el menú lo que
+  puede cambiar; en **Mi cuenta** ve «Tu acceso».
+* Nadie cambia su propia cuenta desde Usuarios (eso es **Mi cuenta**), y la cuenta
+  propietaria no se puede modificar ni eliminar desde el panel.
 
 ## 11. Para la cuenta propietaria (soporte técnico): Monitoreo
 

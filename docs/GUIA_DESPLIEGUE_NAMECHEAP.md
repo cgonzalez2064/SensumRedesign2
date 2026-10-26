@@ -665,14 +665,17 @@ También puedes **Descargar respaldo completo** en cualquier momento (pide tu co
 
 ## 14. Crear los usuarios del equipo
 
-Solo la cuenta propietaria puede crear y modificar usuarios.
+Crean y modifican usuarios la cuenta propietaria y quienes tienen **Gestión de
+usuarios** (incluida en «Administrador del sitio»). Quien no es la cuenta propietaria
+solo cambia a personas con igual o menos acceso y que no gestionan usuarios, y solo da
+los accesos que tiene; «Gestión de usuarios» solo la da la cuenta propietaria.
 
 1. Panel → **Usuarios** → **Invitar usuario**.
 2. Nombre, correo y **Tipo de acceso**:
 
 | Tipo de acceso | Para quién | Ve y puede usar |
 |---|---|---|
-| Administrador del sitio | Quien administra el sitio día a día | Textos, datos de contacto y formulario, fotos, portafolio, publicación y actividad, **Prospectos**, **Estadísticas**, **Salud del sitio** e **Informe mensual (consulta)** |
+| Administrador del sitio | Quien administra el sitio día a día | Textos, datos de contacto y formulario, fotos, portafolio, publicación y actividad, **Prospectos**, **Estadísticas**, **Salud del sitio**, **Informe mensual (consulta)** y **Gestión de usuarios** |
 | Editor de contenido | Quien actualiza el sitio | Textos, datos de contacto y formulario, fotos y portafolio |
 | Redactor | Quien solo corrige o escribe textos | Los textos del sitio (español e inglés) |
 | Fotos y portafolio | Quien sube fotos de proyectos | Fotos de «Nosotros» y proyectos, y el PDF |
@@ -685,7 +688,13 @@ Solo la cuenta propietaria puede crear y modificar usuarios.
 Los permisos que puedes combinar en **Personalizado** son: Textos del sitio · Datos de
 contacto y formulario · Fotos · Portafolio en PDF · Publicación y actividad ·
 Prospectos · **Estadísticas de visitas** · **Salud del sitio** · **Informe mensual
-(consulta)** · **Gestión de solicitudes de soporte**.
+(consulta)** · **Gestión de solicitudes de soporte** · **Gestión de usuarios**.
+
+Si a alguien no le llegan los correos (por ejemplo, un buzón recién creado), en su menú
+«⋮» usa **Establecer contraseña**: el panel genera una fácil de leer, tú se la compartes
+por un medio seguro y al entrar crea la suya. También puedes **Editar nombre y correo**,
+**Enviar enlace para nueva contraseña** y exigir o restablecer su **Verificación en dos
+pasos**.
 
 > **Salud del sitio** es la versión resumida del Monitoreo: si el sitio funciona, la
 > **disponibilidad (uptime)** de las últimas 24 horas, 7, 30 y 90 días, la gráfica de
@@ -1073,6 +1082,13 @@ rm -rf ~/release-… ~/release-….zip
    vez cambias un archivo del sitio a mano (a propósito), confirma el cambio en panel →
    **Monitoreo → Archivos del sitio → Revisar ahora → Marcar como esperados** (pide tu
    contraseña) o con `php ~/sensum-cms/bin/console integrity:accept`.
+
+**Al actualizar a la versión de gestión de usuarios (octubre de 2026):** las cuentas con
+el tipo de acceso **Administrador del sitio** reciben **Gestión de usuarios** (pueden
+editar nombre y correo, contraseñas y verificación en dos pasos de quienes tienen menos
+acceso). Si alguna no debe tenerlo, quítaselo en Usuarios → «⋮» → **Cambiar tipo de
+acceso** (queda como «Personalizado»). Las actualizaciones de la base de datos se
+aplican solas.
 
 **Al actualizar a la versión de octubre de 2026 (SEO):** después de **Volver a publicar
 el sitio**, la pestaña del navegador en la portada dice «Constructora en Guatemala:

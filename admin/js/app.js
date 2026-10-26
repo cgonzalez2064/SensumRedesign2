@@ -5,7 +5,7 @@
 import { h, icon, clear, initials, fill } from './dom.js';
 import { t, setLang, getLang, onLangChange, i18nReady } from './i18n.js';
 import { initTheme, setThemePref, getThemePref } from './theme.js';
-import { api, setCsrf, onSessionExpired, onTwoFactorRequired, setViewAsExpected, onViewAsChanged } from './api.js';
+import { api, setCsrf, onSessionExpired, onTwoFactorRequired, onPasswordChangeRequired, setViewAsExpected, onViewAsChanged } from './api.js';
 import { toast, openDialog, confirmDialog, dropdown, segmented, passwordField, textField, setBusy, errorText, alertBox, loading, button } from './ui.js';
 import { initTelemetry } from './telemetry.js';
 import { can } from './access.js';
@@ -57,7 +57,7 @@ const PRIVATE = [
   { re: /^\/prospectos$/, mod: V.leads, fn: 'render', nav: 'leads', perm: ['leads'] },
   { re: /^\/prospectos\/([1-9][0-9]{0,8})$/, mod: V.leads, fn: 'detail', nav: 'leads', perm: ['leads'] },
   { re: /^\/estadisticas$/, mod: V.stats, fn: 'render', nav: 'stats', perm: ['stats', 'leads'] },
-  { re: /^\/usuarios$/, mod: V.users, fn: 'render', nav: 'users', owner: true },
+  { re: /^\/usuarios$/, mod: V.users, fn: 'render', nav: 'users', perm: ['users'] },
   { re: /^\/monitoreo$/, mod: V.monitor, fn: 'render', nav: 'monitor', owner: true },
   { re: /^\/(salud-del-sitio|monitoreo-basico)$/, mod: V.status, fn: 'render', nav: 'status', perm: ['monitor'] },
   { re: /^\/traduccion$/, mod: V.translation, fn: 'render', nav: 'translation', owner: true },
@@ -336,6 +336,7 @@ function renderShell(activeNav, force = false) {
       !user.owner && (can(user, 'monitor') || can(user, 'report')) ? [h('div', { class: 'nav-section', text: t('nav.groupStatus') }),
         can(user, 'monitor') ? navLink('/salud-del-sitio', 'status', 'heart-pulse', active) : null,
         can(user, 'report') ? navLink('/informe', 'siteReport', 'bar-chart', active) : null] : null,
+      !user.owner && can(user, 'users') ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active)] : null,
       user.owner ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active),
         navLink('/monitoreo', 'monitor', 'activity', active), navLink('/informe', 'siteReport', 'bar-chart', active),
         navLink('/correo', 'email', 'envelope', active), navLink('/traduccion', 'translation', 'translate', active), navLink('/seguridad', 'security', 'shield-lock', active)] : null,
@@ -429,6 +430,20 @@ async function route(force = false) {
     return navigate(state.setupRequired ? '/configurar' : '/ingresar');
   }
 
+  // Signed in with a password someone else gave the account: a password of their own first.
+  if (state.session.user.mustChangePassword && !state.session.viewAs) {
+    state.shell = null;
+    let mod;
+    try { mod = await V.auth(); } catch (e) { return showLoadFailed(document.getElementById('app'), e); }
+    if (stale()) return;
+    mod.changePassword({ app: document.getElementById('app'), onLogout: logout, onDone: async () => {
+      await loadSession();
+      state.path = null;
+      route(true);
+    } });
+    return;
+  }
+
   // Covered by the two-step policy but not set up yet: only the set-up screen.
   if (state.session.user.twoFactorRequired && !state.session.user.twoFactor) {
     state.shell = null;
@@ -517,6 +532,7 @@ async function boot() {
   onSessionExpired(relogin);
   // The policy changed while signed in: refresh the session and show the set-up screen.
   onTwoFactorRequired(async () => { await loadSession(); state.path = null; route(true); });
+  onPasswordChangeRequired(async () => { await loadSession(); state.path = null; route(true); });
   // The new language's texts are loaded now: rebuild the frame (menu, top bar)
   // too — it may have been drawn while they were still loading.
   onLangChange(() => { state.shell = null; state.path = null; route(true); });

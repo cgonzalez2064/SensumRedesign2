@@ -73,6 +73,56 @@ final class Passwords
         return null;
     }
 
+    /**
+     * Common Spanish words, 3–8 letters, no accents or ñ: they read and type the
+     * same on any keyboard and are easy to dictate.
+     */
+    private const WORDS = [
+        'agua', 'aire', 'alba', 'arena', 'arroyo', 'astro', 'aura', 'bosque', 'brisa', 'cabo', 'calma', 'campo',
+        'cauce', 'cerro', 'cielo', 'cima', 'claro', 'colina', 'costa', 'cumbre', 'delta', 'duna', 'faro', 'flor',
+        'fuente', 'hielo', 'isla', 'lago', 'laguna', 'llano', 'lluvia', 'luna', 'marea', 'monte', 'nieve', 'nube',
+        'oasis', 'orilla', 'pampa', 'piedra', 'playa', 'prado', 'rayo', 'roca', 'selva', 'sierra', 'tierra',
+        'trueno', 'valle', 'viento', 'acacia', 'arce', 'avena', 'cacao', 'cactus', 'caoba', 'cedro', 'ceiba', 'coco',
+        'girasol', 'helecho', 'hiedra', 'hoja', 'laurel', 'lirio', 'loto', 'menta', 'musgo', 'nogal', 'olivo',
+        'palma', 'pino', 'roble', 'rosa', 'salvia', 'sauce', 'semilla', 'tallo', 'tomillo', 'trigo', 'vainilla',
+        'violeta', 'banano', 'cereza', 'ciruela', 'durazno', 'fresa', 'granada', 'guayaba', 'higo', 'kiwi', 'lima',
+        'mango', 'manzana', 'mora', 'naranja', 'papaya', 'pera', 'toronja', 'zapote', 'abeja', 'alce', 'alpaca',
+        'ardilla', 'ballena', 'caballo', 'canario', 'castor', 'cebra', 'ciervo', 'conejo', 'coyote', 'foca',
+        'gacela', 'garza', 'gato', 'gaviota', 'grillo', 'hormiga', 'iguana', 'jaguar', 'jirafa', 'koala', 'lince',
+        'lobo', 'loro', 'mapache', 'mirlo', 'morsa', 'nutria', 'oveja', 'panda', 'pato', 'perico', 'puma', 'quetzal',
+        'rana', 'tapir', 'tigre', 'tortuga', 'venado', 'zorro', 'ancla', 'antena', 'arco', 'banco', 'barco', 'bote',
+        'cable', 'caja', 'campana', 'canoa', 'carta', 'casa', 'castillo', 'cinta', 'clave', 'cofre', 'cometa',
+        'copa', 'corona', 'cuerda', 'dado', 'disco', 'escudo', 'flecha', 'globo', 'guante', 'hamaca', 'jarra',
+        'libro', 'linterna', 'llave', 'mapa', 'marco', 'mesa', 'molino', 'moneda', 'mochila', 'motor', 'nave',
+        'papel', 'pincel', 'plato', 'pluma', 'puente', 'puerta', 'radio', 'reloj', 'remo', 'rueda', 'silla',
+        'tambor', 'taza', 'tejado', 'telar', 'tinta', 'torre', 'trompo', 'vaso', 'vela', 'ventana', 'yate', 'azul',
+        'blanco', 'bravo', 'brillo', 'dorado', 'firme', 'fresco', 'gris', 'jade', 'leal', 'lento', 'libre', 'limpio',
+        'lindo', 'listo', 'noble', 'nuevo', 'plata', 'pleno', 'rojo', 'sabio', 'sereno', 'suave', 'tenaz', 'tibio',
+        'verde', 'vivo', 'cobre', 'coral', 'marfil', 'perla', 'topacio', 'zafiro', 'arroz', 'canela', 'galleta',
+        'miel', 'nuez', 'queso', 'sopa', 'tamal', 'tortilla', 'aldea', 'barrio', 'camino', 'ciudad', 'granja',
+        'mercado', 'museo', 'parque', 'plaza', 'puerto', 'ruta', 'senda', 'templo', 'villa', 'ritmo', 'nota',
+        'verso', 'poema', 'cuento', 'idea', 'meta', 'rumbo', 'viaje', 'norte', 'oeste', 'este', 'cobalto', 'cristal',
+        'estrella', 'fogata', 'lucero', 'mirador', 'nido', 'pasto', 'pradera', 'rio', 'sol', 'mar', 'ola', 'uva',
+        'pan', 'sur', 'pez', 'oso', 'cuarzo', 'granito', 'basalto', 'arcilla', 'ladrillo', 'madera',
+    ];
+
+    /**
+     * A password that is easy to read aloud and type, e.g. "Lago-Pino-Ruta-472":
+     * three words and a three-digit number (about 34 bits with 295 words).
+     * Meant as a temporary password that the person replaces at first sign-in,
+     * so sign-in throttling and that short life keep it safe enough.
+     */
+    public static function readable(): string
+    {
+        $parts = [];
+        $n = count(self::WORDS);
+        foreach ([0, 1, 2] as $i) {
+            $parts[] = ucfirst(self::WORDS[random_int(0, $n - 1)]);
+        }
+        $parts[] = (string) random_int(100, 999);
+        return implode('-', $parts);
+    }
+
     /** A dummy hash so failed lookups take as long as real verifications. */
     public static function dummyHash(): string
     {

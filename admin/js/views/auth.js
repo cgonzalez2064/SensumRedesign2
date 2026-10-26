@@ -2,7 +2,7 @@
 import { h, icon, clear, fill } from '../dom.js';
 import { t, getLang, setLang } from '../i18n.js';
 import { getThemePref, setThemePref } from '../theme.js';
-import { api } from '../api.js';
+import { api, setCsrf } from '../api.js';
 import { textField, passwordField, passwordGuide, alertBox, errorText, fieldErrorText, setBusy, toast } from '../ui.js';
 import { themeSwitch, langSwitch } from '../app.js';
 import { codeField, renderSetup } from '../twofactor.js';
@@ -243,6 +243,43 @@ export function enroll({ app, onDone, onLogout }) {
   layout(app, t('twofa.requiredTitle'), t('twofa.requiredLead'), box,
     h('p', { class: 'small auth-alt' }, h('a', { href: '#/ingresar', onclick: (e) => { e.preventDefault(); onLogout(); }, text: t('topbar.logout') })));
   renderSetup(box, { onEnabled: onDone, doneLabel: t('twofa.goToPanel') });
+}
+
+/**
+ * Signed in with a password someone else gave the account (Usuarios): before
+ * anything else, the person creates a password only they know.
+ */
+export function changePassword({ app, onDone, onLogout }) {
+  const current = passwordField({ label: t('auth.tempPassword'), autocomplete: 'current-password', required: true });
+  const pw = passwordField({ label: t('auth.newPassword'), autocomplete: 'new-password', required: true });
+  const pw2 = passwordField({ label: t('auth.confirmPassword'), autocomplete: 'new-password', required: true });
+  const msg = h('div', { 'aria-live': 'assertive' });
+  const submit = h('button', { class: 'btn btn-primary btn-block', type: 'submit' }, t('auth.mustChangeSubmit'));
+  const form = h('form', { class: 'stack', novalidate: true }, current.wrap, pw.wrap, pw2.wrap, passwordGuide(pw.input, pw2.input), msg, submit);
+  layout(app, t('auth.mustChangeTitle'), t('auth.mustChangeLead'), form,
+    h('p', { class: 'small auth-alt' }, h('a', { href: '#/ingresar', onclick: (e) => { e.preventDefault(); onLogout(); }, text: t('topbar.logout') })));
+  setTimeout(() => current.input.focus(), 60);
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clear(msg);
+    if (!current.input.value) { current.setError(fieldErrorText('required')); return current.input.focus(); }
+    current.setError(null);
+    if ([...pw.input.value].length < 10) { pw.setError(fieldErrorText('password_too_short')); return pw.input.focus(); }
+    pw.setError(null);
+    if (pw.input.value !== pw2.input.value) { pw2.setError(fieldErrorText('password_mismatch')); return pw2.input.focus(); }
+    pw2.setError(null);
+    setBusy(submit, true, t('common.saving'));
+    try {
+      const r = await api.post('/account/password', { currentPassword: current.input.value, password: pw.input.value, passwordConfirm: pw2.input.value });
+      if (r.csrf) setCsrf(r.csrf);
+      toast(t('account.passwordChanged'));
+      onDone();
+    } catch (err) {
+      setBusy(submit, false);
+      if (err.code === 'validation' && applyFieldErrors(err, { currentPassword: current, password: pw, passwordConfirm: pw2 })) return;
+      msg.append(alertBox('bad', null, errorText(err)));
+    }
+  });
 }
 
 // ------------------------------------------------------------------ first sign-in

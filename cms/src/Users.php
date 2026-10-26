@@ -28,14 +28,16 @@ final class Users
      *   stats      Estadísticas de visitas
      *   monitor    Salud del sitio (uptime, speed, incidents — no technical details)
      *   support    Gestión de solicitudes de soporte (everyone's tickets)
+     *   users      Gestión de usuarios (invite, edit, passwords, two-step sign-in
+     *              of accounts that don't manage users; see UsersController)
      */
-    public const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'support'];
+    public const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'support', 'users'];
     /**
      * Ready-made access types offered when inviting, one per real job
      * (anything else shows as "Personalizado").
      */
     public const ACCESS_TYPES = [
-        'admin' => ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report'],
+        'admin' => ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'users'],
         'content' => ['texts', 'contact', 'photos', 'documents'],
         'texts' => ['texts'],
         'media' => ['photos', 'documents'],
@@ -72,6 +74,14 @@ final class Users
             throw ApiError::validation($errors);
         }
         return [$name, $email];
+    }
+
+    /** The owner's address makes an account the owner (Auth::isOwner): nobody else may get it. */
+    private function assertNotOwnerEmail(string $email): void
+    {
+        if ($email === $this->app->config->ownerEmail()) {
+            throw ApiError::validation(['email' => 'owner_email_reserved']);
+        }
     }
 
     public function find(int $id): ?array
@@ -148,6 +158,7 @@ final class Users
     public function createInvited(string $name, string $email, array $permissions, string $lang, int $invitedBy): int
     {
         [$name, $email] = $this->validateIdentity($name, $email);
+        $this->assertNotOwnerEmail($email);
         $existing = $this->app->db()->one('SELECT id, status FROM users WHERE email = ?', [$email]);
         if ($existing) {
             throw ApiError::validation(['email' => $existing['status'] === 'invited' ? 'email_already_invited' : 'email_taken']);
@@ -160,13 +171,57 @@ final class Users
         );
     }
 
+    /** The person's own new password (Mi cuenta, reset link, invitation): no change pending any more. */
     public function setPassword(int $userId, string $password): void
     {
         $now = time();
         $this->app->db()->run(
-            'UPDATE users SET password_hash = ?, password_changed_at = ?, updated_at = ? WHERE id = ?',
+            'UPDATE users SET password_hash = ?, password_changed_at = ?, updated_at = ?, must_change_password = 0 WHERE id = ?',
             [Passwords::hash($password), $now, $now, $userId]
         );
+    }
+
+    /**
+     * A password given by someone who manages users. An invited account becomes
+     * active (its invitation link stops working); with $mustChange the panel asks
+     * the person for a password of their own before anything else.
+     */
+    public function setPasswordFor(array $user, string $password, bool $mustChange): void
+    {
+        $now = time();
+        $this->app->db()->transaction(function () use ($user, $password, $mustChange, $now) {
+            $this->app->db()->run(
+                "UPDATE users SET password_hash = ?, password_changed_at = ?, updated_at = ?, must_change_password = ?,
+                        status = CASE status WHEN 'invited' THEN 'active' ELSE status END WHERE id = ?",
+                [Passwords::hash($password), $now, $now, $mustChange ? 1 : 0, (int) $user['id']]
+            );
+            $this->app->db()->run("UPDATE user_tokens SET used_at = ? WHERE user_id = ? AND purpose IN ('invite', 'reset') AND used_at IS NULL", [$now, (int) $user['id']]);
+        });
+    }
+
+    /**
+     * New name and/or sign-in e-mail for someone else's account.
+     * @return array{name:string,email:string,emailChanged:bool}
+     */
+    public function changeIdentity(array $user, string $name, string $email): array
+    {
+        [$name, $email] = $this->validateIdentity($name, $email);
+        $emailChanged = $email !== (string) $user['email'];
+        if ($emailChanged) {
+            $this->assertNotOwnerEmail($email);
+            if ($this->app->db()->value('SELECT 1 FROM users WHERE email = ? AND id <> ?', [$email, (int) $user['id']])) {
+                throw ApiError::validation(['email' => 'email_taken']);
+            }
+        }
+        $now = time();
+        $this->app->db()->transaction(function () use ($user, $name, $email, $emailChanged, $now) {
+            $this->app->db()->run('UPDATE users SET name = ?, email = ?, updated_at = ? WHERE id = ?', [$name, $email, $now, (int) $user['id']]);
+            if ($emailChanged) {
+                // Links e-mailed to the old address stop working.
+                $this->app->db()->run("UPDATE user_tokens SET used_at = ? WHERE user_id = ? AND purpose IN ('invite', 'reset') AND used_at IS NULL", [$now, (int) $user['id']]);
+            }
+        });
+        return ['name' => $name, 'email' => $email, 'emailChanged' => $emailChanged];
     }
 
     public static function present(array $u): array
@@ -181,6 +236,10 @@ final class Users
             'lang' => (string) $u['lang'],
             'createdAt' => (int) $u['created_at'],
             'lastLoginAt' => $u['last_login_at'] !== null ? (int) $u['last_login_at'] : null,
+            'mustChangePassword' => !empty($u['must_change_password']),
+            'twoFactorEnabled' => !empty($u['totp_enabled_at']),
+            'twoFactorEnabledAt' => !empty($u['totp_enabled_at']) ? (int) $u['totp_enabled_at'] : null,
+            'twoFactorForced' => !empty($u['two_factor_required']),
         ];
     }
 }

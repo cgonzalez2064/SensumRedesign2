@@ -278,15 +278,16 @@ where you can also see your request history.
   the message (e.g. `A1B2C3`); it helps the technical team find the cause.
 * If you can't sign in to the panel, email it@gruposensum.com.
 
-## 10. For the owner account: users and access types
+## 10. Users and access types
 
-Only the owner account (it@gruposensum.com) sees **Users** and can invite, change,
+**Users** is seen by the owner account (it@gruposensum.com) and by anyone with
+**User management** (part of "Site administrator"). From there you invite, change,
 disable or delete accounts.
 * **Invite user:** name, email, **access type** and email language. The person
   receives a link to create their password.
   * **Site administrator:** all the content, publishing and activity, **Leads**,
-    **Statistics**, **Site health** and **Monthly report (view)** (does not manage
-    support or send the report).
+    **Statistics**, **Site health**, **Monthly report (view)** and **User management**
+    (does not manage support, send the report or change settings).
   * **Content editor:** text, contact details and form, photos and portfolio.
   * **Copywriter** (text only), **Photos and portfolio**, **Contact details**.
   * **Sales:** Leads and full Statistics; does not change the website.
@@ -298,10 +299,28 @@ disable or delete accounts.
 * **Search:** above the list type a name, e-mail or access type (accents and capitals
   don't matter) and filter by **status** or **access type**. **Clear filters** shows
   everyone again.
-* Each person's "⋮" menu: **Resend invitation**, **Change access type** (applies right
-  away), **Disable / Re-enable** (signs them out) and **Delete user**.
-* Everyone only sees in the menu what they can change; **My account** shows "Your access".
-* The owner account can't be changed or deleted from the panel.
+* Each person's "⋮" menu:
+  * **Edit name and e-mail.** A new e-mail asks for your password; their sessions end
+    and we tell both the old and the new address. If they haven't activated their
+    account yet, the invitation goes to the new address.
+  * **Send a new-password link.** They get an e-mail to create a new password
+    (valid 24 hours); until they use it, their current password keeps working.
+  * **Set password.** Useful when e-mails don't reach them. The panel generates an
+    easy-to-read one (e.g. "Lago-Pino-Ruta-472") or you type it. It asks for your
+    password, ends their sessions and tells them by e-mail **without the password**:
+    share it yourself securely. With the box ticked (recommended), the panel asks them
+    to create their own password before anything else. An invited account becomes active.
+  * **Two-step sign-in.** Require it for that person (they set it up when they sign
+    in) or **reset** it if they lost their phone (asks for your password).
+  * **Resend invitation**, **Change access type** (applies right away),
+    **Disable / Re-enable** (signs them out) and **Delete user**.
+* Someone who manages users without being the owner only changes people with the
+  **same or less access** who don't manage users, and only gives access they have.
+  Only the owner gives "User management". Everyone else shows a lock.
+* Every change is recorded in the panel's activity. Everyone only sees in the menu what
+  they can change; **My account** shows "Your access".
+* Nobody changes their own account from Users (that's **My account**), and the owner
+  account can't be changed or deleted from the panel.
 
 ## 11. For the owner account (technical support): Monitoring
 

@@ -96,7 +96,8 @@ final class Auth
         }
         $db = $this->app->db();
         $row = $db->one(
-            'SELECT s.*, u.id AS uid, u.email, u.name, u.role, u.status, u.lang, u.theme, u.last_login_at, u.permissions, u.totp_enabled_at, u.onboarded_at
+            'SELECT s.*, u.id AS uid, u.email, u.name, u.role, u.status, u.lang, u.theme, u.last_login_at, u.permissions, u.totp_enabled_at, u.onboarded_at,
+                    u.must_change_password, u.two_factor_required
                FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id_hash = ?',
             [hash('sha256', $raw)]
         );
@@ -424,6 +425,8 @@ final class Auth
             'theme' => (string) $u['theme'],
             'twoFactor' => !empty($u['totp_enabled_at']),
             'twoFactorRequired' => $this->app->twoFactor()->required($u),
+            // A password someone else gave the account: the panel asks for a new one first.
+            'mustChangePassword' => !empty($u['must_change_password']),
         ];
     }
 }

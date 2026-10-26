@@ -15,8 +15,9 @@ use Sensum\Cms\Http\ApiError;
  * codes. The secret is stored encrypted; a code cannot be used twice.
  *
  * Policy (owner, Seguridad): "owner" (default) requires it for the owner
- * account, "all" for everyone, "none" leaves it optional. An account the
- * policy covers that has not set it up yet can only reach the set-up screen.
+ * account, "all" for everyone, "none" leaves it optional. Whoever manages users
+ * can also require it for one person (users.two_factor_required). An account
+ * that must use it but has not set it up yet can only reach the set-up screen.
  */
 final class TwoFactor
 {
@@ -52,6 +53,12 @@ final class TwoFactor
 
     public function required(array $user): bool
     {
+        return $this->requiredByPolicy($user) || !empty($user['two_factor_required']);
+    }
+
+    /** Required by the site-wide policy alone (not by a per-person requirement). */
+    public function requiredByPolicy(array $user): bool
+    {
         $p = $this->policy();
         return $p === 'all' || ($p === 'owner' && $this->app->auth()->isOwner($user));
     }
@@ -70,7 +77,7 @@ final class TwoFactor
     public function overview(): array
     {
         $users = [];
-        foreach ($this->app->db()->all("SELECT id, name, email, status, totp_enabled_at FROM users WHERE status <> 'invited' ORDER BY name") as $u) {
+        foreach ($this->app->db()->all("SELECT id, name, email, status, totp_enabled_at, two_factor_required FROM users WHERE status <> 'invited' ORDER BY name") as $u) {
             $users[] = [
                 'id' => (int) $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'status' => $u['status'],
                 'owner' => $this->app->auth()->isOwner($u), 'enabled' => $this->enabled($u),

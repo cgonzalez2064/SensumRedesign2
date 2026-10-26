@@ -12,9 +12,9 @@ use Sensum\Cms\Http\Response;
  * Routes /api/* requests. Every route declares its own guard:
  *   public  — no session (still origin-checked when it changes state)
  *   user    — signed-in user + same origin + CSRF token
- *   owner   — as "user", and the account is OWNER_EMAIL (users, Monitoring, site report)
- * Finer rules (which information an account may change) are checked in the
- * controllers with Auth::assertCan().
+ *   owner   — as "user", and the account is OWNER_EMAIL (Monitoring, settings, site report)
+ * Finer rules (which information an account may change, whom someone who
+ * manages users may change) are checked in the controllers.
  * Unexpected failures are logged privately and answered with a generic
  * "server_error" plus a short reference number — never with internals.
  */
@@ -91,7 +91,6 @@ final class Kernel
         ['POST', '/api/security/backup/send', SecurityController::class, 'sendBackup', 'owner'],
         ['POST', '/api/security/backup/download', SecurityController::class, 'downloadBackup', 'owner'],
         ['PUT', '/api/security/policy', SecurityController::class, 'savePolicy', 'owner'],
-        ['POST', '/api/users/{id}/2fa-reset', UsersController::class, 'resetTwoFactor', 'owner'],
 
         ['GET', '/api/reports', ReportsController::class, 'index', 'user'],
         ['POST', '/api/reports', ReportsController::class, 'create', 'user'],
@@ -116,11 +115,18 @@ final class Kernel
         ['POST', '/api/reports/{id}/messages', ReportsController::class, 'message', 'user'],
         ['GET', '/api/reports/{id}/screenshot', ReportsController::class, 'screenshot', 'user'],
 
-        ['GET', '/api/users', UsersController::class, 'index', 'owner'],
-        ['POST', '/api/users', UsersController::class, 'invite', 'owner'],
-        ['POST', '/api/users/{id}/resend', UsersController::class, 'resend', 'owner'],
-        ['PUT', '/api/users/{id}', UsersController::class, 'update', 'owner'],
-        ['DELETE', '/api/users/{id}', UsersController::class, 'delete', 'owner'],
+        // The owner, or accounts with "Gestión de usuarios" (rules in UsersController).
+        ['GET', '/api/users', UsersController::class, 'index', 'user'],
+        ['POST', '/api/users', UsersController::class, 'invite', 'user'],
+        ['GET', '/api/users/password-suggestion', UsersController::class, 'passwordSuggestion', 'user'],
+        ['POST', '/api/users/{id}/resend', UsersController::class, 'resend', 'user'],
+        ['PUT', '/api/users/{id}', UsersController::class, 'update', 'user'],
+        ['PUT', '/api/users/{id}/profile', UsersController::class, 'profile', 'user'],
+        ['POST', '/api/users/{id}/password', UsersController::class, 'setPassword', 'user'],
+        ['POST', '/api/users/{id}/password-link', UsersController::class, 'passwordLink', 'user'],
+        ['PUT', '/api/users/{id}/2fa', UsersController::class, 'twoFactorRequirement', 'user'],
+        ['POST', '/api/users/{id}/2fa-reset', UsersController::class, 'resetTwoFactor', 'user'],
+        ['DELETE', '/api/users/{id}', UsersController::class, 'delete', 'user'],
     ];
 
     /** Requests other than GET allowed while "viendo como": switching/leaving, and read-only downloads. */
@@ -154,8 +160,12 @@ final class Kernel
                     if ($req->method !== 'GET' && !in_array($req->path, self::VIEW_AS_WRITES, true)) {
                         throw new ApiError(403, 'view_only');
                     }
-                } elseif (!str_starts_with($req->path, '/api/account/2fa') && $this->app->twoFactor()->mustEnroll($session)) {
-                    // Covered by the two-step policy but not set up yet: only the set-up endpoints.
+                } elseif (!empty($session['must_change_password']) && $req->path !== '/api/account/password') {
+                    // Signed in with a password someone else gave the account: a new one first.
+                    throw new ApiError(403, 'password_change_required');
+                } elseif (!str_starts_with($req->path, '/api/account/2fa') && $req->path !== '/api/account/password' && $this->app->twoFactor()->mustEnroll($session)) {
+                    // Covered by the two-step policy but not set up yet: only the set-up endpoints
+                    // (and the password change, which comes first when both are pending).
                     throw new ApiError(403, 'two_factor_setup_required');
                 }
             }

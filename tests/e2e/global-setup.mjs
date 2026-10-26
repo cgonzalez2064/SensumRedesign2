@@ -31,7 +31,8 @@ export default async function globalSetup() {
   server.sql(`UPDATE users SET role='editor', permissions='site,monitor,report,support' WHERE email='${SUPPORT.email}'`);
   server.sql(`UPDATE users SET role='editor', permissions='texts' WHERE email='${TWO_STEP.email}'`);
   server.sql(`UPDATE users SET role='editor', permissions='texts' WHERE email='${TEXTS_ONLY.email}'`);
-  server.sql(`UPDATE users SET role='editor' WHERE email='${EDITOR.email}'`);
+  // Everything an editor can change, but not other people's accounts.
+  server.sql(`UPDATE users SET role='editor', permissions='texts,contact,photos,documents,site,leads,stats,monitor,report' WHERE email='${EDITOR.email}'`);
   // A few error-log entries so Monitoring shows real content (one of each severity).
   const now = Math.floor(Date.now() / 1000);
   server.sql(`INSERT INTO error_log (created_at, severity, source, event, message, location, request, ref, fingerprint, alert, details) VALUES

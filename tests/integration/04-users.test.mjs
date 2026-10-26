@@ -3,7 +3,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startServer, Client, createAdmin, ADMIN, mailpitUp, waitForMail, message, linkToken, unique } from './helpers.mjs';
 
-const ALL = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'support'];
+const ALL = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'support', 'users'];
 let s; let owner;
 before(async () => {
   assert.ok(await mailpitUp(), 'Mailpit must be running');
@@ -70,7 +70,11 @@ test('expired invitations and old links after a resend are rejected', async () =
 
 test('invite validation: duplicates, bad e-mails, access types', async () => {
   const ok = { lang: 'es', permissions: ['texts'] };
-  assert.equal((await owner.post('/api/users', { ...ok, name: 'Dup', email: ADMIN.email })).data.fields.email, 'email_taken');
+  // The owner's address makes an account the owner: nobody else can be given it.
+  assert.equal((await owner.post('/api/users', { ...ok, name: 'Dup', email: ADMIN.email })).data.fields.email, 'owner_email_reserved');
+  const taken = unique('taken');
+  assert.equal((await owner.post('/api/users', { ...ok, name: 'Uno', email: taken })).status, 200);
+  assert.equal((await owner.post('/api/users', { ...ok, name: 'Dos', email: taken })).data.fields.email, 'email_already_invited');
   assert.equal((await owner.post('/api/users', { ...ok, name: 'Bad', email: 'no@@x' })).data.fields.email, 'invalid_email');
   for (const permissions of [[], ['superuser'], 'texts', { a: 'texts' }, [1], null]) {
     const r = await owner.post('/api/users', { name: 'P', email: unique('p'), lang: 'es', permissions });
@@ -88,14 +92,16 @@ test('invite validation: duplicates, bad e-mails, access types', async () => {
   assert.deepEqual(list.accessTypes.texts, ['texts']);
 });
 
-test('only the owner can manage users — not other accounts, whatever their access', async () => {
-  const { client: full } = await inviteAndAccept(ALL);
-  for (const [m, p, body] of [['GET', '/api/users'], ['POST', '/api/users', { name: 'X', email: unique('x'), permissions: ['texts'], lang: 'es' }], ['PUT', '/api/users/1', { permissions: ['texts'] }], ['DELETE', '/api/users/1'], ['POST', '/api/users/1/resend', {}]]) {
+test('without "Gestión de usuarios" no account manages users, whatever its other access', async () => {
+  const { client: full } = await inviteAndAccept(ALL.filter((p) => p !== 'users'));
+  for (const [m, p, body] of [['GET', '/api/users'], ['POST', '/api/users', { name: 'X', email: unique('x'), permissions: ['texts'], lang: 'es' }], ['PUT', '/api/users/1', { permissions: ['texts'] }], ['DELETE', '/api/users/1'], ['POST', '/api/users/1/resend', {}],
+    ['GET', '/api/users/password-suggestion'], ['PUT', '/api/users/1/profile', { name: 'X', email: unique('x') }], ['POST', '/api/users/1/password', { password: 'Otra-Clave-2026' }],
+    ['POST', '/api/users/1/password-link', {}], ['PUT', '/api/users/1/2fa', { required: true }], ['POST', '/api/users/1/2fa-reset', {}]]) {
     const r = await full.req(m, p, { json: body });
     assert.equal(r.status, 403, `${m} ${p}`);
     assert.equal(r.data.error, 'forbidden');
   }
-  // A legacy "admin" role does not grant user management either: only OWNER_EMAIL does.
+  // A legacy "admin" role does not grant user management either: only the permission (or OWNER_EMAIL) does.
   s.sql(`UPDATE users SET role = 'admin' WHERE email = '${(await full.get('/api/auth/session')).data.user.email}'`);
   assert.equal((await full.get('/api/users')).status, 403);
 });

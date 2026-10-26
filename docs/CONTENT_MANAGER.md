@@ -105,7 +105,7 @@ so a slow screen can never write into the next one).
 | E-mail settings (owner) | Panel's SMTP sending account (+ Reply-To), contact-form receivers/sender/method, problem-report and alert recipients, optional Cloudflare Turnstile keys; password re-check, secrets encrypted at rest, security notice, test buttons; `EMAIL_SETTINGS_LOCKED` for .env-only setups |
 | Contact-form captcha | Built-in invisible proof-of-work captcha (always on, no keys) + optional Cloudflare Turnstile; counts of messages and blocked spam in the weekly summary |
 | Automatic alerts (owner) | 12 rules with their own periods and de-duplication (critical errors, file integrity, sign-in attack, new device, certificate, backup, scheduler, disk, error spike, weekly digest, monthly security review, report reminder), on/off per rule; file-integrity check with "accept" (password) |
-| Users (owner) | Invite, change access type (8 ready-made jobs or custom, §2b), disable/enable, delete; search by name, e-mail or access (accent-insensitive) and filter by status and access type; «Ver como» |
+| Users (owner · `users`) | Invite, change access type (8 ready-made jobs or custom, §2b), disable/enable, delete; edit name and sign-in e-mail; e-mail a 24-hour link to choose a new password; set a password (typed or generated, easy to read, normally replaced at the next sign-in); require or reset two-step sign-in; search by name, e-mail or access (accent-insensitive) and filter by status and access type; «Ver como» (owner only) |
 | Interface | Spanish by default, English optional; light/dark/system theme; responsive from 320 px phones to large monitors; reduced-motion aware |
 
 ### 2a. Automatic translation ES ⇄ EN
@@ -153,10 +153,24 @@ change) if that ever matters.
 ### 2b. Owner account and access types
 
 **Owner account.** The active account whose e-mail is `OWNER_EMAIL` (default
-**it@gruposensum.com**) is the owner: the **only** account that manages users,
-sees **Monitoreo** and the diagnostics/errors cards on the dashboard, and sends
-the **Informe mensual**. Nobody can change or delete it from the panel (not even
-itself). Create it first (`bin/console create-admin --email=it@gruposensum.com`);
+**it@gruposensum.com**) is the owner: it manages every other account and is the
+only one that gives **Gestión de usuarios** (`users`), sees **Monitoreo** and the
+diagnostics/errors cards on the dashboard, changes settings and sends the
+**Informe mensual**. Nobody can change or delete it from the panel (not even
+itself), and no other account can be given its e-mail (`owner_email_reserved`).
+
+**User management by others (`users`).** Part of "Administrador del sitio". Such an
+account changes only accounts whose permissions are within its own and that don't
+have `users` themselves (`manager_protected`), never its own (`cannot_change_self`)
+or the owner's (`owner_protected`), and gives only permissions it has, never
+`users` (`not_assignable`). A new e-mail, a given password and a two-step reset ask
+for the acting account's password; the person's sessions end and they are told by
+e-mail (old and new address for an e-mail change; a given password is never
+e-mailed or logged). A given password normally sets `must_change_password`: every
+API call except `POST /api/account/password` then answers `403
+password_change_required` (before the two-step set-up, if both apply).
+`two_factor_required` requires two-step sign-in for one person on top of the
+site-wide policy. Create it first (`bin/console create-admin --email=it@gruposensum.com`);
 `bin/console check` warns if it doesn't exist.
 
 **Access types.** Every other account has a set of permissions — what it may
@@ -263,7 +277,7 @@ nothing.
 | `GET /api/monitor/overview` | `monitor` | *Salud del sitio*: status, `uptime` (`24h`/`7d`/`30d`/`90d` → `pct`, `checks`, `failed`), `incidents` (30 days: `start`, `end`, `ongoing`, `minutes`, `checks` — no check names), 7-day response time, error counts, last check, publish/certificate/domain/e-mail/backup dates — no messages or settings |
 | `GET`/`PUT /api/settings/translation` · `POST /api/settings/translation/test` | owner | DeepL key (encrypted, never returned; password to save), on/off, connection test with usage |
 | `GET /api/security` · `PUT /api/security/backup` · `POST /api/security/backup/send` · `POST /api/security/backup/download` · `PUT /api/security/policy` | owner | off-server encrypted backup settings (password), send now, download (password); who must use two-step sign-in (password) |
-| `POST /api/users/{id}/2fa-reset` | owner | turn off someone else's two-step sign-in (password; ends their sessions; never your own) |
+| `POST /api/users/{id}/2fa-reset` | owner · `users` | turn off someone else's two-step sign-in (password; ends their sessions; never your own; rules above) |
 | `GET`/`PUT /api/contact-form` | contact | The form's questions (`ContactFormFields`): `fields` [{id?, core, type, label{es,en}, help{es,en}, required, width, options?, max?, min?, future?}], `version`; publishes; 409 `conflict`; 422 keyed `fields.<n>.<what>` (`name_required`, `contact_required`, …). GET also returns `defaults`, `limits` and `recipients` {to, canEdit (owner), max} |
 | `PUT /api/contact-form/recipients` | owner | Who receives the form's messages: `to` (1–3 addresses) + `currentPassword`; security notice to the owner |
 | `GET`/`PUT /api/contact-form/services` | contact | "Servicio de interés" options only (older endpoint, kept in step: PUT `items` [{id?, es, en}], `version`; publishes; 409 `conflict`) |
@@ -287,7 +301,12 @@ nothing.
 | `POST /api/collect` | public, origin-checked | visit/click beacon from `assets/stats.js`; always 204 |
 | `POST /api/site-report/pdf` | owner | the report as a PDF (`period`, `lang`, optional `note`) |
 | `PUT /api/reports/{id}` · `POST /api/reports/{id}/status` | owner · `support` | edit fields/priority; status with optional `message` and `notify` |
-| `GET`/`POST /api/users` · `POST /api/users/{id}/resend` · `PUT`/`DELETE /api/users/{id}` | owner | user management, access types |
+| `GET`/`POST /api/users` · `POST /api/users/{id}/resend` · `PUT`/`DELETE /api/users/{id}` | owner · `users` | user management, access types (list: `canManage` per person, `assignable`, `viewerIsOwner`) |
+| `PUT /api/users/{id}/profile` | owner · `users` | `name`, `email` (+ `currentPassword` when the e-mail changes; ends sessions, tells both addresses; an invited person gets the invitation at the new address) |
+| `GET /api/users/password-suggestion` | owner · `users` | an easy-to-read password ("Lago-Pino-Ruta-472", ~34 bits; nothing saved) |
+| `POST /api/users/{id}/password` | owner · `users` | `password`, `mustChange` (default true), `currentPassword`; activates an invited account; ends sessions; notice without the password |
+| `POST /api/users/{id}/password-link` | owner · `users` | e-mails a link to choose a new password (24 h, single use; active accounts only; `502 email_failed` without e-mail) |
+| `PUT /api/users/{id}/2fa` | owner · `users` | `required` (bool): two-step sign-in for this person on top of the site-wide policy |
 | `GET /api/view-as` · `POST /api/view-as` · `POST /api/view-as/switch` · `POST /api/view-as/stop` | owner (really) | "Ver como": candidates (active/invited, never the owner); start with `userId` + `currentPassword`; switch without password while active; stop. While active the session answers as that account, read-only (`403 view_only` for any change except switch/stop and the leads CSV), with `X-View-As: <id>` (0 otherwise) so the panel notices changes |
 | `GET /api/site-report` · `PUT /api/site-report/settings` · `POST /api/site-report/send` · `POST /api/site-report/pdf` | owner | monthly report: status, recipients, history, sending (client version only), PDF |
 | `GET /api/site-report/preview?period=&lang=` | `report` (owner included) | both versions of a month: `report` (client: `audience: client`) and `technical` (`audience: technical`), plus `period` and `periods` |

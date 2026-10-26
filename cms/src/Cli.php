@@ -113,8 +113,8 @@ final class Cli
         $this->out("Account created (id {$id}).");
         $owner = $this->app->config->ownerEmail();
         $this->out(strtolower(trim($email)) === $owner
-            ? 'This is the owner account: it manages users and sees Monitoring and the monthly site report.'
-            : "Note: this is NOT the owner account ({$owner}, OWNER_EMAIL). Only the owner can manage users, see Monitoring and send the site report.");
+            ? 'This is the owner account: it manages every user and sees Monitoring and the monthly site report.'
+            : "Note: this is NOT the owner account ({$owner}, OWNER_EMAIL). It can manage users with the same or less access; only the owner sees Monitoring and sends the site report.");
         return 0;
     }
 
@@ -205,7 +205,7 @@ final class Cli
 
     /** Demo accounts, one per access profile (development only). id => [name, permissions, status] */
     private const DEMO_USERS = [
-        'demo.completo' => ['Demo Administrador del Sitio', ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report'], 'active', 'Administrador del sitio'],
+        'demo.completo' => ['Demo Administrador del Sitio', ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'users'], 'active', 'Administrador del sitio (incluye gestión de usuarios)'],
         'demo.editor' => ['Demo Editor de Contenido', ['texts', 'contact', 'photos', 'documents'], 'active', 'Editor de contenido'],
         'demo.textos' => ['Demo Redactor', ['texts'], 'active', 'Redactor (solo textos)'],
         'demo.fotos' => ['Demo Fotos y Portafolio', ['photos', 'documents'], 'active', 'Fotos y portafolio'],

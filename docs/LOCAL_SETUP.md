@@ -117,7 +117,7 @@ php cms/bin/console demo-users --reports
 ```
 
 Creates or resets one account per ready-made access type — `demo.completo`
-(Administrador del sitio, also sees the monthly report), `demo.editor`, `demo.textos` (Redactor), `demo.fotos`,
+(Administrador del sitio, also sees the monthly report and manages users with the same or less access), `demo.editor`, `demo.textos` (Redactor), `demo.fotos`,
 `demo.contacto`, `demo.ventas` (Prospectos and Estadísticas), `demo.gerencia`
 (basic Estadísticas and Salud del sitio), `demo.soporte` (manages every support
 request) — plus `demo.personalizado` and `demo.desactivado` (`@example.test`),

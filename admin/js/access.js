@@ -6,7 +6,7 @@
 import { h } from './dom.js';
 import { t } from './i18n.js';
 
-export const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'support'];
+export const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'support', 'users'];
 
 /** The owner can do everything; everyone else only what their access type allows. */
 export const can = (user, permission) => !!user && (user.owner || (user.permissions || []).includes(permission));
@@ -27,11 +27,14 @@ export const permissionList = (perms) => perms.map((p) => t('access.perms.' + p)
 
 /**
  * Radio list of ready-made access types plus "Personalizado" (checkboxes).
+ * `allowed` limits both to what the person giving access may give (the owner:
+ * everything; someone else who manages users: their own access, without "users").
  * Returns { el, value(): string[] }.
  */
-export function accessPicker(presets, initial = presets.content, idPrefix = 'acc') {
+export function accessPicker(allPresets, initial = allPresets.content, idPrefix = 'acc', allowed = PERMISSIONS) {
+  const presets = Object.fromEntries(Object.entries(allPresets).filter(([, perms]) => perms.every((p) => allowed.includes(p))));
   const start = accessTypeOf(initial, presets);
-  const boxes = PERMISSIONS.map((p) => h('label', { class: 'check check-help' },
+  const boxes = PERMISSIONS.filter((p) => allowed.includes(p)).map((p) => h('label', { class: 'check check-help' },
     h('input', { type: 'checkbox', value: p, checked: initial.includes(p) || null }),
     h('span', null, h('span', { class: 'check-title', text: t('access.perms.' + p) }), h('span', { class: 'tiny muted check-hint', text: t('access.permHelp.' + p) }))));
   const custom = h('div', { class: 'checks', hidden: start !== 'custom' || null, id: idPrefix + '-custom' }, boxes);

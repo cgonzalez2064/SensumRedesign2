@@ -117,6 +117,12 @@ final class Emails
         return $this->action($user['email'], $user['lang'], 'reset', ['name' => $user['name'], 'minutes' => $minutes], $this->adminUrl('restablecer/' . $token), 'reset.ignore');
     }
 
+    /** A link to choose a new password, sent by someone who manages users (Usuarios). */
+    public function passwordResetByAdmin(array $user, string $byName, string $token, int $hours): array
+    {
+        return $this->action($user['email'], $user['lang'], 'resetadmin', ['name' => $user['name'], 'by' => $byName, 'hours' => (string) $hours], $this->adminUrl('restablecer/' . $token), 'resetadmin.ignore');
+    }
+
     public function passwordChanged(array $user): array
     {
         $s = $this->strings($user['lang']);

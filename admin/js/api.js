@@ -19,6 +19,7 @@ export class ApiError extends Error {
 }
 
 let twoFactorHandler = null;
+let passwordChangeHandler = null;
 let viewAsExpected = null;
 let viewAsHandler = null;
 /** The account the panel is showing ("Ver como"), 0 when it is the person's own. */
@@ -29,6 +30,8 @@ export const setCsrf = (token) => { csrf = token || null; };
 export const onSessionExpired = (fn) => { reloginHandler = fn; };
 /** Called when the server says this account must set up two-step sign-in first. */
 export const onTwoFactorRequired = (fn) => { twoFactorHandler = fn; };
+/** A password someone else gave the account must be replaced first (the panel shows that screen). */
+export const onPasswordChangeRequired = (fn) => { passwordChangeHandler = fn; };
 
 async function parse(res) {
   const type = res.headers.get('Content-Type') || '';
@@ -59,6 +62,7 @@ async function raw(method, path, body, { timeout = 30000, auth = true } = {}) {
   if (res.ok && data && data.ok !== false) return { status: res.status, data };
   const code = (data && data.error) || (res.status >= 500 ? 'service_unavailable' : 'unknown');
   if (code === 'two_factor_setup_required' && twoFactorHandler) twoFactorHandler();
+  if (code === 'password_change_required' && passwordChangeHandler) passwordChangeHandler();
   throw new ApiError(res.status, code, data || {});
 }
 

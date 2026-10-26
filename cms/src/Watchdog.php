@@ -709,6 +709,32 @@ final class Watchdog
         }
     }
 
+    /**
+     * Tells a person about a change someone else made to their account
+     * (Usuarios): new sign-in e-mail (to the old and the new address) or a
+     * password given to them. Never includes the password.
+     * @param array{by:string,email?:string} $vars
+     */
+    public function accountNotice(array $user, string $kind, array $vars): void
+    {
+        try {
+            $lang = ($user['lang'] ?? 'es') === 'en' ? 'en' : 'es';
+            $s = $this->strings($lang);
+            $fill = $vars + ['name' => explode(' ', (string) $user['name'])[0], 'support' => $this->app->mailSettings()->supportEmail()];
+            $this->send((string) $user['email'], $lang, 'account', [
+                'subject' => $s['wd.acct.' . $kind . '.subject'], 'title' => $s['wd.acct.' . $kind . '.title'],
+                'intro' => self::fill($s['wd.acct.' . $kind . '.intro'], $fill),
+                'facts' => [$s['wd.acct.by'] => $vars['by'], $s['wd.device.when'] => date('Y-m-d H:i T')],
+                'action' => self::fill($s['wd.acct.action'], $fill),
+                // The old address can no longer sign in: no button there.
+                'cta' => $kind === 'email_changed_old' ? null : [$s['wd.cta.panel'], ''],
+                'severity' => 'warn', 'tag' => $s['wd.tag.security'],
+            ], true);
+        } catch (\Throwable $e) {
+            $this->app->logger()->error('watchdog_failed', ['rule' => 'account', 'type' => get_class($e)]);
+        }
+    }
+
     /** "Chrome en Windows" from a User-Agent (browser family + operating system only). */
     public static function deviceLabel(string $ua): string
     {
@@ -860,10 +886,12 @@ final class Watchdog
                 . '<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#a15c00;margin-bottom:4px">' . $e($s['wd.whatToDo']) . '</div>' . $e($msg['action']) . '</div>';
             $text .= $s['wd.whatToDo'] . ': ' . $msg['action'] . "\n\n";
         }
-        $link = (new Emails($this->app))->adminUrl($msg['cta'][1]);
-        $body .= Emails::cta($msg['cta'][0], $link);
-        $text .= $link . "\n";
-        $footer = $e(in_array($rule, ['new_device', 'settings_changed', 'two_factor'], true) ? $s['wd.footer.security'] : $s['wd.footer.rule']);
+        if (!empty($msg['cta'])) {
+            $link = (new Emails($this->app))->adminUrl($msg['cta'][1]);
+            $body .= Emails::cta($msg['cta'][0], $link);
+            $text .= $link . "\n";
+        }
+        $footer = $e(in_array($rule, ['new_device', 'settings_changed', 'two_factor', 'account'], true) ? $s['wd.footer.security'] : $s['wd.footer.rule']);
         $layout = (new Emails($this->app))->branded($lang, $msg['tag'] ?? $s['wd.tag.alert'], $msg['intro'], $body, $footer);
         $mail = ['to' => $to, 'subject' => $msg['subject'], 'text' => $text, 'html' => $layout['html'], 'embedded' => $layout['embedded']];
         if (!$deferred || PHP_SAPI === 'cli') {

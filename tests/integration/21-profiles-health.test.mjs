@@ -26,16 +26,16 @@ after(async () => { await s.stop(); });
 
 test('ready-made access types are concrete jobs, and the panel offers each permission', async () => {
   const d = (await owner.get('/api/users')).data;
-  assert.deepEqual(d.permissions, ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'support']);
+  assert.deepEqual(d.permissions, ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'support', 'users']);
   assert.deepEqual(Object.keys(d.accessTypes), ['admin', 'content', 'texts', 'media', 'contact', 'sales', 'management', 'support']);
-  assert.deepEqual(d.accessTypes.admin, ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report'], 'administrators do not handle IT tickets');
+  assert.deepEqual(d.accessTypes.admin, ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'users'], 'administrators manage users but do not handle IT tickets');
   assert.deepEqual(d.accessTypes.management, ['stats', 'monitor']);
   assert.deepEqual(d.accessTypes.support, ['support', 'monitor', 'report', 'site']);
   assert.deepEqual(d.accessTypes.sales, ['leads', 'stats']);
   // Accounts made from the terminal are site administrators (not support managers).
   assert.equal(s.sql(`SELECT permissions FROM users WHERE email='${MGMT.email}'`), 'stats,monitor');
   createAdmin(s, { name: 'Nuevo Admin', email: 'nuevo.admin@example.test', password: 'Clave-Nuevo-Admin-2026' });
-  assert.equal(s.sql("SELECT permissions FROM users WHERE email='nuevo.admin@example.test'"), 'texts,contact,photos,documents,site,leads,stats,monitor,report');
+  assert.equal(s.sql("SELECT permissions FROM users WHERE email='nuevo.admin@example.test'"), 'texts,contact,photos,documents,site,leads,stats,monitor,report,users');
 });
 
 test('basic statistics: visits without the contact-form figures; no Prospectos', async () => {
@@ -164,9 +164,10 @@ test('upgrading: site administrators and support get the new monthly-report acce
   assert.equal(perms('r2@example.test'), 'support,monitor,site,report');
   assert.equal(perms('r3@example.test'), 'texts,site', 'no Salud del sitio, no report');
   assert.equal(perms('r4@example.test'), 'site,monitor,report', 'not added twice');
-  // They match their ready-made type again.
+  // They match their ready-made type again (the site administrator's as it was then:
+  // "Gestión de usuarios" came later, with 015_user_management).
   const types = (await owner.get('/api/users')).data.accessTypes;
   const same = (a, b) => [...a].sort().join() === [...b].sort().join();
-  assert.ok(same(perms('r1@example.test').split(','), types.admin));
+  assert.ok(same(perms('r1@example.test').split(','), types.admin.filter((p) => p !== 'users')));
   assert.ok(same(perms('r2@example.test').split(','), types.support));
 });

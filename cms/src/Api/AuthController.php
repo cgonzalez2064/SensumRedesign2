@@ -20,6 +20,7 @@ final class AuthController extends Controller
         $viewAs = null;
         if ($auth->viewingAs($user)) {
             $public['twoFactorRequired'] = false; // their two-step setup is not the owner's to do
+            $public['mustChangePassword'] = false; // nor their new password
             $viewAs = ['by' => (string) $user['impersonator_name'], 'until' => (int) $user['view_as_until'], 'status' => (string) $user['status'],
                 'accessType' => \Sensum\Cms\Users::accessTypeOf($public['permissions'])];
         }
