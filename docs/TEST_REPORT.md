@@ -9,8 +9,8 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 
 | Suite | Location | Size |
 |---|---|---|
-| API integration | `tests/integration/*.test.mjs` | 232 tests in 27 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
-| Browser E2E | `tests/e2e/*.spec.js` | 69 specs × 3 browser profiles (207 runs, 53 skipped by design: phone-only, desktop-only or single-submission tests) |
+| API integration | `tests/integration/*.test.mjs` | 244 tests in 28 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
+| Browser E2E | `tests/e2e/*.spec.js` | 73 specs × 3 browser profiles (219 runs, 55 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
 | Production build | `tests/apache/apache.test.mjs` | 6 checks of the built release under Apache + PHP-FPM |
 
@@ -388,6 +388,25 @@ are fixed only on the local branch `visual/pie-de-pagina-y-sombra`, kept for a l
 | Browser E2E (3 profiles) | **158 passed**, 55 skipped by design, 0 failed; the language-toggle test now also checks the ES/EN title, description and preview tag |
 | Visual regression | baseline taken from the version in production (`802114e`) and the new version served the same way: **22/22** twice in a row, and an exact comparison of the 22 captures finds them **pixel-identical** (desktop 1440/1280, tablet 768, phones 390/320, ES and EN, modal, mobile menu, form errors, FAQ, privacy notice, 404). The visual test now starts the contact-form anti-spam check and waits for its final state (before, a full-page capture could catch its note half the time) |
 | Built release under Apache + PHP-FPM (real `.htaccess`, HTTP and HTTPS, production `Host` names) | **14/14**; new test: `/index.html`, `/index.php`, `/about`, `/services(.php)`, `/cat`, `/proyects(.php)`, `/contact(.php)` → one 301 to `https://sensumconstrucciones.com/` or its `#section` (fragment not escaped); missing pages are real 404s with their styles |
+
+## Change — user management by site administrators (2026-10-26)
+
+The owner and accounts with the new permission «Gestión de usuarios» (part of
+«Administrador del sitio»; migration 015 adds it to accounts that had exactly that type)
+can, from Usuarios: correct someone's name and e-mail, send a link to choose a new
+password, give a password (typed, or generated: three words and three digits, e.g.
+`Lago-Pino-Ruta-472`) that the person replaces at the next sign-in, and require or reset
+two-step sign-in. Nobody changes their own account there, the owner is untouchable, and a
+manager only reaches people with the same or less access (never «Gestión de usuarios»).
+Security design: `SECURITY_AUDIT.md` §21.
+
+| Check | Result |
+|---|---|
+| API integration (28 files) | **244/244**; new `28-user-management.test.mjs` (12 tests): who manages whom and that nobody gains access through it; e-mail change (password re-typed, sessions end, notices to both addresses, invitation moved to the new address and the old link dead); generated passwords; a given password (manager's password, sessions end, must be replaced before any other call, never in any e-mail; permanent option; invited → active; disabled refused); link for a new password (24 h, single use, not for invited/disabled); two-step sign-in required/not required/reset; password change comes before the two-step set-up; activity log; upgrade of existing accounts. `04-users`, `11-monitoring`, `16-tickets` and `21-profiles-health` follow the new permission |
+| Browser E2E (3 profiles) | **164 passed**, 55 skipped by design, 0 failed; new `user-management.spec.js` (2 tests × 3 devices): a site administrator (not the owner) sees the lock on the owner, edits name and e-mail, generates a password (format, «Generar otra», shown once more after saving), the person must create their own at sign-in (no menu until then, nothing e-mailed contains it); requiring two-step sign-in sends the person to the set-up; the link for a new password arrives. axe (no serious/critical), no side scroll and no console errors on the new screens |
+| Visual regression (public site) | **22/22** identical to `main` (baseline re-captured from `main` with `git worktree`; the public site is not touched) |
+| Built release under Apache + PHP-FPM | **14/14** (`release-20261026-829456f`, development copy and untouched production copy over HTTP/HTTPS) |
+| Found and fixed on the way | On phones a notice at the bottom covered the open actions menu and a tap on it closed the menu (menu above notifications; the page's entrance animation no longer leaves a stacking context behind). The actions menu of the last rows was cut off by the table's rounded box (Usuarios table no longer clips; new check fails without the fix, passes with it). `create-admin` and the demo «Administrador del sitio» account updated to the new rule |
 
 ## Other audits
 
