@@ -9,8 +9,8 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 
 | Suite | Location | Size |
 |---|---|---|
-| API integration | `tests/integration/*.test.mjs` | 244 tests in 28 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
-| Browser E2E | `tests/e2e/*.spec.js` | 74 specs × 3 browser profiles (222 runs, 55 skipped by design: phone-only, desktop-only or single-submission tests) |
+| API integration | `tests/integration/*.test.mjs` | 258 tests in 29 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
+| Browser E2E | `tests/e2e/*.spec.js` | 80 specs × 3 browser profiles (240 runs, 61 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
 | Production build | `tests/apache/apache.test.mjs` | 6 checks of the built release under Apache + PHP-FPM |
 
@@ -408,6 +408,27 @@ Security design: `SECURITY_AUDIT.md` §21.
 | Built release under Apache + PHP-FPM | **14/14** (`release-20261026-829456f`, development copy and untouched production copy over HTTP/HTTPS) |
 | Found and fixed on the way | On phones a notice at the bottom covered the open actions menu and a tap on it closed the menu (menu above notifications; the page's entrance animation no longer leaves a stacking context behind). The actions menu of the last rows was cut off by the table's rounded box (Usuarios table no longer clips; new check fails without the fix, passes with it). `create-admin` and the demo «Administrador del sitio» account updated to the new rule. While trying it on the local copy: migration 015 compared the permission list as text, so accounts from before migration 011 (stored as `…,monitor,stats,…`) would not have received «Gestión de usuarios»; it now checks the nine permissions in any order (upgrade test covers both orders and a «Administrador del sitio» + support account, which stays as it was) |
 | Hands-on walkthrough (2026-10-26) | **26/26** checks with a manager, the owner and four fictitious people on a throwaway server, desktop and phone (screens in `docs/private/users-demo/recorrido/`, not in the repository). Fixed on the way, each with a test that fails without the fix: the «Tu sesión terminó» dialog kept the old e-mail locked after an administrator changed it (now «¿Cambió tu correo? Usar otro»: same account carries on without losing the screen; another account starts from Inicio); changes to other people's accounts did not show in «Actividad reciente» (now shown, with whose account); after a dialog opened from a row menu, keyboard focus fell to the top of the page (now back on that row's ⋮, also after the list is redrawn or two dialogs in a row); the expired-link screen always said «60 minutos» (24 h when an administrator sent it) |
+
+## Change — accounts and automations (2026-10-26)
+
+Usuarios: «Revisar» filters (and `?revisar=` links), access requests answered in one click,
+temporary access with an end date, close someone's sessions, «Ver actividad», a message
+ready to send with a given password (which now expires after 72 h), and a hint for
+mistyped e-mail domains. Inicio → «Accesos». «Actividad» (history with filters, paging and
+export). Seguridad → Cuentas (unused accounts, leaked passwords, remembered browsers) and
+two-step sign-in for whoever administers. Mi cuenta → «Pedir más acceso». Prospectos →
+person in charge, assignment by service, follow-up reminder, Monday summary and the
+visitor's confirmation (off by default). Design: `SECURITY_AUDIT.md` §22.
+
+| Check | Result |
+|---|---|
+| API integration (29 files) | **258/258**; new `29-automations.test.mjs` (14 tests): temporary passwords (expiry, message to send in the person's language, never e-mailed), temporary access (validation, turned off at the next request without the scheduled check, owner told, reactivation), closing sessions (also forgets remembered browsers; who-may-manage rules), access requests (only what is missing, replaces the pending one, grant/decline with manager rules, notices), Inicio → Accesos, Actividad (kinds by access, a person's history, dates, paging), "admins" two-step policy and remembered browsers (allowed / not, same vs other browser, forget, turned off), leaked passwords against a local range-API stub (only 5 hash characters leave; unreachable = allowed), invitation reminder (fresh link, old one dead, once) and expiry/acceptance notices, temporary-access warnings (once), unused accounts (warning, sign-in clears it, turned off, never the owner), lead assignment by service from either language, hand-overs, «Mis prospectos», 48 h reminder (once) and the Monday summary (once a week), the visitor's confirmation (off by default, placeholders, Reply-To, once per address in 10 minutes) |
+| Browser E2E (3 profiles) | **179 passed**, 61 skipped by design, 0 failed; new `automations.spec.js` (6 tests): Inicio → Accesos → granting a request; `?revisar=` tabs (a menu on phones); inviting with temporary access and the typo hint; the message to send (copied); Actividad from Usuarios, filters and the export file; a screen you can't open → «Pedir acceso» → Mi cuenta; Seguridad → Cuentas; Prospectos automation, person in charge and the visitor's confirmation; remembering a browser for two-step sign-in. axe (no serious/critical) and no side scroll on the new screens. Existing specs follow the intended changes (the "No tienes acceso…" screen, status tabs instead of a menu, buttons that now appear twice) |
+| Visual regression (public site) | **22/22** identical to the approved baseline (the contact form's handler changed, its pages did not) |
+| Built release under Apache + PHP-FPM | **14/14** after updating the previous copies the way the deploy guide does (rsync without `.env`/storage, then `publish`): migration 016 applied on the existing databases; `bin/console automations` runs from the release |
+| Static analysis | PHPStan: no errors |
+| Hands-on walkthrough | 26/26 again (user management, with the focus checks) and the design review of every new screen on desktop, phone and dark mode (`docs/private/automations-demo/`) |
+| Found and fixed on the way | On iPhone (WebKit), focusing the row's ⋮ before opening a dialog made typing land in another field: the menu no longer moves focus; the dialog remembers which ⋮ opened it and gives focus back there on close. A screen you can't open crashed the panel's router (inline `style`, refused by the CSP) — now a class. Status badges stretched when a note followed them. On phones the eight filter tabs became a «Mostrar» menu. The visitor's confirmation moved from Formulario (whose save bar publishes the site) to Prospectos. Wording: «Copiar contraseña» next to «Copiar mensaje», «Todo lo demás» instead of a label easy to confuse with the service «Otro», no duplicated name in Actividad |
 
 ## Other audits
 

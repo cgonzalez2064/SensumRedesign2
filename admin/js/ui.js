@@ -48,9 +48,12 @@ export function fieldErrorText(code, params = {}) {
  */
 export function openDialog({ title, lead, body, actions = [], wide = false, dismissible = true, onClose, labelledIcon } = {}) {
   const titleId = nextId('dlg');
-  // Where focus goes back on close: what opened it, or — when that was in a dialog
-  // that has closed meanwhile — what opened that one.
-  const opener = document.activeElement;
+  // Where focus goes back on close: what opened it (a menu item that is already gone:
+  // that menu's button), or — when that was in a dialog that has closed meanwhile —
+  // what opened that one. Focus is not moved before opening (iOS Safari would then
+  // type into the wrong field).
+  const active = document.activeElement && document.activeElement !== document.body ? document.activeElement : null;
+  const opener = active || (lastMenu && Date.now() - lastMenu.at < 1500 ? lastMenu.trigger : null);
   const openerDialog = opener && opener.closest ? opener.closest('dialog') : null;
   const fallback = openerDialog ? openerDialog.focusBack : null;
   const foot = actions.length ? h('div', { class: 'dialog-foot' }) : null;
@@ -369,6 +372,9 @@ export function loadError(err, onRetry) {
 }
 
 /** Dropdown menu with keyboard support (Esc, arrows, outside click). */
+/** The menu whose item was chosen last, so a dialog it opens can give focus back to its button. */
+let lastMenu = null;
+
 export function dropdown(trigger, buildItems, { align = 'right' } = {}) {
   const wrap = h('div', { class: 'menu' }, trigger);
   let panel = null;
@@ -386,6 +392,7 @@ export function dropdown(trigger, buildItems, { align = 'right' } = {}) {
   trigger.addEventListener('click', () => {
     if (panel) return close();
     panel = h('div', { class: 'menu-panel' }, buildItems(close));
+    panel.addEventListener('click', (e) => { if (e.target.closest('.menu-item')) lastMenu = { trigger, at: Date.now() }; }, true);
     if (align === 'left') { panel.style.left = '0'; panel.style.right = 'auto'; }
     wrap.appendChild(panel);
     trigger.setAttribute('aria-expanded', 'true');
