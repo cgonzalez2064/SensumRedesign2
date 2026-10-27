@@ -119,6 +119,16 @@ test('app.sensumconstrucciones.com opens the panel and only the panel', { skip }
   // A missing panel file is a plain 404, not a redirect loop.
   const missing = await req(APP, '/admin/no-such-file.js');
   assert.equal(missing.status, 404);
+  // The wiki's own address opens it inside the panel (sign-in first, like every screen).
+  for (const [path, to] of [['/wiki', '/admin/#/wiki'], ['/wiki/', '/admin/#/wiki'], ['/wiki/prospectos', '/admin/#/wiki/prospectos']]) {
+    const r = await req(APP, path);
+    assert.equal(r.status, 302, path);
+    assert.equal(r.headers.location, `https://${APP}${to}`, path);
+  }
+  assert.equal((await req(SITE, '/wiki')).status, 404, 'not on the public site');
+  // Its articles and screenshots are only for signed-in accounts, and never files on the web.
+  assert.equal((await req(APP, '/api/wiki')).status, 401);
+  assert.equal((await req(APP, '/api/wiki/image?name=inicio&lang=es&theme=light&device=desktop')).status, 401);
 });
 
 test('sensumconstrucciones.com is the public site; the panel moved to app.', { skip }, async () => {

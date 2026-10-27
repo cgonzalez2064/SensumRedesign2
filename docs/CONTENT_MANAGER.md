@@ -249,6 +249,37 @@ the visitor's confirmation (off until Sensum approves its text; at most one per 
 every 10 minutes). Notices use the alerts' branded layout (`Watchdog::notify`) in the
 recipient's language and are sent after the response.
 
+### 2d. Wiki (`#/wiki`, `Wiki.php`, `cms/wiki/`)
+
+Processes, guides and answers inside the panel, for every signed-in account, at
+`app.sensumconstrucciones.com/wiki` (`.htaccess` and the dev router send `/wiki` and
+`/wiki/<slug>` to `/admin/#/wiki…`). It replaced the old *Guía de uso* (`#/ayuda` opens it).
+
+* **Content** lives in `cms/wiki/` — outside `public_html`, served only through the API:
+  `wiki.json` (categories and «Novedades»), `articles/<slug>.<es|en>.md` (front matter +
+  a small Markdown: headings, steps, lists, tables, callouts, `` `UI label` ``, `wiki:`
+  links, `shot:` screenshots; never HTML — `admin/js/wiki-md.js` builds text nodes) and
+  `img/<name>.<lang>.<theme>.<device>.webp`. How to keep it current: `cms/wiki/README.md`.
+* **Who reads what:** no `perms` = everyone; `perms: a, b` = readable by everyone but
+  marked «No incluido en tu rol» (with «Pedir acceso») unless the account has one of
+  them; `owner: true` = only the owner.
+* **Screenshots** are real: `npm --prefix tests run wiki:shots` starts a throwaway server
+  with fictitious people and data and captures every screen in Spanish and English, light
+  and dark, computer (1280×800) and phone (390×844), as WebP. The panel asks for the
+  variant matching the person's language, theme (it follows a theme change while reading)
+  and the device chosen above the article (remembered); a missing variant falls back
+  (other theme → Spanish → other device).
+* **Ask support:** marking text in an article shows «Preguntar a soporte», which opens the
+  support dialog with the subject «Pregunta: <article>», the quote and the page.
+* **«Novedades»:** an entry in `wiki.json → news` (`id`, `date`, `perms`, `notOwner`,
+  `article`, `shot`, texts) is shown once, after signing in, to the accounts that can use it
+  and existed on that date (`wiki_news_seen`, migration `019_wiki`); «Ver más tarde» waits
+  for the next session; the Wiki menu item counts the unseen ones. `WIKI_NEWS=off` turns
+  them off (the browser tests).
+* **Checks:** `31-wiki.test.mjs` fails if an article is missing in one language, its front
+  matter differs between languages, a `` `UI label` `` isn't a text the panel shows, a
+  `wiki:` link or a screenshot variant doesn't exist, or a «Novedad» points nowhere.
+
 ## 3. Editable content model
 
 * `cms/content/schema.php` — sections, fields, type, max length, required.
@@ -285,6 +316,7 @@ recipient's language and are sent after the response.
 | `sessions` | SHA-256 of the session cookie, CSRF token, created/last-seen/expiry, pseudonymized IP, user agent; `view_as_user_id`/`view_as_until` while the owner views as someone (`010_view_as.sql`) |
 | `user_tokens` | SHA-256 of invitation/reset tokens, purpose, expiry, used-at |
 | `access_requests` | «Pedir acceso»: person, permissions, message, status (pending/granted/declined/cancelled), who answered and when (`016_automations`) |
+| `wiki_news_seen` | which «Novedades» of the wiki each person has seen: user, news id, when (`019_wiki`) |
 | `roles_migration_017` | the accounts `017_roles` moved onto a role: user, e-mail, permissions before and after, role, when (for the rollback) |
 | `trusted_devices` | browsers remembered for the second step: SHA-256 of the cookie token, device label, expiry (30 days) (`016_automations`). The same migration adds to `users` `access_until`, `temp_password_expires_at` and the "notice sent" marks of the automations, and to `leads` `assigned_to`, `followup_sent_at`, `confirmation_sent` |
 | `content` | key, language (`es`/`en`/`*`), value, who/when |
@@ -354,6 +386,9 @@ recipient's language and are sent after the response.
 | `POST /api/users/requests/{id}` | owner · `users` | answers an access request: `grant` (bool); granting adds the asked permissions (manager rules apply); the person is told |
 | `GET`/`POST /api/account/access-request` | user (not the owner) | «Pedir acceso»: the pending request; a new one (`permissions` not held yet and not `users`/`support` — `not_requestable`; `message` ≤ 500; replaces the pending one; 3 a day) |
 | `POST /api/account/2fa/forget-devices` | user | forgets the browsers remembered for the second step |
+| `GET /api/wiki?lang=` | user | the wiki for this account: categories, articles (with `allowed` and the Markdown) and its «Novedades» (with `seen`) |
+| `GET /api/wiki/image?name=&lang=&theme=&device=` | user | a screenshot (WebP, `Cache-Control: private`, ETag/304, fallback variant); 404 for anything else |
+| `GET /api/wiki/news` · `POST /api/wiki/news/seen` | user | the unseen «Novedades» (shown once after signing in); mark `ids` seen |
 | `POST /api/account/2fa/remove-devices` | user (password) | «Quitar dispositivos registrados» for oneself: the app and remembered browsers go, every session ends (this one too); next sign-in: e-mail code, then the new device |
 | `PUT /api/security/accounts` | owner | `inactiveDays` (0/90/120/180), `rememberDevice`, `breachedCheck` + `currentPassword`; turning `rememberDevice` off forgets every remembered browser |
 | `GET /api/activity?group=&person=&from=&to=&before=&export=1` | `site` or `users` (owner: everything) | Actividad: 50 per page (`more`, then `before=<id>`), groups by access (`content`, `media` with `site`; `users`; `leads`; owner also `security`, `settings`, `support`, `other`); `export=1` returns up to 5,000 for the panel's CSV |
@@ -411,7 +446,7 @@ admins can republish with one click (or `php bin/console publish`).
 ## 8. Support requests ("Solicitar soporte")
 
 * Entry points: top bar on every screen (*Solicitar soporte*, icon-only on phones),
-  sidebar footer, *Guía de uso* page, Dashboard (editors), *Centro de Ayuda* (*Nueva
+  sidebar footer, the wiki («Preguntar a soporte» on marked text, §2d), Dashboard (editors), *Centro de Ayuda* (*Nueva
   solicitud*). The dialog is *Nueva solicitud de soporte*; e-mails and screens call
   each one a *solicitud* (#id).
 * Fields: Tipo (Problema, Mejora / sugerencia, Contenido, Diseño / visual, Otro),
@@ -630,7 +665,8 @@ win; `.env` is the fallback; `EMAIL_SETTINGS_LOCKED=true` = .env only). Alerts:
 (monitoring), `PAGESPEED_ENABLED`, `PAGESPEED_API_KEY` (monthly report), `SETUP_TOKEN` (remove after first use), `PUBLIC_DIR`
 (only if the folders aren't side by side), `APP_KEY` (optional; otherwise
 generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`,
-`PAGESPEED_API_URL`, `TURNSTILE_VERIFY_URL` (ignored in production).
+`PAGESPEED_API_URL`, `TURNSTILE_VERIFY_URL` (ignored in production), `PWNED_PASSWORDS_URL`
+(`off` skips the leaked-password check) and `WIKI_NEWS` (`off`: no «Novedades» dialog).
 
 ## 11. Command line (`php sensum-cms/bin/console …`)
 

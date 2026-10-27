@@ -3,7 +3,7 @@
  * Hash routes keep reset/invitation tokens out of server logs and referrers.
  */
 import { h, icon, clear, initials, fill } from './dom.js';
-import { t, setLang, getLang, onLangChange, i18nReady } from './i18n.js';
+import { t, tp, setLang, getLang, onLangChange, i18nReady } from './i18n.js';
 import { initTheme, setThemePref, getThemePref } from './theme.js';
 import { api, setCsrf, onSessionExpired, onTwoFactorRequired, onPasswordChangeRequired, setViewAsExpected, onViewAsChanged } from './api.js';
 import { toast, openDialog, confirmDialog, dropdown, segmented, passwordField, textField, setBusy, errorText, alertBox, loading, button } from './ui.js';
@@ -23,7 +23,7 @@ const V = {
   users: lazy(() => import('./views/users.js')),
   account: lazy(() => import('./views/account.js')),
   reports: lazy(() => import('./views/reports.js')),
-  help: lazy(() => import('./views/help.js')),
+  wiki: lazy(() => import('./views/wiki.js')),
   monitor: lazy(() => import('./views/monitor.js')),
   siteReport: lazy(() => import('./views/sitereport.js')),
   email: lazy(() => import('./views/email.js')),
@@ -37,6 +37,8 @@ const V = {
   sections: lazy(() => import('./views/sections.js')),
 };
 const loadAccessRequest = lazy(() => import('./accessrequest.js'));
+const loadNews = lazy(() => import('./news.js'));
+let newsChecked = false;
 const loadReport = lazy(() => import('./report.js'));
 const openReportDialog = (...args) => loadReport().then((m) => m.openReportDialog(...args));
 
@@ -71,7 +73,8 @@ const PRIVATE = [
   { re: /^\/reportes$/, mod: V.reports, fn: 'render', nav: 'reports' },
   { re: /^\/reportes\/([1-9][0-9]{0,8})$/, mod: V.reports, fn: 'detail', nav: 'reports' },
   { re: /^\/cuenta$/, mod: V.account, fn: 'render', nav: 'account' },
-  { re: /^\/ayuda$/, mod: V.help, fn: 'render', nav: 'help' },
+  { re: /^\/(wiki|ayuda)$/, mod: V.wiki, fn: 'home', nav: 'wiki' },
+  { re: /^\/wiki\/([a-z0-9-]{1,60})$/, mod: V.wiki, fn: 'article', nav: 'wiki' },
   { re: /^\/secciones$/, mod: V.sections, fn: 'render', nav: 'moreSections' },
 ];
 
@@ -140,6 +143,7 @@ export async function logout() {
   state.session = null;
   setCsrf(null);
   state.shell = null;
+  newsChecked = false;
   state.skipGuard = true;
   toast(t('auth.loggedOut'), { type: 'info' });
   navigate('/ingresar');
@@ -238,7 +242,7 @@ function navLink(path, key, ic, active, cls) {
   const route = PRIVATE.find((r) => r.nav === key);
   const prefetch = () => { if (route) route.mod().catch(() => {}); };
   return h('a', { class: cls, href: '#' + path, 'data-nav': key, 'aria-current': active === key ? 'page' : null, onclick: closeNav, onpointerenter: prefetch, onfocus: prefetch },
-    icon(ic), h('span', { text: t('nav.' + key) }), key === 'reports' || key === 'leads' ? h('span', { class: 'nav-badge', hidden: true }) : null);
+    icon(ic), h('span', { text: t('nav.' + key) }), key === 'reports' || key === 'leads' || key === 'wiki' ? h('span', { class: 'nav-badge', hidden: true }) : null);
 }
 
 /**
@@ -323,7 +327,7 @@ function renderShell(activeNav, force = false) {
     h('div', { class: 'menu-user' }, h('strong', { text: user.name }), h('span', { class: 'small muted break', text: user.email })),
     h('hr'),
     h('a', { class: 'menu-item', href: '#/cuenta', onclick: () => close() }, icon('person-circle'), t('nav.account')),
-    h('a', { class: 'menu-item', href: '#/ayuda', onclick: () => close() }, icon('question-circle'), t('nav.help')),
+    h('a', { class: 'menu-item', href: '#/wiki', onclick: () => close() }, icon('question-circle'), t('nav.wiki')),
     h('hr'),
     h('div', { class: 'menu-label', text: t('topbar.theme') }),
     h('div', { class: 'menu-user' }, themeSwitch()),
@@ -369,7 +373,7 @@ function renderShell(activeNav, force = false) {
       askable(user).length ? navLink('/secciones', 'moreSections', 'plus-lg', active, 'nav-more') : null,
       h('div', { class: 'nav-section', text: t('nav.groupSupport') }),
       navLink('/reportes', 'reports', 'headset', active),
-      navLink('/ayuda', 'help', 'question-circle', active),
+      navLink('/wiki', 'wiki', 'question-circle', active),
       navLink('/cuenta', 'account', 'person-circle', active)),
     h('div', { class: 'sidebar-foot' },
       h('button', { class: 'btn btn-block', type: 'button', onclick: () => { closeNav(); openReportDialog(); } }, icon('life-preserver'), t('topbar.report')),
@@ -386,6 +390,17 @@ function renderShell(activeNav, force = false) {
   state.shell = { main, sidebar, scrim, openBtn, active, offline, key };
   refreshReportsBadge();
   refreshLeadsBadge();
+  // «Novedades» for this account: shown once after signing in; the Wiki item counts the unseen ones.
+  loadNews().then((m) => {
+    m.onNewsCount((n) => {
+      const el = state.shell && state.shell.sidebar.querySelector('.nav a[data-nav="wiki"] .nav-badge');
+      if (!el) return;
+      el.hidden = !n;
+      el.textContent = String(n);
+      el.setAttribute('aria-label', tp('wiki.newsBadge', n));
+    });
+    if (!newsChecked) { newsChecked = true; m.checkNews({ viewAs: !!state.session.viewAs, navigate }); }
+  }).catch(() => {});
   return main;
 }
 
@@ -555,6 +570,7 @@ function focusHeading(main) {
 
 async function onSignedIn(data) {
   setSession(data);
+  newsChecked = false;
   let next = '/';
   try { next = sessionStorage.getItem('sensum_after_login') || '/'; sessionStorage.removeItem('sensum_after_login'); } catch (e) { /* ignore */ }
   state.path = null;

@@ -700,3 +700,25 @@ qué hora—, agrupado por día.
 * **Exportar a Excel** descarga lo que muestran los filtros (hasta 5,000 líneas).
 * Desde **Usuarios**, **Ver actividad** abre el historial de una persona.
 * Nunca se muestran contraseñas ni direcciones IP.
+
+## 23. Wiki: procesos, guías y respuestas
+
+En el menú, **Ayuda y soporte → Wiki** (o en **app.sensumconstrucciones.com/wiki**).
+Explica cada proceso del panel con capturas reales. Solo se ve después de iniciar sesión,
+y la ven todas las cuentas.
+
+* **Buscar:** escribe lo que necesitas hacer («cambiar una foto», «exportar
+  prospectos»); no importan tildes ni mayúsculas. La tecla **/** lleva al buscador.
+* **Para tu rol / Todo el panel:** al principio ves los artículos de tus secciones. En
+  «Todo el panel» aparecen también los demás, marcados «No incluido en tu rol», con
+  **Pedir acceso**.
+* **Capturas:** se ven en tu idioma y en tu apariencia (claro u oscuro). Arriba de cada
+  artículo eliges verlas como en **Computadora** o en **Celular**; toca una para
+  ampliarla.
+* **Preguntar a soporte:** marca cualquier texto de un artículo y toca **Preguntar a
+  soporte**. Se abre una solicitud con el tema y el texto marcado; solo escribes tu
+  pregunta. También está la tarjeta «¿Te quedó una duda?».
+* **Novedades:** cuando el panel agrega algo que puedes usar, al entrar te lo muestra
+  una vez (qué es y qué puedes hacer), con **Ver cómo funciona**. **Ver más tarde** lo
+  vuelve a mostrar la próxima vez. En el menú, **Wiki** muestra cuántas novedades no has
+  visto; también están arriba en la portada de la wiki.

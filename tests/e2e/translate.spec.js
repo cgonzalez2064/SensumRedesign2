@@ -11,7 +11,7 @@ let server; let stub;
 
 test.beforeAll(async () => {
   stub = await startDeepLStub({ port: 8218 });
-  server = await startServer({ port: 8211, env: { DEEPL_API_KEY: STUB_KEY, DEEPL_API_URL: stub.url } });
+  server = await startServer({ port: 8211, env: { DEEPL_API_KEY: STUB_KEY, DEEPL_API_URL: stub.url, WIKI_NEWS: 'off' } });
   createAdmin(server);
   server.sql("UPDATE users SET onboarded_at = strftime('%s','now')"); // no first-sign-in welcome here
   server.cli(['publish']);

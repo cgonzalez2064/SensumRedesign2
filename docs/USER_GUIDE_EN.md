@@ -670,3 +670,24 @@ grouped by day.
 * **Export to Excel** downloads what the filters show (up to 5,000 lines).
 * From **Users**, **See activity** opens one person's history.
 * Passwords and IP addresses are never shown.
+
+## 23. Wiki: processes, guides and answers
+
+In the menu, **Help & support → Wiki** (or at **app.sensumconstrucciones.com/wiki**).
+It explains every process in the panel with real screenshots. It's only shown after
+signing in, to every account.
+
+* **Search:** type what you need to do ("change a photo", "export leads"); accents and
+  capitals don't matter. The **/** key jumps to the search box.
+* **For your role / The whole panel:** at first you see your sections' articles. "The
+  whole panel" adds the others, marked "Not in your role", with **Ask for access**.
+* **Screenshots:** shown in your language and appearance (light or dark). At the top of
+  each article choose to see them as on a **Computer** or a **Phone**; tap one to
+  enlarge it.
+* **Ask support:** select any text in an article and tap **Ask support**. A request
+  opens with the topic and the selected text; you only write your question. The "Still
+  have a question?" card works too.
+* **What's new:** when the panel adds something you can use, it shows you once, after
+  signing in, what it is and what you can do, with **See how it works**. **Later**
+  brings it back next time. In the menu, **Wiki** counts the updates you haven't seen;
+  they're also at the top of the wiki's home page.

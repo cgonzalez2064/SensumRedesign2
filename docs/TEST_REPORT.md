@@ -453,6 +453,24 @@ attached, totals only). Design: `SECURITY_AUDIT.md` §23.
 | Design review | Every new screen checked in the browser (desktop and phone): the statistics bar was reorganised (period left, actions right; full width on phones), the report e-mail shows only the days with visits |
 | Found and fixed on the way | An older access (no complete role) lost its sections when another role was ticked: they now stay as extra sections. Pending requests already covered by a role change kept showing in Usuarios: now closed by themselves. Administrators saw «Más secciones» only for «Gestión de solicitudes de soporte»: that section, like «Gestión de usuarios», is now given only by the owner. The e-mail code field said «the number the app shows»: it now has its own hint |
 
+## Change — the panel's wiki (2026-10-27)
+
+`app.sensumconstrucciones.com/wiki` (`#/wiki`, replacing *Guía de uso*): 22 articles in 7
+categories, in Spanish and English, with real screenshots of every screen in both
+languages, light and dark, computer and phone (208 WebP, `tests/wiki/shots.mjs`, fictitious
+data). Search, «Para tu rol / Todo el panel», «En esta página», «Preguntar a soporte» on
+marked text, and «Novedades» shown once to whoever can use each new feature. Design:
+`SECURITY_AUDIT.md` §24; how to keep it current: `cms/wiki/README.md`.
+
+| Check | Result |
+|---|---|
+| API integration (31 files) | **271/271**; new `31-wiki.test.mjs` (5 tests): every article in both languages with the same front matter, every `` `UI label` `` a text the panel really shows, every `wiki:` link and every screenshot variant present, no HTML; «Novedades» unique and pointing at real articles; only signed-in accounts read the wiki (401), owner-only articles hidden from others, `allowed` per role, English texts; screenshots private (`Cache-Control: private`, ETag/304), nothing outside the folder (404); «Novedades» only for whoever can use them, once, never older than the account; `/wiki` → the panel |
+| Browser E2E (3 profiles) | **185 passed**, 63 skipped by design, 10 failed in the first full run — all in `translate.spec.js`, whose own server showed the «Novedades» dialog over the editor; with `WIKI_NEWS=off` there too, that spec passes (**11 passed**, 0 failed). New `wiki.spec.js` (3 tests × 3 devices, all passing): the menu item, «Para tu rol / Todo el panel», accent-insensitive search with highlights, an article with steps and UI labels, screenshots following the chosen device and the theme, marking text → «Preguntar a soporte» → a request with the topic and the quote, a role's locked article with «Pedir acceso» (opened from `/wiki/<slug>`), and the «Novedades» dialog (prepared answers: counter, next, «Ver cómo funciona», seen marks). axe (no serious/critical) and no side scroll |
+| Visual regression (public site) | **22/22** identical |
+| Static analysis | PHPStan: no errors |
+| Design review | Home, articles, search, the marked-text button, the support dialog, the «Novedades» dialog, light and dark, desktop and phone, checked in the browser; 208 screenshots reviewed by sample |
+| Found and fixed on the way | Three button names in the articles didn't match the panel (caught by the new check). The «Proyecto 1» photo screenshot was empty (no photo on the real site): Fotos now shows «Nosotros». On phones the «Novedades» text scrolled inside the dialog without being focusable (axe): fixed. The same support question sent from each device was refused as a duplicate (correct behaviour): the test now asks a different question per device |
+
 ## Other audits
 
 | Audit | Result |

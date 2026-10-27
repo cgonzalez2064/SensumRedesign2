@@ -22,13 +22,17 @@ function chipGroup(name, values, labels, selected, legend) {
   return group;
 }
 
-export function openReportDialog() {
+/**
+ * @param {{ heading?: string, lead?: string, type?: string, area?: string, subject?: string, description?: string, focus?: 'title'|'description' }} [preset]
+ *   a question from the wiki arrives with its topic and the text the person marked
+ */
+export function openReportDialog(preset = {}) {
   const lang = getLang();
   const context = technicalContext({ lang, theme: getThemePref() });
-  const typeGroup = chipGroup('rtype', TYPES, t('report.types'), 'problem', t('report.type'));
-  const titleF = textField({ label: t('report.titleLabel'), placeholder: t('report.titlePlaceholder'), max: 120, required: true });
-  const descF = textField({ label: t('report.description'), placeholder: t('report.descriptionPlaceholder'), max: 4000, multiline: true, rows: 5, required: true });
-  const areaGroup = chipGroup('rarea', AREAS, t('report.areas'), 'admin', t('report.area'));
+  const typeGroup = chipGroup('rtype', TYPES, t('report.types'), TYPES.includes(preset.type) ? preset.type : 'problem', t('report.type'));
+  const titleF = textField({ label: t('report.titleLabel'), placeholder: t('report.titlePlaceholder'), max: 120, required: true, value: preset.subject || '' });
+  const descF = textField({ label: t('report.description'), placeholder: t('report.descriptionPlaceholder'), max: 4000, multiline: true, rows: 5, required: true, value: preset.description || '' });
+  const areaGroup = chipGroup('rarea', AREAS, t('report.areas'), AREAS.includes(preset.area) ? preset.area : 'admin', t('report.area'));
   const pageF = textField({ label: t('report.page'), value: location.pathname + safeRoute(), hint: t('report.pageHint'), max: 300, optionalTag: true });
 
   // Optional screenshot (validated again on the server).
@@ -74,14 +78,19 @@ export function openReportDialog() {
 
   let reportId = null;
   const dlg = openDialog({
-    title: t('report.title'), lead: t('report.lead'), labelledIcon: 'life-preserver', body: form, wide: true,
+    title: preset.heading || t('report.title'), lead: preset.lead || t('report.lead'), labelledIcon: preset.heading ? 'headset' : 'life-preserver', body: form, wide: true,
     actions: [
       { label: t('common.cancel'), onClick: (b, close) => close() },
       { label: t('report.send'), variant: 'primary', icon: 'send', onClick: () => form.requestSubmit() },
     ],
   });
   const sendBtn = dlg.foot.lastChild;
-  setTimeout(() => titleF.input.focus(), 60);
+  setTimeout(() => {
+    // From the wiki: the cursor waits after the quoted text, ready for the question.
+    const el = preset.focus === 'description' ? descF.input : titleF.input;
+    el.focus();
+    if (preset.focus === 'description') el.setSelectionRange(el.value.length, el.value.length);
+  }, 60);
 
   const showResult = (delivered) => {
     fill(dlg.body, delivered

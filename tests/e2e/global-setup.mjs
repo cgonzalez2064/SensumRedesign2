@@ -17,7 +17,8 @@ export const SUPPORT = { name: 'Iris Soporte', email: 'iris.soporte@example.test
 export const TWO_STEP = { name: 'Tomás Dos Pasos', email: 'tomas.2fa@example.test', password: 'Clave-Tomas-2FA-2026' };
 
 export default async function globalSetup() {
-  const server = await startServer({ port: PORT });
+  // No «Novedades» dialog over the screens being tested (wiki.spec.js checks it with its own answers).
+  const server = await startServer({ port: PORT, env: { WIKI_NEWS: 'off' } });
   createAdmin(server, ADMIN);
   createAdmin(server, EDITOR);
   createAdmin(server, OTHER_ADMIN);

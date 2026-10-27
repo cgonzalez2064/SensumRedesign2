@@ -45,6 +45,11 @@
   # the public pages stay on the site (assets: icons and photo previews).
   RewriteCond %{HTTP_HOST} ^app\.sensumconstrucciones\.com$ [NC]
   RewriteRule ^$ /admin/ [L,R=302]
+  # app.sensumconstrucciones.com/wiki (and /wiki/<artículo>) opens the panel's wiki.
+  RewriteCond %{HTTP_HOST} ^app\.sensumconstrucciones\.com$ [NC]
+  RewriteRule ^wiki/?$ /admin/#/wiki [L,R=302,NE]
+  RewriteCond %{HTTP_HOST} ^app\.sensumconstrucciones\.com$ [NC]
+  RewriteRule ^wiki/([a-z0-9-]+)/?$ /admin/#/wiki/$1 [L,R=302,NE]
   RewriteCond %{HTTP_HOST} ^app\.sensumconstrucciones\.com$ [NC]
   RewriteCond %{REQUEST_URI} !^/(admin|api|assets)(/|$)
   RewriteCond %{REQUEST_URI} !^/404\.html$

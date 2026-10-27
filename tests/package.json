@@ -7,7 +7,8 @@
     "test": "node --test --test-concurrency=1 \"integration/*.test.mjs\"",
     "test:visual": "playwright test --config visual/playwright.config.js",
     "test:visual:update": "playwright test --config visual/playwright.config.js --update-snapshots",
-    "test:e2e": "playwright test --config e2e/playwright.config.js"
+    "test:e2e": "playwright test --config e2e/playwright.config.js",
+    "wiki:shots": "node wiki/shots.mjs"
   },
   "engines": {
     "node": ">=20"

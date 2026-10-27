@@ -1120,6 +1120,13 @@ La base de datos se actualiza sola (migraciones `017_roles` y `018_device_reset`
   `php ~/sensum-cms/bin/console mail:test tu@correo` funcione.
 * **Estadísticas:** filtros por período, **Exportar** y **Enviar por correo** (no hace
   falta configurar nada).
+* **Wiki** (migración `019_wiki`): queda en **app.sensumconstrucciones.com/wiki** (el
+  `.htaccess` nuevo la envía al panel) y en el menú **Ayuda y soporte → Wiki**, en lugar
+  de «Guía de uso». Sus artículos y capturas viajan dentro de `sensum-cms/wiki/` (fuera
+  de `public_html`): solo los ve quien inició sesión. Al entrar después de actualizar,
+  cada persona ve una vez las **Novedades** que le corresponden según su rol. No hay
+  nada que configurar. Para comprobarla: abre `https://app.sensumconstrucciones.com/wiki`
+  (te pide iniciar sesión y luego la muestra).
 
 **Volver atrás de esta versión**, de menos a más:
 1. Solo los roles: `php ~/sensum-cms/bin/console roles:rollback` devuelve a cada cuenta

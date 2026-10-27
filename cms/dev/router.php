@@ -92,6 +92,11 @@ if (isset($redirects[$path])) {
     header('Location: ' . $redirects[$path], true, 301);
     exit;
 }
+// The panel's wiki has its own address (app.sensumconstrucciones.com/wiki in production).
+if (preg_match('#^/wiki(?:/([a-z0-9-]+))?/?$#', $path, $wm)) {
+    header('Location: /admin/#/wiki' . (isset($wm[1]) ? '/' . $wm[1] : ''), true, 302);
+    exit;
+}
 
 // Local publishing goes to an overlay folder (PUBLIC_DIR in cms/.env, e.g.
 // storage/dev-public) so testing the admin never rewrites the committed

@@ -34,3 +34,4 @@ tests/fixtures/out/
 
 # Playwright E2E artifacts
 tests/e2e/.artifacts/
+tests/wiki/.tmp/
