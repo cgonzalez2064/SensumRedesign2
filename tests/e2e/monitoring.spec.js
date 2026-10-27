@@ -88,7 +88,7 @@ test('"Salud del sitio" can be given to anyone as part of a custom access', asyn
   await signIn(page, TEXTS_ONLY);
   await expect(page.locator('.nav a[href="#/salud-del-sitio"]')).toHaveCount(0);
   await page.goto('/admin/#/salud-del-sitio');
-  await expect(page.locator('main h1')).toHaveText('No encontramos esta pantalla');
+  await expect(page.locator('main h1')).toHaveText('No tienes acceso a esta sección');
 
   const it = await browser.newContext();
   const owner = await it.newPage();

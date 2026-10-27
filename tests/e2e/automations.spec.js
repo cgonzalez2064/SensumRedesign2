@@ -9,6 +9,10 @@ import { readFileSync } from 'node:fs';
 import { ADMIN, Client, waitForMail, message, linkToken, totp } from '../integration/helpers.mjs';
 import { OTHER_ADMIN, SALES } from './global-setup.mjs';
 
+// People made here get a custom access (no ready-made type), so other specs' searches by type
+// stay exact, and they are invited by the test administrator: the owner's 20 invitations an hour
+// are left for the other specs.
+
 const BASE = 'http://127.0.0.1:8210';
 const tag = (info) => ({ 'desktop-chrome': 'Escritorio', 'tablet-chrome': 'Tableta', 'iphone-webkit': 'Celular' }[info.project.name] || info.project.name);
 const phone = (info) => info.project.name === 'iphone-webkit';
@@ -32,10 +36,10 @@ async function axe(page) {
 }
 const noSideScroll = async (page) => expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 
-/** An active account made by the owner through the API (its own password). */
+/** An active account invited by the test administrator through the API (its own password). */
 async function account(info, name, permissions) {
   const owner = new Client(BASE);
-  await owner.login();
+  await owner.login(OTHER_ADMIN.email, OTHER_ADMIN.password);
   const email = `${name.split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()}.${info.project.name}.${Date.now()}@example.test`;
   const r = await owner.post('/api/users', { name, email, permissions, lang: 'es' });
   expect(r.status, r.text).toBe(200);
@@ -48,7 +52,7 @@ async function account(info, name, permissions) {
 }
 
 test('a site administrator sees what needs attention on Inicio and grants an access request with one click', async ({ page }, info) => {
-  const marina = await account(info, `Marina ${tag(info)}`, ['texts', 'contact', 'photos', 'documents']);
+  const marina = await account(info, `Marina ${tag(info)}`, ['texts', 'contact', 'photos']);
   expect((await marina.c.post('/api/account/access-request', { permissions: ['leads'], message: 'Para la campaña.' })).status).toBe(200);
   await signIn(page, OTHER_ADMIN);
   const access = page.locator('#access-title').locator('xpath=ancestor::section');
@@ -125,7 +129,7 @@ test('inviting with temporary access and a typo hint; a given password comes wit
 
 test('Actividad: a person\'s history from Usuarios, filters and the export for Excel', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop-chrome', 'one browser is enough for the export');
-  const p = await account(info, `Rita ${tag(info)}`, ['texts']);
+  const p = await account(info, `Rita ${tag(info)}`, ['texts', 'photos']);
   await signIn(page, OTHER_ADMIN);
   await page.goto('/admin/#/usuarios');
   await page.getByLabel(/Buscar por nombre/).fill(p.name);
@@ -155,7 +159,7 @@ test('Actividad: a person\'s history from Usuarios, filters and the export for E
 });
 
 test('a screen you can\'t open says so and lets you ask for it; Mi cuenta shows the request', async ({ page }, info) => {
-  const p = await account(info, `Nora ${tag(info)}`, ['texts', 'contact', 'photos', 'documents']);
+  const p = await account(info, `Nora ${tag(info)}`, ['texts', 'contact', 'photos']);
   await signIn(page, p);
   await page.goto('/admin/#/prospectos');
   await expect(page.locator('main h1')).toHaveText('No tienes acceso a esta sección');
@@ -222,7 +226,8 @@ test('Seguridad: the account rules; Prospectos: automation, the person in charge
   await expect(page.getByText('Guardado. La confirmación está apagada.')).toBeVisible();
   // One lead: who follows it up, in its history.
   await page.locator('.ticket-row', { hasText: 'Lucía Méndez' }).click();
-  await page.getByLabel('Responsable').selectOption({ label: SALES.name });
+  await expect(page.locator('main h1')).toHaveText('Lucía Méndez');
+  await page.getByLabel('Responsable', { exact: true }).selectOption({ label: SALES.name });
   await page.locator('#ld-follow').locator('xpath=ancestor::section').getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(page.getByText(`${OTHER_ADMIN.name} asignó el prospecto a ${SALES.name}`)).toBeVisible();
   await axe(page);
@@ -230,7 +235,7 @@ test('Seguridad: the account rules; Prospectos: automation, the person in charge
 
 test('two-step sign-in can remember this browser for 30 days when Seguridad allows it', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop-chrome', 'one browser is enough');
-  const p = await account(info, 'Rocío Recuerda', ['texts']);
+  const p = await account(info, 'Rocío Recuerda', ['texts', 'photos']);
   const setup = await p.c.post('/api/account/2fa/setup', { currentPassword: p.password });
   const secret = setup.data.secret.replace(/ /g, '');
   expect((await p.c.post('/api/account/2fa/enable', { code: await totp(secret) })).status).toBe(200);

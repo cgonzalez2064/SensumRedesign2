@@ -48,7 +48,7 @@ test('an account with "Solo textos" only sees and opens what it may change', asy
   await expect(page.locator('.quick a[href="#/fotos"]')).toHaveCount(0);
   for (const hash of ['#/fotos', '#/contacto', '#/formulario', '#/usuarios', '#/informe']) {
     await page.goto('/admin/' + hash);
-    await expect(page.locator('main h1')).toHaveText('No encontramos esta pantalla');
+    await expect(page.locator('main h1')).toHaveText('No tienes acceso a esta sección');
   }
   await page.goto('/admin/#/cuenta');
   await expect(page.locator('main').getByText('Textos del sitio', { exact: true })).toBeVisible();

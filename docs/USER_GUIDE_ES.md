@@ -210,6 +210,12 @@ En **Mi cuenta**:
   y difícil de adivinar. No uses la misma contraseña de otros sitios.
 * **Cerrar sesión en otros dispositivos:** útil si entraste desde una computadora
   ajena.
+* **Pedir más acceso:** debajo de «Tu acceso», elige las secciones que necesitas y
+  escribe para qué. Le avisamos por correo a quien administra los usuarios y te llega
+  un correo cuando lo revise. Si abres una sección que tu acceso no incluye, el panel
+  te lo dice y te ofrece **Pedir acceso** ahí mismo.
+* **Contraseña temporal:** si un administrador te dio una contraseña para entrar, vence
+  en 72 horas. Úsala pronto: al entrar, el panel te pide crear la tuya.
 
 **¿Olvidaste tu contraseña?**
 1. En la pantalla de inicio de sesión toca **¿Olvidaste tu contraseña?**
@@ -228,6 +234,11 @@ En **Mi cuenta**:
 Si cambias de celular, desactívala y vuelve a activarla con el nuevo (te pide la
 contraseña y un código). Si lo perdiste y no tienes códigos, pide a soporte
 técnico que te la restablezca.
+
+**Recordar este dispositivo:** si la cuenta propietaria lo permite, al escribir el
+código puedes marcar «Recordar este dispositivo por 30 días» y ese navegador no te lo
+pedirá durante ese tiempo. No lo marques en una computadora compartida. En **Mi
+cuenta** ves cuántos navegadores recordaste y puedes **Olvidarlos**.
 
 Nadie del equipo técnico te pedirá tu contraseña ni tus códigos, ni por correo ni
 por teléfono.
@@ -315,9 +326,26 @@ cambia, desactiva o elimina cuentas.
   * **Soporte técnico:** gestiona **todas** las solicitudes de soporte (con sus
     gráficas), Salud del sitio, Informe mensual (consulta) y publicación y actividad.
   * **Personalizado:** marca exactamente lo que necesita; cada casilla explica qué incluye.
-* **Buscar:** arriba de la lista escribe un nombre, correo o tipo de acceso (no importan
-  tildes ni mayúsculas) y filtra por **estado** o **tipo de acceso**. **Quitar filtros**
-  muestra a todas las personas otra vez.
+* **Buscar y revisar:** arriba de la lista escribe un nombre, correo o tipo de acceso
+  (no importan tildes ni mayúsculas) o filtra por **tipo de acceso**. Las pestañas
+  **Todas · Activas · Invitaciones · Desactivadas** muestran cada grupo y, en
+  **Revisar**, aparecen solo cuando hay alguien: *Deben crear contraseña*, *Sin
+  verificación en dos pasos*, *Sin entrar en 90 días* y *Acceso temporal*. En el
+  celular están en el menú **Mostrar**. **Quitar filtros** muestra a todas las personas.
+* **En Inicio**, la tarjeta **Accesos** resume lo que necesita atención (solicitudes,
+  invitaciones por vencer o vencidas, contraseñas pendientes, accesos temporales que
+  terminan esta semana, cuentas sin verificación o sin uso); cada línea abre su filtro.
+* **Solicitudes de acceso:** cuando alguien pide más acceso, aparece arriba de la lista
+  con lo que pide y su mensaje. **Dar acceso** lo aplica con un clic y **Descartar** la
+  cierra; en ambos casos le avisamos por correo. Si pide algo que tú no puedes dar,
+  solo la cuenta propietaria puede.
+* **Acceso temporal** (para agencias, fotógrafos o personal temporal): al invitar o en
+  **Cambiar tipo de acceso**, activa **Acceso temporal** y elige la fecha. La cuenta
+  funciona hasta el final de ese día; 3 días antes avisamos a la persona y a quien la
+  invitó, y ese día se desactiva sola. Para extenderlo, cambia la fecha; para volver a
+  activarla, **Reactivar**.
+* Al invitar o cambiar un correo, si el dominio parece mal escrito (por ejemplo
+  «gmial.com»), el panel sugiere el correcto con **Usar este**.
 * Menú «⋮» de cada persona:
   * **Editar nombre y correo.** Un correo nuevo pide tu contraseña; se cierran sus
     sesiones y avisamos al correo anterior y al nuevo. Si aún no activó su cuenta,
@@ -328,12 +356,20 @@ cambia, desactiva o elimina cuentas.
     fácil de leer y dictar (por ejemplo «Lago-Pino-Ruta-472») o puedes escribirla. Pide
     tu contraseña, cierra sus sesiones y le avisa por correo **sin incluir la contraseña**:
     compártela tú por un medio seguro. Con la casilla marcada (recomendado), al entrar
-    el panel le pide crear su propia contraseña antes de cualquier otra cosa. Si estaba
-    invitada, su cuenta queda activa.
+    el panel le pide crear su propia contraseña antes de cualquier otra cosa, y la
+    temporal **vence en 72 horas** si no la usa. Si estaba invitada, su cuenta queda
+    activa. Al guardar ves un **mensaje listo para enviar** (dirección del panel, correo
+    y contraseña, en su idioma): **Copiar mensaje** y pégalo en WhatsApp.
   * **Verificación en dos pasos.** Exígesela a esa persona (al entrar deberá
     configurarla) o **restablécela** si perdió el teléfono (pide tu contraseña).
+  * **Cerrar sus sesiones.** Si perdió el celular o la computadora: cierra el panel en
+    todos sus dispositivos sin cambiar su contraseña. Le avisamos por correo.
+  * **Ver actividad.** Abre en **Actividad** lo que hizo y lo que se cambió en su cuenta.
   * **Reenviar invitación**, **Cambiar tipo de acceso** (se aplica de inmediato),
     **Desactivar / Reactivar** (cierra su sesión) y **Eliminar usuario**.
+* **Avisos automáticos:** si una invitación está por vencer, la persona recibe un
+  recordatorio con un enlace nuevo (una sola vez); si vence sin aceptarse, o cuando la
+  acepta, avisamos a quien la invitó.
 * Quien gestiona usuarios sin ser la cuenta propietaria solo cambia a personas con
   **igual o menos acceso** que el suyo y que no gestionan usuarios, y solo da los
   accesos que tiene. «Gestión de usuarios» solo la da la cuenta propietaria. Las demás
@@ -507,8 +543,20 @@ En **Administración → Seguridad**:
   abre). **Enviar respaldo ahora** sirve para probarlo y **Descargar respaldo
   completo** para guardarlo en tu computadora. Para abrirlo: 7-Zip (Windows) o
   Keka / The Unarchiver (Mac), con la contraseña de respaldos.
+* **Cuentas:**
+  * **Desactivar cuentas sin uso** (Nunca, o después de 90, 120 o 180 días sin
+    entrar): avisamos a la persona 7 días antes; si no entra, su cuenta se desactiva y
+    avisamos a quien la administra. La cuenta propietaria nunca se desactiva.
+  * **Rechazar contraseñas filtradas** (activado): al crear o cambiar una contraseña,
+    el panel comprueba de forma anónima que no aparezca en filtraciones de datos
+    conocidas (servicio Have I Been Pwned). La contraseña no sale del servidor y, si el
+    servicio no responde, no bloquea a nadie.
+  * **Permitir «Recordar este dispositivo»** (apagado): quien usa la verificación en
+    dos pasos puede no escribir el código durante 30 días en un navegador de
+    confianza. Al apagarlo, se olvidan todos los navegadores recordados.
 * **Verificación en dos pasos.** Elige a quién se le exige (solo a la cuenta
-  propietaria, a todo el equipo o a nadie) y mira quién ya la tiene activa. Si
+  propietaria; a la cuenta propietaria y a quienes administran —gestionan usuarios o
+  publican el sitio—; a todo el equipo; o a nadie) y mira quién ya la tiene activa. Si
   alguien perdió su celular, pulsa **Restablecer** junto a su nombre: la vuelve a
   configurar la próxima vez que entre.
 
@@ -529,6 +577,18 @@ estadísticas** (por ejemplo, el tipo «Ventas»).
   o **llamar**; el **estado** y el **monto** cotizado o ganado (en quetzales, sin
   decimales); y **notas** de seguimiento («Llamé el martes…»). Cada cambio queda en el
   historial con quién y cuándo.
+* **Responsable:** cada mensaje puede tener una persona que le da seguimiento (campo
+  **Responsable** en el detalle). Si eliges a otra persona, le avisamos por correo. En
+  la lista, filtra por **Asignados a mí** o **Sin asignar**.
+* **Automatización** (debajo de la lista): elige el responsable de cada servicio y de
+  **Todo lo demás**; cada mensaje nuevo se le asigna y le llega por correo (el correo
+  del formulario sigue llegando como siempre). **Recordatorio si sigue «Nuevo»** (24,
+  48 o 72 horas) envía un solo correo al responsable, y el **Resumen semanal los
+  lunes** cuenta los nuevos y los que esperan respuesta (solo si hay algo que contar).
+* **Confirmación a quien escribe** (apagada hasta que Sensum apruebe el texto): el
+  cliente recibe un correo apenas envía el formulario, en español o inglés según la
+  página. En el texto puedes usar {nombre}, {servicio}, {telefono}, {whatsapp} y
+  {correo}; **Ver con un ejemplo** muestra cómo queda.
 * **Exportar CSV** descarga la lista filtrada para Excel o Google Sheets.
 * **Eliminar** borra el mensaje y sus notas; úsalo si la persona pide que borremos
   sus datos.
@@ -595,3 +655,16 @@ persona*) eliges una cuenta y, después de confirmar tu contraseña, ves el pane
 * Es **solo lectura**: si intentas guardar, el panel avisa que no se guardan cambios.
   Tampoco marca nada como leído en la cuenta de esa persona.
 * Cada inicio, cambio y fin queda registrado en la actividad.
+
+## 22. Actividad: quién cambió qué
+
+La ven la cuenta propietaria, quienes gestionan usuarios y quienes tienen
+«Publicación y actividad». Muestra cada cambio del panel —quién lo hizo, a quién y a
+qué hora—, agrupado por día.
+
+* Filtra por **Persona**, **Tipo** (textos y publicación, fotos y archivos, usuarios y
+  accesos, prospectos; la cuenta propietaria ve también inicios de sesión, seguridad,
+  configuración y soporte) y **fechas**. **Cargar más** trae los anteriores.
+* **Exportar a Excel** descarga lo que muestran los filtros (hasta 5,000 líneas).
+* Desde **Usuarios**, **Ver actividad** abre el historial de una persona.
+* Nunca se muestran contraseñas ni direcciones IP.

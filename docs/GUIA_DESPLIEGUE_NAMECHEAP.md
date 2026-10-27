@@ -784,12 +784,18 @@ escribe si hay algún error). Agrega dos tareas, usando la ruta de PHP del paso 
 
 | Tarea | Frecuencia (Common Settings) | Comando |
 |---|---|---|
-| **Revisión automática** (monitoreo, alertas pendientes, calificación de Google, certificado, recordatorio del informe, limpieza) | *Twice Per Hour* o personalizado `*/15 * * * *` | `/usr/local/bin/php /home/USUARIO/sensum-cms/bin/console monitor > /dev/null 2>&1` |
+| **Revisión automática** (monitoreo, alertas pendientes, calificación de Google, certificado, recordatorio del informe, limpieza y las **automatizaciones**: recordatorios de invitaciones, accesos temporales, cuentas sin uso, seguimiento y resumen de prospectos) | *Twice Per Hour* o personalizado `*/15 * * * *` | `/usr/local/bin/php /home/USUARIO/sensum-cms/bin/console monitor > /dev/null 2>&1` |
 | **Respaldo diario** de la base de datos (guarda las últimas 14 copias) | *Once Per Day* | `/usr/local/bin/php /home/USUARIO/sensum-cms/bin/console backup > /dev/null 2>&1` |
 
 Reemplaza `/usr/local/bin/php` por la ruta que mostró `which php` y `USUARIO` por tu
 usuario de cPanel. En el panel → **Monitoreo**, «Última revisión automática» debe
 mostrar la hora de la última ejecución después de unos minutos.
+
+Sin esta tarea, las automatizaciones (recordatorios por correo, fin de los accesos
+temporales por el aviso de 3 días, cuentas sin uso, recordatorios y resumen de
+prospectos) no se envían. El fin de un acceso temporal sí se aplica igual: la cuenta
+se desactiva en cuanto la persona intenta usar el panel. Para probarlas a mano:
+`php ~/sensum-cms/bin/console automations`.
 
 Cada revisión también mide **cuánto tarda en cargar la página de inicio**; con eso se
 arma la gráfica «Tiempo de respuesta» de Monitoreo → **Tendencias** (junto con errores
@@ -1089,6 +1095,20 @@ editar nombre y correo, contraseñas y verificación en dos pasos de quienes tie
 acceso). Si alguna no debe tenerlo, quítaselo en Usuarios → «⋮» → **Cambiar tipo de
 acceso** (queda como «Personalizado»). Las actualizaciones de la base de datos se
 aplican solas.
+
+**Al actualizar a la versión de cuentas y automatizaciones (octubre de 2026):** la base
+de datos se actualiza sola. Lo nuevo no cambia el sitio público ni hace falta configurar
+nada en el servidor:
+* **Prospectos → Automatización:** el **recordatorio si sigue «Nuevo»** (48 horas) y el
+  **resumen semanal de los lunes** quedan activados para quienes ven Prospectos; la
+  asignación por servicio queda vacía hasta que la configuren. La **confirmación a quien
+  escribe** queda **apagada** hasta que Sensum apruebe su texto.
+* **Seguridad → Cuentas** (cuenta propietaria): «Rechazar contraseñas filtradas» queda
+  activado (el servidor consulta `api.pwnedpasswords.com` por HTTPS; si no responde, no
+  bloquea a nadie); «Desactivar cuentas sin uso» y «Recordar este dispositivo» quedan
+  apagados.
+* Las contraseñas temporales que dé un administrador vencen a las 72 horas si no se
+  cambian.
 
 **Al actualizar a la versión de octubre de 2026 (SEO):** después de **Volver a publicar
 el sitio**, la pestaña del navegador en la portada dice «Constructora en Guatemala:

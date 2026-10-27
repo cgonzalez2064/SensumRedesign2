@@ -194,7 +194,7 @@ Ready-made types (`Users::ACCESS_TYPES`, one concrete job each), or *Personaliza
 
 | Type | Permissions |
 |---|---|
-| *Administrador del sitio* (`admin`) | texts, contact, photos, documents, site, leads, stats, monitor, report |
+| *Administrador del sitio* (`admin`) | texts, contact, photos, documents, site, leads, stats, monitor, report, users |
 | *Editor de contenido* (`content`) | texts, contact, photos, documents |
 | *Redactor* (`texts`) | texts |
 | *Fotos y portafolio* (`media`) | photos, documents |
@@ -212,6 +212,22 @@ sees only their own unless they have `support`). Existing accounts were migrated
 (`leads` → `+stats`, so nobody lost Estadísticas; `support` is never granted
 automatically) and `012_report_access.sql` (`site` + `monitor` → `+report`). The old `role` column is kept only for compatibility; it grants
 nothing.
+
+### 2c. Automations (`Automations.php`)
+
+They run with the scheduled check (`bin/console monitor`) or right after their event,
+and each notice goes out once (marked in the database). People: invitation reminder
+24 h before it expires (with a fresh link; the old one stops working), the inviter told
+when it expires or is accepted; temporary access (warning 3 days before to the person
+and whoever invited them; at the end the account is turned off — also enforced at the
+next request without the scheduled check); unused accounts (Seguridad, off by default:
+warning 7 days before, then turned off; never the owner); access requests to whoever
+manages users and the answer to the person. Prospectos: assignment by service (or a
+default person) with an e-mail to the assignee, hand-overs notified, one reminder for a
+lead still "new" after N hours, a Monday summary (only with something to report), and
+the visitor's confirmation (off until Sensum approves its text; at most one per address
+every 10 minutes). Notices use the alerts' branded layout (`Watchdog::notify`) in the
+recipient's language and are sent after the response.
 
 ## 3. Editable content model
 
@@ -248,6 +264,8 @@ nothing.
 | `site_reports` | monthly reports sent: month, when, by whom, recipients, language, status, figures |
 | `sessions` | SHA-256 of the session cookie, CSRF token, created/last-seen/expiry, pseudonymized IP, user agent; `view_as_user_id`/`view_as_until` while the owner views as someone (`010_view_as.sql`) |
 | `user_tokens` | SHA-256 of invitation/reset tokens, purpose, expiry, used-at |
+| `access_requests` | «Pedir acceso»: person, permissions, message, status (pending/granted/declined/cancelled), who answered and when (`016_automations`) |
+| `trusted_devices` | browsers remembered for the second step: SHA-256 of the cookie token, device label, expiry (30 days) (`016_automations`). The same migration adds to `users` `access_until`, `temp_password_expires_at` and the "notice sent" marks of the automations, and to `leads` `assigned_to`, `followup_sent_at`, `confirmation_sent` |
 | `content` | key, language (`es`/`en`/`*`), value, who/when |
 | `media` | slot, position, server-generated file base, extension, size, generated widths, alt ES/EN, sanitized original name, soft-delete date |
 | `settings` | last publish, published file hashes, drift notice, e-mail/captcha settings (secrets encrypted), off-server backup settings, two-step policy, last domain check |
@@ -307,6 +325,13 @@ nothing.
 | `POST /api/users/{id}/password` | owner · `users` | `password`, `mustChange` (default true), `currentPassword`; activates an invited account; ends sessions; notice without the password |
 | `POST /api/users/{id}/password-link` | owner · `users` | e-mails a link to choose a new password (24 h, single use; active accounts only; `502 email_failed` without e-mail) |
 | `PUT /api/users/{id}/2fa` | owner · `users` | `required` (bool): two-step sign-in for this person on top of the site-wide policy |
+| `POST /api/users/{id}/sessions/revoke` | owner · `users` | ends all their sessions and forgets their remembered browsers; notice to the person |
+| `POST /api/users/requests/{id}` | owner · `users` | answers an access request: `grant` (bool); granting adds the asked permissions (manager rules apply); the person is told |
+| `GET`/`POST /api/account/access-request` | user (not the owner) | «Pedir acceso»: the pending request; a new one (`permissions` not held yet, `message` ≤ 500; replaces the pending one; 3 a day) |
+| `POST /api/account/2fa/forget-devices` | user | forgets the browsers remembered for the second step |
+| `PUT /api/security/accounts` | owner | `inactiveDays` (0/90/120/180), `rememberDevice`, `breachedCheck` + `currentPassword`; turning `rememberDevice` off forgets every remembered browser |
+| `GET /api/activity?group=&person=&from=&to=&before=&export=1` | `site` or `users` (owner: everything) | Actividad: 50 per page (`more`, then `before=<id>`), groups by access (`content`, `media` with `site`; `users`; `leads`; owner also `security`, `settings`, `support`, `other`); `export=1` returns up to 5,000 for the panel's CSV |
+| `PUT /api/leads/automation` · `PUT /api/leads/confirmation` | `leads` | assignment `rules` (service → person), `fallbackUserId`, `followupHours` (0/24/48/72), `weeklySummary`; the visitor's confirmation (`enabled`, `es`/`en` `subject` + `body` with {nombre} {servicio} {telefono} {whatsapp} {correo}) |
 | `GET /api/view-as` · `POST /api/view-as` · `POST /api/view-as/switch` · `POST /api/view-as/stop` | owner (really) | "Ver como": candidates (active/invited, never the owner); start with `userId` + `currentPassword`; switch without password while active; stop. While active the session answers as that account, read-only (`403 view_only` for any change except switch/stop and the leads CSV), with `X-View-As: <id>` (0 otherwise) so the panel notices changes |
 | `GET /api/site-report` · `PUT /api/site-report/settings` · `POST /api/site-report/send` · `POST /api/site-report/pdf` | owner | monthly report: status, recipients, history, sending (client version only), PDF |
 | `GET /api/site-report/preview?period=&lang=` | `report` (owner included) | both versions of a month: `report` (client: `audience: client`) and `technical` (`audience: technical`), plus `period` and `periods` |
@@ -589,6 +614,7 @@ generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`,
 `reports:retry` · `backup` (consistent DB copy, keeps 14) ·
 `integrity:accept` (record the current public files as expected) ·
 `2fa:reset <email>` (turn off an account's two-step sign-in when it is locked out) ·
+`automations [unix-time]` (only the automations, optionally as of a moment; `monitor` runs them too) ·
 `monitor` also closes resolved tickets after 7 days and deletes leads past retention ·
 `demo-users [--reports]` (local demo accounts per access profile; refused in production)
 

@@ -200,6 +200,12 @@ In **My account**:
   receive a notification email. Use at least 10 characters; a phrase of several
   words is easy to remember and hard to guess. Don't reuse passwords from other sites.
 * **Sign out on other devices:** useful if you used someone else's computer.
+* **Ask for more access:** under "Your access", choose the sections you need and say
+  what for. We e-mail whoever manages users, and you get an e-mail when they review it.
+  If you open a section your access doesn't include, the panel says so and offers
+  **Ask for access** right there.
+* **Temporary password:** if an administrator gave you a password to sign in, it
+  expires after 72 hours. Use it soon: the panel then asks you to create your own.
 
 **Forgot your password?**
 1. On the sign-in screen tap **Forgot your password?**
@@ -217,6 +223,11 @@ In **My account**:
 If you change phones, turn it off and on again with the new one (asks for your
 password and a code). If you lost it and have no codes, ask technical support to
 reset it.
+
+**Remember this device:** if the owner account allows it, when you type the code you
+can tick "Remember this device for 30 days" and that browser won't ask for it during
+that time. Don't tick it on a shared computer. **My account** shows how many browsers
+you remembered, and **Forget them** clears them.
 
 Nobody from the technical team will ever ask for your password or your codes, by
 email or phone.
@@ -298,9 +309,26 @@ disable or delete accounts.
   * **Technical support:** manages **all** support requests (with their charts),
     Site health, Monthly report (view), and publishing and activity.
   * **Custom:** tick exactly what they need; each box explains what it includes.
-* **Search:** above the list type a name, e-mail or access type (accents and capitals
-  don't matter) and filter by **status** or **access type**. **Clear filters** shows
-  everyone again.
+* **Search and review:** above the list type a name, e-mail or access type (accents
+  and capitals don't matter) or filter by **access type**. The tabs **All · Active ·
+  Invitations · Turned off** show each group and, under **Review**, appear only when
+  someone matches: *Must create password*, *Without two-step sign-in*, *No sign-in in
+  90 days* and *Temporary access*. On phones they are in the **Show** menu. **Clear
+  filters** shows everyone.
+* **On Home**, the **Access** card sums up what needs attention (requests, invitations
+  expiring or expired, pending passwords, temporary access ending this week, accounts
+  without two-step sign-in or unused); each line opens its filter.
+* **Access requests:** when someone asks for more access, it shows above the list with
+  what they ask for and their message. **Grant access** applies it in one click and
+  **Dismiss** closes it; either way we tell them by e-mail. If they ask for something
+  you can't give, only the owner account can.
+* **Temporary access** (agencies, photographers or temporary staff): when inviting or
+  in **Change access type**, turn on **Temporary access** and choose the date. The
+  account works until the end of that day; 3 days before we tell the person and whoever
+  invited them, and that day it turns off by itself. To extend it, change the date; to
+  turn it back on, **Reactivate**.
+* When inviting or changing an e-mail, if the domain looks mistyped (e.g. "gmial.com"),
+  the panel suggests the right one with **Use this**.
 * Each person's "⋮" menu:
   * **Edit name and e-mail.** A new e-mail asks for your password; their sessions end
     and we tell both the old and the new address. If they haven't activated their
@@ -311,11 +339,20 @@ disable or delete accounts.
     easy-to-read one (e.g. "Lago-Pino-Ruta-472") or you type it. It asks for your
     password, ends their sessions and tells them by e-mail **without the password**:
     share it yourself securely. With the box ticked (recommended), the panel asks them
-    to create their own password before anything else. An invited account becomes active.
+    to create their own password before anything else, and the temporary one **expires
+    after 72 hours** if unused. An invited account becomes active. After saving you see
+    a **message ready to send** (panel address, e-mail and password, in their language):
+    **Copy message** and paste it into WhatsApp.
   * **Two-step sign-in.** Require it for that person (they set it up when they sign
     in) or **reset** it if they lost their phone (asks for your password).
+  * **Close their sessions.** If they lost their phone or computer: closes the panel on
+    all their devices without changing their password. We tell them by e-mail.
+  * **See activity.** Opens in **Activity** what they did and what was changed in their account.
   * **Resend invitation**, **Change access type** (applies right away),
     **Disable / Re-enable** (signs them out) and **Delete user**.
+* **Automatic notices:** when an invitation is about to expire, the person gets a
+  reminder with a new link (once); if it expires unaccepted, or when it's accepted, we
+  tell whoever invited them.
 * Someone who manages users without being the owner only changes people with the
   **same or less access** who don't manage users, and only gives access they have.
   Only the owner gives "User management". Everyone else shows a lock.
@@ -481,9 +518,20 @@ In **Administration → Security**:
   characters (keep it: without it the file can't be opened). **Send backup now**
   is for testing and **Download full backup** saves it on your computer. To open
   it: 7-Zip (Windows) or Keka / The Unarchiver (Mac), with the backup password.
-* **Two-step sign-in.** Choose who must use it (only the owner account, the whole
-  team or nobody) and see who already has it on. If someone lost their phone, press
-  **Reset** next to their name: they set it up again at their next sign-in.
+* **Accounts:**
+  * **Turn off unused accounts** (Never, or after 90, 120 or 180 days without signing
+    in): we warn the person 7 days before; if they don't sign in, the account turns off
+    and we tell whoever manages them. The owner account is never turned off.
+  * **Refuse leaked passwords** (on): when a password is created or changed, the panel
+    checks anonymously that it doesn't appear in known data breaches (Have I Been
+    Pwned). The password never leaves the server and, if the service doesn't answer,
+    nobody is blocked.
+  * **Allow "Remember this device"** (off): people who use two-step sign-in can skip
+    the code for 30 days in a trusted browser. Turning it off forgets every remembered browser.
+* **Two-step sign-in.** Choose who must use it (only the owner account; the owner and
+  whoever administers —manages users or publishes the site—; the whole team; or nobody)
+  and see who already has it on. If someone lost their phone, press **Reset** next to
+  their name: they set it up again at their next sign-in.
 
 Every change asks for your password and is logged.
 
@@ -500,6 +548,18 @@ Visible to the owner account and to people with the **Leads and statistics** acc
   **call**; the **status** and the quoted or won **amount** (quetzales, no decimals);
   and follow-up **notes** ("Called on Tuesday…"). Every change is kept in the history
   with who and when.
+* **Owner:** each message can have a person who follows it up (**Owner** field in the
+  detail). If you choose someone else, we tell them by e-mail. In the list, filter by
+  **Assigned to me** or **Unassigned**.
+* **Automation** (below the list): choose the owner of each service and of **Everything
+  else**; each new message is assigned to them and arrives by e-mail (the form e-mail
+  keeps arriving as always). **Reminder if still "New"** (24, 48 or 72 hours) sends one
+  e-mail to the owner, and the **Weekly summary on Mondays** counts new leads and the
+  ones waiting for a reply (only when there is something to report).
+* **Confirmation to whoever writes** (off until Sensum approves the text): the client
+  gets an e-mail as soon as they send the form, in Spanish or English depending on the
+  page. In the text you can use {nombre}, {servicio}, {telefono}, {whatsapp} and
+  {correo}; **See it with an example** shows the result.
 * **Export CSV** downloads the filtered list for Excel or Google Sheets.
 * **Delete** removes the message and its notes; use it when the person asks us to
   delete their data.
@@ -566,3 +626,16 @@ person sees it**: their menu, screens and data.
 * It is **read-only**: trying to save shows that changes are not saved. Nothing is
   marked as read in that person's account either.
 * Every start, switch and end is logged in the activity.
+
+## 22. Activity: who changed what
+
+Visible to the owner account, whoever manages users and whoever has "Publishing and
+activity". It shows every change in the panel —who made it, to whom and when—,
+grouped by day.
+
+* Filter by **Person**, **Kind** (text and publishing, photos and files, users and
+  access, leads; the owner also sees sign-ins, security, settings and support) and
+  **dates**. **Load more** brings earlier entries.
+* **Export to Excel** downloads what the filters show (up to 5,000 lines).
+* From **Users**, **See activity** opens one person's history.
+* Passwords and IP addresses are never shown.

@@ -241,7 +241,7 @@ test('an editor sees no user management and is refused if they try', async ({ pa
   await login(page, EDITOR);
   await expect(page.locator('.nav a[href="#/usuarios"]')).toHaveCount(0);
   await page.goto('/admin/#/usuarios');
-  await expect(page.locator('main h1')).toHaveText('No encontramos esta pantalla');
+  await expect(page.locator('main h1')).toHaveText('No tienes acceso a esta sección');
 });
 
 test('Monitoring is shown only to the owner account', async ({ page }) => {
@@ -268,9 +268,9 @@ test('Monitoring is shown only to the owner account', async ({ page }) => {
     await expect(page.locator('.nav a[href="#/correo"]')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Errores recientes' })).toHaveCount(0);
     await page.goto('/admin/#/monitoreo');
-    await expect(page.locator('main h1')).toHaveText('No encontramos esta pantalla');
+    await expect(page.locator('main h1')).toHaveText('No tienes acceso a esta sección');
     await page.goto('/admin/#/correo');
-    await expect(page.locator('main h1')).toHaveText('No encontramos esta pantalla');
+    await expect(page.locator('main h1')).toHaveText('No tienes acceso a esta sección');
   }
 });
 

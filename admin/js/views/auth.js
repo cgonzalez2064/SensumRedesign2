@@ -70,8 +70,8 @@ function secondStep(app, challenge, onSignedIn, rememberAllowed = false) {
   const msg = h('div', { 'aria-live': 'assertive' });
   const submit = h('button', { class: 'btn btn-primary btn-block', type: 'submit' }, icon('shield-lock'), t('twofa.verify'));
   // Seguridad allows it: this browser skips the code for 30 days (not on a shared computer).
-  const remember = rememberAllowed ? h('label', { class: 'check' }, h('input', { type: 'checkbox', id: 'login-remember' }),
-    h('span', null, h('span', { text: t('twofa.rememberDevice') }), h('span', { class: 'tiny muted check-hint', text: t('twofa.rememberDeviceHint') }))) : null;
+  const remember = rememberAllowed ? h('label', { class: 'check check-help' }, h('input', { type: 'checkbox', id: 'login-remember' }),
+    h('span', null, h('span', { class: 'check-title', text: t('twofa.rememberDevice') }), h('span', { class: 'tiny muted check-hint', text: t('twofa.rememberDeviceHint') }))) : null;
   const form = h('form', { class: 'stack', novalidate: true }, code.wrap, remember, msg, submit,
     h('p', { class: 'small' }, h('a', { href: '#/ingresar', onclick: (e) => { e.preventDefault(); login({ app, onSignedIn }); }, text: t('twofa.backToPassword') })));
   layout(app, t('twofa.loginTitle'), t('twofa.loginLead'), form);

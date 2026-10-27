@@ -181,7 +181,7 @@ test('requiring two-step sign-in and sending a link for a new password', async (
   await expect(page.locator('main h1')).toHaveText(/^Hola, /);
   await page.goto('/admin/#/usuarios');
   await openMenu(page, rosa);
-  await page.getByRole('button', { name: 'Verificación en dos pasos' }).click();
+  await page.locator('.menu-panel').getByRole('button', { name: 'Verificación en dos pasos' }).click();
   const dlg = page.getByRole('dialog');
   await expect(dlg.getByText('Sin configurar')).toBeVisible();
   const sw = dlg.getByRole('switch', { name: `Exigírsela a ${rosa}` });

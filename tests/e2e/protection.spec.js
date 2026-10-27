@@ -75,11 +75,11 @@ test('IT sets up the encrypted backup and sends one now', async ({ page }, info)
   await page.getByLabel('Enviar a').fill(to);
   await page.getByLabel('Contraseña de respaldos', { exact: true }).fill('corta');
   await page.getByLabel('Confirma la contraseña de respaldos').fill('corta');
-  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  await page.locator('#sec-ob').locator('xpath=ancestor::section').getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(page.getByText('Usa al menos 12 caracteres.')).toBeVisible();
   await page.getByLabel('Contraseña de respaldos', { exact: true }).fill('Respaldo-E2E-Sensum-2026');
   await page.getByLabel('Confirma la contraseña de respaldos').fill('Respaldo-E2E-Sensum-2026');
-  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  await page.locator('#sec-ob').locator('xpath=ancestor::section').getByRole('button', { name: 'Guardar cambios' }).click();
   await page.getByRole('dialog').getByLabel('Tu contraseña').fill(ADMIN.password);
   await page.getByRole('dialog').getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(page.getByText('Respaldo configurado.')).toBeVisible();

@@ -44,7 +44,7 @@ test('Gerencia: basic statistics and Salud del sitio, without contact details or
   await axe(page);
   await noSideScroll(page);
   await page.goto('/admin/#/prospectos');
-  await expect(page.locator('main h1')).toHaveText('No encontramos esta pantalla');
+  await expect(page.locator('main h1')).toHaveText('No tienes acceso a esta sección');
 
   // Salud del sitio: uptime by period, the daily chart and incidents (without which check failed).
   await page.goto('/admin/#/salud-del-sitio');
@@ -133,7 +133,7 @@ test('Soporte técnico: everyone\'s requests, the overview charts and no adminis
   await expect(overview).not.toHaveAttribute('open', '');
   // Not an administrator.
   await page.goto('/admin/#/usuarios');
-  await expect(page.locator('main h1')).toHaveText('No encontramos esta pantalla');
+  await expect(page.locator('main h1')).toHaveText('No tienes acceso a esta sección');
   expect(errors).toEqual([]);
 });
 
@@ -146,7 +146,7 @@ test('a site administrator does not manage support: own requests only, no overvi
   await expect(page.getByText('La galería no abre en el celular')).toHaveCount(0);
 });
 
-test('Usuarios: search by name, e-mail or access, and filter by status or type', async ({ page }) => {
+test('Usuarios: search by name, e-mail or access, and filter by type or status', async ({ page }) => {
   await signIn(page);
   await page.goto('/admin/#/usuarios');
   const search = page.getByRole('searchbox', { name: 'Buscar por nombre, correo o acceso' });
@@ -168,7 +168,9 @@ test('Usuarios: search by name, e-mail or access, and filter by status or type',
   await page.getByRole('combobox', { name: 'Filtrar por tipo de acceso' }).selectOption({ label: 'Soporte técnico' });
   await expect(shown).toHaveCount(1);
   await expect(shown.first()).toContainText(SUPPORT.name);
-  await page.getByRole('combobox', { name: 'Filtrar por estado' }).selectOption({ label: 'Desactivado' });
+  // Status: tabs (a menu on phones).
+  if (await page.locator('#users-view').isVisible()) await page.locator('#users-view').selectOption('desactivadas');
+  else await page.locator('.users-tabs').getByRole('button', { name: /^Desactivadas/ }).click();
   await expect(page.getByText('Nadie coincide')).toBeVisible();
   await axe(page);
   await page.getByRole('button', { name: 'Quitar filtros' }).click();
