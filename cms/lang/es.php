@@ -579,4 +579,125 @@ return [
     'acc.permHelp.monitor' => 'Si el sitio funciona: disponibilidad, velocidad e incidentes.',
     'acc.permHelp.report' => 'El informe que reciben los clientes y su detalle técnico.',
     'acc.permHelp.support' => 'Ver y atender las solicitudes de soporte de todo el equipo.',
+
+    // Automations (Automations.php): people and access, Prospectos, the visitor's confirmation.
+    'invite_reminder.subject' => 'Recordatorio: tu invitación al Administrador de contenido de Sensum Construcciones',
+    'invite_reminder.intro' => '{inviter} te invitó a administrar el contenido del sitio web de Sensum Construcciones y tu invitación está por vencer.',
+    'invite_reminder.action' => 'Para activar tu cuenta, crea tu contraseña con el siguiente botón. Este enlace nuevo vence en {hours} horas; el que recibiste antes ya no funciona.',
+    'invite_reminder.button' => 'Crear mi contraseña',
+    'au.footer' => 'Aviso automático del Administrador de contenido de Sensum Construcciones. Lo recibes por tu función en el panel.',
+    'au.tag.people' => 'Usuarios y accesos',
+    'au.tag.leads' => 'Prospectos',
+    'au.daysAgo' => 'hace {n} día|hace {n} días',
+    'au.inviteExpired.subject' => 'La invitación de {person} venció sin aceptarse',
+    'au.inviteExpired.title' => 'La invitación de {person} venció',
+    'au.inviteExpired.intro' => 'Hola {name}: {person} ({email}) no activó su cuenta y el enlace de su invitación ya no funciona.',
+    'au.inviteExpired.action' => 'Si todavía necesita entrar al panel, abre Usuarios y elige «Reenviar invitación» en su menú. Si ya no lo necesita, puedes eliminarla.',
+    'au.inviteExpired.cta' => 'Ver invitaciones',
+    'au.inviteAccepted.subject' => '{person} activó su cuenta del panel',
+    'au.inviteAccepted.title' => '{person} ya puede entrar al panel',
+    'au.inviteAccepted.intro' => 'Hola {name}: {person} ({email}) aceptó tu invitación y activó su cuenta del Administrador de contenido. Su acceso: {access}.',
+    'au.inviteAccepted.cta' => 'Abrir Usuarios',
+    'au.accessEnding.person.subject' => 'Tu acceso al panel termina el {date}',
+    'au.accessEnding.person.title' => 'Tu acceso termina el {date}',
+    'au.accessEnding.person.intro' => 'Hola {name}: tu acceso al Administrador de contenido de Sensum Construcciones es temporal y termina el {date}. Después ya no podrás entrar.',
+    'au.accessEnding.person.action' => 'Si todavía lo necesitas, pide a {manager} que lo extienda.',
+    'au.accessEnding.subject' => 'El acceso de {person} termina el {date}',
+    'au.accessEnding.title' => 'El acceso de {person} termina pronto',
+    'au.accessEnding.intro' => 'Hola {name}: el acceso temporal de {person} ({email}) termina el {date}. Ese día su cuenta se desactivará sola.',
+    'au.accessEnding.action' => 'Si necesita más tiempo, abre Usuarios y cambia la fecha en «Cambiar tipo de acceso».',
+    'au.accessEnding.cta' => 'Ver accesos temporales',
+    'au.accessEnded.subject' => 'Terminó el acceso temporal de {person}',
+    'au.accessEnded.title' => 'Se desactivó la cuenta de {person}',
+    'au.accessEnded.intro' => 'Hola {name}: el acceso temporal de {person} ({email}) terminó el {date} y su cuenta se desactivó. Sus sesiones abiertas se cerraron.',
+    'au.accessEnded.action' => 'Si necesita volver a entrar, abre Usuarios, elige «Reactivar» y ponle una fecha nueva si hace falta.',
+    'au.accessEnded.cta' => 'Abrir Usuarios',
+    'au.inactiveWarning.subject' => 'Tu cuenta del panel se desactivará el {date}',
+    'au.inactiveWarning.title' => 'Tu cuenta se desactivará por falta de uso',
+    'au.inactiveWarning.intro' => 'Hola {name}: no has entrado al Administrador de contenido de Sensum Construcciones en {days} días. Por seguridad, las cuentas que no se usan se desactivan, y la tuya se desactivará el {date}.',
+    'au.inactiveWarning.action' => 'Si la sigues necesitando, solo entra al panel antes de esa fecha.',
+    'au.inactiveDisabled.subject' => 'Se desactivó la cuenta de {person} por falta de uso',
+    'au.inactiveDisabled.title' => 'Se desactivó la cuenta de {person}',
+    'au.inactiveDisabled.intro' => 'Hola {name}: {person} ({email}) no entró al panel en {days} días y su cuenta se desactivó automáticamente, como indica la regla de Seguridad.',
+    'au.inactiveDisabled.action' => 'Si la vuelve a necesitar, abre Usuarios y elige «Reactivar».',
+    'au.inactiveDisabled.cta' => 'Abrir Usuarios',
+    'au.accessRequest.subject' => '{person} pide acceso a {perms}',
+    'au.accessRequest.title' => '{person} pide más acceso',
+    'au.accessRequest.intro' => 'Hola {name}: {person} ({email}) pidió acceso a: {perms}.',
+    'au.accessRequest.message' => 'Su mensaje',
+    'au.accessRequest.action' => 'Abre Usuarios para darle el acceso con un clic o descartar la solicitud.',
+    'au.accessRequest.cta' => 'Ver solicitudes',
+    'au.accessGranted.subject' => 'Ya tienes acceso a {perms}',
+    'au.accessGranted.title' => 'Te dieron el acceso que pediste',
+    'au.accessGranted.intro' => 'Hola {name}: {by} te dio acceso a {perms}. Ya puedes usarlo en el panel.',
+    'au.accessDeclined.subject' => 'Tu solicitud de acceso no se aprobó',
+    'au.accessDeclined.title' => 'Tu solicitud de acceso no se aprobó',
+    'au.accessDeclined.intro' => 'Hola {name}: {by} revisó tu solicitud de acceso a {perms} y no la aprobó por ahora.',
+    'au.accessDeclined.action' => 'Si tienes dudas, habla con {by}.',
+    'au.lead.service' => 'Servicio',
+    'au.lead.phone' => 'Teléfono',
+    'au.lead.email' => 'Correo',
+    'au.lead.received' => 'Recibido',
+    'au.lead.message' => 'Mensaje',
+    'au.leadAssigned.subject' => 'Nuevo prospecto para ti: {lead}',
+    'au.leadAssigned.title' => 'Nuevo prospecto: {lead}',
+    'au.leadAssigned.intro' => 'Hola {name}: llegó un mensaje desde el sitio web y se te asignó por el servicio «{service}».',
+    'au.leadAssigned.action' => 'Respóndele lo antes posible y cambia su estado a «Contactado» en Prospectos.',
+    'au.leadAssigned.cta' => 'Abrir el prospecto',
+    'au.leadAssignedAny.subject' => 'Nuevo prospecto para ti: {lead}',
+    'au.leadAssignedAny.title' => 'Nuevo prospecto: {lead}',
+    'au.leadAssignedAny.intro' => 'Hola {name}: llegó un mensaje desde el sitio web y se te asignó.',
+    'au.leadAssignedAny.action' => 'Respóndele lo antes posible y cambia su estado a «Contactado» en Prospectos.',
+    'au.leadAssignedAny.cta' => 'Abrir el prospecto',
+    'au.leadHandedOver.subject' => '{by} te asignó un prospecto: {lead}',
+    'au.leadHandedOver.title' => 'Ahora das seguimiento a {lead}',
+    'au.leadHandedOver.intro' => 'Hola {name}: {by} te asignó el prospecto de {lead}, recibido el {date}.',
+    'au.leadHandedOver.action' => 'Revisa su historial y sus notas en Prospectos antes de contactarle.',
+    'au.leadHandedOver.cta' => 'Abrir el prospecto',
+    'au.leadFollowup.subject' => '{lead} sigue esperando respuesta',
+    'au.leadFollowup.title' => 'Prospecto sin respuesta desde hace {hours} horas',
+    'au.leadFollowup.intro' => 'Hola {name}: {lead} escribió el {date} y su estado sigue en «Nuevo».',
+    'au.leadFollowup.action' => 'Si ya le respondiste, marca el prospecto como «Contactado» para que el panel lo sepa y no vuelva a avisarte.',
+    'au.leadFollowup.cta' => 'Abrir el prospecto',
+    'au.leadWeekly.subject' => 'Prospectos de la semana ({range})',
+    'au.leadWeekly.title' => 'Resumen semanal de prospectos',
+    'au.leadWeekly.intro' => 'Hola {name}: así quedó la semana en Prospectos.',
+    'au.leadWeekly.new' => 'Nuevos esta semana',
+    'au.leadWeekly.waiting' => 'Esperan respuesta',
+    'au.leadWeekly.quoted' => 'Cotizados sin cerrar',
+    'au.leadWeekly.won' => 'Ganados esta semana',
+    'au.leadWeekly.itemsTitle' => 'Esperan respuesta (los más antiguos primero)',
+    'au.leadWeekly.cta' => 'Abrir Prospectos',
+    'au.confirm.subject' => 'Recibimos su mensaje — Sensum Construcciones',
+    'au.confirm.body' => 'Estimado(a) {nombre}:
+
+Gracias por comunicarse con Sensum Construcciones. Recibimos su solicitud y un miembro de nuestro equipo se pondrá en contacto con usted a la brevedad.
+
+Si su consulta es urgente, puede escribirnos por WhatsApp al {whatsapp} o llamarnos al {telefono}.
+
+Atentamente,
+Equipo de Sensum Construcciones',
+    'au.confirm.tag' => 'Confirmación de su solicitud',
+    'au.confirm.footer' => 'Recibe este correo porque envió un mensaje desde el formulario de contacto de sensumconstrucciones.com.',
+    'au.share.temporary' => 'Hola {name}:
+
+Te comparto tu acceso al Administrador de contenido de Sensum Construcciones.
+
+Dirección: {url}
+Correo: {email}
+Contraseña temporal: {password}
+
+Al entrar, el panel te pedirá crear tu propia contraseña. La temporal vence en {hours} horas.',
+    'au.share.permanent' => 'Hola {name}:
+
+Te comparto tu acceso al Administrador de contenido de Sensum Construcciones.
+
+Dirección: {url}
+Correo: {email}
+Contraseña: {password}
+
+Te recomiendo cambiarla en «Mi cuenta» después de entrar.',
+    'wd.acct.sessions_revoked.subject' => 'Se cerraron tus sesiones del panel',
+    'wd.acct.sessions_revoked.title' => 'Se cerraron tus sesiones abiertas',
+    'wd.acct.sessions_revoked.intro' => 'Hola {name}: {by} cerró tus sesiones del Administrador de contenido en todos tus dispositivos. Tu contraseña no cambió; solo tendrás que volver a iniciar sesión.',
 ];

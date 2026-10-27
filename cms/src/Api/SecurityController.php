@@ -17,7 +17,24 @@ final class SecurityController extends Controller
         Response::ok([
             'backup' => $this->app->offsiteBackup()->settings(),
             'twoFactor' => $this->app->twoFactor()->overview(),
+            'accounts' => $this->app->automations()->accountPolicy() + [
+                'rememberedDevices' => (int) $this->app->db()->value('SELECT COUNT(*) FROM trusted_devices WHERE expires_at > ?', [time()]),
+            ],
         ]);
+    }
+
+    /** Account rules: turn off unused accounts, remember browsers for two-step sign-in, refuse leaked passwords. */
+    public function saveAccounts(): never
+    {
+        $this->confirmPassword('security_accounts');
+        $before = $this->app->automations()->accountPolicy();
+        $after = $this->app->automations()->saveAccountPolicy($this->req->json());
+        if ($before['rememberDevice'] && !$after['rememberDevice']) {
+            // Turned off: every remembered browser asks for the code again.
+            $this->app->db()->run('DELETE FROM trusted_devices');
+        }
+        $this->app->activity($this->uid(), 'security_policy_changed', '', ['accounts' => $after], $this->req->ip());
+        Response::ok(['accounts' => $after + ['rememberedDevices' => (int) $this->app->db()->value('SELECT COUNT(*) FROM trusted_devices WHERE expires_at > ?', [time()])]]);
     }
 
     public function saveBackup(): never

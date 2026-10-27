@@ -61,11 +61,18 @@ final class Leads
     // ------------------------------------------------------------------ reading
 
     /** @return array{leads:list<array>,counts:array<string,int>,filter:string,services:list<string>} */
-    public function list(string $filter = 'active', string $q = '', string $service = ''): array
+    public function list(string $filter = 'active', string $q = '', string $service = '', string $assigned = '', int $viewer = 0): array
     {
         $db = $this->app->db();
         $filter = in_array($filter, self::FILTERS, true) ? $filter : 'active';
         [$where, $params] = $this->where($filter, $q, $service);
+        // Who follows it up: "me" (the viewer) or nobody yet.
+        if ($assigned === 'me') {
+            $where[] = 'assigned_to = ?';
+            $params[] = $viewer;
+        } elseif ($assigned === 'none') {
+            $where[] = 'assigned_to IS NULL';
+        }
         $rows = $db->all('SELECT * FROM leads' . ($where ? ' WHERE ' . implode(' AND ', $where) : '')
             . ' ORDER BY unread DESC, created_at DESC, id DESC LIMIT 300', $params);
         $counts = array_fill_keys(self::STATUSES, 0);
@@ -75,6 +82,7 @@ final class Leads
         $counts['active'] = $counts['new'] + $counts['contacted'] + $counts['quoted'];
         $counts['all'] = array_sum(array_intersect_key($counts, array_flip(self::STATUSES)));
         $counts['unread'] = $this->badge();
+        $counts['mine'] = (int) $db->value("SELECT COUNT(*) FROM leads WHERE assigned_to = ? AND status IN ('new', 'contacted', 'quoted')", [$viewer]);
         return [
             'leads' => array_map([$this, 'present'], $rows),
             'counts' => $counts,
@@ -118,19 +126,31 @@ final class Leads
             'createdAt' => (int) $l['created_at'],
             'updatedAt' => (int) $l['updated_at'],
             'contactedAt' => $l['contacted_at'] !== null ? (int) $l['contacted_at'] : null,
+            'assignedTo' => isset($l['assigned_to']) ? (int) $l['assigned_to'] : null,
         ];
     }
 
     // ------------------------------------------------------------------ changes
 
     /**
-     * Status and/or amount. Each change is written to the lead's history.
-     * @param array{status?:mixed,amount?:mixed} $in
+     * Status, amount and/or who follows it up. Each change is written to the lead's history.
+     * @param array{status?:mixed,amount?:mixed,assignedTo?:mixed} $in
      */
     public function update(array $session, int $id, array $in): array
     {
         $lead = $this->find($id);
         $changes = [];
+        $assignee = null;
+        if (array_key_exists('assignedTo', $in)) {
+            $to = $in['assignedTo'];
+            if ($to !== null && (!is_int($to) || !($assignee = $this->app->automations()->leadPerson($to)))) {
+                throw ApiError::validation(['assignedTo' => 'invalid']);
+            }
+            $old = $lead['assigned_to'] !== null ? (int) $lead['assigned_to'] : null;
+            if ($to !== $old) {
+                $changes['assignedTo'] = [$old, $to];
+            }
+        }
         if (array_key_exists('status', $in)) {
             if (!is_string($in['status']) || !in_array($in['status'], self::STATUSES, true)) {
                 throw ApiError::validation(['status' => 'invalid']);
@@ -162,7 +182,7 @@ final class Leads
             return $this->detail($id);
         }
         $now = time();
-        $this->app->db()->transaction(function () use ($id, $lead, $changes, $session, $now) {
+        $this->app->db()->transaction(function () use ($id, $lead, $changes, $session, $now, $assignee) {
             $sets = ['updated_at = ?'];
             $params = [$now];
             if (isset($changes['status'])) {
@@ -181,6 +201,11 @@ final class Leads
                 $sets[] = 'amount = ?';
                 $params[] = $changes['amount'][1];
                 $this->event($id, $session, ['action' => 'amount', 'from' => $changes['amount'][0], 'to' => $changes['amount'][1]]);
+            }
+            if (array_key_exists('assignedTo', $changes)) {
+                $sets[] = 'assigned_to = ?';
+                $params[] = $changes['assignedTo'][1];
+                $this->event($id, $session, ['action' => 'assigned', 'to' => $assignee ? (string) $assignee['name'] : '']);
             }
             $params[] = $id;
             $this->app->db()->run('UPDATE leads SET ' . implode(', ', $sets) . ' WHERE id = ?', $params);
@@ -359,6 +384,15 @@ final class Leads
     private function event(int $id, array $session, array $details): void
     {
         $this->insertNote($id, $session, 'event', '', $details);
+    }
+
+    /** A change made by the panel itself (automatic assignment): no author. */
+    public function systemEvent(int $id, array $details): void
+    {
+        $this->app->db()->insert(
+            'INSERT INTO lead_notes (lead_id, user_id, author, kind, body, details, created_at) VALUES (?, NULL, ?, ?, ?, ?, ?)',
+            [$id, '', 'event', '', json_encode($details, JSON_UNESCAPED_UNICODE), time()]
+        );
     }
 
     private function insertNote(int $id, array $session, string $kind, string $body, array $details): void

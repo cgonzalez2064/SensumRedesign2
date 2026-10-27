@@ -59,6 +59,9 @@ final class AccountController extends Controller
         if (hash_equals($current, $new)) {
             throw ApiError::validation(['password' => 'password_same_as_current']);
         }
+        if ($err = Passwords::breachedError($this->app, $new)) {
+            throw ApiError::validation(['password' => $err]);
+        }
         if (!hash_equals($new, $this->str('passwordConfirm'))) {
             throw ApiError::validation(['passwordConfirm' => 'password_mismatch']);
         }
@@ -83,7 +86,53 @@ final class AccountController extends Controller
 
     public function twoFactor(): never
     {
-        Response::ok($this->app->twoFactor()->status($this->uid()));
+        Response::ok($this->app->twoFactor()->status($this->uid()) + ['rememberAllowed' => $this->app->automations()->accountPolicy()['rememberDevice']]);
+    }
+
+    /** Forgets every browser remembered for the second step (they ask for the code again). */
+    public function forgetDevices(): never
+    {
+        $n = $this->app->db()->run('DELETE FROM trusted_devices WHERE user_id = ?', [$this->uid()])->rowCount();
+        $this->app->activity($this->uid(), 'trusted_devices_forgotten', '', ['count' => $n], $this->req->ip());
+        Response::ok(['forgotten' => $n]);
+    }
+
+    // ------------------------------------------------------------------ «Pedir acceso»
+
+    /** The person's pending request, if any. */
+    public function accessRequest(): never
+    {
+        $r = $this->app->db()->one("SELECT * FROM access_requests WHERE user_id = ? AND status = 'pending' ORDER BY id DESC LIMIT 1", [$this->uid()]);
+        Response::ok(['request' => $r ? ['permissions' => Users::permissionsOf(['permissions' => $r['permissions']]), 'message' => (string) $r['message'], 'createdAt' => (int) $r['created_at']] : null]);
+    }
+
+    /**
+     * Asks whoever manages users for permissions this account doesn't have.
+     * A new request replaces a pending one; at most 3 a day.
+     */
+    public function requestAccess(): never
+    {
+        if ($this->app->auth()->viewingAs($this->session) || $this->app->auth()->isOwner($this->session)) {
+            throw new ApiError(403, 'forbidden');
+        }
+        $permissions = Users::normalizePermissions($this->req->raw('permissions'));
+        if (array_intersect($permissions, Users::permissionsOf($this->session))) {
+            throw ApiError::validation(['permissions' => 'already_have']);
+        }
+        $message = mb_substr(trim(preg_replace('/[\x00-\x09\x0B-\x1F\x7F]+/u', ' ', $this->str('message')) ?? ''), 0, 500);
+        if (!$this->app->rateLimiter()->hit('access_request', (string) $this->uid(), 3, 86400)) {
+            throw new ApiError(429, 'too_many_attempts');
+        }
+        $db = $this->app->db();
+        $db->run("UPDATE access_requests SET status = 'cancelled', resolved_at = ? WHERE user_id = ? AND status = 'pending'", [time(), $this->uid()]);
+        $db->insert('INSERT INTO access_requests (user_id, permissions, message, created_at) VALUES (?, ?, ?, ?)', [$this->uid(), implode(',', $permissions), $message, time()]);
+        $this->app->activity($this->uid(), 'access_requested', (string) $this->uid(), ['permissions' => $permissions], $this->req->ip());
+        Response::okAndContinue(['request' => ['permissions' => $permissions, 'message' => $message, 'createdAt' => time()]]);
+        $user = (new Users($this->app))->find($this->uid());
+        if ($user) {
+            $this->app->automations()->accessRequested($user, $permissions, $message);
+        }
+        exit;
     }
 
     /** Starts set-up (password confirmed): QR code and key for the authenticator app. */

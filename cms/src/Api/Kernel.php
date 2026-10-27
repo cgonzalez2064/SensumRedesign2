@@ -100,6 +100,7 @@ final class Kernel
         ['GET', '/api/leads/badge', LeadsController::class, 'badge', 'user'],
         ['POST', '/api/leads/export', LeadsController::class, 'export', 'user'],
         ['PUT', '/api/leads/settings', LeadsController::class, 'settings', 'owner'],
+        ['PUT', '/api/leads/automation', LeadsController::class, 'automation', 'user'],
         ['GET', '/api/leads/{id}', LeadsController::class, 'show', 'user'],
         ['PUT', '/api/leads/{id}', LeadsController::class, 'update', 'user'],
         ['POST', '/api/leads/{id}/notes', LeadsController::class, 'note', 'user'],
@@ -127,6 +128,14 @@ final class Kernel
         ['PUT', '/api/users/{id}/2fa', UsersController::class, 'twoFactorRequirement', 'user'],
         ['POST', '/api/users/{id}/2fa-reset', UsersController::class, 'resetTwoFactor', 'user'],
         ['DELETE', '/api/users/{id}', UsersController::class, 'delete', 'user'],
+        ['POST', '/api/users/{id}/sessions/revoke', UsersController::class, 'revokeSessions', 'user'],
+        ['POST', '/api/users/requests/{id}', UsersController::class, 'answerRequest', 'user'],
+        ['GET', '/api/activity', ActivityController::class, 'index', 'user'],
+        ['GET', '/api/account/access-request', AccountController::class, 'accessRequest', 'user'],
+        ['POST', '/api/account/access-request', AccountController::class, 'requestAccess', 'user'],
+        ['POST', '/api/account/2fa/forget-devices', AccountController::class, 'forgetDevices', 'user'],
+        ['PUT', '/api/security/accounts', SecurityController::class, 'saveAccounts', 'owner'],
+        ['PUT', '/api/leads/confirmation', LeadsController::class, 'confirmation', 'user'],
     ];
 
     /** Requests other than GET allowed while "viendo como": switching/leaving, and read-only downloads. */

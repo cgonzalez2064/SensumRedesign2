@@ -52,6 +52,13 @@ final class Emails
         return $this->action($user['email'], $user['lang'], 'invite', ['name' => $user['name'], 'inviter' => $inviterName, 'hours' => $hours], $this->adminUrl('invitacion/' . $token));
     }
 
+    /** Sent once, 24 h before an invitation expires, with a fresh link (Automations). */
+    public function invitationReminder(array $user, string $inviterName, string $token): array
+    {
+        $hours = (string) $this->app->config->int('INVITE_TTL_HOURS', 72, 1, 336);
+        return $this->action($user['email'], $user['lang'], 'invite_reminder', ['name' => $user['name'], 'inviter' => $inviterName ?: 'Sensum Construcciones', 'hours' => $hours], $this->adminUrl('invitacion/' . $token));
+    }
+
     /**
      * Sent once, when a new person activates their account (invitation
      * accepted): their access in plain words, first steps, how to get help and

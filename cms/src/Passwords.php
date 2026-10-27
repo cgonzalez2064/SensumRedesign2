@@ -46,6 +46,37 @@ final class Passwords
     }
 
     /**
+     * Seguridad → "Rechazar contraseñas filtradas": whether the password appears in
+     * known data breaches (Have I Been Pwned, k-anonymity: only the first five
+     * characters of its SHA-1 leave the server). Unreachable service: allowed.
+     */
+    public static function breachedError(App $app, string $password): ?string
+    {
+        if (!$app->automations()->accountPolicy()['breachedCheck']) {
+            return null;
+        }
+        $base = $app->config->string('PWNED_PASSWORDS_URL', 'https://api.pwnedpasswords.com/range/');
+        if ($base === '' || $base === 'off') {
+            return null;
+        }
+        $sha = strtoupper(sha1($password));
+        $ctx = stream_context_create(['http' => ['timeout' => 3, 'ignore_errors' => true, 'header' => "Add-Padding: true\r\nUser-Agent: Sensum-Content-Manager\r\n"]]);
+        $body = @file_get_contents($base . substr($sha, 0, 5), false, $ctx);
+        if (!is_string($body) || $body === '') {
+            $app->logger()->warning('breached_check_unavailable', ['message' => 'Leaked-password check not reachable; password allowed']);
+            return null;
+        }
+        $suffix = substr($sha, 5);
+        foreach (preg_split('/\r?\n/', $body) ?: [] as $line) {
+            [$hash, $count] = array_pad(explode(':', trim($line)), 2, '0');
+            if (strtoupper($hash) === $suffix && (int) $count > 0) {
+                return 'password_breached';
+            }
+        }
+        return null;
+    }
+
+    /**
      * Returns an error code, or null when the password is acceptable.
      * Codes are translated by the admin UI.
      */

@@ -53,7 +53,7 @@ export function login({ app, onSignedIn }) {
     setBusy(submit, true, t('auth.submitting'));
     try {
       const data = await api.post('/auth/login', { email: email.input.value.trim(), password: pw.input.value }, { auth: false });
-      if (data.twoFactor) { secondStep(app, data.challenge, onSignedIn); return; }
+      if (data.twoFactor) { secondStep(app, data.challenge, onSignedIn, !!data.rememberAllowed); return; }
       onSignedIn(data);
     } catch (err) {
       setBusy(submit, false);
@@ -65,11 +65,14 @@ export function login({ app, onSignedIn }) {
 }
 
 /** Second step of the sign-in: the code from the authenticator app (or a recovery code). */
-function secondStep(app, challenge, onSignedIn) {
+function secondStep(app, challenge, onSignedIn, rememberAllowed = false) {
   const code = codeField({ allowRecovery: true, id: 'login-code' });
   const msg = h('div', { 'aria-live': 'assertive' });
   const submit = h('button', { class: 'btn btn-primary btn-block', type: 'submit' }, icon('shield-lock'), t('twofa.verify'));
-  const form = h('form', { class: 'stack', novalidate: true }, code.wrap, msg, submit,
+  // Seguridad allows it: this browser skips the code for 30 days (not on a shared computer).
+  const remember = rememberAllowed ? h('label', { class: 'check' }, h('input', { type: 'checkbox', id: 'login-remember' }),
+    h('span', null, h('span', { text: t('twofa.rememberDevice') }), h('span', { class: 'tiny muted check-hint', text: t('twofa.rememberDeviceHint') }))) : null;
+  const form = h('form', { class: 'stack', novalidate: true }, code.wrap, remember, msg, submit,
     h('p', { class: 'small' }, h('a', { href: '#/ingresar', onclick: (e) => { e.preventDefault(); login({ app, onSignedIn }); }, text: t('twofa.backToPassword') })));
   layout(app, t('twofa.loginTitle'), t('twofa.loginLead'), form);
   setTimeout(() => code.input.focus(), 50);
@@ -79,7 +82,7 @@ function secondStep(app, challenge, onSignedIn) {
     clear(msg);
     setBusy(submit, true, t('auth.submitting'));
     try {
-      onSignedIn(await api.post('/auth/login/2fa', { challenge, code: v }, { auth: false }));
+      onSignedIn(await api.post('/auth/login/2fa', { challenge, code: v, remember: !!(remember && remember.firstChild.checked) }, { auth: false }));
     } catch (err) {
       setBusy(submit, false);
       if (err.code === 'two_factor_expired') {

@@ -252,6 +252,11 @@ final class App
         return new Leads($this);
     }
 
+    public function automations(): Automations
+    {
+        return new Automations($this);
+    }
+
     public function analytics(): Analytics
     {
         return new Analytics($this);

@@ -19,9 +19,15 @@ final class LeadsController extends Controller
     public function index(): never
     {
         $this->requirePermission('leads');
-        $out = $this->app->leads()->list($this->req->query('status') ?: 'active', $this->req->query('q'), $this->req->query('service'));
+        $out = $this->app->leads()->list($this->req->query('status') ?: 'active', $this->req->query('q'), $this->req->query('service'), $this->req->query('assigned'), $this->uid());
         $out['canConfigure'] = $this->isOwner();
         $out['retention'] = $this->app->leads()->retentionMonths();
+        // Who can follow leads up (assignment) and the automations' settings.
+        $out['people'] = array_map(fn ($u) => ['id' => (int) $u['id'], 'name' => (string) $u['name']], $this->app->automations()->leadPeople(false));
+        $out['automation'] = $this->app->automations()->leadSettings();
+        $out['formServices'] = array_values(array_map(fn ($it) => (string) $it['es'], $this->app->contactServices()->items()));
+        $out['confirmation'] = $this->app->automations()->confirmationSettings();
+        $out['me'] = $this->uid();
         Response::ok($out);
     }
 
@@ -34,14 +40,43 @@ final class LeadsController extends Controller
     public function show(int $id): never
     {
         $this->requirePermission('leads');
-        Response::ok($this->app->leads()->detail($id));
+        Response::ok($this->app->leads()->detail($id) + [
+            'people' => array_map(fn ($u) => ['id' => (int) $u['id'], 'name' => (string) $u['name']], $this->app->automations()->leadPeople(false)),
+        ]);
     }
 
     public function update(int $id): never
     {
         $this->requirePermission('leads');
         $in = $this->req->json();
-        Response::ok($this->app->leads()->update((array) $this->session, $id, array_intersect_key($in, array_flip(['status', 'amount']))));
+        $before = $this->app->db()->value('SELECT assigned_to FROM leads WHERE id = ?', [$id]);
+        $out = $this->app->leads()->update((array) $this->session, $id, array_intersect_key($in, array_flip(['status', 'amount', 'assignedTo'])));
+        $to = $out['lead']['assignedTo'];
+        Response::okAndContinue($out);
+        // Someone else now follows it up: they hear about it (not when you take it yourself).
+        if ($to !== null && $to !== ($before !== null ? (int) $before : null) && $to !== $this->uid() && ($person = $this->app->automations()->leadPerson($to))) {
+            $lead = $this->app->db()->one('SELECT * FROM leads WHERE id = ?', [$id]);
+            $this->app->automations()->notifyAssignee($lead, $person, 'leadHandedOver', ['by' => (string) $this->session['name']]);
+        }
+        exit;
+    }
+
+    /** Prospectos → confirmation e-mailed to whoever writes (off until Sensum approves its text). */
+    public function confirmation(): never
+    {
+        $this->requirePermission('leads');
+        $saved = $this->app->automations()->saveConfirmationSettings($this->req->json());
+        $this->app->activity($this->uid(), 'contact_confirmation_changed', 'contact_form', ['enabled' => $saved['enabled']], $this->req->ip());
+        Response::ok(['confirmation' => $saved]);
+    }
+
+    /** Prospectos → Automatización: who gets each service, the follow-up reminder and the weekly summary. */
+    public function automation(): never
+    {
+        $this->requirePermission('leads');
+        $saved = $this->app->automations()->saveLeadSettings($this->req->json());
+        $this->app->activity($this->uid(), 'lead_automation_changed', '', ['rules' => count($saved['rules']), 'followupHours' => $saved['followupHours'], 'weeklySummary' => $saved['weeklySummary']], $this->req->ip());
+        Response::ok(['automation' => $saved]);
     }
 
     public function note(int $id): never

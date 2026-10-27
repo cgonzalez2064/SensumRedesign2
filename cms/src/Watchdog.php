@@ -829,15 +829,31 @@ final class Watchdog
     }
 
     /** "visita|visitas": singular or plural by $n, then fills {n} and $vars. */
-    private static function plural(string $s, int $n, array $vars = []): string
+    public static function plural(string $s, int $n, array $vars = []): string
     {
         $forms = explode('|', $s);
         return self::fill($forms[$n === 1 || count($forms) === 1 ? 0 : 1], ['n' => $n] + $vars);
     }
 
-    private static function fill(string $s, array $vars): string
+    public static function fill(string $s, array $vars): string
     {
         return strtr($s, array_combine(array_map(fn ($k) => '{' . $k . '}', array_keys($vars)), array_map('strval', array_values($vars))));
+    }
+
+    /**
+     * A notice from the automations (Automations): same branded layout as the
+     * alerts, with a footer that says why the person gets it. Sent after the
+     * response unless $deferred is false (or from the command line).
+     */
+    public function notify(string $to, string $lang, string $rule, array $msg, bool $deferred = true): void
+    {
+        $this->send($to, $lang === 'en' ? 'en' : 'es', 'auto_' . $rule, $msg, $deferred);
+    }
+
+    /** The language files' strings for $lang (the automations build their notices with them). */
+    public function texts(string $lang): array
+    {
+        return $this->strings($lang === 'en' ? 'en' : 'es');
     }
 
     private function sendToOwner(string $rule, array $msg, int $now, bool $deferred = false): void
@@ -891,7 +907,11 @@ final class Watchdog
             $body .= Emails::cta($msg['cta'][0], $link);
             $text .= $link . "\n";
         }
-        $footer = $e(in_array($rule, ['new_device', 'settings_changed', 'two_factor', 'account'], true) ? $s['wd.footer.security'] : $s['wd.footer.rule']);
+        $footer = $e(match (true) {
+            in_array($rule, ['new_device', 'settings_changed', 'two_factor', 'account'], true) => $s['wd.footer.security'],
+            str_starts_with($rule, 'auto_') => $s['au.footer'],
+            default => $s['wd.footer.rule'],
+        });
         $layout = (new Emails($this->app))->branded($lang, $msg['tag'] ?? $s['wd.tag.alert'], $msg['intro'], $body, $footer);
         $mail = ['to' => $to, 'subject' => $msg['subject'], 'text' => $text, 'html' => $layout['html'], 'embedded' => $layout['embedded']];
         if (!$deferred || PHP_SAPI === 'cli') {
@@ -917,7 +937,7 @@ final class Watchdog
     {
         $ok = $this->app->mailer()->send($mail);
         $this->app->logger()->info($ok ? 'watchdog_sent' : 'watchdog_not_sent', ['rule' => $rule]);
-        if ($ok && !in_array($rule, ['weekly_digest', 'monthly_review', 'new_device', 'settings_changed'], true)) {
+        if ($ok && !in_array($rule, ['weekly_digest', 'monthly_review', 'new_device', 'settings_changed'], true) && !str_starts_with($rule, 'auto_')) {
             $this->app->maintenanceLog()->add('alerts');
         }
     }

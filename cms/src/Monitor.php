@@ -238,6 +238,9 @@ final class Monitor
         foreach ($this->app->watchdog()->run() as $line) {
             $out[] = 'Alert ' . $line;
         }
+        foreach ($this->app->automations()->run() as $line) {
+            $out[] = 'Automation ' . $line;
+        }
         return $out;
     }
 

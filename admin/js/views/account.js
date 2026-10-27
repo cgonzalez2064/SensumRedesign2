@@ -1,16 +1,27 @@
 /** Mi cuenta — profile, preferences and "Cuenta / Seguridad". */
 import { h, clear, fill, icon } from '../dom.js';
-import { t, tp, getLang, setLang } from '../i18n.js';
+import { t, tp, getLang, setLang, fmtDate } from '../i18n.js';
 import { api, setCsrf } from '../api.js';
 import { pageHead, textField, passwordField, passwordGuide, alertBox, toast, errorText, fieldErrorText, setBusy, button, cardHead, openDialog } from '../ui.js';
 import { renderSetup, confirmWithCode, recoveryCodes } from '../twofactor.js';
 import { updateUser, themeSwitch } from '../app.js';
 import { getThemePref } from '../theme.js';
 import { permissionList } from '../access.js';
+import { openAccessRequest, askable } from '../accessrequest.js';
 
 export function render({ main, session }) {
   const user = session.user;
   main.append(pageHead({ title: t('account.title'), lead: t('account.lead') }));
+
+  // «Pedir más acceso» (not the owner, not while viewing as someone): the request and its state.
+  const requestBox = h('div', { class: 'stack-sm access-request-box' });
+  const drawRequest = (req) => {
+    if (user.owner || session.viewAs || !askable(user).length) { requestBox.hidden = true; return; }
+    const ask = button(t(req ? 'accessRequest.change' : 'accessRequest.askMore'), { small: true, icon: 'send', onClick: () => openAccessRequest(user, [], drawRequest) });
+    fill(requestBox, req ? h('p', { class: 'tiny muted' }, icon('hourglass-split'), ' ', t('accessRequest.pendingShort', { perms: permissionList(req.permissions), when: fmtDate(req.createdAt, false) })) : null, h('div', null, ask));
+  };
+  drawRequest(null);
+  api.get('/account/access-request').then((r) => drawRequest(r.request)).catch(() => {});
 
   // Profile.
   const name = textField({ label: t('account.name'), value: user.name, autocomplete: 'name', max: 80, required: true });
@@ -22,7 +33,7 @@ export function render({ main, session }) {
     h('h2', { id: 'prof-t', text: t('account.profile') }),
     name.wrap, email.wrap,
     h('div', { class: 'field' }, h('span', { class: 'label', text: t('access.yours') }),
-      h('span', { class: 'small', text: user.owner ? t('access.owner') : permissionList(user.permissions || []) })),
+      h('span', { class: 'small', text: user.owner ? t('access.owner') : permissionList(user.permissions || []) }), requestBox),
     h('div', { class: 'field' }, h('label', { class: 'label', for: 'acc-lang', text: t('account.language') }), langSel),
     h('div', { class: 'field' }, h('span', { class: 'label', text: t('account.theme') }), themeSwitch()),
     profMsg, h('div', null, saveProfile));
@@ -134,8 +145,15 @@ export function render({ main, session }) {
       h('p', { class: 'small', text: t('twofa.recoveryLeft', { n: st.recoveryRemaining }) }),
       st.recoveryRemaining <= 3 ? alertBox('warn', null, t('twofa.fewCodes')) : null,
       st.required ? h('p', { class: 'tiny muted', text: t('twofa.requiredNote') }) : null,
+      st.rememberedDevices ? h('div', { class: 'row-between remembered' },
+        h('span', { class: 'small' }, icon('laptop'), ' ', tp('twofa.remembered', st.rememberedDevices)), forget(st)) : null,
       h('div', { class: 'row' }, regen, off)));
   };
+  // Browsers remembered for 30 days (when the owner allows it): forget them all.
+  const forget = (st) => button(t('twofa.forgetDevices'), { small: true, variant: 'ghost', onClick: async () => {
+    try { await api.post('/account/2fa/forget-devices', {}); toast(t('twofa.devicesForgotten')); drawTwoStep({ ...st, rememberedDevices: 0 }); }
+    catch (err) { toast(errorText(err), { type: 'bad' }); }
+  } });
   api.get('/account/2fa').then(drawTwoStep).catch((err) => fill(tfBody, alertBox('bad', null, errorText(err))));
 
   main.append(h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, profile, sessions), h('div', { class: 'stack-lg' }, security, twoStep)));

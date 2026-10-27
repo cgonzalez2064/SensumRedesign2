@@ -114,6 +114,9 @@ final class SystemController extends Controller
                 [time() - 14 * 86400]
             ));
         }
+        if ($this->app->auth()->can($this->session, 'users')) {
+            $out['access'] = $this->accessSummary();
+        }
         if ($canSite) {
             // Changes to someone's account also say whose (the target is their id).
             $userActions = "'user_invited','user_invite_resent','user_updated','user_profile_updated','user_password_set','user_password_link_sent','two_factor_requirement','two_factor_reset'";
@@ -136,5 +139,28 @@ final class SystemController extends Controller
         $result = $this->app->publisher()->publish($this->uid(), 'manual');
         $this->app->activity($this->uid(), 'publish_manual', '', ['changed' => $result['changed']], $this->req->ip());
         Response::ok(['publishedAt' => $result['published_at'], 'changed' => $result['changed']]);
+    }
+
+    /**
+     * «Accesos» on Inicio, for whoever manages users: what needs attention, each
+     * item linking to the matching filter in Usuarios.
+     */
+    private function accessSummary(): array
+    {
+        $db = $this->app->db();
+        $now = time();
+        $owner = $this->app->config->ownerEmail();
+        $invites = $db->all("SELECT (SELECT MAX(t.expires_at) FROM user_tokens t WHERE t.user_id = u.id AND t.purpose = 'invite' AND t.used_at IS NULL) AS exp FROM users u WHERE u.status = 'invited'");
+        $valid = array_filter($invites, fn ($r) => (int) $r['exp'] > $now);
+        return [
+            'requests' => (int) $db->value("SELECT COUNT(*) FROM access_requests r JOIN users u ON u.id = r.user_id WHERE r.status = 'pending' AND u.status = 'active'"),
+            'invitesPending' => count($valid),
+            'invitesExpiring' => count(array_filter($valid, fn ($r) => (int) $r['exp'] - $now <= 86400)),
+            'invitesExpired' => count($invites) - count($valid),
+            'mustChange' => (int) $db->value("SELECT COUNT(*) FROM users WHERE status = 'active' AND must_change_password = 1"),
+            'withoutTwoFactor' => (int) $db->value("SELECT COUNT(*) FROM users WHERE status = 'active' AND totp_enabled_at IS NULL"),
+            'inactive' => (int) $db->value("SELECT COUNT(*) FROM users WHERE status = 'active' AND lower(email) <> ? AND COALESCE(last_login_at, created_at) < ?", [$owner, $now - 90 * 86400]),
+            'temporaryEnding' => (int) $db->value("SELECT COUNT(*) FROM users WHERE status = 'active' AND access_until IS NOT NULL AND access_until <= ?", [$now + 7 * 86400]),
+        ];
     }
 }

@@ -7,7 +7,7 @@
 import { h, icon, fill, initials } from '../dom.js';
 import { t, fmtDate, fmtRelative, getLang } from '../i18n.js';
 import { api, download, saveBlob } from '../api.js';
-import { pageHead, loading, loadError, emptyState, toast, errorText, setBusy, button, textField, fieldErrorText, alertBox, cardHead, confirmDialog } from '../ui.js';
+import { pageHead, loading, loadError, emptyState, toast, errorText, setBusy, button, textField, fieldErrorText, alertBox, cardHead, confirmDialog, switchInput, segmented } from '../ui.js';
 import { refreshLeadsBadge } from '../app.js';
 
 const STATUSES = ['new', 'contacted', 'quoted', 'won', 'lost'];
@@ -30,6 +30,7 @@ export async function render({ main, isOwner }) {
   let filter = 'active';
   let q = '';
   let service = '';
+  let assigned = '';
   let alive = true;
   let timer = null;
 
@@ -37,6 +38,11 @@ export async function render({ main, isOwner }) {
   search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { q = search.value.trim(); load(); }, 300); });
   const serviceSel = h('select', { class: 'select', 'aria-label': t('leads.serviceFilter') });
   serviceSel.addEventListener('change', () => { service = serviceSel.value; load(); });
+  // Who follows it up: everyone's, mine, or nobody's yet.
+  const assignedSel = h('select', { class: 'select', 'aria-label': t('leads.assignedFilter') },
+    [['', t('leads.assignedAll')], ['me', t('leads.assignedMe')], ['none', t('leads.assignedNone')]].map(([v, l]) => h('option', { value: v, text: l })));
+  assignedSel.addEventListener('change', () => { assigned = assignedSel.value; load(); });
+  const automationBox = h('div');
   const tabs = h('div', { class: 'filter-tabs', role: 'group', 'aria-label': t('leads.filterLabel') });
   const listBox = h('div', { 'aria-live': 'polite' });
   const settingsBox = h('div');
@@ -54,7 +60,7 @@ export async function render({ main, isOwner }) {
   const load = async () => {
     let data;
     try {
-      const qs = new URLSearchParams({ status: filter, ...(q ? { q } : {}), ...(service ? { service } : {}) }).toString();
+      const qs = new URLSearchParams({ status: filter, ...(q ? { q } : {}), ...(service ? { service } : {}), ...(assigned ? { assigned } : {}) }).toString();
       data = await api.get('/leads?' + qs);
     } catch (err) { fill(listBox, loadError(err, load)); return; }
     if (!alive) return;
@@ -65,6 +71,10 @@ export async function render({ main, isOwner }) {
     fill(serviceSel, h('option', { value: '', text: t('leads.allServices') }),
       data.services.map((sv) => h('option', { value: sv, text: sv, selected: sv === service || null })));
     serviceSel.hidden = data.services.length < 2;
+    // Assignment only makes sense with more than one person following leads up.
+    assignedSel.hidden = data.people.length < 2 && !assigned;
+    const names = Object.fromEntries(data.people.map((p) => [p.id, p.name]));
+    if (!automationBox.firstChild) fill(automationBox, automationCard(data), confirmCard(data.confirmation));
     if (isOwner) fill(settingsBox, retentionCard(data.retention));
     refreshLeadsBadge();
     if (!data.leads.length) {
@@ -79,7 +89,8 @@ export async function render({ main, isOwner }) {
         h('span', { class: 'grow ticket-main' },
           h('span', { class: 'ticket-title' }, l.unread ? h('span', { class: 'unread-dot', title: t('leads.unread') }, h('span', { class: 'sr-only', text: t('leads.unread') })) : null, h('span', { class: 'break', text: l.name })),
           h('span', { class: 'tiny muted lead-excerpt', text: l.message }),
-          h('span', { class: 'tiny muted', text: [l.service, fmtRelative(l.createdAt), l.lang === 'en' ? 'EN' : null].filter(Boolean).join(' · ') })),
+          h('span', { class: 'tiny muted', text: [l.service, fmtRelative(l.createdAt), l.lang === 'en' ? 'EN' : null].filter(Boolean).join(' · ') }),
+          l.assignedTo && names[l.assignedTo] ? h('span', { class: 'tiny lead-owner' }, icon('person-circle'), l.assignedTo === data.me ? t('leads.assignedToYou') : names[l.assignedTo]) : null),
         h('span', { class: 'ticket-badges' },
           !l.notified ? h('span', { class: 'badge badge-warn', title: t('leads.notNotified') }, icon('exclamation-triangle-fill'), h('span', { class: 'sr-only', text: t('leads.notNotified') })) : null,
           l.amount !== null ? h('span', { class: 'badge', text: money(l.amount) }) : null,
@@ -87,6 +98,101 @@ export async function render({ main, isOwner }) {
         icon('chevron-right', 'ticket-chevron'))))));
   };
 
+  /**
+   * Automatización: who gets each service's leads (by e-mail, and first in their
+   * list), the reminder for leads still "new", and the Monday summary.
+   */
+  const automationCard = (data) => {
+    const a = data.automation;
+    const services = [...new Set([...(data.formServices || []), ...a.rules.map((r) => r.service)])];
+    const personSel = (id, value, label) => h('select', { class: 'select', id, 'aria-label': label },
+      h('option', { value: '', text: t('leads.auto.nobody') }),
+      data.people.map((p) => h('option', { value: String(p.id), text: p.name, selected: p.id === value || null })));
+    const rows = services.map((sv, i) => ({ service: sv, sel: personSel('auto-svc-' + i, (a.rules.find((r) => r.service === sv) || {}).userId, t('leads.auto.forService', { service: sv })) }));
+    const fallback = personSel('auto-fallback', a.fallbackUserId, t('leads.auto.others'));
+    const followup = h('select', { class: 'select', id: 'auto-followup' }, [0, 24, 48, 72].map((n) => h('option', { value: String(n), text: t('leads.auto.followup.' + n), selected: n === a.followupHours || null })));
+    const weekly = switchInput({ id: 'auto-weekly', checked: a.weeklySummary, describedBy: 'auto-weekly-hint' });
+    const save = button(t('common.save'), { variant: 'primary', icon: 'check-lg' });
+    save.addEventListener('click', async () => {
+      setBusy(save, true, t('common.saving'));
+      try {
+        await api.put('/leads/automation', {
+          rules: rows.filter((r) => r.sel.value).map((r) => ({ service: r.service, userId: Number(r.sel.value) })),
+          fallbackUserId: fallback.value ? Number(fallback.value) : null, followupHours: Number(followup.value), weeklySummary: weekly.input.checked,
+        });
+        toast(t('leads.auto.saved'));
+      } catch (err) { toast(errorText(err), { type: 'bad' }); }
+      setBusy(save, false);
+    });
+    return h('section', { class: 'card', 'aria-labelledby': 'lead-auto' },
+      cardHead({ id: 'lead-auto', icon: 'bell', title: t('leads.auto.title'), lead: t('leads.auto.lead') }),
+      h('div', { class: 'stack' },
+        h('div', { class: 'auto-rules', role: 'group', 'aria-label': t('leads.auto.assignTitle') },
+          h('div', { class: 'auto-rule auto-rule-head' }, h('span', { class: 'label', text: t('leads.auto.service') }), h('span', { class: 'label', text: t('leads.auto.person') })),
+          rows.map((r) => h('div', { class: 'auto-rule' }, h('label', { for: r.sel.id, class: 'small', text: r.service }), r.sel)),
+          h('div', { class: 'auto-rule' }, h('label', { for: 'auto-fallback', class: 'small muted', text: t('leads.auto.others') }), fallback)),
+        h('p', { class: 'tiny muted', text: t('leads.auto.assignHint') }),
+        h('div', { class: 'field' }, h('label', { class: 'label', for: 'auto-followup', text: t('leads.auto.followupLabel') }), followup,
+          h('div', { class: 'field-foot' }, h('span', { class: 'hint', text: t('leads.auto.followupHint') }))),
+        h('div', { class: 'rule' }, weekly.wrap, h('div', { class: 'grow' }, h('label', { for: 'auto-weekly', text: t('leads.auto.weekly') }), h('div', { class: 'small muted', id: 'auto-weekly-hint', text: t('leads.auto.weeklyHint') }))),
+        h('div', { class: 'card-foot' }, h('span'), save)));
+  };
+
+  // ---------------------------------------------------------------- confirmation to the visitor
+  // Off until Sensum approves its text.
+    const SAMPLE = { nombre: 'Ana', servicio: 'Remodelaciones', telefono: '2256-7954', whatsapp: '+502 3481 9804', correo: 'contacto@sensumconstrucciones.com' };
+  const confirmCard = (c) => {
+    const sw = switchInput({ id: 'cf-on', checked: c.enabled, describedBy: 'cf-on-hint' });
+    const fields = {};
+    const editors = ['es', 'en'].map((lang) => {
+      const subject = textField({ label: t('confirm.subject'), value: c[lang].subject, max: 150, maxlength: 150, langTag: lang.toUpperCase() });
+      const bodyF = textField({ label: t('confirm.body'), value: c[lang].body, multiline: true, rows: 11, max: 2000, maxlength: 2000, langTag: lang.toUpperCase() });
+      const sample = h('div', { class: 'confirm-sample', 'aria-live': 'polite' });
+      const draw = () => { sample.textContent = Object.entries(SAMPLE).reduce((s, [k, v]) => s.split('{' + k + '}').join(v), bodyF.input.value); };
+      bodyF.input.addEventListener('input', draw);
+      draw();
+      // Placeholders: a click puts them where the cursor is.
+      const chips = h('div', { class: 'row confirm-chips', role: 'group', 'aria-label': t('confirm.placeholders') },
+        h('span', { class: 'tiny muted', text: t('confirm.placeholders') }),
+        Object.keys(SAMPLE).map((k) => h('button', { type: 'button', class: 'chip-btn', onclick: () => {
+          const el = bodyF.input;
+          const at = el.selectionStart ?? el.value.length;
+          el.setRangeText('{' + k + '}', at, el.selectionEnd ?? at, 'end');
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.focus();
+        } }, '{' + k + '}')));
+      fields[lang] = { subject, body: bodyF };
+      return h('div', { class: 'stack', hidden: lang !== 'es' || null, 'data-lang': lang }, subject.wrap, bodyF.wrap, chips,
+        h('details', { class: 'disclosure' }, h('summary', null, t('confirm.preview'), icon('chevron-down')), sample));
+    });
+    const langPick = segmented([{ value: 'es', label: 'Español' }, { value: 'en', label: 'English' }], 'es', (v) => editors.forEach((e) => { e.hidden = e.dataset.lang !== v; }), t('confirm.language'));
+    const save = button(t('common.save'), { variant: 'primary', icon: 'check-lg' });
+    save.addEventListener('click', async () => {
+      Object.values(fields).forEach((f) => { f.subject.setError(null); f.body.setError(null); });
+      setBusy(save, true, t('common.saving'));
+      try {
+        const payload = { enabled: sw.input.checked };
+        for (const lang of ['es', 'en']) payload[lang] = { subject: fields[lang].subject.input.value, body: fields[lang].body.input.value };
+        await api.put('/leads/confirmation', payload);
+        toast(t(sw.input.checked ? 'confirm.savedOn' : 'confirm.savedOff'));
+      } catch (err) {
+        if (err.code === 'validation') {
+          for (const [k, code] of Object.entries(err.fields || {})) {
+            const [lang, part] = k.split('.');
+            if (fields[lang] && fields[lang][part]) fields[lang][part].setError(fieldErrorText(code, { max: part === 'subject' ? 150 : 2000 }));
+          }
+          toast(t('confirm.fixErrors'), { type: 'bad' });
+        } else toast(errorText(err), { type: 'bad' });
+      }
+      setBusy(save, false);
+    });
+    return h('section', { class: 'card', 'aria-labelledby': 'cf-title' },
+      cardHead({ id: 'cf-title', icon: 'send', title: t('confirm.title'), lead: t('confirm.lead') }),
+      h('div', { class: 'rule' }, sw.wrap, h('div', { class: 'grow' }, h('label', { for: 'cf-on', text: t('confirm.on') }), h('div', { class: 'small muted', id: 'cf-on-hint', text: t('confirm.onHint') }))),
+      h('div', null, langPick), editors,
+      h('div', { class: 'card-foot' }, h('span'), save));
+  };
+  
   /** Owner: how long messages are kept (the privacy notice says it). */
   const retentionCard = (months) => {
     const sel = h('select', { class: 'select', id: 'lead-retention' }, [6, 12, 24, 36].map((m) => h('option', { value: String(m), selected: m === months || null, text: t('leads.months', { n: m }) })));
@@ -100,7 +206,7 @@ export async function render({ main, isOwner }) {
       h('div', { class: 'field' }, h('label', { class: 'label', for: 'lead-retention', text: t('leads.retentionLabel') }), sel));
   };
 
-  fill(body, h('div', { class: 'ticket-toolbar' }, tabs, h('div', { class: 'ticket-search row' }, serviceSel, search)), listBox, settingsBox);
+  fill(body, h('div', { class: 'ticket-toolbar' }, tabs, h('div', { class: 'ticket-search row' }, assignedSel, serviceSel, search)), listBox, automationBox, settingsBox);
   listBox.append(loading());
   await load();
   return { destroy: () => { alive = false; clearTimeout(timer); } };
@@ -114,6 +220,7 @@ export async function detail({ main, params }) {
   main.append(pageHead({ crumbs: [{ label: t('leads.title'), href: '#/prospectos' }, { label: '#' + id }], title: t('leads.loadingTitle') }), body);
   let alive = true;
   let draftDirty = () => false;
+  let people = [];
 
   const load = async () => {
     let data;
@@ -122,6 +229,7 @@ export async function detail({ main, params }) {
       fill(body, loadError(err, load)); return;
     }
     if (!alive) return;
+    people = data.people || [];
     draw(data);
     refreshLeadsBadge();
   };
@@ -185,6 +293,8 @@ export async function detail({ main, params }) {
 
     // Follow-up: status and amount.
     const statusSel = h('select', { class: 'select', id: 'ld-status' }, STATUSES.map((s) => h('option', { value: s, selected: s === l.status || null, text: t('leads.status.' + s) })));
+    const ownerSel = h('select', { class: 'select', id: 'ld-owner', 'aria-describedby': 'ld-owner-hint' }, h('option', { value: '', text: t('leads.auto.nobody') }),
+      people.map((p) => h('option', { value: String(p.id), text: p.name, selected: p.id === l.assignedTo || null })));
     const amount = textField({ label: t('leads.amount'), value: l.amount !== null ? String(l.amount) : '', inputmode: 'numeric', hint: t('leads.amountHint'), maxlength: 9 });
     amount.input.addEventListener('input', () => { amount.input.value = amount.input.value.replace(/\D/g, '').slice(0, 9); });
     const save = button(t('common.save'), { variant: 'primary', icon: 'check-lg' });
@@ -192,7 +302,8 @@ export async function detail({ main, params }) {
       amount.setError(null);
       setBusy(save, true, t('common.saving'));
       try {
-        const res = await api.put('/leads/' + id, { status: statusSel.value, amount: amount.input.value === '' ? null : Number(amount.input.value) });
+        const res = await api.put('/leads/' + id, { status: statusSel.value, amount: amount.input.value === '' ? null : Number(amount.input.value),
+          ...(people.length ? { assignedTo: ownerSel.value ? Number(ownerSel.value) : null } : {}) });
         toast(t('leads.saved'));
         draw(res);
         return;
@@ -211,6 +322,8 @@ export async function detail({ main, params }) {
       cardHead({ id: 'ld-follow', icon: 'funnel', title: t('leads.followUp') }),
       h('div', { class: 'stack' },
         h('div', { class: 'field' }, h('label', { class: 'label', for: 'ld-status', text: t('leads.statusLabel') }), statusSel),
+        people.length > 1 || l.assignedTo ? h('div', { class: 'field' }, h('label', { class: 'label', for: 'ld-owner', text: t('leads.ownerLabel') }), ownerSel,
+          h('div', { class: 'field-foot' }, h('span', { class: 'hint', id: 'ld-owner-hint', text: t('leads.ownerHint') }))) : null,
         amount.wrap,
         h('div', { class: 'row-between' }, del, save)));
 
@@ -230,8 +343,10 @@ function noteItem(n) {
     const d = n.details || {};
     const text = d.action === 'status'
       ? t('leads.event.status', { name: n.author, from: t('leads.status.' + d.from), to: t('leads.status.' + d.to) })
-      : d.to === null ? t('leads.event.amountCleared', { name: n.author }) : t('leads.event.amount', { name: n.author, amount: money(d.to) });
-    return h('li', { class: 'timeline-event' }, icon(d.action === 'status' ? STATUS_ICON[d.to] || 'arrow-repeat' : 'card-text'), h('span', { class: 'small', text }), when);
+      : d.action === 'assigned'
+        ? (d.auto ? t('leads.event.assignedAuto', { to: d.to }) : d.to ? t('leads.event.assigned', { name: n.author, to: d.to }) : t('leads.event.unassigned', { name: n.author }))
+        : d.to === null ? t('leads.event.amountCleared', { name: n.author }) : t('leads.event.amount', { name: n.author, amount: money(d.to) });
+    return h('li', { class: 'timeline-event' }, icon(d.action === 'status' ? STATUS_ICON[d.to] || 'arrow-repeat' : d.action === 'assigned' ? 'person-circle' : 'card-text'), h('span', { class: 'small', text }), when);
   }
   return h('li', { class: 'timeline-msg from-support note' },
     h('span', { class: 'avatar', 'aria-hidden': 'true', text: initials(n.author) }),

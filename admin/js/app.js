@@ -33,7 +33,9 @@ const V = {
   stats: lazy(() => import('./views/stats.js')),
   status: lazy(() => import('./views/status.js')),
   translation: lazy(() => import('./views/translation.js')),
+  activity: lazy(() => import('./views/activity.js')),
 };
+const loadAccessRequest = lazy(() => import('./accessrequest.js'));
 const loadReport = lazy(() => import('./report.js'));
 const openReportDialog = (...args) => loadReport().then((m) => m.openReportDialog(...args));
 
@@ -58,6 +60,7 @@ const PRIVATE = [
   { re: /^\/prospectos\/([1-9][0-9]{0,8})$/, mod: V.leads, fn: 'detail', nav: 'leads', perm: ['leads'] },
   { re: /^\/estadisticas$/, mod: V.stats, fn: 'render', nav: 'stats', perm: ['stats', 'leads'] },
   { re: /^\/usuarios$/, mod: V.users, fn: 'render', nav: 'users', perm: ['users'] },
+  { re: /^\/actividad$/, mod: V.activity, fn: 'render', nav: 'activity', perm: ['site', 'users'] },
   { re: /^\/monitoreo$/, mod: V.monitor, fn: 'render', nav: 'monitor', owner: true },
   { re: /^\/(salud-del-sitio|monitoreo-basico)$/, mod: V.status, fn: 'render', nav: 'status', perm: ['monitor'] },
   { re: /^\/traduccion$/, mod: V.translation, fn: 'render', nav: 'translation', owner: true },
@@ -351,11 +354,13 @@ function renderShell(activeNav, force = false) {
       can(user, 'leads') || can(user, 'stats') ? [h('div', { class: 'nav-section', text: t('nav.groupClients') }),
         can(user, 'leads') ? navLink('/prospectos', 'leads', 'inbox', active) : null,
         navLink('/estadisticas', 'stats', 'graph-up', active)] : null,
-      !user.owner && (can(user, 'monitor') || can(user, 'report')) ? [h('div', { class: 'nav-section', text: t('nav.groupStatus') }),
+      // "Actividad": with the people for whoever manages them, otherwise with the site's status.
+      !user.owner && (can(user, 'monitor') || can(user, 'report') || (can(user, 'site') && !can(user, 'users'))) ? [h('div', { class: 'nav-section', text: t('nav.groupStatus') }),
         can(user, 'monitor') ? navLink('/salud-del-sitio', 'status', 'heart-pulse', active) : null,
-        can(user, 'report') ? navLink('/informe', 'siteReport', 'bar-chart', active) : null] : null,
-      !user.owner && can(user, 'users') ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active)] : null,
-      user.owner ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active),
+        can(user, 'report') ? navLink('/informe', 'siteReport', 'bar-chart', active) : null,
+        can(user, 'site') && !can(user, 'users') ? navLink('/actividad', 'activity', 'clock-history', active) : null] : null,
+      !user.owner && can(user, 'users') ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active), navLink('/actividad', 'activity', 'clock-history', active)] : null,
+      user.owner ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active), navLink('/actividad', 'activity', 'clock-history', active),
         navLink('/monitoreo', 'monitor', 'activity', active), navLink('/informe', 'siteReport', 'bar-chart', active),
         navLink('/correo', 'email', 'envelope', active), navLink('/traduccion', 'translation', 'translate', active), navLink('/seguridad', 'security', 'shield-lock', active)] : null,
       h('div', { class: 'nav-section', text: t('nav.groupSupport') }),
@@ -428,17 +433,20 @@ async function route(force = false) {
   if (state.view && state.view.destroy) state.view.destroy();
   state.view = null;
   state.path = path;
+  // "#/usuarios?revisar=invitaciones": routes match the part before "?", screens get the rest.
+  const [pathname, search] = path.split('?');
+  const query = new URLSearchParams(search || '');
 
-  const pub = PUBLIC.find((r) => r.re.test(path));
+  const pub = PUBLIC.find((r) => r.re.test(pathname));
   if (pub) {
-    if (state.session && path === '/ingresar') return navigate(sessionStorage.getItem('sensum_after_login') || '/');
+    if (state.session && pathname === '/ingresar') return navigate(sessionStorage.getItem('sensum_after_login') || '/');
     state.shell = null;
     const app = document.getElementById('app');
     let mod;
     try { mod = await pub.mod(); } catch (e) { return showLoadFailed(document.getElementById('app'), e); }
     if (stale()) return;
     clear(app);
-    const view = (await mod[pub.fn]({ app, params: path.match(pub.re).slice(1), setupRequired: state.setupRequired, onSignedIn })) || null;
+    const view = (await mod[pub.fn]({ app, params: pathname.match(pub.re).slice(1), setupRequired: state.setupRequired, onSignedIn })) || null;
     if (!stale()) state.view = view;
     return;
   }
@@ -491,13 +499,19 @@ async function route(force = false) {
     return;
   }
 
-  const priv = PRIVATE.find((r) => r.re.test(path));
+  const priv = PRIVATE.find((r) => r.re.test(pathname));
   const main = renderShell(priv ? priv.nav : null);
   if (!priv || (priv.owner && !isOwner()) || (priv.perm && !priv.perm.some(userCan))) {
-    main.append(h('div', { class: 'card empty' }, h('span', { class: 'icon-tile' }, icon('exclamation-circle')),
-      h('h1', { tabindex: '-1', text: t('notFound.title') }), h('p', { text: t('notFound.body') }),
-      h('a', { class: 'btn btn-primary', href: '#/' }, t('notFound.home'))));
-    document.title = t('notFound.title') + ' · ' + t('app.name');
+    // A screen that exists but this account can't open: say so, and offer to ask for it.
+    const forbidden = !!priv;
+    const canAsk = forbidden && !priv.owner && !isOwner() && !state.session.viewAs;
+    const ask = canAsk ? button(t('accessRequest.ask'), { variant: 'primary', icon: 'send', onClick: () => loadAccessRequest().then((m) => m.openAccessRequest(state.session.user, priv.perm)) }) : null;
+    const title = forbidden ? t('notFound.forbiddenTitle') : t('notFound.title');
+    main.append(h('div', { class: 'card empty' }, h('span', { class: 'icon-tile' }, icon(forbidden ? 'lock' : 'exclamation-circle')),
+      h('h1', { tabindex: '-1', text: title }),
+      h('p', { text: forbidden ? t(priv.owner ? 'notFound.ownerOnly' : 'notFound.forbiddenBody') : t('notFound.body') }),
+      h('div', { class: 'row row-center' }, ask, h('a', { class: ['btn', !ask && 'btn-primary'], href: '#/' }, t('notFound.home')))));
+    document.title = title + ' · ' + t('app.name');
     focusHeading(main);
     return;
   }
@@ -508,7 +522,7 @@ async function route(force = false) {
   clearTimeout(slow);
   if (stale()) return;
   clear(main);
-  const view = (await mod[priv.fn]({ main, params: path.match(priv.re).slice(1), session: state.session, navigate, isOwner: isOwner(), can: userCan })) || null;
+  const view = (await mod[priv.fn]({ main, params: pathname.match(priv.re).slice(1), query, session: state.session, navigate, isOwner: isOwner(), can: userCan })) || null;
   if (stale()) {
     if (view && view.destroy) view.destroy();
     return;

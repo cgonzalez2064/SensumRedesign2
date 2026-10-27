@@ -97,7 +97,7 @@ final class Auth
         $db = $this->app->db();
         $row = $db->one(
             'SELECT s.*, u.id AS uid, u.email, u.name, u.role, u.status, u.lang, u.theme, u.last_login_at, u.permissions, u.totp_enabled_at, u.onboarded_at,
-                    u.must_change_password, u.two_factor_required
+                    u.must_change_password, u.two_factor_required, u.access_until
                FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id_hash = ?',
             [hash('sha256', $raw)]
         );
@@ -107,6 +107,11 @@ final class Auth
         }
         if ($row['status'] !== 'active' || (int) $row['expires_at'] <= $now || ((int) $row['last_seen_at'] + $this->idleSeconds()) <= $now) {
             $db->run('DELETE FROM sessions WHERE id_hash = ?', [$row['id_hash']]);
+            return null;
+        }
+        // Temporary access that ended: the account turns off now, not at the next scheduled check.
+        if ($row['access_until'] !== null && (int) $row['access_until'] <= $now) {
+            $this->app->automations()->endTemporaryAccess((array) $db->one('SELECT * FROM users WHERE id = ?', [$row['uid']]), $now);
             return null;
         }
         // Sliding idle expiry, written at most once a minute.
@@ -251,7 +256,7 @@ final class Auth
     // Login / logout
     // ------------------------------------------------------------------
 
-    /** @return array{user:array, csrf:string}|array{challenge:string} the session, or a challenge for the second step */
+    /** @return array{user:array, csrf:string}|array{challenge:string, remember:bool} the session, or a challenge for the second step (and whether the browser may be remembered) */
     public function login(Request $req, string $email, string $password): array
     {
         $email = mb_strtolower(trim($email), 'UTF-8');
@@ -267,6 +272,10 @@ final class Auth
         $user = $this->app->db()->one('SELECT * FROM users WHERE email = ?', [$email]);
         $hash = ($user && $user['password_hash']) ? (string) $user['password_hash'] : Passwords::dummyHash();
         $valid = Passwords::verify($password, $hash) && $user && $user['status'] === 'active';
+        if ($valid && $user['access_until'] !== null && (int) $user['access_until'] <= time()) {
+            $this->app->automations()->endTemporaryAccess($user);
+            $valid = false; // turned off: same answer as any disabled account
+        }
 
         if (!$valid) {
             $rl->hit('login_ip', $ip, PHP_INT_MAX, self::LOGIN_IP_WINDOW);
@@ -277,12 +286,22 @@ final class Auth
             throw new ApiError(401, 'invalid_credentials');
         }
 
+        // A password given by someone who manages users, not replaced in time: it no longer works.
+        if (!empty($user['must_change_password']) && $user['temp_password_expires_at'] !== null && (int) $user['temp_password_expires_at'] <= time()) {
+            $this->app->activity((int) $user['id'], 'login_temp_password_expired', '', [], $ip);
+            throw new ApiError(401, 'temporary_password_expired');
+        }
         if (Passwords::needsRehash((string) $user['password_hash'])) {
             $this->app->db()->run('UPDATE users SET password_hash = ? WHERE id = ?', [Passwords::hash($password), $user['id']]);
         }
-        // Two-step sign-in: the password was right; the session starts after the code.
+        // Two-step sign-in: the password was right; the session starts after the code,
+        // unless this browser was remembered (when the owner allows it).
         if ($this->app->twoFactor()->enabled($user)) {
-            return ['challenge' => $this->app->twoFactor()->createChallenge((int) $user['id'])];
+            if ($this->isTrustedDevice($req, (int) $user['id'])) {
+                $rl->clear('login_email', $email);
+                return $this->finishLogin($req, $user, ['twoFactor' => 'remembered']);
+            }
+            return ['challenge' => $this->app->twoFactor()->createChallenge((int) $user['id']), 'remember' => $this->app->automations()->accountPolicy()['rememberDevice']];
         }
         $rl->clear('login_email', $email);
         return $this->finishLogin($req, $user, []);
@@ -292,7 +311,7 @@ final class Auth
      * Second step: the code from the authenticator app (or a recovery code).
      * @return array{user:array, csrf:string}
      */
-    public function loginSecondStep(Request $req, string $challenge, string $code): array
+    public function loginSecondStep(Request $req, string $challenge, string $code, bool $remember = false): array
     {
         $ip = $req->ip();
         $rl = $this->app->rateLimiter();
@@ -308,18 +327,61 @@ final class Auth
         if ($r['method'] === 'recovery') {
             $this->app->watchdog()->twoFactorNotice($user, 'recovery_used');
         }
-        return $this->finishLogin($req, $user, ['twoFactor' => $r['method']]);
+        if ($remember && $r['method'] === 'totp' && $this->app->automations()->accountPolicy()['rememberDevice']) {
+            $this->rememberDevice($req, (int) $user['id']);
+        }
+        return $this->finishLogin($req, $user, ['twoFactor' => $r['method']] + ($remember ? ['remembered' => true] : []));
     }
 
     /** @return array{user:array, csrf:string} */
     private function finishLogin(Request $req, array $user, array $details): array
     {
         $ip = $req->ip();
-        $this->app->db()->run('UPDATE users SET last_login_at = ? WHERE id = ?', [time(), $user['id']]);
+        // Signing in also clears a pending "unused account" warning.
+        $this->app->db()->run('UPDATE users SET last_login_at = ?, inactive_warned_at = NULL WHERE id = ?', [time(), $user['id']]);
         $session = $this->startSession($req, (int) $user['id']);
         $this->app->activity((int) $user['id'], 'login', '', $details, $ip);
         $this->app->watchdog()->onLogin($user, $req->userAgent(), $ip);
         return ['user' => $user, 'csrf' => $session['csrf']];
+    }
+
+    // ------------------------------------------------------------------
+    // Remembered browsers (two-step sign-in, Seguridad → "Recordar el dispositivo")
+    // ------------------------------------------------------------------
+
+    public const TRUSTED_DAYS = 30;
+
+    public function trustedCookieName(): string
+    {
+        return $this->secureCookies() ? '__Host-sensum_device' : 'sensum_device';
+    }
+
+    /** This browser was remembered for this person (and the owner still allows it). */
+    private function isTrustedDevice(Request $req, int $userId): bool
+    {
+        $raw = $req->cookie($this->trustedCookieName());
+        if ($raw === '' || !preg_match('/^[A-Za-z0-9_-]{43}$/', $raw) || !$this->app->automations()->accountPolicy()['rememberDevice']) {
+            return false;
+        }
+        $now = time();
+        $id = $this->app->db()->value('SELECT id FROM trusted_devices WHERE token_hash = ? AND user_id = ? AND expires_at > ?', [hash('sha256', $raw), $userId, $now]);
+        if (!$id) {
+            return false;
+        }
+        $this->app->db()->run('UPDATE trusted_devices SET last_used_at = ? WHERE id = ?', [$now, $id]);
+        return true;
+    }
+
+    private function rememberDevice(Request $req, int $userId): void
+    {
+        $token = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+        $now = time();
+        $expires = $now + self::TRUSTED_DAYS * 86400;
+        $db = $this->app->db();
+        $db->run('DELETE FROM trusted_devices WHERE expires_at < ?', [$now]);
+        $db->run('INSERT INTO trusted_devices (user_id, token_hash, label, created_at, last_used_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
+            [$userId, hash('sha256', $token), Watchdog::deviceLabel($req->userAgent()), $now, $now, $expires]);
+        Response::setCookie($this->trustedCookieName(), $token, $expires, $this->secureCookies());
     }
 
     /**
@@ -365,6 +427,8 @@ final class Auth
         if ($keepIdHash !== null) {
             return $this->app->db()->run('DELETE FROM sessions WHERE user_id = ? AND id_hash <> ?', [$userId, $keepIdHash])->rowCount();
         }
+        // Everywhere: remembered browsers ask for the second step again too.
+        $this->app->db()->run('DELETE FROM trusted_devices WHERE user_id = ?', [$userId]);
         return $this->app->db()->run('DELETE FROM sessions WHERE user_id = ?', [$userId])->rowCount();
     }
 

@@ -16,12 +16,12 @@ export async function render({ main, session }) {
   const load = async () => {
     let data;
     try { data = await api.get('/security'); } catch (err) { fill(body, loadError(err, load)); return; }
-    if (alive) fill(body, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, backupCard(data.backup)), h('div', { class: 'stack-lg' }, twoFactorCard(data.twoFactor, session))));
+    if (alive) fill(body, h('div', { class: 'dash-grid' }, h('div', { class: 'stack-lg' }, accountsCard(data.accounts), backupCard(data.backup)), h('div', { class: 'stack-lg' }, twoFactorCard(data.twoFactor, session))));
   };
 
   // ---------------------------------------------------------------- two-step sign-in
   const twoFactorCard = (tf, sess) => {
-    const sel = h('select', { class: 'select', id: 'sec-policy' }, ['owner', 'all', 'none'].map((p) => h('option', { value: p, selected: p === tf.policy || null, text: t('security.policy.' + p) })));
+    const sel = h('select', { class: 'select', id: 'sec-policy' }, ['owner', 'admins', 'all', 'none'].map((p) => h('option', { value: p, selected: p === tf.policy || null, text: t('security.policy.' + p) })));
     sel.addEventListener('change', async () => {
       const password = await askPassword({ title: t('security.policyConfirm'), lead: t('security.policyLead.' + sel.value), confirmLabel: t('common.save') });
       if (password === null) { sel.value = tf.policy; return; }
@@ -50,6 +50,35 @@ export async function render({ main, session }) {
         h('div', { class: 'field-foot' }, h('span', { class: 'hint', text: t('security.policyLead.' + tf.policy) }))),
       h('ul', { class: 'person-list' }, rows),
       h('p', { class: 'tiny muted', text: t('security.tfHelp') }));
+  };
+
+  // ---------------------------------------------------------------- account rules
+  const accountsCard = (a) => {
+    const inactive = h('select', { class: 'select', id: 'sec-inactive', 'aria-describedby': 'sec-inactive-hint' },
+      [0, 90, 120, 180].map((d) => h('option', { value: String(d), selected: d === a.inactiveDays || null, text: t('security.inactive.' + d) })));
+    const breached = switchInput({ id: 'sec-breached', checked: a.breachedCheck, describedBy: 'sec-breached-hint' });
+    const remember = switchInput({ id: 'sec-remember', checked: a.rememberDevice, describedBy: 'sec-remember-hint' });
+    const save = button(t('common.save'), { variant: 'primary', icon: 'check-lg' });
+    save.addEventListener('click', async () => {
+      const password = await askPassword({ title: t('security.accountsConfirm'), lead: t('security.accountsConfirmLead'), confirmLabel: t('common.save') });
+      if (password === null) return;
+      setBusy(save, true, t('common.saving'));
+      try {
+        await api.put('/security/accounts', { inactiveDays: Number(inactive.value), breachedCheck: breached.input.checked, rememberDevice: remember.input.checked, currentPassword: password });
+        toast(t('security.accountsSaved'));
+        load();
+        return;
+      } catch (err) { toast(err.code === 'validation' && err.fields.currentPassword ? t('fieldErrors.current_password_wrong') : errorText(err), { type: 'bad' }); }
+      setBusy(save, false);
+    });
+    const rule = (sw, id, title, hint) => h('div', { class: 'rule' }, sw.wrap, h('div', { class: 'grow' }, h('label', { for: id, text: title }), h('div', { class: 'small muted', id: id + '-hint', text: hint })));
+    return h('section', { class: 'card', 'aria-labelledby': 'sec-acc' },
+      cardHead({ id: 'sec-acc', icon: 'person-gear', title: t('security.accountsTitle'), lead: t('security.accountsLead') }),
+      h('div', { class: 'field' }, h('label', { class: 'label', for: 'sec-inactive', text: t('security.inactiveLabel') }), inactive,
+        h('div', { class: 'field-foot' }, h('span', { class: 'hint', id: 'sec-inactive-hint', text: t('security.inactiveHint') }))),
+      rule(breached, 'sec-breached', t('security.breachedTitle'), t('security.breachedHint')),
+      rule(remember, 'sec-remember', t('security.rememberTitle'), t('security.rememberHint') + (a.rememberedDevices ? ' ' + t('security.rememberedNow', { n: a.rememberedDevices }) : '')),
+      h('div', { class: 'card-foot' }, h('span'), save));
   };
 
   // ---------------------------------------------------------------- off-server backup

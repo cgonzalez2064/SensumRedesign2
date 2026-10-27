@@ -28,6 +28,7 @@ final class Cli
             'mail:test' => $this->mailTest($args[0] ?? ''),
             'translate:test' => $this->translateTest(),
             'monitor' => $this->monitor(),
+            'automations' => $this->automations($args[0] ?? ''),
             'alert:test' => $this->alertTest(),
             'reports:retry' => $this->retryReports(),
             'backup' => $this->backup(),
@@ -45,7 +46,7 @@ final class Cli
 
     private function help(): int
     {
-        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|translate:test|monitor|alert:test|reports:retry|backup|integrity:accept|demo-users [--reports]|2fa:reset <email>>');
+        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|translate:test|monitor|automations|alert:test|reports:retry|backup|integrity:accept|demo-users [--reports]|2fa:reset <email>>');
         return 0;
     }
 
@@ -164,6 +165,19 @@ final class Cli
     private function monitor(): int
     {
         foreach ($this->app->monitor()->run() as $line) {
+            $this->out($line);
+        }
+        return 0;
+    }
+
+    /**
+     * Runs only the automations (reminders, temporary access, inactivity, lead
+     * follow-up and summary); `monitor` already runs them. An optional Unix time
+     * runs them as of that moment (to check the Monday summary, for example).
+     */
+    private function automations(string $at): int
+    {
+        foreach ($this->app->automations()->run(preg_match('/^\d{9,11}$/', $at) ? (int) $at : null) as $line) {
             $this->out($line);
         }
         return 0;

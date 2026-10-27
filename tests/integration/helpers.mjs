@@ -48,6 +48,7 @@ export async function startServer({ port, smtpDown = false, env = {}, reuseDir =
     OWNER_EMAIL: ADMIN.email, // the test administrator is the owner unless a test says otherwise
     ALERT_EMAIL: ALERTS_TO,
     TWO_FACTOR_POLICY: 'none', // two-step sign-in has its own tests (17-protection)
+    PWNED_PASSWORDS_URL: 'off', // the leaked-password check has its own test with a local stub (29-automations)
     ...env,
   };
   const proc = spawn(PHP, ['-d', 'upload_max_filesize=16M', '-d', 'post_max_size=20M', '-d', 'memory_limit=256M',

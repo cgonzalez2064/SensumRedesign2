@@ -80,15 +80,41 @@ export async function render({ main, session, isOwner, can }) {
     const left = h('div', { class: 'stack-lg' }, statusCard);
     const right = h('div', { class: 'stack-lg' });
 
+    // «Accesos» (whoever manages users): what needs attention, each with its filter in Usuarios.
+    if (data.access) {
+      const a = data.access;
+      const items = [
+        ['requests', 'send', '', a.requests, true],
+        ['invitesExpiring', 'hourglass-split', 'invitaciones', a.invitesExpiring, true],
+        ['invitesExpired', 'exclamation-circle', 'invitaciones', a.invitesExpired, true],
+        ['invitesPending', 'envelope', 'invitaciones', a.invitesPending - a.invitesExpiring, false],
+        ['mustChange', 'key', 'contrasena', a.mustChange, false],
+        ['temporaryEnding', 'hourglass-split', 'temporales', a.temporaryEnding, false],
+        ['withoutTwoFactor', 'shield-lock', 'sin-verificacion', a.withoutTwoFactor, false],
+        ['inactive', 'clock-history', 'inactivas', a.inactive, false],
+      ].filter((i) => i[3] > 0);
+      const urgent = items.some((i) => i[4]);
+      right.append(h('section', { class: 'card', 'aria-labelledby': 'access-title' },
+        cardHead({ id: 'access-title', icon: 'people', tone: urgent ? 'warn' : 'ok', title: t('dashboard.access.title'),
+          badge: h('a', { class: 'btn btn-sm', href: '#/usuarios' }, t('dashboard.access.open')) }),
+        items.length
+          ? h('ul', { class: 'status-list access-list' }, items.map(([key, ic, filter, n, warn]) => h('li', null,
+            h('span', { class: warn ? 'warn-text' : 'muted' }, icon(ic)),
+            h('a', { class: 'grow access-link', href: '#/usuarios' + (filter ? '?revisar=' + filter : '') }, tp('dashboard.access.' + key, n)),
+            icon('chevron-right', 'muted'))))
+          : h('p', { class: 'muted row' }, h('span', { class: 'ok-text' }, icon('check-circle-fill')), t('dashboard.access.allGood'))));
+    }
+
     if (data.activity || isOwner) {
       // Recent activity ("site" access and the owner).
       const acts = data.activity || [];
       if (data.activity) left.append(h('section', { class: 'card', 'aria-labelledby': 'act-title' },
-        cardHead({ id: 'act-title', icon: 'activity', title: t('dashboard.activityTitle') }),
+        cardHead({ id: 'act-title', icon: 'activity', title: t('dashboard.activityTitle'),
+          badge: can('site') || can('users') ? h('a', { class: 'btn btn-sm', href: '#/actividad' }, t('dashboard.activityAll')) : null }),
         acts.length ? h('ul', { class: 'status-list' }, acts.map((a) => h('li', null, icon('clock-history', 'muted'),
           h('div', { class: 'grow' }, h('span', null, h('strong', { text: a.user || t('dashboard.someone') }), ' ', t('dashboard.actions.' + a.action)),
             a.action === 'content_updated' && a.target ? h('span', { class: 'muted', text: ' — ' + (t('sections.' + a.target)[0] || a.target) }) : null,
-            a.targetName ? h('span', { class: 'muted break', text: ' — ' + a.targetName }) : null,
+            a.targetName && a.targetName !== a.user ? h('span', { class: 'muted break', text: ' — ' + a.targetName }) : null,
             h('div', { class: 'tiny muted', text: fmtDate(a.at) }))))) : h('p', { class: 'muted', text: t('dashboard.noActivity') })));
 
       // Diagnostics and errors: owner account only (the server sends them only to the owner).

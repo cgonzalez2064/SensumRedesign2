@@ -3,11 +3,13 @@ declare(strict_types=1);
 
 namespace Sensum\Cms\Api;
 
+use Sensum\Cms\Automations;
 use Sensum\Cms\Emails;
 use Sensum\Cms\Http\ApiError;
 use Sensum\Cms\Http\Response;
 use Sensum\Cms\Passwords;
 use Sensum\Cms\Users;
+use Sensum\Cms\Watchdog;
 
 /**
  * User management: the owner account (OWNER_EMAIL) and accounts with the
@@ -114,7 +116,23 @@ final class UsersController extends Controller
                FROM users u ORDER BY CASE u.status WHEN 'active' THEN 0 WHEN 'invited' THEN 1 ELSE 2 END, u.name COLLATE NOCASE"
         );
         $twoFactor = $this->app->twoFactor();
+        $byId = array_column($rows, null, 'id');
+        $requests = [];
+        foreach ($this->app->db()->all("SELECT * FROM access_requests WHERE status = 'pending' ORDER BY created_at") as $r) {
+            $person = $byId[$r['user_id']] ?? null;
+            if (!$person || $person['status'] !== 'active') {
+                continue;
+            }
+            $perms = Users::permissionsOf(['permissions' => $r['permissions']]);
+            $requests[] = [
+                'id' => (int) $r['id'], 'userId' => (int) $r['user_id'], 'name' => (string) $person['name'], 'email' => (string) $person['email'],
+                'permissions' => $perms, 'message' => (string) $r['message'], 'createdAt' => (int) $r['created_at'],
+                // Granting needs the right to change that person and to give each permission.
+                'canGrant' => $this->refusal($person) === null && !array_diff($perms, $this->assignable()),
+            ];
+        }
         Response::ok([
+            'requests' => $requests,
             'users' => array_map(fn ($u) => Users::present($u) + [
                 'inviteExpiresAt' => $u['invite_expires_at'] !== null ? (int) $u['invite_expires_at'] : null,
                 'isSelf' => (int) $u['id'] === $this->uid(),
@@ -147,10 +165,14 @@ final class UsersController extends Controller
         }
         $permissions = Users::normalizePermissions($this->req->raw('permissions'));
         $this->assertAssignable($permissions);
+        $until = Users::parseAccessUntil($this->req->raw('accessUntil'));
         $id = $this->users()->createInvited($this->str('name'), $this->str('email'), $permissions, $this->lang(), $this->uid());
+        if ($until !== null) {
+            $this->app->db()->run('UPDATE users SET access_until = ? WHERE id = ?', [$until, $id]);
+        }
         $user = $this->target($id);
         $result = $this->sendInvitation($user);
-        $this->app->activity($this->uid(), 'user_invited', (string) $id, ['permissions' => $permissions, 'emailSent' => $result['emailSent']], $this->req->ip());
+        $this->app->activity($this->uid(), 'user_invited', (string) $id, array_filter(['permissions' => $permissions, 'emailSent' => $result['emailSent'], 'accessUntil' => $until], fn ($v) => $v !== null), $this->req->ip());
         Response::ok(['user' => Users::present($user)] + $result);
     }
 
@@ -185,15 +207,27 @@ final class UsersController extends Controller
         if ($raw !== null) {
             $this->assertAssignable($permissions);
         }
-        $this->app->db()->transaction(function () use ($status, $permissions, $id) {
-            $this->app->db()->run('UPDATE users SET status = ?, permissions = ?, updated_at = ? WHERE id = ?', [$status, implode(',', $permissions), time(), $id]);
+        // "Acceso hasta": a new date, none ('' / null), or unchanged when absent. Reactivating
+        // an account whose date has passed removes the date unless a new one comes with it.
+        $until = $user['access_until'] !== null ? (int) $user['access_until'] : null;
+        if (array_key_exists('accessUntil', $this->req->json())) {
+            $until = Users::parseAccessUntil($this->req->raw('accessUntil'));
+        } elseif ($status === 'active' && $user['status'] === 'disabled' && $until !== null && $until <= time()) {
+            $until = null;
+        }
+        $this->app->db()->transaction(function () use ($status, $permissions, $id, $until, $user) {
+            $this->app->db()->run(
+                'UPDATE users SET status = ?, permissions = ?, access_until = ?, access_warned_at = CASE WHEN ? THEN NULL ELSE access_warned_at END, inactive_warned_at = CASE WHEN ? THEN NULL ELSE inactive_warned_at END, updated_at = ? WHERE id = ?',
+                [$status, implode(',', $permissions), $until, $until !== ($user['access_until'] !== null ? (int) $user['access_until'] : null) ? 1 : 0, $status === 'active' && $user['status'] === 'disabled' ? 1 : 0, time(), $id]
+            );
             if ($status === 'disabled') {
                 $this->app->auth()->revokeSessions($id);
             }
         });
-        $this->app->activity($this->uid(), 'user_updated', (string) $id, [
+        $this->app->activity($this->uid(), 'user_updated', (string) $id, array_filter([
             'permissions' => [Users::permissionsOf($user), $permissions], 'status' => [$user['status'], $status],
-        ], $this->req->ip());
+            'accessUntil' => $until !== ($user['access_until'] !== null ? (int) $user['access_until'] : null) ? [$user['access_until'] !== null ? (int) $user['access_until'] : null, $until] : null,
+        ], fn ($v) => $v !== null), $this->req->ip());
         Response::ok(['user' => Users::present($this->target($id))]);
     }
 
@@ -254,15 +288,72 @@ final class UsersController extends Controller
         $this->throttle();
         $this->confirmPassword('user_password_set');
         $password = $this->str('password');
-        if ($err = Passwords::policyError($password, (string) $user['email'], (string) $user['name'])) {
+        if ($err = Passwords::policyError($password, (string) $user['email'], (string) $user['name']) ?? Passwords::breachedError($this->app, $password)) {
             throw ApiError::validation(['password' => $err]);
         }
         $mustChange = $this->req->raw('mustChange') !== false;
         $this->users()->setPasswordFor($user, $password, $mustChange);
         $this->app->auth()->revokeSessions($id);
         $this->app->activity($this->uid(), 'user_password_set', (string) $id, ['mustChange' => $mustChange, 'wasInvited' => $user['status'] === 'invited'], $this->req->ip());
-        Response::okAndContinue(['user' => Users::present($this->target($id))]);
+        $updated = $this->target($id);
+        Response::okAndContinue(['user' => Users::present($updated), 'message' => $this->shareMessage($updated, $password, $mustChange)]);
         $this->app->watchdog()->accountNotice($user, $mustChange ? 'password_set_temporary' : 'password_set', ['by' => (string) $this->session['name']]);
+        exit;
+    }
+
+    /**
+     * A message to send the person by WhatsApp or similar: where to sign in, with
+     * which e-mail and password, in their language. Only returned to the browser.
+     */
+    private function shareMessage(array $user, string $password, bool $temporary): string
+    {
+        $t = $this->app->watchdog()->texts((string) $user['lang']);
+        return Watchdog::fill($t[$temporary ? 'au.share.temporary' : 'au.share.permanent'], [
+            'name' => explode(' ', trim((string) $user['name']))[0] ?: (string) $user['name'],
+            'url' => $this->app->config->adminUrl() . '/', 'email' => (string) $user['email'], 'password' => $password,
+            'hours' => Automations::TEMP_PASSWORD_HOURS,
+        ]);
+    }
+
+    /** Ends every session of the person (lost phone or laptop); remembered browsers ask for the code again. */
+    public function revokeSessions(int $id): never
+    {
+        $user = $this->manageable($id);
+        $this->throttle();
+        $ended = $this->app->auth()->revokeSessions($id);
+        $this->app->activity($this->uid(), 'user_sessions_revoked', (string) $id, ['ended' => $ended], $this->req->ip());
+        Response::okAndContinue(['ended' => $ended]);
+        if ($user['status'] === 'active') {
+            $this->app->watchdog()->accountNotice($user, 'sessions_revoked', ['by' => (string) $this->session['name']]);
+        }
+        exit;
+    }
+
+    /** «Pedir acceso»: grants the request (adds the permissions) or declines it; the person is told. */
+    public function answerRequest(int $id): never
+    {
+        $this->assertManager();
+        $r = $this->app->db()->one("SELECT * FROM access_requests WHERE id = ? AND status = 'pending'", [$id]);
+        if (!$r) {
+            throw new ApiError(404, 'not_found');
+        }
+        $user = $this->manageable((int) $r['user_id']);
+        $grant = $this->req->raw('grant');
+        if (!is_bool($grant)) {
+            throw ApiError::validation(['grant' => 'invalid']);
+        }
+        $this->throttle();
+        $asked = Users::permissionsOf(['permissions' => $r['permissions']]);
+        $now = time();
+        if ($grant) {
+            $this->assertAssignable($asked);
+            $permissions = array_values(array_intersect(Users::PERMISSIONS, array_unique(array_merge(Users::permissionsOf($user), $asked))));
+            $this->app->db()->run('UPDATE users SET permissions = ?, updated_at = ? WHERE id = ?', [implode(',', $permissions), $now, $user['id']]);
+        }
+        $this->app->db()->run('UPDATE access_requests SET status = ?, resolved_at = ?, resolved_by = ? WHERE id = ?', [$grant ? 'granted' : 'declined', $now, $this->uid(), $id]);
+        $this->app->activity($this->uid(), $grant ? 'access_granted' : 'access_declined', (string) $user['id'], ['permissions' => $asked], $this->req->ip());
+        Response::okAndContinue(['user' => Users::present($this->target((int) $user['id']))]);
+        $this->app->automations()->accessAnswered($user, $asked, $grant, (string) $this->session['name']);
         exit;
     }
 

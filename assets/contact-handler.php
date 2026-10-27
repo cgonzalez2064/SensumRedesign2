@@ -667,6 +667,15 @@ if ($cmsApp) {
         error_log('[sensum-contact] cms_delivery_threw');
         $sent = null;
     }
+    // Prospectos → Automatización: assignment, the assignee's notice and the
+    // visitor's confirmation (their e-mails go out after the response).
+    if ($leadId) {
+        try {
+            $cmsApp->automations()->afterLead($leadId);
+        } catch (\Throwable $e) {
+            error_log('[sensum-contact] automation_threw');
+        }
+    }
 }
 if ($sent !== null) {
     finish($cmsApp, $leadId, $sent);

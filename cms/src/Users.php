@@ -176,27 +176,54 @@ final class Users
     {
         $now = time();
         $this->app->db()->run(
-            'UPDATE users SET password_hash = ?, password_changed_at = ?, updated_at = ?, must_change_password = 0 WHERE id = ?',
+            'UPDATE users SET password_hash = ?, password_changed_at = ?, updated_at = ?, must_change_password = 0, temp_password_expires_at = NULL WHERE id = ?',
             [Passwords::hash($password), $now, $now, $userId]
         );
+        // A remembered browser no longer skips the second step after a password change.
+        $this->app->db()->run('DELETE FROM trusted_devices WHERE user_id = ?', [$userId]);
     }
 
     /**
      * A password given by someone who manages users. An invited account becomes
      * active (its invitation link stops working); with $mustChange the panel asks
-     * the person for a password of their own before anything else.
+     * the person for a password of their own before anything else, and the given
+     * one stops working after Automations::TEMP_PASSWORD_HOURS if it is not replaced.
      */
     public function setPasswordFor(array $user, string $password, bool $mustChange): void
     {
         $now = time();
         $this->app->db()->transaction(function () use ($user, $password, $mustChange, $now) {
             $this->app->db()->run(
-                "UPDATE users SET password_hash = ?, password_changed_at = ?, updated_at = ?, must_change_password = ?,
+                "UPDATE users SET password_hash = ?, password_changed_at = ?, updated_at = ?, must_change_password = ?, temp_password_expires_at = ?,
                         status = CASE status WHEN 'invited' THEN 'active' ELSE status END WHERE id = ?",
-                [Passwords::hash($password), $now, $now, $mustChange ? 1 : 0, (int) $user['id']]
+                [Passwords::hash($password), $now, $now, $mustChange ? 1 : 0, $mustChange ? $now + Automations::TEMP_PASSWORD_HOURS * 3600 : null, (int) $user['id']]
             );
             $this->app->db()->run("UPDATE user_tokens SET used_at = ? WHERE user_id = ? AND purpose IN ('invite', 'reset') AND used_at IS NULL", [$now, (int) $user['id']]);
+            $this->app->db()->run('DELETE FROM trusted_devices WHERE user_id = ?', [(int) $user['id']]);
         });
+    }
+
+    /**
+     * "Acceso hasta" from the panel: a date (YYYY-MM-DD) whose end, in the site's
+     * time zone, is when the account turns off; '' or null for no end date.
+     */
+    public static function parseAccessUntil(mixed $raw, ?int $now = null): ?int
+    {
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+        $now ??= time();
+        if (!is_string($raw) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw) || !($d = \DateTimeImmutable::createFromFormat('!Y-m-d', $raw)) || $d->format('Y-m-d') !== $raw) {
+            throw ApiError::validation(['accessUntil' => 'invalid']);
+        }
+        $end = $d->setTime(23, 59, 59)->getTimestamp();
+        if ($end <= $now) {
+            throw ApiError::validation(['accessUntil' => 'date_past']);
+        }
+        if ($end > $now + 2 * 366 * 86400) {
+            throw ApiError::validation(['accessUntil' => 'date_too_far']);
+        }
+        return $end;
     }
 
     /**
@@ -240,6 +267,10 @@ final class Users
             'twoFactorEnabled' => !empty($u['totp_enabled_at']),
             'twoFactorEnabledAt' => !empty($u['totp_enabled_at']) ? (int) $u['totp_enabled_at'] : null,
             'twoFactorForced' => !empty($u['two_factor_required']),
+            'accessUntil' => isset($u['access_until']) ? (int) $u['access_until'] : null,
+            // A password given by a manager that was not replaced in time no longer works.
+            'tempPasswordExpired' => !empty($u['must_change_password']) && isset($u['temp_password_expires_at']) && (int) $u['temp_password_expires_at'] <= time(),
+            'tempPasswordExpiresAt' => !empty($u['must_change_password']) && isset($u['temp_password_expires_at']) ? (int) $u['temp_password_expires_at'] : null,
         ];
     }
 }

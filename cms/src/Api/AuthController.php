@@ -65,7 +65,7 @@ final class AuthController extends Controller
         $result = $this->app->auth()->login($this->req, $email, $password);
         if (isset($result['challenge'])) {
             // Password correct; the authenticator code comes next (no session yet).
-            Response::ok(['authenticated' => false, 'twoFactor' => true, 'challenge' => $result['challenge']]);
+            Response::ok(['authenticated' => false, 'twoFactor' => true, 'challenge' => $result['challenge'], 'rememberAllowed' => $result['remember']]);
         }
         Response::ok($this->sessionPayload($result['user'], $result['csrf']));
     }
@@ -77,7 +77,7 @@ final class AuthController extends Controller
         if ($code === '') {
             throw ApiError::validation(['code' => 'required']);
         }
-        $result = $this->app->auth()->loginSecondStep($this->req, $this->str('challenge'), mb_substr($code, 0, 40));
+        $result = $this->app->auth()->loginSecondStep($this->req, $this->str('challenge'), mb_substr($code, 0, 40), $this->req->raw('remember') === true);
         Response::ok($this->sessionPayload($result['user'], $result['csrf']));
     }
 
@@ -194,6 +194,8 @@ final class AuthController extends Controller
         if ($user) {
             $sent = $this->app->mailer()->send((new Emails($this->app))->welcome($user, $inviter ? (string) $inviter['name'] : ''));
             $this->app->activity((int) $user['id'], 'welcome_email', '', ['sent' => $sent]);
+            // Whoever invited them hears that the account is active.
+            $this->app->automations()->invitationAccepted($user);
         }
         exit;
     }
@@ -239,6 +241,9 @@ final class AuthController extends Controller
         }
         if (!hash_equals($password, $confirm)) {
             throw ApiError::validation(['passwordConfirm' => 'password_mismatch']);
+        }
+        if ($err = Passwords::breachedError($this->app, $password)) {
+            throw ApiError::validation(['password' => $err]);
         }
     }
 }

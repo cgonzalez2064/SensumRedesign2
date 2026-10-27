@@ -4,16 +4,50 @@
  * change (canManage) and which access it may give (assignable).
  */
 import { h, icon, clear, initials, fill } from '../dom.js';
-import { t, fmtRelative, fmtDate } from '../i18n.js';
+import { t, tp, fmtRelative, fmtDate } from '../i18n.js';
 import { api } from '../api.js';
-import { pageHead, loading, loadError, textField, passwordField, passwordGuide, alertBox, toast, errorText, fieldErrorText, openDialog, confirmDialog, askPassword, setBusy, button, dropdown, copyText, emptyState, switchInput, segmented } from '../ui.js';
-import { accessPicker, accessLabel, accessTypeOf } from '../access.js';
+import { pageHead, loading, loadError, textField, passwordField, passwordGuide, alertBox, toast, errorText, fieldErrorText, openDialog, confirmDialog, askPassword, setBusy, button, dropdown, copyText, emptyState, switchInput, segmented, attachEmailHint, cardHead } from '../ui.js';
+import { accessPicker, accessLabel, accessTypeOf, permissionList } from '../access.js';
 import { viewAs, pickViewAs } from '../viewas.js';
 import { reloadSession } from '../app.js';
 
 const STATUS_BADGE = { active: 'badge-ok', invited: 'badge-warn', disabled: 'badge' };
+const DAY = 86400;
+/** "2026-12-31" for a date input, from a timestamp (local time). */
+const isoDay = (ts) => { const d = new Date(ts * 1000); return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); };
 
-export async function render({ main }) {
+/**
+ * Filter tabs: everyone, by status, then what may need attention (shown only
+ * when someone matches). Their keys are also the "?revisar=" links from Inicio
+ * and from the automatic e-mails.
+ */
+const FILTERS = [
+  ['todas', () => true],
+  ['activas', (u) => u.status === 'active'],
+  ['invitaciones', (u) => u.status === 'invited'],
+  ['desactivadas', (u) => u.status === 'disabled'],
+  ['contrasena', (u) => u.status === 'active' && u.mustChangePassword, true],
+  ['sin-verificacion', (u) => u.status === 'active' && !u.twoFactorEnabled, true],
+  ['inactivas', (u) => u.status === 'active' && !u.isOwner && (u.lastLoginAt || u.createdAt) < Date.now() / 1000 - 90 * DAY, true],
+  ['temporales', (u) => u.status === 'active' && !!u.accessUntil, true],
+];
+
+/** "Acceso temporal" switch with its end date (invite and change access). Returns { el, value(): ''|'YYYY-MM-DD'|null for unchanged }. */
+function accessUntilField(idPrefix, current) {
+  const sw = switchInput({ id: idPrefix + '-tmp', checked: !!current });
+  const today = isoDay(Date.now() / 1000);
+  const date = h('input', { class: 'input', type: 'date', id: idPrefix + '-until', min: today, value: current ? isoDay(current) : isoDay(Date.now() / 1000 + 30 * DAY), 'aria-describedby': idPrefix + '-until-hint' });
+  const dateBox = h('div', { class: 'field', hidden: !current || null },
+    h('label', { class: 'label', for: idPrefix + '-until', text: t('users.accessUntilLabel') }), date,
+    h('div', { class: 'field-foot' }, h('span', { class: 'hint', id: idPrefix + '-until-hint', text: t('users.accessUntilHint') })));
+  sw.input.addEventListener('change', () => { dateBox.hidden = !sw.input.checked; if (sw.input.checked) date.focus(); });
+  const el = h('div', { class: 'stack-sm temp-access' },
+    h('div', { class: 'row-between switch-row' }, h('div', null, h('label', { for: idPrefix + '-tmp', class: 'strong', text: t('users.temporaryAccess') }),
+      h('p', { class: 'tiny muted', text: t('users.temporaryAccessHelp') })), sw.wrap), dateBox);
+  return { el, date, value: () => (sw.input.checked ? date.value : '') };
+}
+
+export async function render({ main, query, navigate, can }) {
   const add = button(t('users.invite'), { variant: 'primary', icon: 'person-plus' });
   // "Ver como" (owner only): check what each access type sees (read-only).
   const viewBtn = button(t('viewAs.pick'), { icon: 'eye', onClick: () => pickViewAs({ onDone: () => reloadSession('/') }) });
@@ -25,8 +59,9 @@ export async function render({ main }) {
   let presets = null;
   let assignable = [];
   let viewerIsOwner = false;
+  const canSeeActivity = can('site') || can('users');
   // Search and filters (kept while the list reloads after a change).
-  const filters = { q: '', status: '', access: '' };
+  const filters = { q: '', view: FILTERS.some(([k]) => k === query.get('revisar')) ? query.get('revisar') : 'todas', access: '' };
   const fold = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const load = async () => {
     let data;
@@ -37,6 +72,7 @@ export async function render({ main }) {
     viewerIsOwner = !!data.viewerIsOwner;
     viewBtn.hidden = !viewerIsOwner;
     const statusText = (u) => {
+      if (u.status === 'disabled' && u.accessUntil && u.accessUntil * 1000 <= Date.now()) return t('users.accessEnded', { when: fmtDate(u.accessUntil, false) });
       if (u.status !== 'invited') return null;
       return u.inviteExpiresAt && u.inviteExpiresAt * 1000 > Date.now()
         ? t('users.inviteExpires', { when: fmtDate(u.inviteExpiresAt) })
@@ -56,8 +92,10 @@ export async function render({ main }) {
         u.status === 'active' ? menuItem('envelope', t('users.sendLink'), () => { close(true); sendLink(u); }) : null,
         u.status !== 'disabled' ? menuItem('key', t('users.setPassword'), () => { close(true); setPassword(u); }) : null,
         u.status !== 'disabled' ? menuItem('phone', t('users.twoFactor'), () => { close(true); twoFactor(u); }) : null,
+        u.status === 'active' ? menuItem('box-arrow-right', t('users.revokeSessions'), () => { close(true); revokeSessions(u); }) : null,
         h('hr'),
         menuItem('shield-lock', t('access.change'), () => { close(true); changeAccess(u); }),
+        canSeeActivity ? menuItem('clock-history', t('users.viewActivity'), () => { close(); navigate('/actividad?persona=' + u.id); }) : null,
         u.status === 'disabled' ? menuItem('check2-circle', t('users.enable'), () => { close(true); update(u, { status: 'active' }); })
           : u.status === 'active' ? menuItem('lock', t('users.disable'), () => { close(true); disable(u); }) : null,
         h('hr'),
@@ -66,17 +104,33 @@ export async function render({ main }) {
     };
     const person = (u) => h('div', { class: 'person' }, h('span', { class: 'avatar', 'aria-hidden': 'true', text: initials(u.name) }),
       h('div', { class: 'grow' }, h('strong', { class: 'break', text: u.name }), h('div', { class: 'small muted break', text: u.email })));
-    const statusBadge = (u) => h('div', { class: 'stack-sm' }, h('span', { class: ['badge', STATUS_BADGE[u.status]], text: t('users.status.' + u.status) }),
+    const statusBadge = (u) => h('div', { class: 'stack-sm user-status' }, h('span', { class: ['badge', STATUS_BADGE[u.status]], text: t('users.status.' + u.status) }),
       statusText(u) ? h('span', { class: 'tiny muted', text: statusText(u) }) : null,
-      u.mustChangePassword ? h('span', { class: 'tiny user-flag' }, icon('key'), t('users.mustChangeBadge')) : null,
+      u.tempPasswordExpired ? h('span', { class: 'tiny user-flag warn-text' }, icon('hourglass-split'), t('users.tempExpiredBadge'))
+        : u.mustChangePassword ? h('span', { class: 'tiny user-flag' }, icon('key'), t('users.mustChangeBadge')) : null,
+      u.status !== 'disabled' && u.accessUntil ? h('span', { class: ['tiny', 'user-flag', u.accessUntil - Date.now() / 1000 < 7 * DAY ? 'warn-text' : 'muted'] }, icon('hourglass-split'), t('users.accessUntilBadge', { when: fmtDate(u.accessUntil, false) })) : null,
       u.twoFactorEnabled ? h('span', { class: 'tiny muted user-flag' }, icon('shield-lock'), t('users.twoFactorBadge')) : null);
 
     // ---- search & filters
     const typeOf = (u) => (u.isOwner ? 'owner' : accessTypeOf(u.permissions || [], presets));
     const search = h('input', { class: 'input', type: 'search', value: filters.q, placeholder: t('users.search'), 'aria-label': t('users.search'), autocomplete: 'off' });
-    const statusSel = h('select', { class: 'select', 'aria-label': t('users.filterStatus') },
-      [['', t('users.allStatuses')], ['active', t('users.status.active')], ['invited', t('users.status.invited')], ['disabled', t('users.status.disabled')]]
-        .map(([v, l]) => h('option', { value: v, text: l, selected: v === filters.status || null })));
+    // Everyone / by status, then «Revisar»: only the checks someone matches (a link from Inicio keeps its tab).
+    const counts = Object.fromEntries(FILTERS.map(([k, test]) => [k, users.filter(test).length]));
+    const tabs = h('div', { class: 'filter-tabs users-tabs hide-sm', role: 'group', 'aria-label': t('users.filterLabel') });
+    // Phones: the same choices in one menu (eight tabs would take half the screen).
+    const viewSel = h('select', { class: 'select only-sm users-view', id: 'users-view', 'aria-label': t('users.filterLabel') });
+    viewSel.addEventListener('change', () => { filters.view = viewSel.value; drawTabs(); renderList(); });
+    const drawTabs = () => {
+      const shown = FILTERS.filter(([k, , review]) => !review || counts[k] > 0 || filters.view === k);
+      fill(tabs, shown.map(([k, , review], i) => [
+        review && !shown[i - 1][2] ? h('span', { class: 'filter-sep', text: t('users.reviewLabel') }) : null,
+        h('button', { type: 'button', class: ['filter-tab', review && 'filter-tab-review'], 'aria-pressed': String(filters.view === k),
+          onclick: () => { filters.view = k; drawTabs(); renderList(); } },
+        t('users.filters.' + k), h('span', { class: 'count', text: String(counts[k]) }))]));
+      const opt = ([k]) => h('option', { value: k, selected: filters.view === k || null, text: `${t('users.filters.' + k)} (${counts[k]})` });
+      const review = shown.filter((f) => f[2]);
+      fill(viewSel, shown.filter((f) => !f[2]).map(opt), review.length ? h('optgroup', { label: t('users.reviewLabel') }, review.map(opt)) : null);
+    };
     const accessSel = h('select', { class: 'select', 'aria-label': t('users.filterAccess') },
       h('option', { value: '', text: t('users.allAccess') }), h('option', { value: 'owner', text: t('users.ownerAccess'), selected: filters.access === 'owner' || null }),
       [...Object.keys(presets), 'custom'].map((k) => h('option', { value: k, text: t('access.types.' + k)[0], selected: k === filters.access || null })));
@@ -85,7 +139,7 @@ export async function render({ main }) {
     const matches = (u) => {
       const q = fold(filters.q.trim());
       if (q && !fold(u.name + ' ' + u.email + ' ' + accessLabel(u, presets)).includes(q)) return false;
-      if (filters.status && u.status !== filters.status) return false;
+      if (!FILTERS.find(([k]) => k === filters.view)[1](u)) return false;
       if (filters.access && typeOf(u) !== filters.access) return false;
       return true;
     };
@@ -94,16 +148,15 @@ export async function render({ main }) {
       count.textContent = shown.length === users.length ? t('users.countAll', { n: users.length }) : t('users.countSome', { n: shown.length, total: users.length });
       if (!shown.length) {
         fill(listBox, h('div', { class: 'card' }, emptyState('people', t('users.noMatchTitle'), t('users.noMatchBody'),
-          button(t('users.clearFilters'), { small: true, onClick: () => { filters.q = ''; filters.status = ''; filters.access = ''; search.value = ''; statusSel.value = ''; accessSel.value = ''; renderList(); } }))));
+          button(t('users.clearFilters'), { small: true, onClick: () => { filters.q = ''; filters.view = 'todas'; filters.access = ''; search.value = ''; accessSel.value = ''; drawTabs(); renderList(); } }))));
         return;
       }
       fill(listBox, tableOf(shown), cardsOf(shown));
     };
     let timer = 0;
     search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { filters.q = search.value; renderList(); }, 150); });
-    statusSel.addEventListener('change', () => { filters.status = statusSel.value; renderList(); });
     accessSel.addEventListener('change', () => { filters.access = accessSel.value; renderList(); });
-    const toolbar = h('div', { class: 'users-toolbar' }, h('div', { class: 'users-search' }, icon('search'), search), statusSel, accessSel);
+    const toolbar = h('div', { class: 'users-toolbar' }, h('div', { class: 'users-search' }, icon('search'), search), accessSel);
 
     const tableOf = (list) => h('div', { class: 'table-wrap responsive hide-sm' }, h('table', { class: 'table' },
       h('thead', null, h('tr', null, ['name', 'access', 'status', 'lastLogin'].map((c) => h('th', { scope: 'col', text: t('users.cols.' + c) })), h('th', { scope: 'col' }, h('span', { class: 'sr-only', text: t('users.cols.actions') })))),
@@ -118,8 +171,38 @@ export async function render({ main }) {
       h('div', { class: 'small', text: accessLabel(u, presets) }),
       h('div', { class: 'row' }, statusBadge(u)),
       h('div', { class: 'tiny muted', text: u.lastLoginAt ? t('users.lastLogin', { when: fmtRelative(u.lastLoginAt) }) : t('users.neverLoggedIn') }))));
-    fill(body, h('div', { class: 'stack' }, toolbar, count, listBox));
+    fill(body, h('div', { class: 'stack' }, requestsCard(data.requests || [], users), toolbar, tabs, viewSel, count, listBox));
+    drawTabs();
     renderList();
+  };
+
+  // ---- «Pedir acceso»: requests waiting for an answer
+  const requestsCard = (requests) => {
+    if (!requests.length) return null;
+    const answer = async (r, grant, btn) => {
+      setBusy(btn, true, t('common.saving'));
+      try {
+        await api.post(`/users/requests/${r.id}`, { grant });
+        toast(t(grant ? 'users.requestGranted' : 'users.requestDeclined', { name: r.name }));
+        load();
+      } catch (err) { setBusy(btn, false); toast(err.code === 'validation' ? fieldErrorText(Object.values(err.fields)[0]) : errorText(err), { type: 'bad' }); }
+    };
+    return h('section', { class: 'card requests-card', 'aria-labelledby': 'req-t' },
+      cardHead({ id: 'req-t', icon: 'send', tone: 'warn', title: tp('users.requestsTitle', requests.length), lead: t('users.requestsLead') }),
+      h('ul', { class: 'request-list' }, requests.map((r) => {
+        const grant = r.canGrant ? button(t('users.requestGrant'), { variant: 'primary', small: true, icon: 'check-lg', attrs: { 'aria-label': t('users.requestGrantFor', { name: r.name }) } }) : null;
+        const decline = button(t('users.requestDecline'), { small: true, variant: 'ghost', attrs: { 'aria-label': t('users.requestDeclineFor', { name: r.name }) } });
+        if (grant) grant.addEventListener('click', () => answer(r, true, grant));
+        decline.addEventListener('click', () => answer(r, false, decline));
+        return h('li', { class: 'request-row' },
+          h('span', { class: 'avatar', 'aria-hidden': 'true', text: initials(r.name) }),
+          h('div', { class: 'grow stack-sm' },
+            h('div', null, h('strong', { class: 'break', text: r.name }), h('span', { class: 'tiny muted', text: ' · ' + fmtRelative(r.createdAt) })),
+            h('div', { class: 'small' }, t('users.requestAsks') + ' ', h('strong', { text: permissionList(r.permissions) })),
+            r.message ? h('blockquote', { class: 'request-message small', text: r.message }) : null,
+            r.canGrant ? null : h('p', { class: 'tiny muted', text: t('users.requestOwnerOnly') })),
+          h('div', { class: 'row request-actions' }, decline, grant));
+      })));
   };
 
   const menuItem = (ic, label, onClick, danger) => h('button', { type: 'button', class: ['menu-item', danger && 'danger'], onclick: onClick }, icon(ic), label);
@@ -149,9 +232,10 @@ export async function render({ main }) {
   };
   const changeAccess = (u) => {
     const picker = accessPicker(presets, u.permissions, 'chg', assignable);
+    const until = accessUntilField('chg', u.accessUntil && u.accessUntil * 1000 > Date.now() ? u.accessUntil : null);
     const msg = h('div');
     const dlg = openDialog({
-      title: t('access.changeTitle', { name: u.name }), labelledIcon: 'shield-lock', body: h('div', { class: 'stack' }, picker.el, msg), wide: true,
+      title: t('access.changeTitle', { name: u.name }), labelledIcon: 'shield-lock', body: h('div', { class: 'stack' }, picker.el, until.el, msg), wide: true,
       actions: [
         { label: t('common.cancel'), onClick: (b, close) => close() },
         { label: t('common.save'), variant: 'primary', icon: 'check-lg', onClick: async (btn) => {
@@ -159,11 +243,18 @@ export async function render({ main }) {
           const permissions = picker.value();
           if (!permissions.length) return msg.append(alertBox('bad', null, t('access.pickOne')));
           setBusy(btn, true, t('common.saving'));
-          try { await api.put(`/users/${u.id}`, { permissions }); dlg.close(); toast(t('access.changed')); load(); }
+          try { await api.put(`/users/${u.id}`, { permissions, accessUntil: until.value() }); dlg.close(); toast(t('access.changed')); load(); }
           catch (err) { setBusy(btn, false); msg.append(alertBox('bad', null, err.code === 'validation' ? fieldErrorText(Object.values(err.fields)[0]) : errorText(err, { preserved: true }))); }
         } },
       ],
     });
+  };
+  const revokeSessions = async (u) => {
+    if (!(await confirmDialog({ title: t('users.revokeTitle', { name: u.name }), body: t('users.revokeBody'), confirmLabel: t('users.revokeConfirm') }))) return;
+    try {
+      const r = await api.post(`/users/${u.id}/sessions/revoke`, {});
+      toast(r.ended ? tp('users.revokeDone', r.ended, { name: u.name }) : t('users.revokeNone', { name: u.name }));
+    } catch (err) { toast(errorText(err), { type: 'bad' }); }
   };
   const disable = async (u) => {
     if (await confirmDialog({ title: t('users.disableTitle', { name: u.name }), body: t('users.disableBody'), confirmLabel: t('users.disable'), danger: true })) update(u, { status: 'disabled' });
@@ -189,6 +280,7 @@ export async function render({ main }) {
   const editProfile = (u) => {
     const name = textField({ label: t('users.name'), value: u.name, autocomplete: 'off', max: 80, required: true });
     const email = textField({ label: t('users.email'), value: u.email, type: 'email', autocomplete: 'off', inputmode: 'email', required: true });
+    attachEmailHint(email);
     const pw = passwordField({ label: t('users.confirmWithPassword'), autocomplete: 'current-password', required: true });
     const note = h('p', { class: 'small muted', text: t(u.status === 'invited' ? 'users.editInvitedNote' : 'users.editEmailNote') });
     const confirmBox = h('div', { class: 'stack-sm', hidden: true }, note, pw.wrap);
@@ -285,19 +377,23 @@ export async function render({ main }) {
       const btn = dlg.foot.lastChild;
       setBusy(btn, true, t('common.saving'));
       try {
-        await api.post(`/users/${u.id}/password`, { password, mustChange, currentPassword: mine.input.value });
+        const r = await api.post(`/users/${u.id}/password`, { password, mustChange, currentPassword: mine.input.value });
         dlg.close();
         load();
-        // Shown once more so it can be copied; it is never e-mailed.
+        // Shown once more so it can be copied, with a message ready to send by WhatsApp; it is never e-mailed.
+        const message = h('pre', { class: 'share-message', tabindex: '0', 'aria-label': t('users.shareMessageLabel'), text: r.message || '' });
         openDialog({
-          title: t('users.setPasswordDoneTitle'), labelledIcon: 'check-circle-fill',
+          title: t('users.setPasswordDoneTitle'), labelledIcon: 'check-circle-fill', wide: true,
           body: h('div', { class: 'stack' }, h('output', { class: 'pw-generated', text: password }),
             h('p', { class: 'muted', text: t('users.setPasswordDoneBody', { name: u.name }) }),
-            mustChange ? h('p', { class: 'small muted', text: t('users.setPasswordDoneChange') }) : null),
+            mustChange ? h('p', { class: 'small muted', text: t('users.setPasswordDoneChange', { hours: 72 }) }) : null,
+            r.message ? h('div', { class: 'stack-sm' }, h('span', { class: 'label', text: t('users.shareMessageLabel') }), message,
+              h('p', { class: 'tiny muted', text: t('users.shareMessageHint') })) : null),
           actions: [
             { label: t('common.close'), onClick: (b, close) => close() },
-            { label: t('users.pwCopy'), variant: 'primary', icon: 'clipboard', onClick: () => copy(password) },
-          ],
+            { label: t('users.pwCopyOnly'), icon: 'key', onClick: () => copy(password) },
+            r.message ? { label: t('users.shareMessageCopy'), variant: 'primary', icon: 'clipboard', onClick: async () => { if (await copyText(r.message)) toast(t('users.shareMessageCopied')); } } : null,
+          ].filter(Boolean),
         });
       } catch (err) {
         setBusy(btn, false);
@@ -347,11 +443,13 @@ export async function render({ main }) {
   add.addEventListener('click', () => {
     const name = textField({ label: t('users.name'), autocomplete: 'off', max: 80, required: true });
     const email = textField({ label: t('users.email'), type: 'email', autocomplete: 'off', inputmode: 'email', required: true });
+    attachEmailHint(email);
     const picker = accessPicker(presets, assignable.length && presets.content.every((p) => assignable.includes(p)) ? presets.content : assignable.slice(0, 1), 'inv', assignable);
+    const until = accessUntilField('inv', null);
     const lang = h('div', { class: 'field' }, h('label', { class: 'label', for: 'inv-lang', text: t('users.language') }),
       h('select', { class: 'select', id: 'inv-lang' }, h('option', { value: 'es', text: 'Español' }), h('option', { value: 'en', text: 'English' })));
     const msg = h('div');
-    const form = h('form', { class: 'stack', novalidate: true }, name.wrap, email.wrap, picker.el, lang, msg);
+    const form = h('form', { class: 'stack', novalidate: true }, name.wrap, email.wrap, picker.el, until.el, lang, msg);
     const dlg = openDialog({
       title: t('users.inviteTitle'), lead: t('users.inviteLead'), labelledIcon: 'person-plus', body: form, wide: true,
       actions: [
@@ -374,7 +472,7 @@ export async function render({ main }) {
       if (!permissions.length) return msg.append(alertBox('bad', null, t('access.pickOne')));
       setBusy(btn, true, t('common.saving'));
       try {
-        const r = await api.post('/users', { name: n, email: em, permissions, lang: form.querySelector('#inv-lang').value });
+        const r = await api.post('/users', { name: n, email: em, permissions, lang: form.querySelector('#inv-lang').value, accessUntil: until.value() });
         dlg.close();
         if (r.emailSent) toast(t('users.invited', { email: em })); else linkFallback(r.inviteLink);
         load();
@@ -384,6 +482,7 @@ export async function render({ main }) {
           if (err.fields.name) name.setError(fieldErrorText(err.fields.name, { max: 80 }));
           if (err.fields.email) { email.setError(fieldErrorText(err.fields.email)); email.input.focus(); }
           if (err.fields.permissions) msg.append(alertBox('bad', null, err.fields.permissions === 'not_assignable' ? fieldErrorText('not_assignable') : t('access.pickOne')));
+          if (err.fields.accessUntil) msg.append(alertBox('bad', null, fieldErrorText(err.fields.accessUntil)));
         } else msg.append(alertBox('bad', null, errorText(err, { preserved: true })));
       }
     });

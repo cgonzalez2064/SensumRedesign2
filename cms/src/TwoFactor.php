@@ -15,13 +15,14 @@ use Sensum\Cms\Http\ApiError;
  * codes. The secret is stored encrypted; a code cannot be used twice.
  *
  * Policy (owner, Seguridad): "owner" (default) requires it for the owner
- * account, "all" for everyone, "none" leaves it optional. Whoever manages users
+ * account, "admins" for the owner and whoever manages users or publishes the
+ * site, "all" for everyone, "none" leaves it optional. Whoever manages users
  * can also require it for one person (users.two_factor_required). An account
  * that must use it but has not set it up yet can only reach the set-up screen.
  */
 final class TwoFactor
 {
-    public const POLICIES = ['none', 'owner', 'all'];
+    public const POLICIES = ['none', 'owner', 'admins', 'all'];
     private const DIGITS = 6;
     private const PERIOD = 30;
     private const RECOVERY_CODES = 10;
@@ -60,7 +61,13 @@ final class TwoFactor
     public function requiredByPolicy(array $user): bool
     {
         $p = $this->policy();
-        return $p === 'all' || ($p === 'owner' && $this->app->auth()->isOwner($user));
+        $auth = $this->app->auth();
+        return match ($p) {
+            'all' => true,
+            'admins' => $auth->isOwner($user) || in_array('users', Users::permissionsOf($user), true) || in_array('site', Users::permissionsOf($user), true),
+            'owner' => $auth->isOwner($user),
+            default => false,
+        };
     }
 
     public function enabled(array $user): bool
@@ -95,6 +102,7 @@ final class TwoFactor
             'enabledAt' => $u['totp_enabled_at'] !== null ? (int) $u['totp_enabled_at'] : null,
             'required' => $this->required($u),
             'recoveryRemaining' => (int) $this->app->db()->value('SELECT COUNT(*) FROM recovery_codes WHERE user_id = ? AND used_at IS NULL', [$userId]),
+            'rememberedDevices' => (int) $this->app->db()->value('SELECT COUNT(*) FROM trusted_devices WHERE user_id = ? AND expires_at > ?', [$userId, time()]),
         ];
     }
 
@@ -163,6 +171,7 @@ final class TwoFactor
         $this->app->db()->transaction(function () use ($userId) {
             $this->app->db()->run('UPDATE users SET totp_secret_enc = NULL, totp_pending_enc = NULL, totp_enabled_at = NULL, totp_last_step = 0 WHERE id = ?', [$userId]);
             $this->app->db()->run('DELETE FROM recovery_codes WHERE user_id = ?', [$userId]);
+            $this->app->db()->run('DELETE FROM trusted_devices WHERE user_id = ?', [$userId]);
         });
     }
 

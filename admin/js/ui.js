@@ -284,6 +284,50 @@ export function alertBox(type, title, body, actions) {
       actions && actions.length ? h('div', { class: 'alert-actions' }, actions) : null));
 }
 
+// ---------------------------------------------------------------- e-mail typos
+// Domains people at Sensum and their clients use; a near miss gets a suggestion.
+const EMAIL_DOMAINS = ['gmail.com', 'hotmail.com', 'hotmail.es', 'outlook.com', 'outlook.es', 'yahoo.com', 'yahoo.es', 'icloud.com', 'live.com',
+  'gruposensum.com', 'sensumconstrucciones.com'];
+/** Edit distance with transpositions (gmial → gmail = 1). */
+function editDistance(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+  }
+  return d[a.length][b.length];
+}
+/** "ana@hotmial.com" → "ana@hotmail.com"; null when the address looks right. */
+export function emailSuggestion(value) {
+  const m = /^([^\s@]+)@([^\s@]+\.[^\s@]+)$/.exec(String(value).trim().toLowerCase());
+  if (!m || EMAIL_DOMAINS.includes(m[2])) return null;
+  let best = null;
+  for (const d of EMAIL_DOMAINS) {
+    const dist = editDistance(m[2], d);
+    if (dist > 0 && dist <= (d.length > 9 ? 2 : 1) && (!best || dist < best[1])) best = [d, dist];
+  }
+  return best ? m[1] + '@' + best[0] : null;
+}
+/** Under an e-mail field: «¿Quisiste decir …?» with a button that fixes it. */
+export function attachEmailHint(field) {
+  const box = h('div', { class: 'email-hint', hidden: true, 'aria-live': 'polite' });
+  const check = () => {
+    const s = emailSuggestion(field.input.value);
+    clear(box);
+    box.hidden = !s;
+    if (!s) return;
+    box.append(icon('lightbulb'), h('span', null, t('common.didYouMean') + ' ', h('strong', { text: s }), '?'),
+      h('button', { type: 'button', class: 'btn btn-link btn-sm', onclick: () => { field.input.value = s; field.input.dispatchEvent(new Event('input', { bubbles: true })); box.hidden = true; field.input.focus(); } }, t('common.useThis')));
+  };
+  field.input.addEventListener('blur', check);
+  field.input.addEventListener('input', () => { if (!box.hidden) check(); });
+  field.wrap.append(box);
+  return box;
+}
+
 export function emptyState(ic, title, body, action) {
   return h('div', { class: 'empty' }, h('span', { class: 'icon-tile' }, icon(ic)), h('h3', { text: title }), body ? h('p', { text: body }) : null, action || null);
 }
