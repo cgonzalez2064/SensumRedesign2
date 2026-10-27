@@ -32,7 +32,9 @@ on a computer that isn't yours.
 
 For security, your session ends after 60 minutes without activity. If that
 happens while you're editing, the panel asks for your password right there and
-**you won't lose what you were typing**.
+**you won't lose what you were typing**. It also ends if an administrator changes
+your e-mail or password; if your e-mail changed, tap **E-mail changed? Use
+another** and type the new one.
 
 **First time:** you'll receive an invitation email. Open it, tap **Create my
 password**, choose a password, and you're in. The link expires after 72 hours;

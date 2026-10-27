@@ -43,25 +43,25 @@ export async function render({ main }) {
         : t('users.inviteExpired');
     };
     const actionsMenu = (u) => {
-      const trigger = h('button', { type: 'button', class: 'btn btn-ghost btn-icon btn-sm', 'aria-label': t('users.actionsFor', { name: u.name }) }, icon('three-dots-vertical'));
+      const trigger = h('button', { type: 'button', class: 'btn btn-ghost btn-icon btn-sm', 'aria-label': t('users.actionsFor', { name: u.name }), 'data-focus-key': 'user-' + u.id }, icon('three-dots-vertical'));
       if (u.isSelf) return h('span', { class: 'badge badge-brand', text: t('users.you') });
       if (!u.canManage) {
         // The owner, or someone with more access (or who also manages users): only the owner changes them.
         return h('span', { class: 'muted not-manageable', title: t('users.notManageable'), 'aria-label': t('users.notManageable'), role: 'img' }, icon('lock'));
       }
       return dropdown(trigger, (close) => [
-        viewerIsOwner && u.status !== 'disabled' && !u.isOwner ? menuItem('eye', t('viewAs.menu'), async () => { close(); if (await viewAs(u, { active: false })) reloadSession('/'); }) : null,
-        u.status === 'invited' ? menuItem('send', t('users.resend'), () => { close(); resend(u); }) : null,
-        menuItem('pencil', t('users.editProfile'), () => { close(); editProfile(u); }),
-        u.status === 'active' ? menuItem('envelope', t('users.sendLink'), () => { close(); sendLink(u); }) : null,
-        u.status !== 'disabled' ? menuItem('key', t('users.setPassword'), () => { close(); setPassword(u); }) : null,
-        u.status !== 'disabled' ? menuItem('phone', t('users.twoFactor'), () => { close(); twoFactor(u); }) : null,
+        viewerIsOwner && u.status !== 'disabled' && !u.isOwner ? menuItem('eye', t('viewAs.menu'), async () => { close(true); if (await viewAs(u, { active: false })) reloadSession('/'); }) : null,
+        u.status === 'invited' ? menuItem('send', t('users.resend'), () => { close(true); resend(u); }) : null,
+        menuItem('pencil', t('users.editProfile'), () => { close(true); editProfile(u); }),
+        u.status === 'active' ? menuItem('envelope', t('users.sendLink'), () => { close(true); sendLink(u); }) : null,
+        u.status !== 'disabled' ? menuItem('key', t('users.setPassword'), () => { close(true); setPassword(u); }) : null,
+        u.status !== 'disabled' ? menuItem('phone', t('users.twoFactor'), () => { close(true); twoFactor(u); }) : null,
         h('hr'),
-        menuItem('shield-lock', t('access.change'), () => { close(); changeAccess(u); }),
-        u.status === 'disabled' ? menuItem('check2-circle', t('users.enable'), () => { close(); update(u, { status: 'active' }); })
-          : u.status === 'active' ? menuItem('lock', t('users.disable'), () => { close(); disable(u); }) : null,
+        menuItem('shield-lock', t('access.change'), () => { close(true); changeAccess(u); }),
+        u.status === 'disabled' ? menuItem('check2-circle', t('users.enable'), () => { close(true); update(u, { status: 'active' }); })
+          : u.status === 'active' ? menuItem('lock', t('users.disable'), () => { close(true); disable(u); }) : null,
         h('hr'),
-        menuItem('trash3', t('users.remove'), () => { close(); remove(u); }, true),
+        menuItem('trash3', t('users.remove'), () => { close(true); remove(u); }, true),
       ]).el;
     };
     const person = (u) => h('div', { class: 'person' }, h('span', { class: 'avatar', 'aria-hidden': 'true', text: initials(u.name) }),

@@ -48,6 +48,11 @@ export function fieldErrorText(code, params = {}) {
  */
 export function openDialog({ title, lead, body, actions = [], wide = false, dismissible = true, onClose, labelledIcon } = {}) {
   const titleId = nextId('dlg');
+  // Where focus goes back on close: what opened it, or — when that was in a dialog
+  // that has closed meanwhile — what opened that one.
+  const opener = document.activeElement;
+  const openerDialog = opener && opener.closest ? opener.closest('dialog') : null;
+  const fallback = openerDialog ? openerDialog.focusBack : null;
   const foot = actions.length ? h('div', { class: 'dialog-foot' }) : null;
   const bodyEl = h('div', { class: 'dialog-body' }, body);
   const dlg = h('dialog', { class: ['dialog', wide && 'wide'], 'aria-labelledby': titleId },
@@ -61,7 +66,7 @@ export function openDialog({ title, lead, body, actions = [], wide = false, dism
   const close = (result) => {
     if (closed) return;
     closed = true;
-    const done = () => { dlg.close(); dlg.remove(); if (onClose) onClose(result); };
+    const done = () => { dlg.close(); dlg.remove(); restoreFocus(opener, fallback); if (onClose) onClose(result); };
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return done();
     dlg.classList.add('closing');
     setTimeout(done, 190);
@@ -74,9 +79,26 @@ export function openDialog({ title, lead, body, actions = [], wide = false, dism
   }
   dlg.addEventListener('cancel', (e) => { e.preventDefault(); if (dismissible) close(); });
   dlg.addEventListener('click', (e) => { if (e.target === dlg && dismissible) close(); });
+  dlg.focusBack = openerDialog ? fallback : opener;
   document.body.appendChild(dlg);
   dlg.showModal();
   return { el: dlg, body: bodyEl, foot, close };
+}
+
+/**
+ * Focus back on the control that opened a dialog. A list drawn again meanwhile has a
+ * new copy of it: the visible element with the same data-focus-key.
+ */
+function restoreFocus(...candidates) {
+  const now = document.activeElement;
+  if (now && now !== document.body) return; // something else already has it (another dialog)
+  for (const el of candidates) {
+    if (!el || el === document.body || !el.focus) continue;
+    if (el.isConnected) { el.focus(); return; }
+    const key = el.dataset && el.dataset.focusKey;
+    const twin = key && [...document.querySelectorAll('[data-focus-key]')].find((x) => x.dataset.focusKey === key && x.offsetParent !== null);
+    if (twin) { twin.focus(); return; }
+  }
 }
 
 /** Promise<boolean> confirmation dialog. */

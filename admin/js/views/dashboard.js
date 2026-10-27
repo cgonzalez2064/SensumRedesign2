@@ -88,6 +88,7 @@ export async function render({ main, session, isOwner, can }) {
         acts.length ? h('ul', { class: 'status-list' }, acts.map((a) => h('li', null, icon('clock-history', 'muted'),
           h('div', { class: 'grow' }, h('span', null, h('strong', { text: a.user || t('dashboard.someone') }), ' ', t('dashboard.actions.' + a.action)),
             a.action === 'content_updated' && a.target ? h('span', { class: 'muted', text: ' — ' + (t('sections.' + a.target)[0] || a.target) }) : null,
+            a.targetName ? h('span', { class: 'muted break', text: ' — ' + a.targetName }) : null,
             h('div', { class: 'tiny muted', text: fmtDate(a.at) }))))) : h('p', { class: 'muted', text: t('dashboard.noActivity') })));
 
       // Diagnostics and errors: owner account only (the server sends them only to the owner).

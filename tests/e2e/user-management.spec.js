@@ -138,6 +138,41 @@ test('a site administrator fixes someone’s details and gives them a password t
   }
 });
 
+test('someone whose e-mail was changed while signed in carries on with the new one', async ({ browser }, info) => {
+  const elena = `Elena ${tag(info)}`;
+  const person = await activePerson(info, elena);
+  const page = await (await browser.newContext(info.project.use)).newPage();
+  await signIn(page, person);
+  await expect(page.locator('main h1')).toHaveText(/^(Te damos la bienvenida|Hola), Elena/);
+  if (await page.getByRole('button', { name: 'Guardar y continuar' }).isVisible()) await page.getByRole('button', { name: 'Guardar y continuar' }).click();
+  await expect(page.locator('main h1')).toHaveText(/^Hola, Elena/);
+
+  // The owner corrects the address: Elena's sessions end.
+  const owner = new Client(BASE);
+  await owner.login();
+  const newEmail = person.email.replace('elena.', 'elena.nuevo.');
+  expect((await owner.put(`/api/users/${person.id}/profile`, { name: elena, email: newEmail, currentPassword: ADMIN.password })).status).toBe(200);
+
+  // Her next step asks her to sign in again, in place; the old address is locked
+  // until she says it changed.
+  await page.goto('/admin/#/cuenta');
+  const dlg = page.getByRole('dialog', { name: 'Tu sesión terminó' });
+  await expect(dlg).toBeVisible();
+  await expect(dlg.getByText(/cuando cambian tus datos de acceso/)).toBeVisible();
+  const email = dlg.getByLabel('Correo electrónico');
+  await expect(email).toHaveAttribute('readonly', '');
+  await dlg.getByRole('button', { name: '¿Cambió tu correo? Usar otro' }).click();
+  await expect(email).not.toHaveAttribute('readonly', '');
+  await email.fill(newEmail);
+  await dlg.getByLabel('Contraseña', { exact: true }).fill(person.password);
+  await dlg.getByRole('button', { name: 'Continuar' }).click();
+  await expect(dlg).toBeHidden();
+  await expect(page.locator('main h1')).toHaveText('Mi cuenta');
+  // Signed in with the new address (what is on screen stays until it reloads).
+  await page.reload();
+  await expect(page.getByLabel('Correo', { exact: true })).toHaveValue(newEmail);
+});
+
 test('requiring two-step sign-in and sending a link for a new password', async ({ browser }, info) => {
   const rosa = `Rosa ${tag(info)}`;
   const person = await activePerson(info, rosa);

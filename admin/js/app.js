@@ -146,13 +146,21 @@ function relogin() {
   if (reloginPromise) return reloginPromise;
   reloginPromise = new Promise((resolve, reject) => {
     const email = state.session ? state.session.user.email : '';
+    const signedId = state.session ? state.session.user.id : null;
     const emailF = textField({ label: t('auth.email'), value: email, type: 'email', autocomplete: 'username', readOnly: !!email });
+    // An administrator may have changed this account's e-mail: the person types the new one.
+    const otherEmail = email ? button(t('auth.useOtherEmail'), { variant: 'link', small: true, onClick: () => {
+      emailF.input.readOnly = false;
+      otherEmail.hidden = true;
+      emailF.input.select();
+      emailF.input.focus();
+    } }) : null;
     const pwF = passwordField({ label: t('auth.password'), autocomplete: 'current-password' });
     const msg = h('div');
     const codeF = codeField({ allowRecovery: true, id: 'relogin-code' });
     let challenge = null;
     let ok = false;
-    const form = h('form', { class: 'stack', novalidate: true }, alertBox('info', null, t('auth.sessionExpiredBody')), emailF.wrap, pwF.wrap, msg);
+    const form = h('form', { class: 'stack', novalidate: true }, alertBox('info', null, t('auth.sessionExpiredBody')), emailF.wrap, otherEmail, pwF.wrap, msg);
     const dlg = openDialog({
       title: t('auth.sessionExpiredTitle'), body: form,
       onClose: () => { reloginPromise = null; if (!ok) reject(new Error('relogin_cancelled')); },
@@ -179,17 +187,27 @@ function relogin() {
             setBusy(btn, false);
             pwF.wrap.hidden = true;
             emailF.wrap.hidden = true;
+            if (otherEmail) otherEmail.hidden = true;
             form.insertBefore(codeF.wrap, msg);
             codeF.input.focus();
             return;
           }
+        }
+        if (signedId && data.user.id !== signedId) {
+          // Someone else signed in: nothing on screen is theirs, and the request that
+          // was waiting is not sent on their behalf (closing rejects it). Start from home.
+          setSession(data);
+          state.skipGuard = true;
+          dlg.close();
+          reloadSession('/');
+          return;
         }
         setSession(data);
         ok = true;
         resolve();
         dlg.close();
       } catch (err) {
-        if (challenge && err.code === 'two_factor_expired') { challenge = null; pwF.wrap.hidden = false; emailF.wrap.hidden = false; codeF.wrap.remove(); }
+        if (challenge && err.code === 'two_factor_expired') { challenge = null; pwF.wrap.hidden = false; emailF.wrap.hidden = false; if (otherEmail) otherEmail.hidden = !emailF.input.readOnly; codeF.wrap.remove(); }
         setBusy(btn, false);
         msg.appendChild(alertBox('bad', null, errorText(err)));
         pwF.input.select();

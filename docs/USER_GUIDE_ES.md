@@ -32,7 +32,9 @@ Hazlo siempre si usaste una computadora que no es tuya.
 
 Por seguridad, la sesión se cierra sola después de 60 minutos sin usar el
 panel. Si te pasa mientras editas, el panel te pedirá la contraseña ahí mismo
-y **no perderás lo que estabas escribiendo**.
+y **no perderás lo que estabas escribiendo**. También se cierra si un
+administrador cambia tu correo o tu contraseña; si cambió tu correo, toca
+**¿Cambió tu correo? Usar otro** y escribe el nuevo.
 
 **Primera vez:** recibirás un correo de invitación. Ábrelo, toca **Crear mi
 contraseña**, elige una contraseña y listo. El enlace vence en 72 horas; si

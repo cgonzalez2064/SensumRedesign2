@@ -290,6 +290,11 @@ test('the owner manages everyone but themselves; every change is in the activity
   assert.equal(field(await owner.post(`/api/users/${oid}/password`, { password: 'Otra-Clave-Larga-2026', currentPassword: ADMIN.password })), 'cannot_change_self');
   const actions = s.sql("SELECT group_concat(DISTINCT action) FROM activity_log WHERE action IN ('user_profile_updated', 'user_password_set', 'user_password_link_sent', 'two_factor_requirement', 'two_factor_reset')").split(',').sort();
   assert.deepEqual(actions, ['two_factor_requirement', 'two_factor_reset', 'user_password_link_sent', 'user_password_set', 'user_profile_updated']);
+  // And in "Actividad reciente" on the home page, with whose account it was.
+  const activity = (await owner.get('/api/dashboard')).data.activity;
+  for (const action of ['user_profile_updated', 'user_password_link_sent', 'two_factor_requirement']) {
+    assert.ok(activity.some((a) => a.action === action && a.targetName === 'Gerente General' && a.user === ADMIN.name), action);
+  }
 });
 
 test('upgrading: accounts that were exactly "Administrador del sitio" also manage users (once); others don’t', async () => {

@@ -115,11 +115,15 @@ final class SystemController extends Controller
             ));
         }
         if ($canSite) {
+            // Changes to someone's account also say whose (the target is their id).
+            $userActions = "'user_invited','user_invite_resent','user_updated','user_profile_updated','user_password_set','user_password_link_sent','two_factor_requirement','two_factor_reset'";
             $out['activity'] = array_map(fn ($r) => [
-                'action' => $r['action'], 'target' => $r['target'], 'user' => $r['name'], 'at' => (int) $r['created_at'],
+                'action' => $r['action'], 'target' => $r['target'], 'targetName' => $r['target_name'], 'user' => $r['name'], 'at' => (int) $r['created_at'],
             ], $db->all(
-                "SELECT a.action, a.target, a.created_at, u.name FROM activity_log a LEFT JOIN users u ON u.id = a.user_id
-                  WHERE a.action IN ('content_updated','media_uploaded','media_removed','media_alt_updated','media_reordered','user_invited','invitation_accepted','user_updated','user_deleted','password_changed','password_reset_completed','report_submitted','report_email_failed','publish_manual','login_throttled')
+                "SELECT a.action, a.target, a.created_at, u.name, p.name AS target_name FROM activity_log a
+                  LEFT JOIN users u ON u.id = a.user_id
+                  LEFT JOIN users p ON a.action IN ($userActions) AND p.id = CAST(a.target AS INTEGER)
+                  WHERE a.action IN ('content_updated','media_uploaded','media_removed','media_alt_updated','media_reordered','invitation_accepted','user_deleted','password_changed','password_reset_completed','report_submitted','report_email_failed','publish_manual','login_throttled',$userActions)
                   ORDER BY a.id DESC LIMIT 12"
             ));
         }
