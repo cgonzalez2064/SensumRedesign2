@@ -69,7 +69,7 @@ test('accepting an invitation sends the welcome e-mail once: access in plain wor
   const welcome = mails.filter((m) => m.Subject === 'Tu cuenta del Administrador de contenido está lista');
   assert.equal(welcome.length, 1);
   const m = await message(welcome[0].ID);
-  for (const text of ['¡Te damos la bienvenida, Laura!', `Entra con tu correo ${email}`, 'Tu acceso: Editor de contenido', '- Textos del sitio:', '- Portafolio en PDF:',
+  for (const text of ['¡Te damos la bienvenida, Laura!', `Entra con tu correo ${email}`, 'Tu acceso: Editor del sitio web', '- Textos del sitio:', '- Portafolio en PDF:',
     'Soporte → Nueva solicitud', 'it@gruposensum.com', 'Nunca te pediremos tu contraseña', 'Ana Administradora te dio acceso']) assert.ok(m.Text.includes(text), text);
   assert.ok(m.HTML.includes('cid:sensum-logo') && m.HTML.includes('Entrar al panel'));
   assert.ok(!m.Text.includes('Clave-Laura-Perez-2026') && !m.HTML.includes('Clave-Laura-Perez-2026'), 'never the password');
@@ -82,7 +82,7 @@ test('the welcome e-mail follows the account language and names a custom access 
   await accept(email);
   const [w] = (await waitForMail(email, 2)).filter((m) => m.Subject === 'Your Content Manager account is ready');
   const m = await message(w.ID);
-  for (const text of ['Welcome, Laura!', 'Your access: Custom access', '- Photos:', '- Site health:', 'Support → New request']) assert.ok(m.Text.includes(text), text);
+  for (const text of ['Welcome, Laura!', 'Your access: Access by section', '- Photos:', '- Site health:', 'Support → New request']) assert.ok(m.Text.includes(text), text);
 });
 
 test('upgrading: people who already signed in are not asked', async () => {

@@ -152,6 +152,7 @@ final class SystemController extends Controller
         $owner = $this->app->config->ownerEmail();
         $invites = $db->all("SELECT (SELECT MAX(t.expires_at) FROM user_tokens t WHERE t.user_id = u.id AND t.purpose = 'invite' AND t.used_at IS NULL) AS exp FROM users u WHERE u.status = 'invited'");
         $valid = array_filter($invites, fn ($r) => (int) $r['exp'] > $now);
+        (new \Sensum\Cms\Users($this->app))->closeCoveredRequests();
         return [
             'requests' => (int) $db->value("SELECT COUNT(*) FROM access_requests r JOIN users u ON u.id = r.user_id WHERE r.status = 'pending' AND u.status = 'active'"),
             'invitesPending' => count($valid),

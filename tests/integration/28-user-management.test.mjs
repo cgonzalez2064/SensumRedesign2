@@ -4,7 +4,7 @@
 // two-step sign-in — without anyone gaining more access than they have.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { startServer, Client, createAdmin, ADMIN, unique, waitForMail, messagesTo, message, linkToken, totp } from './helpers.mjs';
+import { startServer, Client, createAdmin, ADMIN, unique, waitForMail, messagesTo, message, linkToken, totp, loginWithEmailCode } from './helpers.mjs';
 
 let s; let owner; let presets;
 before(async () => {
@@ -54,7 +54,7 @@ test('the owner and accounts with "Gestión de usuarios" manage users; others do
 test('no one gains access through user management', async () => {
   const mgr = await person(presets.admin);
   const peer = await person(presets.admin);
-  const support = await person(presets.support); // has "support", which the manager lacks
+  const support = await person(['support', 'monitor', 'report', 'site']); // has "support", which the manager lacks
   const editor = await person(['texts']);
   const rows = (await mgr.c.get('/api/users')).data.users;
   assert.equal(rows.find((u) => u.id === peer.id).canManage, false, 'another user manager');
@@ -232,7 +232,7 @@ test('a link to choose a new password: e-mailed, valid 24 hours, single use; not
   assert.equal(field(await mgr.c.post(`/api/users/${target.id}/password-link`, {})), 'user_disabled');
 });
 
-test('two-step sign-in: require it for one person, stop requiring it, reset it with the manager’s password', async () => {
+test('two-step sign-in: require it for one person, stop requiring it, remove their devices with the manager’s password', async () => {
   const mgr = await person(presets.admin);
   const target = await person(['texts']);
   resetLimits();
@@ -244,7 +244,7 @@ test('two-step sign-in: require it for one person, stop requiring it, reset it w
   assert.equal((await target.c.get('/api/auth/session')).data.user.twoFactorRequired, true);
   assert.equal(field(await mgr.c.put(`/api/users/${target.id}/2fa`, { required: 'yes' })), 'invalid');
 
-  // The person sets it up; the manager can reset it (lost phone) with their own password.
+  // The person sets it up; the manager can remove their devices (lost phone) with their own password.
   const setup = await target.c.post('/api/account/2fa/setup', { currentPassword: PW });
   assert.equal(setup.status, 200, setup.text);
   assert.equal((await target.c.post('/api/account/2fa/enable', { code: await totp(setup.data.secret) })).status, 200);
@@ -256,9 +256,22 @@ test('two-step sign-in: require it for one person, stop requiring it, reset it w
   assert.equal(reset.data.twoFactor, null, 'the site-wide overview is only for the owner');
   assert.equal((await target.c.get('/api/dashboard')).status, 401, 'sessions ended');
 
+  assert.equal(reset.data.user.twoFactorReenroll, true);
+
+  // Next sign-in: password, a code sent by e-mail, then the new device (even when no longer required).
   assert.equal((await mgr.c.put(`/api/users/${target.id}/2fa`, { required: false })).status, 200);
-  const { c } = await signIn(target.email, PW);
-  assert.equal((await c.get('/api/dashboard')).status, 200, 'no longer required');
+  const c = new Client(s.base);
+  const first = await c.login(target.email, PW);
+  assert.equal(first.data.method, 'email');
+  assert.match(first.data.sentTo, /^.•••@example\.test$/, 'the address, masked');
+  assert.equal((await c.post('/api/auth/login/2fa', { challenge: first.data.challenge, code: '000000' })).status, 422, 'a wrong code');
+  const r = await loginWithEmailCode(c, target.email, PW);
+  assert.equal(r.status, 200, r.text);
+  assert.equal((await c.get('/api/dashboard')).data.error, 'two_factor_setup_required', 'the new device first');
+  const again = await c.post('/api/account/2fa/setup', { currentPassword: PW });
+  assert.equal((await c.post('/api/account/2fa/enable', { code: await totp(again.data.secret) })).status, 200);
+  assert.equal((await c.get('/api/dashboard')).status, 200, 'registered: the panel as usual');
+  assert.equal((await c.get('/api/auth/session')).data.user.twoFactorReenroll, false);
 });
 
 test('a temporary password and required two-step sign-in: the password comes first, then the set-up', async () => {

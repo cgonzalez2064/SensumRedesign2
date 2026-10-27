@@ -162,12 +162,14 @@ test('Usuarios: search by name, e-mail or access, and filter by type or status',
   await search.fill('vera.ventas@');
   await expect(shown).toHaveCount(1);
   await expect(shown.first()).toContainText(SALES.name);
-  await search.fill('redactor');
+  await search.fill('consulta');
+  await expect(shown.filter({ hasText: SUPPORT.name })).toHaveCount(0); // its sections, not a role
+  await search.fill('tere textos');
   await expect(shown.first()).toContainText(TEXTS_ONLY.name);
   await search.fill('');
-  await page.getByRole('combobox', { name: 'Filtrar por tipo de acceso' }).selectOption({ label: 'Soporte técnico' });
-  await expect(shown).toHaveCount(1);
-  await expect(shown.first()).toContainText(SUPPORT.name);
+  await page.getByRole('combobox', { name: 'Filtrar por rol' }).selectOption({ label: 'Ventas y prospectos' });
+  await expect(shown.filter({ hasText: SALES.name })).toHaveCount(1);
+  for (const r of await shown.all()) await expect(r).toContainText('Ventas y prospectos');
   // Status: tabs (a menu on phones).
   if (await page.locator('#users-view').isVisible()) await page.locator('#users-view').selectOption('desactivadas');
   else await page.locator('.users-tabs').getByRole('button', { name: /^Desactivadas/ }).click();

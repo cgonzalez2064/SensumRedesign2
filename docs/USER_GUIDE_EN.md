@@ -39,7 +39,7 @@ another** and type the new one.
 **First time:** you'll receive an invitation email. Open it, tap **Create my
 password**, choose a password, and you're in. The link expires after 72 hours;
 if it expired, ask an administrator to send a new one. When your account is
-activated you get a **welcome e-mail** with your access type, first steps and how to
+activated you get a **welcome e-mail** with your role, first steps and how to
 get help.
 
 **Welcome (first time only):** before you go in, the panel asks you to choose the
@@ -200,10 +200,16 @@ In **My account**:
   receive a notification email. Use at least 10 characters; a phrase of several
   words is easy to remember and hard to guess. Don't reuse passwords from other sites.
 * **Sign out on other devices:** useful if you used someone else's computer.
-* **Ask for more access:** under "Your access", choose the sections you need and say
-  what for. We e-mail whoever manages users, and you get an e-mail when they review it.
-  If you open a section your access doesn't include, the panel says so and offers
-  **Ask for access** right there.
+* **Your role:** your role's name and the sections it includes.
+* **More sections / Ask for access:** the menu only shows what you can open. To see
+  everything the panel has, tap **More sections** (at the end of the menu, on Home or in
+  My account → **See all sections**). There you see **You can ask for** (each section with
+  what it includes and an **Ask for access** button) and **You already have access**.
+  **Ask for access** opens the request with that section ticked; you can tick others and
+  say what for. We e-mail whoever manages users and you get an e-mail when they review
+  it; meanwhile the section shows **Requested**. If you open a section your role doesn't
+  include, the panel says so and offers **Ask for access** or **See all sections**.
+  "User management" and "Support request management" aren't asked for: the owner gives them.
 * **Temporary password:** if an administrator gave you a password to sign in, it
   expires after 72 hours. Use it soon: the panel then asks you to create your own.
 
@@ -220,9 +226,18 @@ In **My account**:
 4. Keep the **10 recovery codes** somewhere safe (a password manager or printed).
    You can generate new ones at any time.
 
-If you change phones, turn it off and on again with the new one (asks for your
-password and a code). If you lost it and have no codes, ask technical support to
-reset it.
+**If you change phones:** in **My account → Two-step sign-in** tap **Remove registered
+devices** and enter your password. Your authenticator app and remembered browsers are
+removed and all your sessions end. When you sign in again:
+1. Enter your e-mail and password.
+2. **Check your e-mail:** we send a 6-digit code (it expires in 10 minutes). If it
+   doesn't arrive, check your spam folder or tap **Resend code** (up to three times).
+3. **Register your new device:** scan the QR code with the app on the new phone, enter
+   the code and keep the new recovery codes.
+
+If you lost your phone and have no recovery codes, ask whoever manages users (or
+technical support) to **remove your registered devices**: you'll sign in with the same
+e-mail code step.
 
 **Remember this device:** if the owner account allows it, when you type the code you
 can tick "Remember this device for 30 days" and that browser won't ask for it during
@@ -291,26 +306,26 @@ where you can also see your request history.
   the message (e.g. `A1B2C3`); it helps the technical team find the cause.
 * If you can't sign in to the panel, email it@gruposensum.com.
 
-## 10. Users and access types
+## 10. Users and roles
 
 **Users** is seen by the owner account (it@gruposensum.com) and by anyone with
-**User management** (part of "Site administrator"). From there you invite, change,
+**User management** (part of the "Administrator" role). From there you invite, change,
 disable or delete accounts.
-* **Invite user:** name, email, **access type** and email language. The person
-  receives a link to create their password.
-  * **Site administrator:** all the content, publishing and activity, **Leads**,
-    **Statistics**, **Site health**, **Monthly report (view)** and **User management**
-    (does not manage support, send the report or change settings).
-  * **Content editor:** text, contact details and form, photos and portfolio.
-  * **Copywriter** (text only), **Photos and portfolio**, **Contact details**.
-  * **Sales:** Leads and full Statistics; does not change the website.
-  * **Management (view only):** Statistics (basic version, no personal data) and
-    Site health; changes nothing.
-  * **Technical support:** manages **all** support requests (with their charts),
-    Site health, Monthly report (view), and publishing and activity.
-  * **Custom:** tick exactly what they need; each box explains what it includes.
-* **Search and review:** above the list type a name, e-mail or access type (accents
-  and capitals don't matter) or filter by **access type**. The tabs **All · Active ·
+* **Invite user:** name, email, **role** and email language. The person receives a link
+  to create their password. There are four roles:
+  * **Administrator:** the whole panel: text, photos, contact details and form,
+    publishing and activity, **Leads**, **Statistics**, **Site health**, **Monthly report
+    (view)** and **User management** (does not manage support, send the report or change
+    technical settings). Only the owner gives it.
+  * **Website editor:** text, photos, PDF portfolio, contact details and form.
+  * **Sales and leads:** Leads and full Statistics; does not change the website.
+  * **View only:** Statistics (basic version, no personal data), Site health and the
+    Monthly report; changes nothing.
+* **Extra sections (optional):** under the roles, for an exception: add a section the
+  role doesn't include (e.g. "Website editor + Leads"). They are also added when you
+  grant a request.
+* **Search and review:** above the list type a name, e-mail or role (accents and
+  capitals don't matter) or filter by **role**. The tabs **All · Active ·
   Invitations · Turned off** show each group and, under **Review**, appear only when
   someone matches: *Must create password*, *Without two-step sign-in*, *No sign-in in
   90 days* and *Temporary access*. On phones they are in the **Show** menu. **Clear
@@ -323,14 +338,14 @@ disable or delete accounts.
   **Dismiss** closes it; either way we tell them by e-mail. If they ask for something
   you can't give, only the owner account can.
 * **Temporary access** (agencies, photographers or temporary staff): when inviting or
-  in **Change access type**, turn on **Temporary access** and choose the date. The
+  in **Change role**, turn on **Temporary access** and choose the date. The
   account works until the end of that day; 3 days before we tell the person and whoever
   invited them, and that day it turns off by itself. To extend it, change the date; to
   turn it back on, **Reactivate**.
 * When inviting or changing an e-mail, if the domain looks mistyped (e.g. "gmial.com"),
   the panel suggests the right one with **Use this**.
 * Each person's "⋮" menu:
-  * **Edit name and e-mail.** A new e-mail asks for your password; their sessions end
+  * **Update information.** Corrects their name or e-mail. A new e-mail asks for your password; their sessions end
     and we tell both the old and the new address. If they haven't activated their
     account yet, the invitation goes to the new address.
   * **Send a new-password link.** They get an e-mail to create a new password
@@ -344,20 +359,25 @@ disable or delete accounts.
     a **message ready to send** (panel address, e-mail and password, in their language):
     **Copy message** and paste it into WhatsApp.
   * **Two-step sign-in.** Require it for that person (they set it up when they sign
-    in) or **reset** it if they lost their phone (asks for your password).
+    in) or, if they lost or changed their phone, **Remove registered devices** (asks for
+    your password): their app and remembered browsers are removed and their sessions
+    end. When they sign in, after their password we send a **code to their e-mail**;
+    once they confirm it, they **register their new device**. The list shows "Will
+    register a new device" until they do.
   * **Close their sessions.** If they lost their phone or computer: closes the panel on
     all their devices without changing their password. We tell them by e-mail.
   * **See activity.** Opens in **Activity** what they did and what was changed in their account.
-  * **Resend invitation**, **Change access type** (applies right away),
+  * **Resend invitation**, **Change role** (applies right away),
     **Disable / Re-enable** (signs them out) and **Delete user**.
 * **Automatic notices:** when an invitation is about to expire, the person gets a
   reminder with a new link (once); if it expires unaccepted, or when it's accepted, we
   tell whoever invited them.
 * Someone who manages users without being the owner only changes people with the
   **same or less access** who don't manage users, and only gives access they have.
-  Only the owner gives "User management". Everyone else shows a lock.
+  Only the owner gives "User management" and "Support request management". Everyone
+  else shows a lock.
 * Every change is recorded in the panel's activity. Everyone only sees in the menu what
-  they can change; **My account** shows "Your access".
+  they can change; **My account** shows "Your role", and **More sections** everything else.
 * Nobody changes their own account from Users (that's **My account**), and the owner
   account can't be changed or deleted from the panel.
 
@@ -430,7 +450,7 @@ If last month's report isn't sent in the **first 5 days of the month**, you get 
 **reminder** email (once) and a notice on **Home**.
 
 **Administrators (view):** anyone with the **Monthly report (view)** access (part of
-"Site administrator" and "Technical support") finds it under **Site status → Monthly
+the "Administrator" and "View only" roles) finds it under **Site status → Monthly
 report** and sees both tabs, without recipients or send buttons.
 
 ## 13. For the owner account: e-mail and the form's captcha
@@ -472,10 +492,10 @@ password).
 correctly (SPF, DKIM, DMARC and MX: without them the site's e-mails land in spam or
 can be forged) and shows when the domain expires. It is also checked once a day.
 
-## 15. Request management (owner account and "Technical support")
+## 15. Request management (owner account and technical support)
 
 Under **Support** (Help Center) the owner account —and anyone with the **Support
-request management** access ("Technical support" type)— sees **everyone's** requests
+request management** access (an extra section the owner gives)— sees **everyone's** requests
 in **Request management**:
 
 * **Support overview** (at the top, can be folded away): choose 30, 90 or 365 days and
@@ -530,8 +550,10 @@ In **Administration → Security**:
     the code for 30 days in a trusted browser. Turning it off forgets every remembered browser.
 * **Two-step sign-in.** Choose who must use it (only the owner account; the owner and
   whoever administers —manages users or publishes the site—; the whole team; or nobody)
-  and see who already has it on. If someone lost their phone, press **Reset** next to
-  their name: they set it up again at their next sign-in.
+  and see who already has it on. If someone lost or changed their phone, press **Remove
+  devices** next to their name: at their next sign-in they confirm a code sent to their
+  e-mail and register their new device. If the panel's e-mail isn't working, technical
+  support can turn it off from the server with `php ~/sensum-cms/bin/console 2fa:reset <e-mail> --off`.
 
 Every change asks for your password and is logged.
 
@@ -570,22 +592,31 @@ Visible to the owner account and to people with the **Leads and statistics** acc
 
 * **Visits**, **clicks to get in touch** (WhatsApp, phone and e-mail), **contact-form
   messages** and **contact rate**, compared with the previous period.
-* With the **Visit statistics** access but not **Leads** (for example "Management
-  (view only)") you see the **basic version**: visits, page views, visits from phones,
+* With the **Visit statistics** access but not **Leads** (for example the "View only"
+  role) you see the **basic version**: visits, page views, visits from phones,
   where visitors come from, devices and clicks — no contact-form messages or personal
   data.
 * **Visits per day** (chart), **where visitors come from** (Google, Facebook, direct…),
   **devices** and language, **actions** on the site (map, portfolio, social media) and
   the path **from message to project** (contacted, quoted, won).
-* Choose the period at the top: last 30 days or a full month.
+* **Period:** last 7, 30 or 90 days, **this month**, a full month or **Choose dates…**
+  (from–to, up to a year). Below it, the period it is compared with. Under "From message
+  to project" you can look at one **service** (only the message figures change).
+* **Export:** **Spreadsheet (CSV)** with every figure for the period (for Excel or Google
+  Sheets), or **Print or save as PDF** (the screen, ready to print).
+* **Send by e-mail:** a Sensum-branded report to up to 5 addresses, with the parts you
+  choose (visits per day, where they come from, actions, devices and, if you see Leads,
+  from message to project), an optional message, its language and the spreadsheet
+  attached. Each person gets their own e-mail; you can **send yourself a copy**. It only
+  has totals: never names, e-mails or messages from the people who wrote.
 * Measured on the site itself, **without cookies** and without storing IP addresses;
   people asking "Do Not Track" and robots are not counted, so figures are somewhat
   lower than other tools show. The owner account can turn them off.
 
 ## 19. Site health
 
-For people with the **Site health** access (part of "Site administrator", "Management
-(view only)" and "Technical support", or chosen under "Custom"). In the menu: **Site
+For people with the **Site health** access (part of the "Administrator" and "View only"
+roles, or added as an extra section). In the menu: **Site
 status → Site health**.
 
 * A notice at the top says whether **everything works**, whether there **was a
@@ -619,7 +650,7 @@ In **Users → View as…** (or a person's "⋮" menu → *View the panel as thi
 choose an account and, after confirming your password, see the panel **exactly as that
 person sees it**: their menu, screens and data.
 
-* A blue bar at the top shows *Viewing the panel as …*, their access type, "read-only"
+* A blue bar at the top shows *Viewing the panel as …*, their role, "read-only"
   and the time left (30 minutes).
 * **Switch person** moves to another account without asking for the password again.
 * **Back to my account** ends it and takes you back to Users.

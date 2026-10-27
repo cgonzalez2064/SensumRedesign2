@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { startServer, Client, createAdmin, ADMIN, PHP, ROOT, mailpitUp, waitForMail, messagesTo, message, countTo, unique, totp, MAILPIT } from './helpers.mjs';
+import { startServer, Client, createAdmin, ADMIN, PHP, ROOT, mailpitUp, waitForMail, messagesTo, message, countTo, unique, totp, MAILPIT, loginWithEmailCode } from './helpers.mjs';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // The RDAP stand-in runs in this process: CLI calls that reach it must not block the event loop.
@@ -118,7 +118,7 @@ test('a recovery code signs in once and the person is told', async () => {
   owner = c; // continue as this session
 });
 
-test('policy: the owner cannot turn it off while required; "all" covers everyone; IT can reset someone', async () => {
+test('policy: the owner cannot turn it off while required; "all" covers everyone; IT can remove someone\'s devices', async () => {
   const off = await owner.post('/api/account/2fa/disable', { currentPassword: ADMIN.password, code: recovery[1] });
   assert.equal(off.status, 409);
   assert.equal(off.data.error, 'two_factor_required_by_policy');
@@ -131,7 +131,7 @@ test('policy: the owner cannot turn it off while required; "all" covers everyone
   assert.equal(p.data.twoFactor.policy, 'all');
   assert.equal((await ed.get('/api/content')).status, 403, 'now required for the editor too');
   assert.equal((await ed.put('/api/security/policy', { twoFactor: 'none', currentPassword: EDITOR.password })).status, 403);
-  // The editor sets it up, then IT resets it (lost phone).
+  // The editor sets it up, then IT removes their devices (lost phone).
   const setup = await ed.post('/api/account/2fa/setup', { currentPassword: EDITOR.password });
   await ed.post('/api/account/2fa/enable', { code: await totp(setup.data.secret) });
   const edId = Number(s.sql(`SELECT id FROM users WHERE email='${EDITOR.email}'`));
@@ -145,10 +145,13 @@ test('policy: the owner cannot turn it off while required; "all" covers everyone
   assert.equal(reset.status, 200, reset.text);
   assert.equal(s.sql(`SELECT totp_enabled_at FROM users WHERE id=${edId}`), '');
   assert.equal((await ed.get('/api/auth/session')).data.authenticated, false, 'their sessions ended');
-  assert.ok((await waitForMail(EDITOR.email, before + 1)).some((x) => /restableció tu verificación/.test(x.Subject)));
-  // Back to "owner" and optional for the editor: they can turn it off with password + code.
+  assert.ok((await waitForMail(EDITOR.email, before + 1)).some((x) => /Se quitaron los dispositivos/.test(x.Subject)));
+  // Back to "owner": they sign in with a code sent by e-mail and must register the new device first.
   await owner.put('/api/security/policy', { twoFactor: 'owner', currentPassword: ADMIN.password });
-  await ed.login(EDITOR.email, EDITOR.password);
+  assert.equal((await loginWithEmailCode(ed, EDITOR.email, EDITOR.password)).status, 200);
+  assert.equal((await ed.get('/api/content')).status, 403, 'the new device first');
+  assert.equal((await ed.get('/api/auth/session')).data.user.twoFactorReenroll, true);
+  // Once it is registered, it is optional again for the editor: they can turn it off with password + code.
   const setup2 = await ed.post('/api/account/2fa/setup', { currentPassword: EDITOR.password });
   await ed.post('/api/account/2fa/enable', { code: await totp(setup2.data.secret) });
   await nextStep();
@@ -157,10 +160,14 @@ test('policy: the owner cannot turn it off while required; "all" covers everyone
   assert.equal(dis.data.status.enabled, false);
 });
 
-test('from the server terminal, IT can turn it off for an account (locked out)', () => {
+test('from the server terminal, IT can remove an account\'s devices, or turn it off when e-mail is not working', () => {
   const out = s.cli(['2fa:reset', ADMIN.email]);
-  assert.match(out, /Two-step sign-in turned off/);
+  assert.match(out, /Registered devices removed/);
   assert.equal(s.sql(`SELECT COUNT(*) FROM recovery_codes r JOIN users u ON u.id = r.user_id WHERE u.email='${ADMIN.email}'`), '0');
+  assert.notEqual(s.sql(`SELECT two_factor_reenroll_at FROM users WHERE email='${ADMIN.email}'`), '');
+  const off = s.cli(['2fa:reset', ADMIN.email, '--off']);
+  assert.match(off, /Two-step sign-in turned off/);
+  assert.equal(s.sql(`SELECT two_factor_reenroll_at FROM users WHERE email='${ADMIN.email}'`), '', 'no e-mail code with --off');
 });
 
 // ------------------------------------------------------------------ encrypted off-server backup

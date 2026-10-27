@@ -9,8 +9,8 @@ import { api, saveBlob } from './api.js';
 import { button, setBusy, toast, errorText, fieldErrorText, textField, passwordField, alertBox, openDialog, copyText } from './ui.js';
 
 /** A field for the 6-digit code (or, if allowed, a recovery code). */
-export function codeField({ allowRecovery = false, id } = {}) {
-  const f = textField({ id, label: t('twofa.codeLabel'), hint: t('twofa.codeHint'), inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: 6, spellcheck: false, placeholder: '123456' });
+export function codeField({ allowRecovery = false, id, hint } = {}) {
+  const f = textField({ id, label: t('twofa.codeLabel'), hint: hint || t('twofa.codeHint'), inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: 6, spellcheck: false, placeholder: '123456' });
   f.input.classList.add('code-input');
   let recovery = false;
   const toggle = allowRecovery ? button(t('twofa.useRecovery'), { variant: 'link', small: true }) : null;

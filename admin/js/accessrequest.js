@@ -1,16 +1,13 @@
 /**
  * «Pedir acceso»: someone asks for sections they can't use; whoever manages
  * users gets it by e-mail and in Usuarios, where one click grants it.
- * Opened from Mi cuenta and from a screen the account can't open.
+ * Opened from «Más secciones», Mi cuenta and a screen the account can't open.
  */
 import { h, clear } from './dom.js';
 import { t, fmtDate } from './i18n.js';
 import { api } from './api.js';
 import { openDialog, textField, alertBox, toast, errorText, setBusy } from './ui.js';
-import { PERMISSIONS } from './access.js';
-
-/** Permissions one can ask for: those not held yet ("Gestión de usuarios" is given by the owner on their own). */
-export const askable = (user) => PERMISSIONS.filter((p) => p !== 'users' && !(user.permissions || []).includes(p));
+import { askable } from './access.js';
 
 /**
  * @param {object} user the signed-in account

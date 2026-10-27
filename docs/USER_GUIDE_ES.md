@@ -39,7 +39,7 @@ administrador cambia tu correo o tu contraseña; si cambió tu correo, toca
 **Primera vez:** recibirás un correo de invitación. Ábrelo, toca **Crear mi
 contraseña**, elige una contraseña y listo. El enlace vence en 72 horas; si
 venció, pide a un administrador que te envíe otro. Al activar tu cuenta te llega
-un **correo de bienvenida** con tu tipo de acceso, los primeros pasos y cómo pedir
+un **correo de bienvenida** con tu rol, los primeros pasos y cómo pedir
 ayuda.
 
 **Bienvenida (solo la primera vez):** antes de entrar, el panel te pide elegir el
@@ -210,10 +210,17 @@ En **Mi cuenta**:
   y difícil de adivinar. No uses la misma contraseña de otros sitios.
 * **Cerrar sesión en otros dispositivos:** útil si entraste desde una computadora
   ajena.
-* **Pedir más acceso:** debajo de «Tu acceso», elige las secciones que necesitas y
-  escribe para qué. Le avisamos por correo a quien administra los usuarios y te llega
-  un correo cuando lo revise. Si abres una sección que tu acceso no incluye, el panel
-  te lo dice y te ofrece **Pedir acceso** ahí mismo.
+* **Tu rol:** el nombre de tu rol y las secciones que incluye.
+* **Más secciones / Pedir acceso:** el menú solo muestra lo que puedes abrir. Para ver
+  todo lo que tiene el panel, toca **Más secciones** (al final del menú, en Inicio o en
+  Mi cuenta → **Ver todas las secciones**). Ahí ves **Puedes pedir** (cada sección con lo
+  que incluye y el botón **Pedir acceso**) y **Ya tienes acceso**. Al tocar **Pedir
+  acceso**, esa sección ya va marcada; puedes marcar otras y escribir para qué. Le
+  avisamos por correo a quien administra los usuarios y te llega un correo cuando lo
+  revise; mientras tanto la sección aparece como **Solicitado**. Si abres una sección
+  que tu rol no incluye, el panel te lo dice y te ofrece **Pedir acceso** o **Ver todas
+  las secciones**. «Gestión de usuarios» y «Gestión de solicitudes de soporte» no se
+  piden: las da la cuenta propietaria.
 * **Contraseña temporal:** si un administrador te dio una contraseña para entrar, vence
   en 72 horas. Úsala pronto: al entrar, el panel te pide crear la tuya.
 
@@ -231,9 +238,18 @@ En **Mi cuenta**:
 4. Guarda los **10 códigos de recuperación** en un lugar seguro (gestor de
    contraseñas o impresos). Puedes generar otros nuevos cuando quieras.
 
-Si cambias de celular, desactívala y vuelve a activarla con el nuevo (te pide la
-contraseña y un código). Si lo perdiste y no tienes códigos, pide a soporte
-técnico que te la restablezca.
+**Si cambias de celular:** en **Mi cuenta → Verificación en dos pasos** toca **Quitar
+dispositivos registrados** y escribe tu contraseña. Se quitan la app de autenticación y
+los navegadores recordados, y se cierran todas tus sesiones. Al volver a entrar:
+1. Escribe tu correo y contraseña.
+2. **Revisa tu correo:** te enviamos un código de 6 dígitos (vence en 10 minutos). Si no
+   te llega, revisa el correo no deseado o toca **Reenviar código** (hasta tres veces).
+3. **Registra tu dispositivo nuevo:** escanea el código QR con la app del teléfono nuevo,
+   escribe el código y guarda los códigos de recuperación nuevos.
+
+Si perdiste el celular y no tienes códigos de recuperación, pide a quien administra los
+usuarios (o a soporte técnico) que **quite tus dispositivos registrados**: entrarás con
+el mismo paso del código por correo.
 
 **Recordar este dispositivo:** si la cuenta propietaria lo permite, al escribir el
 código puedes marcar «Recordar este dispositivo por 30 días» y ese navegador no te lo
@@ -307,27 +323,26 @@ Si el correo no se pudo enviar en ese momento, el panel te lo dirá: tu solicitu
   encontrar la causa.
 * Si no puedes entrar al panel, escribe a it@gruposensum.com.
 
-## 10. Usuarios y tipos de acceso
+## 10. Usuarios y roles
 
 Ven **Usuarios** la cuenta propietaria (it@gruposensum.com) y quienes tienen
-**Gestión de usuarios** (incluida en «Administrador del sitio»). Desde ahí se invita,
+**Gestión de usuarios** (incluida en el rol «Administrador»). Desde ahí se invita,
 cambia, desactiva o elimina cuentas.
-* **Invitar usuario:** nombre, correo, **tipo de acceso** e idioma de los correos.
-  La persona recibe un enlace para crear su contraseña.
-  * **Administrador del sitio:** todo el contenido, publicación y actividad,
-    **Prospectos**, **Estadísticas**, **Salud del sitio**, **Informe mensual
-    (consulta)** y **Gestión de usuarios** (no gestiona el soporte, no envía el informe
-    ni cambia la configuración).
-  * **Editor de contenido:** textos, datos de contacto y formulario, fotos y portafolio.
-  * **Redactor** (solo textos), **Fotos y portafolio**, **Datos de contacto**.
-  * **Ventas:** Prospectos y Estadísticas completas; no cambia el sitio.
-  * **Gerencia (consulta):** Estadísticas (versión básica, sin datos personales) y
-    Salud del sitio; no cambia nada.
-  * **Soporte técnico:** gestiona **todas** las solicitudes de soporte (con sus
-    gráficas), Salud del sitio, Informe mensual (consulta) y publicación y actividad.
-  * **Personalizado:** marca exactamente lo que necesita; cada casilla explica qué incluye.
-* **Buscar y revisar:** arriba de la lista escribe un nombre, correo o tipo de acceso
-  (no importan tildes ni mayúsculas) o filtra por **tipo de acceso**. Las pestañas
+* **Invitar usuario:** nombre, correo, **rol** e idioma de los correos.
+  La persona recibe un enlace para crear su contraseña. Hay cuatro roles:
+  * **Administrador:** todo el panel: textos, fotos, datos de contacto y formulario,
+    publicación y actividad, **Prospectos**, **Estadísticas**, **Salud del sitio**,
+    **Informe mensual (consulta)** y **Gestión de usuarios** (no gestiona el soporte, no
+    envía el informe ni cambia la configuración técnica). Solo lo da la cuenta propietaria.
+  * **Editor del sitio web:** textos, fotos, portafolio en PDF, datos de contacto y formulario.
+  * **Ventas y prospectos:** Prospectos y Estadísticas completas; no cambia el sitio.
+  * **Consulta (solo lectura):** Estadísticas (versión básica, sin datos personales),
+    Salud del sitio e Informe mensual; no cambia nada.
+* **Secciones adicionales (opcional):** debajo de los roles, para una excepción: agrega
+  una sección que el rol no incluye (por ejemplo «Editor del sitio web + Prospectos»).
+  También se agregan solas cuando das acceso a una solicitud.
+* **Buscar y revisar:** arriba de la lista escribe un nombre, correo o rol
+  (no importan tildes ni mayúsculas) o filtra por **rol**. Las pestañas
   **Todas · Activas · Invitaciones · Desactivadas** muestran cada grupo y, en
   **Revisar**, aparecen solo cuando hay alguien: *Deben crear contraseña*, *Sin
   verificación en dos pasos*, *Sin entrar en 90 días* y *Acceso temporal*. En el
@@ -340,14 +355,14 @@ cambia, desactiva o elimina cuentas.
   cierra; en ambos casos le avisamos por correo. Si pide algo que tú no puedes dar,
   solo la cuenta propietaria puede.
 * **Acceso temporal** (para agencias, fotógrafos o personal temporal): al invitar o en
-  **Cambiar tipo de acceso**, activa **Acceso temporal** y elige la fecha. La cuenta
+  **Cambiar rol**, activa **Acceso temporal** y elige la fecha. La cuenta
   funciona hasta el final de ese día; 3 días antes avisamos a la persona y a quien la
   invitó, y ese día se desactiva sola. Para extenderlo, cambia la fecha; para volver a
   activarla, **Reactivar**.
 * Al invitar o cambiar un correo, si el dominio parece mal escrito (por ejemplo
   «gmial.com»), el panel sugiere el correcto con **Usar este**.
 * Menú «⋮» de cada persona:
-  * **Editar nombre y correo.** Un correo nuevo pide tu contraseña; se cierran sus
+  * **Actualizar información.** Corrige su nombre o su correo. Un correo nuevo pide tu contraseña; se cierran sus
     sesiones y avisamos al correo anterior y al nuevo. Si aún no activó su cuenta,
     la invitación le llega al correo nuevo.
   * **Enviar enlace para nueva contraseña.** Le llega un correo para crear una contraseña
@@ -361,21 +376,26 @@ cambia, desactiva o elimina cuentas.
     activa. Al guardar ves un **mensaje listo para enviar** (dirección del panel, correo
     y contraseña, en su idioma): **Copiar mensaje** y pégalo en WhatsApp.
   * **Verificación en dos pasos.** Exígesela a esa persona (al entrar deberá
-    configurarla) o **restablécela** si perdió el teléfono (pide tu contraseña).
+    configurarla) o, si perdió o cambió de teléfono, **Quitar dispositivos registrados**
+    (pide tu contraseña): se quitan su app y sus navegadores recordados y se cierran sus
+    sesiones. Al entrar, después de su contraseña le enviamos un **código a su correo**;
+    al confirmarlo, **registra su dispositivo nuevo**. En la lista aparece «Registrará un
+    dispositivo nuevo» hasta que lo haga.
   * **Cerrar sus sesiones.** Si perdió el celular o la computadora: cierra el panel en
     todos sus dispositivos sin cambiar su contraseña. Le avisamos por correo.
   * **Ver actividad.** Abre en **Actividad** lo que hizo y lo que se cambió en su cuenta.
-  * **Reenviar invitación**, **Cambiar tipo de acceso** (se aplica de inmediato),
+  * **Reenviar invitación**, **Cambiar rol** (se aplica de inmediato),
     **Desactivar / Reactivar** (cierra su sesión) y **Eliminar usuario**.
 * **Avisos automáticos:** si una invitación está por vencer, la persona recibe un
   recordatorio con un enlace nuevo (una sola vez); si vence sin aceptarse, o cuando la
   acepta, avisamos a quien la invitó.
 * Quien gestiona usuarios sin ser la cuenta propietaria solo cambia a personas con
   **igual o menos acceso** que el suyo y que no gestionan usuarios, y solo da los
-  accesos que tiene. «Gestión de usuarios» solo la da la cuenta propietaria. Las demás
+  accesos que tiene. «Gestión de usuarios» y «Gestión de solicitudes de soporte» solo las
+  da la cuenta propietaria. Las demás
   personas aparecen con un candado.
 * Cada cambio queda en la actividad del panel. Cada persona solo ve en el menú lo que
-  puede cambiar; en **Mi cuenta** ve «Tu acceso».
+  puede cambiar; en **Mi cuenta** ve «Tu rol», y en **Más secciones**, todo lo demás.
 * Nadie cambia su propia cuenta desde Usuarios (eso es **Mi cuenta**), y la cuenta
   propietaria no se puede modificar ni eliminar desde el panel.
 
@@ -450,7 +470,7 @@ Si el informe del mes anterior no se envía en los **primeros 5 días del mes**,
 llega un **recordatorio** por correo (una sola vez) y un aviso en **Inicio**.
 
 **Administradores (consulta):** quien tenga el acceso **Informe mensual (consulta)**
-(incluido en «Administrador del sitio» y «Soporte técnico») lo encuentra en **Estado
+(incluido en los roles «Administrador» y «Consulta (solo lectura)») lo encuentra en **Estado
 del sitio → Informe mensual** y ve las dos pestañas, sin destinatarios ni botones de
 envío.
 
@@ -494,10 +514,10 @@ aceptes: avisa a soporte técnico. Si los hiciste tú, pulsa **Marcar como esper
 configurado (SPF, DKIM, DMARC y MX: sin ellos los correos del sitio llegan a spam o
 pueden falsificarse) y muestra cuándo vence el dominio. Se revisa solo una vez al día.
 
-## 15. Gestión de solicitudes (cuenta propietaria y «Soporte técnico»)
+## 15. Gestión de solicitudes (cuenta propietaria y soporte técnico)
 
 En **Soporte** (Centro de Ayuda) la cuenta propietaria —y quien tenga el acceso
-**Gestión de solicitudes de soporte** (tipo «Soporte técnico»)— ve, en **Gestión de
+**Gestión de solicitudes de soporte** (sección adicional que da la cuenta propietaria)— ve, en **Gestión de
 solicitudes**, las solicitudes de **todas** las personas:
 
 * **Panorama de soporte** (arriba, se puede plegar): elige 30, 90 o 365 días y ve las
@@ -557,8 +577,10 @@ En **Administración → Seguridad**:
 * **Verificación en dos pasos.** Elige a quién se le exige (solo a la cuenta
   propietaria; a la cuenta propietaria y a quienes administran —gestionan usuarios o
   publican el sitio—; a todo el equipo; o a nadie) y mira quién ya la tiene activa. Si
-  alguien perdió su celular, pulsa **Restablecer** junto a su nombre: la vuelve a
-  configurar la próxima vez que entre.
+  alguien perdió o cambió su celular, pulsa **Quitar dispositivos** junto a su nombre:
+  la próxima vez que entre confirmará un código enviado a su correo y registrará su
+  dispositivo nuevo. Si el correo del panel no funciona, soporte técnico puede apagarla
+  desde el servidor con `php ~/sensum-cms/bin/console 2fa:reset <correo> --off`.
 
 Todos los cambios piden tu contraseña y quedan registrados.
 
@@ -599,22 +621,32 @@ estadísticas** (por ejemplo, el tipo «Ventas»).
 
 * **Visitas**, **clics para contactar** (WhatsApp, teléfono y correo), **mensajes
   del formulario** y **tasa de contacto**, comparados con el período anterior.
-* Con el acceso **Estadísticas de visitas** sin **Prospectos** (por ejemplo,
-  «Gerencia (consulta)») ves la **versión básica**: visitas, páginas vistas, visitas
+* Con el acceso **Estadísticas de visitas** sin **Prospectos** (por ejemplo, el rol
+  «Consulta (solo lectura)») ves la **versión básica**: visitas, páginas vistas, visitas
   desde celular, de dónde llegan, dispositivos y clics, sin mensajes del formulario
   ni datos personales.
 * **Visitas por día** (gráfica), **de dónde llegan** (Google, Facebook, acceso
   directo…), **dispositivos** e idioma, **acciones** en el sitio (mapa, portafolio,
   redes) y el camino **del mensaje al proyecto** (contactados, cotizados, ganados).
-* Elige el período arriba: últimos 30 días o un mes completo.
+* **Período:** últimos 7, 30 o 90 días, **este mes**, un mes completo o **Elegir
+  fechas…** (desde–hasta, hasta un año). Debajo se indica con qué período se compara.
+  En «Del mensaje al proyecto» puedes ver un solo **servicio** (solo cambian las cifras
+  de los mensajes).
+* **Exportar:** **Hoja de cálculo (CSV)** con todas las cifras del período (para Excel o
+  Google Sheets), o **Imprimir o guardar como PDF** (la pantalla, lista para imprimir).
+* **Enviar por correo:** un reporte con la marca de Sensum para hasta 5 correos, con las
+  partes que elijas (visitas por día, de dónde llegan, acciones, dispositivos y, si ves
+  Prospectos, del mensaje al proyecto), un mensaje opcional, el idioma y la hoja de
+  cálculo adjunta. Cada persona recibe su propio correo; puedes **enviarte una copia**.
+  El reporte solo tiene totales: nunca nombres, correos ni mensajes de quienes escribieron.
 * Se mide en el propio sitio, **sin cookies** y sin guardar direcciones IP; quien pide
   «No rastrear» y los robots no se cuentan, por eso las cifras son algo menores que las
   de otras herramientas. La cuenta propietaria puede desactivarlas.
 
 ## 19. Salud del sitio
 
-Para quienes tienen el acceso **Salud del sitio** (incluido en «Administrador del
-sitio», «Gerencia (consulta)» y «Soporte técnico», o elegido en «Personalizado»). En el
+Para quienes tienen el acceso **Salud del sitio** (incluido en los roles «Administrador»
+y «Consulta (solo lectura)», o agregado como sección adicional). En el
 menú: **Estado del sitio → Salud del sitio**.
 
 * Un aviso arriba dice si **todo funciona**, si **hubo un problema** en las últimas
@@ -648,7 +680,7 @@ En **Usuarios → Ver como…** (o en el menú «⋮» de una persona → *Ver e
 persona*) eliges una cuenta y, después de confirmar tu contraseña, ves el panel
 **exactamente como lo ve esa persona**: su menú, sus pantallas y sus datos.
 
-* Arriba aparece una barra azul: *Viendo el panel como …*, su tipo de acceso, «solo
+* Arriba aparece una barra azul: *Viendo el panel como …*, su rol, «solo
   lectura» y el tiempo que queda (30 minutos).
 * **Cambiar de persona** pasa a otra cuenta sin volver a pedir la contraseña.
 * **Volver a mi cuenta** termina y te regresa a Usuarios.

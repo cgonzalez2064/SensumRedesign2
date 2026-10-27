@@ -3,7 +3,7 @@ import { h, icon, clear, fill } from '../dom.js';
 import { t, getLang, setLang } from '../i18n.js';
 import { getThemePref, setThemePref } from '../theme.js';
 import { api, setCsrf } from '../api.js';
-import { textField, passwordField, passwordGuide, alertBox, errorText, fieldErrorText, setBusy, toast } from '../ui.js';
+import { textField, passwordField, passwordGuide, alertBox, errorText, fieldErrorText, setBusy, toast, button } from '../ui.js';
 import { themeSwitch, langSwitch } from '../app.js';
 import { codeField, renderSetup } from '../twofactor.js';
 
@@ -53,7 +53,7 @@ export function login({ app, onSignedIn }) {
     setBusy(submit, true, t('auth.submitting'));
     try {
       const data = await api.post('/auth/login', { email: email.input.value.trim(), password: pw.input.value }, { auth: false });
-      if (data.twoFactor) { secondStep(app, data.challenge, onSignedIn, !!data.rememberAllowed); return; }
+      if (data.twoFactor) { secondStep(app, data.challenge, onSignedIn, !!data.rememberAllowed, data.method === 'email' ? data.sentTo : null); return; }
       onSignedIn(data);
     } catch (err) {
       setBusy(submit, false);
@@ -64,17 +64,41 @@ export function login({ app, onSignedIn }) {
   });
 }
 
-/** Second step of the sign-in: the code from the authenticator app (or a recovery code). */
-function secondStep(app, challenge, onSignedIn, rememberAllowed = false) {
-  const code = codeField({ allowRecovery: true, id: 'login-code' });
+/**
+ * Second step of the sign-in: the code from the authenticator app (or a recovery
+ * code) — or, after «Quitar dispositivos registrados», a code sent to the e-mail.
+ */
+function secondStep(app, challenge, onSignedIn, rememberAllowed = false, sentTo = null) {
+  const byEmail = !!sentTo;
+  const code = codeField({ allowRecovery: !byEmail, id: 'login-code', hint: byEmail ? t('twofa.emailCodeHint') : null });
+  if (byEmail) code.input.setAttribute('aria-describedby', 'login-code-sent');
   const msg = h('div', { 'aria-live': 'assertive' });
   const submit = h('button', { class: 'btn btn-primary btn-block', type: 'submit' }, icon('shield-lock'), t('twofa.verify'));
   // Seguridad allows it: this browser skips the code for 30 days (not on a shared computer).
   const remember = rememberAllowed ? h('label', { class: 'check check-help' }, h('input', { type: 'checkbox', id: 'login-remember' }),
     h('span', null, h('span', { class: 'check-title', text: t('twofa.rememberDevice') }), h('span', { class: 'tiny muted check-hint', text: t('twofa.rememberDeviceHint') }))) : null;
-  const form = h('form', { class: 'stack', novalidate: true }, code.wrap, remember, msg, submit,
-    h('p', { class: 'small' }, h('a', { href: '#/ingresar', onclick: (e) => { e.preventDefault(); login({ app, onSignedIn }); }, text: t('twofa.backToPassword') })));
-  layout(app, t('twofa.loginTitle'), t('twofa.loginLead'), form);
+  // «Reenviar código»: a new code by e-mail (three at most); the previous one stops working.
+  const sentNote = byEmail ? h('p', { class: 'small muted', id: 'login-code-sent', text: t('twofa.emailSent', { email: sentTo, minutes: 10 }) }) : null;
+  const resend = byEmail ? button(t('twofa.resend'), { variant: 'link', small: true, onClick: async () => {
+    setBusy(resend, true, t('twofa.resending'));
+    try {
+      const r = await api.post('/auth/login/2fa/resend', { challenge }, { auth: false });
+      setBusy(resend, false);
+      code.input.value = '';
+      code.setError(null);
+      toast(t('twofa.resent', { email: r.sentTo }));
+      code.input.focus();
+    } catch (err) {
+      setBusy(resend, false);
+      if (err.code === 'two_factor_expired') { login({ app, onSignedIn }); toast(t('twofa.expired'), { type: 'warn' }); return; }
+      if (err.code === 'too_many_attempts') resend.hidden = true;
+      clear(msg);
+      msg.append(alertBox('bad', null, err.code === 'too_many_attempts' ? t('twofa.resendLimit') : errorText(err)));
+    }
+  } }) : null;
+  const form = h('form', { class: 'stack', novalidate: true }, sentNote, code.wrap, remember, msg, submit,
+    h('p', { class: 'small row-between' }, h('a', { href: '#/ingresar', onclick: (e) => { e.preventDefault(); login({ app, onSignedIn }); }, text: t('twofa.backToPassword') }), resend));
+  layout(app, t(byEmail ? 'twofa.emailTitle' : 'twofa.loginTitle'), t(byEmail ? 'twofa.emailLead' : 'twofa.loginLead'), form);
   setTimeout(() => code.input.focus(), 50);
   const send = async () => {
     const v = code.input.value.trim();
@@ -240,10 +264,13 @@ export function setup({ app, setupRequired, onSignedIn }) {
   });
 }
 
-/** Required two-step set-up (the policy covers this account and it isn't set up yet). */
-export function enroll({ app, onDone, onLogout }) {
+/**
+ * Required two-step set-up: the policy covers this account and it isn't set up
+ * yet, or its devices were removed and the e-mail code was confirmed (reenroll).
+ */
+export function enroll({ app, onDone, onLogout, reenroll = false }) {
   const box = h('div');
-  layout(app, t('twofa.requiredTitle'), t('twofa.requiredLead'), box,
+  layout(app, t(reenroll ? 'twofa.newDeviceTitle' : 'twofa.requiredTitle'), t(reenroll ? 'twofa.newDeviceLead' : 'twofa.requiredLead'), box,
     h('p', { class: 'small auth-alt' }, h('a', { href: '#/ingresar', onclick: (e) => { e.preventDefault(); onLogout(); }, text: t('topbar.logout') })));
   renderSetup(box, { onEnabled: onDone, doneLabel: t('twofa.goToPanel') });
 }

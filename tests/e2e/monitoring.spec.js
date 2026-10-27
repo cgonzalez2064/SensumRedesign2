@@ -96,12 +96,15 @@ test('"Salud del sitio" can be given to anyone as part of a custom access', asyn
   await owner.goto('/admin/#/usuarios');
   const row = owner.locator('tr', { hasText: TEXTS_ONLY.name });
   await row.getByRole('button', { name: new RegExp(`Acciones para ${TEXTS_ONLY.name}`) }).click();
-  await owner.getByRole('button', { name: 'Cambiar tipo de acceso' }).click();
-  const dlg = owner.getByRole('dialog', { name: new RegExp(`Acceso de ${TEXTS_ONLY.name}`) });
-  await dlg.getByText('Personalizado').click();
-  await dlg.getByRole('checkbox', { name: /^Salud del sitio/ }).check();
+  await owner.getByRole('button', { name: 'Cambiar rol' }).click();
+  const dlg = owner.getByRole('dialog', { name: new RegExp(`Rol de ${TEXTS_ONLY.name}`) });
+  // Only some sections (an older access): the closest role is ticked, and what they had stays.
+  await expect(dlg.getByText(/no corresponde a ningún rol/)).toBeVisible();
+  await dlg.getByText('Consulta (solo lectura)', { exact: true }).click();
+  await expect(dlg.locator('details.extras')).toHaveAttribute('open', '');
+  await expect(dlg.getByRole('checkbox', { name: /^Textos del sitio/ })).toBeChecked();
   await dlg.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(row.getByText('Textos del sitio · Salud del sitio')).toBeVisible();
+  await expect(row.getByText('Consulta (solo lectura) + Textos del sitio')).toBeVisible();
 
   await page.goto('/admin/#/');
   await page.reload();
@@ -109,11 +112,15 @@ test('"Salud del sitio" can be given to anyone as part of a custom access', asyn
   await page.goto('/admin/#/salud-del-sitio');
   await expect(page.locator('main h1')).toHaveText('Salud del sitio');
 
-  // Put it back.
-  await row.getByRole('button', { name: new RegExp(`Acciones para ${TEXTS_ONLY.name}`) }).click();
-  await owner.getByRole('button', { name: 'Cambiar tipo de acceso' }).click();
-  await owner.getByRole('dialog').getByText('Redactor', { exact: true }).click();
-  await owner.getByRole('dialog').getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(row.getByText('Redactor', { exact: true })).toBeVisible();
+  // Put it back (only "Textos del sitio" is not a role, so through the API, as an older account would be).
+  const { csrf, users } = await owner.evaluate(async () => {
+    const session = await (await fetch('../api/auth/session')).json();
+    return { csrf: session.csrf, users: (await (await fetch('../api/users')).json()).users };
+  });
+  const id = users.find((u) => u.name === TEXTS_ONLY.name).id;
+  const back = await owner.evaluate(async ([id, csrf]) => (await fetch('../api/users/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf }, body: JSON.stringify({ permissions: ['texts'] }) })).status, [id, csrf]);
+  expect(back).toBe(200);
+  await owner.reload();
+  await expect(owner.locator('tr', { hasText: TEXTS_ONLY.name }).getByText('Textos del sitio', { exact: true })).toBeVisible();
   await ctx.close(); await it.close();
 });

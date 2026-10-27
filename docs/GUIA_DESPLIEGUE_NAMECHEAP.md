@@ -671,30 +671,30 @@ solo cambia a personas con igual o menos acceso y que no gestionan usuarios, y s
 los accesos que tiene; «Gestión de usuarios» solo la da la cuenta propietaria.
 
 1. Panel → **Usuarios** → **Invitar usuario**.
-2. Nombre, correo y **Tipo de acceso**:
+2. Nombre, correo y **Rol**:
 
-| Tipo de acceso | Para quién | Ve y puede usar |
+| Rol | Para quién | Ve y puede usar |
 |---|---|---|
-| Administrador del sitio | Quien administra el sitio día a día | Textos, datos de contacto y formulario, fotos, portafolio, publicación y actividad, **Prospectos**, **Estadísticas**, **Salud del sitio**, **Informe mensual (consulta)** y **Gestión de usuarios** |
-| Editor de contenido | Quien actualiza el sitio | Textos, datos de contacto y formulario, fotos y portafolio |
-| Redactor | Quien solo corrige o escribe textos | Los textos del sitio (español e inglés) |
-| Fotos y portafolio | Quien sube fotos de proyectos | Fotos de «Nosotros» y proyectos, y el PDF |
-| Datos de contacto | Recepción / atención | Teléfonos, WhatsApp, correo, dirección, mapa, Instagram y las opciones del formulario |
-| Ventas | Quien atiende clientes | **Prospectos** (mensajes del formulario) y **Estadísticas** completas; no cambia el sitio |
-| Gerencia (consulta) | Dirección / gerencia | **Estadísticas de visitas** (versión básica, sin datos personales) y **Salud del sitio**; no cambia nada |
-| Soporte técnico | Tu equipo de TI o un proveedor | **Gestión de solicitudes de soporte** (todas, con gráficas), **Salud del sitio**, **Informe mensual (consulta)** y publicación y actividad |
-| Personalizado | Cualquier otra combinación | Marca los permisos uno por uno; cada casilla explica qué incluye |
+| Administrador | Quien administra el sitio y al equipo (solo lo da la cuenta propietaria) | Textos, datos de contacto y formulario, fotos, portafolio, publicación y actividad, **Prospectos**, **Estadísticas**, **Salud del sitio**, **Informe mensual (consulta)** y **Gestión de usuarios** |
+| Editor del sitio web | Quien actualiza el sitio (mercadeo, recepción, fotografía) | Textos, fotos, portafolio en PDF, datos de contacto y formulario |
+| Ventas y prospectos | Quien atiende clientes | **Prospectos** (mensajes del formulario) y **Estadísticas** completas; no cambia el sitio |
+| Consulta (solo lectura) | Dirección / gerencia | **Estadísticas de visitas** (versión básica, sin datos personales), **Salud del sitio** e **Informe mensual (consulta)**; no cambia nada |
 
-Los permisos que puedes combinar en **Personalizado** son: Textos del sitio · Datos de
-contacto y formulario · Fotos · Portafolio en PDF · Publicación y actividad ·
-Prospectos · **Estadísticas de visitas** · **Salud del sitio** · **Informe mensual
-(consulta)** · **Gestión de solicitudes de soporte** · **Gestión de usuarios**.
+Para una excepción, abre **Secciones adicionales (opcional)** debajo de los roles y agrega
+una sección que el rol no incluye (por ejemplo, «Editor del sitio web + Prospectos»).
+Las secciones son: Textos del sitio · Datos de contacto y formulario · Fotos · Portafolio
+en PDF · Publicación y actividad · Prospectos · **Estadísticas de visitas** · **Salud del
+sitio** · **Informe mensual (consulta)** · **Gestión de solicitudes de soporte** (para
+quien da soporte técnico) · **Gestión de usuarios** (incluida en Administrador). Cada
+persona ve en **Más secciones** las que puede pedir y las pide con un clic; tú las das
+en Usuarios → **Solicitudes de acceso**.
 
 Si a alguien no le llegan los correos (por ejemplo, un buzón recién creado), en su menú
 «⋮» usa **Establecer contraseña**: el panel genera una fácil de leer, tú se la compartes
-por un medio seguro y al entrar crea la suya. También puedes **Editar nombre y correo**,
-**Enviar enlace para nueva contraseña** y exigir o restablecer su **Verificación en dos
-pasos**.
+por un medio seguro y al entrar crea la suya. También puedes **Actualizar información**
+(nombre y correo), **Enviar enlace para nueva contraseña**, exigir su **Verificación en dos
+pasos** o **Quitar dispositivos registrados** si perdió o cambió de teléfono (al entrar
+confirma un código que le llega por correo y registra el nuevo).
 
 > **Salud del sitio** es la versión resumida del Monitoreo: si el sitio funciona, la
 > **disponibilidad (uptime)** de las últimas 24 horas, 7, 30 y 90 días, la gráfica de
@@ -719,15 +719,14 @@ pasos**.
 3. La persona recibe un correo para crear su contraseña (vence en 72 horas). Si el
    correo no sale, el panel te muestra el enlace para compartirlo por otro medio.
    Al crear su contraseña recibe un **correo de bienvenida** (una sola vez, en el idioma
-   elegido en la invitación) con su tipo de acceso explicado, los primeros pasos y cómo
+   elegido en la invitación) con su rol explicado, los primeros pasos y cómo
    pedir ayuda; y la **primera vez que entra** el panel le pide elegir **idioma** y
    **apariencia** (Claro, Oscuro o Automático, que viene preseleccionado). Las cuentas
    que ya usaban el panel no ven esa pantalla.
-4. Para cambiar el acceso después: menú «⋮» de la persona → **Cambiar tipo de
-   acceso**. Se aplica de inmediato.
-5. **Buscar personas:** arriba de la lista hay un buscador (nombre, correo o tipo de
-   acceso; no importan tildes ni mayúsculas) y filtros por **estado** y **tipo de
-   acceso**.
+4. Para cambiar el acceso después: menú «⋮» de la persona → **Cambiar rol**. Se aplica
+   de inmediato.
+5. **Buscar personas:** arriba de la lista hay un buscador (nombre, correo o rol; no
+   importan tildes ni mayúsculas) y filtros por **estado** y **rol**.
 6. **Comprueba lo que ve cada persona con «Ver como…»** (arriba en Usuarios, o en el
    menú «⋮» de cada persona): pide tu contraseña una vez y muestra el panel exactamente
    como lo ve esa cuenta. Una barra azul arriba permite **Cambiar de persona** (sin
@@ -1043,15 +1042,15 @@ en `.env` (50 a 99).
 - [ ] **Informe mensual → Descargar PDF** se abre bien; la prueba por correo trae el PDF adjunto.
 - [ ] Traducción → **Probar conexión** dice «La clave funciona». En Textos del sitio, escribe en español y mira cómo se llena el inglés (luego descarta el cambio).
 - [ ] Monitoreo → **Tendencias** muestra las gráficas (pasa el cursor para ver cada día) después de la primera hora de revisiones automáticas.
-- [ ] Una persona «Administrador del sitio» o «Gerencia (consulta)» ve **Salud del sitio** en su menú (uptime de 24 h / 7 / 30 / 90 días, gráficas e incidentes), sin el registro de errores.
+- [ ] Una persona «Administrador» o «Consulta (solo lectura)» ve **Salud del sitio** en su menú (uptime de 24 h / 7 / 30 / 90 días, gráficas e incidentes), sin el registro de errores.
 - [ ] Monitoreo (cuenta propietaria) → **Disponibilidad (uptime)** e **Incidentes (30 días)** muestran datos después de las primeras revisiones automáticas.
-- [ ] Una persona «Gerencia (consulta)» ve **Estadísticas** sin mensajes del formulario ni el menú Prospectos.
-- [ ] Si alguien da soporte técnico: tipo de acceso «Soporte técnico» → ve todas las solicitudes y el **Panorama de soporte**; no ve Usuarios ni Monitoreo.
+- [ ] Una persona «Consulta (solo lectura)» ve **Estadísticas** sin mensajes del formulario ni el menú Prospectos, y **Más secciones** con lo que puede pedir.
+- [ ] Si alguien da soporte técnico: un rol (por ejemplo «Consulta») + la sección adicional «Gestión de solicitudes de soporte» → ve todas las solicitudes y el **Panorama de soporte**; no ve Usuarios ni Monitoreo.
 - [ ] **Informe mensual → Vista previa**: la pestaña **Para clientes** no menciona respaldos ni temas técnicos; en **Detalle técnico**, «Seguridad» dice «Protegido» (con HTTPS y respaldo reciente) o explica el motivo de «Requiere atención».
-- [ ] Una persona «Administrador del sitio» ve **Estado del sitio → Informe mensual** (las dos pestañas) sin botones de envío.
+- [ ] Una persona «Administrador» ve **Estado del sitio → Informe mensual** (las dos pestañas) sin botones de envío.
 - [ ] Usuarios → el **buscador** encuentra a una persona por nombre o correo.
 - [ ] En **celular y tableta**: al desplazarte, la barra de arriba (menú, logo) queda fija; al abrir el menú lateral y desplazarlo, el logo y «Administrador de contenido» se quedan arriba. En **Soporte** se ven todos los filtros sin cortarse.
-- [ ] Usuarios → **Ver como…**: revisa cada persona del equipo; su menú solo muestra lo que su tipo de acceso permite. Termina con **Volver a mi cuenta**.
+- [ ] Usuarios → **Ver como…**: revisa cada persona del equipo; su menú solo muestra lo que su rol permite. Termina con **Volver a mi cuenta**.
 - [ ] Better Stack muestra ambos monitores en verde.
 
 ---
@@ -1092,9 +1091,46 @@ rm -rf ~/release-… ~/release-….zip
 **Al actualizar a la versión de gestión de usuarios (octubre de 2026):** las cuentas con
 el tipo de acceso **Administrador del sitio** reciben **Gestión de usuarios** (pueden
 editar nombre y correo, contraseñas y verificación en dos pasos de quienes tienen menos
-acceso). Si alguna no debe tenerlo, quítaselo en Usuarios → «⋮» → **Cambiar tipo de
-acceso** (queda como «Personalizado»). Las actualizaciones de la base de datos se
-aplican solas.
+acceso); con la versión de roles simplificados ese tipo se llama **Administrador**. Si
+alguna cuenta no debe tenerlo, cámbiala en Usuarios → «⋮» → **Cambiar rol** (por
+ejemplo a «Editor del sitio web» con secciones adicionales). Las actualizaciones de la
+base de datos se aplican solas.
+
+**Al actualizar a la versión de roles simplificados (octubre de 2026):** antes de los
+`rsync`, guarda una copia del programa actual por si hay que volver atrás:
+
+```bash
+cp -a ~/sensum-cms ~/sensum-cms-antes-roles
+```
+
+La base de datos se actualiza sola (migraciones `017_roles` y `018_device_reset`):
+* **Roles:** quedan cuatro: **Administrador**, **Editor del sitio web**, **Ventas y
+  prospectos** y **Consulta (solo lectura)**, más «Secciones adicionales» para
+  excepciones. Cada cuenta que no tenía un rol completo pasa al rol más cercano **sin
+  perder nada de lo que veía** (nunca a Administrador): por ejemplo, Redactor, Fotos y
+  portafolio y Datos de contacto pasan a Editor del sitio web; Gerencia pasa a Consulta
+  (ahora también ve el Informe mensual); Soporte técnico pasa a Consulta + sus secciones.
+  La cuenta propietaria no cambia.
+* Para ver qué cuentas cambió y cómo: `php ~/sensum-cms/bin/console roles`. Revisa la
+  lista y corrige en **Usuarios → «⋮» → Cambiar rol** lo que haga falta (y con **Ver
+  como…** que cada persona vea lo que corresponde).
+* **Verificación en dos pasos:** «Restablecer» ahora es **Quitar dispositivos
+  registrados**: al entrar, la persona confirma un código que le llega por correo y
+  registra su dispositivo nuevo. Depende del correo del panel: comprueba antes que
+  `php ~/sensum-cms/bin/console mail:test tu@correo` funcione.
+* **Estadísticas:** filtros por período, **Exportar** y **Enviar por correo** (no hace
+  falta configurar nada).
+
+**Volver atrás de esta versión**, de menos a más:
+1. Solo los roles: `php ~/sensum-cms/bin/console roles:rollback` devuelve a cada cuenta
+   el acceso que tenía (respeta las que ya corregiste a mano).
+2. El programa: `rsync -a --delete --exclude=".env" --exclude="storage/" ~/sensum-cms-antes-roles/ ~/sensum-cms/`
+   y luego `php ~/sensum-cms/bin/console publish`. La versión anterior funciona con la base
+   de datos nueva (las columnas y la tabla nuevas no le estorban).
+3. Todo, incluida la base de datos: el paso 23 con la copia que hizo `backup` antes de
+   actualizar.
+
+Cuando todo esté bien unos días, borra la copia: `rm -rf ~/sensum-cms-antes-roles`.
 
 **Al actualizar a la versión de cuentas y automatizaciones (octubre de 2026):** la base
 de datos se actualiza sola. Lo nuevo no cambia el sitio público ni hace falta configurar
@@ -1119,8 +1155,8 @@ del 17b si aún no los hiciste.
 **Al actualizar desde una versión anterior (perfiles de acceso nuevos):** las cuentas
 que ya tenían **Prospectos** reciben también **Estadísticas de visitas** (antes iban
 juntas), así nadie pierde lo que veía. **Gestión de solicitudes de soporte** no se le
-da a nadie automáticamente: asígnala tú en Usuarios → «⋮» → **Cambiar tipo de acceso**
-(tipo **Soporte técnico**) si alguien más atiende el soporte. Las cuentas que tenían
+da a nadie automáticamente: agrégala tú en Usuarios → «⋮» → **Cambiar rol** →
+**Secciones adicionales** si alguien más atiende el soporte. Las cuentas que tenían
 **Publicación y actividad** y **Salud del sitio** (Administrador del sitio y Soporte
 técnico) reciben **Informe mensual (consulta)**. Revisa después con **Ver como…** que
 cada persona vea lo que corresponde.
@@ -1142,6 +1178,8 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
   (o extrae el zip del paso 2).
 - **La base de datos:** reemplaza `sensum-cms/storage/database.sqlite` por una copia
   de `sensum-cms/storage/backups/db/`.
+- **Solo los roles de octubre de 2026:** `php ~/sensum-cms/bin/console roles:rollback`
+  (ver paso 22).
 - **Si el hosting se perdió por completo:** abre el último respaldo cifrado (correo o
   descarga) con la contraseña de respaldos, sube un paquete nuevo (paso 3–5), reemplaza
   `sensum-cms/storage/database.sqlite` por el del respaldo, copia las fotos a

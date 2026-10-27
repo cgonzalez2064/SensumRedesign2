@@ -379,7 +379,7 @@ final class Automations
         // Rules name the service in Spanish; a message from the English page carries its English name.
         $service = mb_strtolower(trim((string) $lead['service']));
         foreach ($this->app->contactServices()->items() as $it) {
-            if ($service !== '' && in_array($service, [mb_strtolower((string) ($it['es'] ?? '')), mb_strtolower((string) ($it['en'] ?? ''))], true)) {
+            if ($service !== '' && in_array($service, [mb_strtolower($it['es']), mb_strtolower($it['en'])], true)) {
                 $service = mb_strtolower((string) $it['es']);
                 break;
             }

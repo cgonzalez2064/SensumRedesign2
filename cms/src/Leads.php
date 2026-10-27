@@ -326,19 +326,23 @@ final class Leads
     // ------------------------------------------------------------------ figures
 
     /**
-     * Figures for a period (monthly report, weekly summary).
+     * Figures for a period (monthly report, weekly summary, Estadísticas), for
+     * every service or only one (its label as stored).
      * @return array{received:int,byService:array<string,int>,contacted:int,quoted:int,won:int,lost:int,wonAmount:int,quotedAmount:int,avgResponseHours:?float}
      */
-    public function stats(int $start, int $end): array
+    public function stats(int $start, int $end, string $service = ''): array
     {
         $db = $this->app->db();
+        // Same period, optionally one service: every query below adds the same condition.
+        $w = 'created_at >= ? AND created_at < ?' . ($service !== '' ? ' AND service = ?' : '');
+        $p = $service !== '' ? [$start, $end, $service] : [$start, $end];
         $out = ['received' => 0, 'byService' => [], 'contacted' => 0, 'quoted' => 0, 'won' => 0, 'lost' => 0, 'wonAmount' => 0, 'quotedAmount' => 0, 'avgResponseHours' => null];
         try {
-            $out['received'] = (int) $db->value('SELECT COUNT(*) FROM leads WHERE created_at >= ? AND created_at < ?', [$start, $end]);
-            foreach ($db->all("SELECT service, COUNT(*) AS n FROM leads WHERE created_at >= ? AND created_at < ? GROUP BY service ORDER BY n DESC, service", [$start, $end]) as $r) {
+            $out['received'] = (int) $db->value("SELECT COUNT(*) FROM leads WHERE $w", $p);
+            foreach ($db->all("SELECT service, COUNT(*) AS n FROM leads WHERE $w GROUP BY service ORDER BY n DESC, service", $p) as $r) {
                 $out['byService'][(string) $r['service']] = (int) $r['n'];
             }
-            foreach ($db->all('SELECT status, COUNT(*) AS n, SUM(COALESCE(amount, 0)) AS amount FROM leads WHERE created_at >= ? AND created_at < ? GROUP BY status', [$start, $end]) as $r) {
+            foreach ($db->all("SELECT status, COUNT(*) AS n, SUM(COALESCE(amount, 0)) AS amount FROM leads WHERE $w GROUP BY status", $p) as $r) {
                 if (in_array($r['status'], ['contacted', 'quoted', 'won', 'lost'], true)) {
                     $out[$r['status']] = (int) $r['n'];
                 }
@@ -349,7 +353,7 @@ final class Leads
                     $out['quotedAmount'] = (int) $r['amount'];
                 }
             }
-            $avg = $db->value('SELECT AVG(contacted_at - created_at) FROM leads WHERE created_at >= ? AND created_at < ? AND contacted_at IS NOT NULL', [$start, $end]);
+            $avg = $db->value("SELECT AVG(contacted_at - created_at) FROM leads WHERE $w AND contacted_at IS NOT NULL", $p);
             $out['avgResponseHours'] = $avg !== null ? round((float) $avg / 3600, 1) : null;
         } catch (\Throwable) {
             // older database without the leads table

@@ -15,7 +15,7 @@ async function signIn(page, user = ADMIN) {
 test('a new person chooses language and appearance once, and gets the welcome e-mail', async ({ browser }, info) => {
   const email = `nueva.${info.project.name}.${Date.now()}@example.test`;
   const password = `Clave-Nueva-${Date.now()}`;
-  // The owner invites them as "Editor de contenido".
+  // The owner invites them as "Editor del sitio web".
   const ownerCtx = await browser.newContext(info.project.use.viewport ? { viewport: info.project.use.viewport } : {});
   const owner = await ownerCtx.newPage();
   await signIn(owner);
@@ -24,7 +24,7 @@ test('a new person chooses language and appearance once, and gets the welcome e-
   const dialog = owner.getByRole('dialog');
   await dialog.getByLabel('Nombre').fill('Laura Pérez');
   await dialog.getByLabel('Correo electrónico').fill(email);
-  await dialog.getByText('Editor de contenido', { exact: true }).click();
+  await dialog.getByText('Editor del sitio web', { exact: true }).click();
   await dialog.getByRole('button', { name: 'Enviar invitación' }).click();
   await expect(owner.getByText(/Invitación enviada a/)).toBeVisible();
   await ownerCtx.close();
@@ -69,7 +69,7 @@ test('a new person chooses language and appearance once, and gets the welcome e-
   const welcome = mails.find((m) => m.Subject === 'Tu cuenta del Administrador de contenido está lista');
   expect(welcome, JSON.stringify(mails.map((m) => m.Subject))).toBeTruthy();
   const body = await message(welcome.ID);
-  for (const text of ['¡Te damos la bienvenida, Laura!', 'Editor de contenido', 'Textos del sitio', 'Portafolio en PDF', 'Soporte → Nueva solicitud', 'Nunca te pediremos tu contraseña']) {
+  for (const text of ['¡Te damos la bienvenida, Laura!', 'Editor del sitio web', 'Textos del sitio', 'Portafolio en PDF', 'Soporte → Nueva solicitud', 'Nunca te pediremos tu contraseña']) {
     expect(body.Text).toContain(text);
   }
   expect(body.Text).toContain('Ana Administradora te dio acceso');

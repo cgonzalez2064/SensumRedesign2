@@ -33,18 +33,16 @@ final class Users
      */
     public const PERMISSIONS = ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'support', 'users'];
     /**
-     * Ready-made access types offered when inviting, one per real job
-     * (anything else shows as "Personalizado").
+     * Roles: the ready-made access offered when inviting, one per real job.
+     * Anything a role doesn't include is added one section at a time
+     * («Secciones adicionales», or by granting a «Pedir acceso» request).
+     * Migration 017_roles moved the older access types onto these.
      */
     public const ACCESS_TYPES = [
         'admin' => ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'users'],
         'content' => ['texts', 'contact', 'photos', 'documents'],
-        'texts' => ['texts'],
-        'media' => ['photos', 'documents'],
-        'contact' => ['contact'],
         'sales' => ['leads', 'stats'],
-        'management' => ['stats', 'monitor'],
-        'support' => ['support', 'monitor', 'report', 'site'],
+        'management' => ['stats', 'monitor', 'report'],
     ];
 
     public function __construct(private App $app)
@@ -116,21 +114,53 @@ final class Users
         return $list;
     }
 
-    /** @return list<string> */
-    /** Key of the ready-made access type with exactly these permissions, or 'custom'. */
+    /**
+     * Given only by the owner, never asked for with «Pedir acceso»: managing
+     * users, and handling everyone's support requests (technical support's tool).
+     */
+    public const NOT_REQUESTABLE = ['users', 'support'];
+
+    /** The role an account is built on: the largest one it has in full, or 'custom' when none. */
     public static function accessTypeOf(array $permissions): string
     {
+        $best = 'custom';
         foreach (self::ACCESS_TYPES as $key => $perms) {
-            if (count($perms) === count($permissions) && !array_diff($perms, $permissions)) {
-                return $key;
+            if (!array_diff($perms, $permissions) && ($best === 'custom' || count($perms) > count(self::ACCESS_TYPES[$best]))) {
+                $best = $key;
             }
         }
-        return 'custom';
+        return $best;
     }
 
+    /**
+     * Sections an account has beyond its role.
+     * @return list<string>
+     */
+    public static function extrasOf(array $permissions): array
+    {
+        $type = self::accessTypeOf($permissions);
+        return $type === 'custom' ? [] : array_values(array_diff(array_intersect(self::PERMISSIONS, $permissions), self::ACCESS_TYPES[$type]));
+    }
+
+    /** @return list<string> */
     public static function permissionsOf(array $u): array
     {
         return array_values(array_intersect(self::PERMISSIONS, explode(',', (string) ($u['permissions'] ?? ''))));
+    }
+
+    /**
+     * «Pedir acceso» requests the person no longer needs — they already have all
+     * of it (a role change, migration 017_roles): closed quietly, so nobody is
+     * asked to grant what is already there.
+     */
+    public function closeCoveredRequests(): void
+    {
+        $db = $this->app->db();
+        foreach ($db->all("SELECT r.id, r.permissions AS asked, u.permissions FROM access_requests r JOIN users u ON u.id = r.user_id WHERE r.status = 'pending'") as $r) {
+            if (!array_diff(self::permissionsOf(['permissions' => $r['asked']]), self::permissionsOf($r))) {
+                $db->run("UPDATE access_requests SET status = 'granted', resolved_at = ? WHERE id = ? AND status = 'pending'", [time(), $r['id']]);
+            }
+        }
     }
 
     /** Creates an active account with a password (first admin / CLI). */
@@ -267,6 +297,7 @@ final class Users
             'twoFactorEnabled' => !empty($u['totp_enabled_at']),
             'twoFactorEnabledAt' => !empty($u['totp_enabled_at']) ? (int) $u['totp_enabled_at'] : null,
             'twoFactorForced' => !empty($u['two_factor_required']),
+            'twoFactorReenroll' => !empty($u['two_factor_reenroll_at']),
             'accessUntil' => isset($u['access_until']) ? (int) $u['access_until'] : null,
             // A password given by a manager that was not replaced in time no longer works.
             'tempPasswordExpired' => !empty($u['must_change_password']) && isset($u['temp_password_expires_at']) && (int) $u['temp_password_expires_at'] <= time(),

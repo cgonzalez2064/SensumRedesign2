@@ -65,7 +65,9 @@ final class AuthController extends Controller
         $result = $this->app->auth()->login($this->req, $email, $password);
         if (isset($result['challenge'])) {
             // Password correct; the authenticator code comes next (no session yet).
-            Response::ok(['authenticated' => false, 'twoFactor' => true, 'challenge' => $result['challenge'], 'rememberAllowed' => $result['remember']]);
+            // 'email': the account's devices were removed and the code went to its e-mail (sentTo, masked).
+            Response::ok(['authenticated' => false, 'twoFactor' => true, 'challenge' => $result['challenge'], 'rememberAllowed' => $result['remember'],
+                'method' => $result['method'] ?? 'app', 'sentTo' => $result['sentTo'] ?? null]);
         }
         Response::ok($this->sessionPayload($result['user'], $result['csrf']));
     }
@@ -79,6 +81,12 @@ final class AuthController extends Controller
         }
         $result = $this->app->auth()->loginSecondStep($this->req, $this->str('challenge'), mb_substr($code, 0, 40), $this->req->raw('remember') === true);
         Response::ok($this->sessionPayload($result['user'], $result['csrf']));
+    }
+
+    /** «Reenviar código» on the e-mail step of the sign-in. */
+    public function resendLoginCode(): never
+    {
+        Response::ok($this->app->auth()->resendLoginCode($this->req, $this->str('challenge')));
     }
 
     public function logout(): never

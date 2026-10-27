@@ -49,7 +49,7 @@ test('viewing as a "texts only" account: their menus and data, nothing can be ch
   assert.equal(sess.user.email, EDITOR.email);
   assert.equal(sess.user.owner, false);
   assert.deepEqual(sess.user.permissions, ['texts']);
-  assert.deepEqual([sess.viewAs.by, sess.viewAs.accessType, sess.viewAs.status], [ADMIN.name, 'texts', 'active']);
+  assert.deepEqual([sess.viewAs.by, sess.viewAs.accessType, sess.viewAs.status], [ADMIN.name, 'custom', 'active'], 'only some sections: no role');
   assert.ok(sess.viewAs.until > Date.now() / 1000 + 29 * 60);
   const content = await owner.get('/api/content');
   assert.equal(content.status, 200);
@@ -90,7 +90,7 @@ test('switching to another account needs no password; leads stay unread', async 
   // An invited account can be viewed too.
   await owner.post('/api/view-as/switch', { userId: ids['ivan.invitado@example.test'] });
   const inv = await session(owner);
-  assert.deepEqual([inv.user.email, inv.viewAs.status, inv.viewAs.accessType], ['ivan.invitado@example.test', 'invited', 'media']);
+  assert.deepEqual([inv.user.email, inv.viewAs.status, inv.viewAs.accessType], ['ivan.invitado@example.test', 'invited', 'custom']);
   assert.equal((await owner.post('/api/view-as/switch', { userId: ids[ADMIN.email] })).status, 422, 'not the owner');
 });
 

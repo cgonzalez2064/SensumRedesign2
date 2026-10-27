@@ -34,7 +34,9 @@ final class Cli
             'backup' => $this->backup(),
             'integrity:accept' => $this->integrityAccept(),
             'demo-users' => $this->demoUsers($args),
-            '2fa:reset' => $this->twoFactorReset($args[0] ?? ''),
+            '2fa:reset' => $this->twoFactorReset($args[0] ?? '', in_array('--off', $args, true)),
+            'roles' => $this->rolesReport(),
+            'roles:rollback' => $this->rolesRollback(),
             default => $this->help(),
         };
     }
@@ -46,7 +48,7 @@ final class Cli
 
     private function help(): int
     {
-        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|translate:test|monitor|automations|alert:test|reports:retry|backup|integrity:accept|demo-users [--reports]|2fa:reset <email>>');
+        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|translate:test|monitor|automations|alert:test|reports:retry|backup|integrity:accept|demo-users [--reports]|2fa:reset <email> [--off]|roles|roles:rollback>');
         return 0;
     }
 
@@ -198,37 +200,101 @@ final class Cli
     }
 
     /**
-     * Turns off two-step sign-in for an account from the server (e.g. the owner
-     * lost the phone and the recovery codes). The person sets it up again at the
-     * next sign-in when the policy requires it.
+     * Removes an account's registered devices from the server (e.g. the owner
+     * lost the phone and the recovery codes): the next sign-in confirms a code
+     * sent to its e-mail and registers the new device. `--off` only turns
+     * two-step sign-in off (for when e-mail is not working); the person sets it
+     * up again at the next sign-in when the policy requires it.
      */
-    private function twoFactorReset(string $email): int
+    private function twoFactorReset(string $email, bool $off = false): int
     {
         $user = $this->app->db()->one('SELECT * FROM users WHERE lower(email) = ?', [strtolower(trim($email))]);
         if (!$user) {
             fwrite(STDERR, "No account with that e-mail.\n");
             return 1;
         }
-        $this->app->twoFactor()->disable((int) $user['id']);
+        if ($off) {
+            $this->app->twoFactor()->disable((int) $user['id']);
+            $this->app->db()->run('UPDATE users SET two_factor_reenroll_at = NULL WHERE id = ?', [$user['id']]);
+        } else {
+            $this->app->twoFactor()->removeDevices((int) $user['id']);
+        }
         $this->app->auth()->revokeSessions((int) $user['id']);
-        $this->app->activity(null, 'two_factor_reset', (string) $user['id'], ['by' => 'console']);
-        $this->app->watchdog()->twoFactorNotice($user, 'reset');
-        $this->out('Two-step sign-in turned off for ' . $user['email'] . '; their sessions were ended.');
+        $this->app->activity(null, 'two_factor_reset', (string) $user['id'], ['by' => 'console'] + ($off ? ['off' => true] : []));
+        if (!$off) {
+            $this->app->watchdog()->twoFactorNotice($user, 'reset');
+        }
+        $this->out($off
+            ? 'Two-step sign-in turned off for ' . $user['email'] . '; their sessions were ended.'
+            : 'Registered devices removed for ' . $user['email'] . '; their sessions were ended. Next sign-in: password, a code sent to that e-mail, then the new device.');
         return 0;
     }
 
-    /** Demo accounts, one per access profile (development only). id => [name, permissions, status] */
+    /** What migration 017_roles changed: each account moved onto a role (before → after). */
+    private function rolesReport(): int
+    {
+        $rows = $this->rolesMigrated();
+        if ($rows === null) {
+            return 1;
+        }
+        if (!$rows) {
+            $this->out('017_roles changed no account: every account already had a complete role.');
+            return 0;
+        }
+        foreach ($rows as $r) {
+            $now = (string) $r['permissions'];
+            $this->out(sprintf('%s  [%s]  %s  →  %s%s', $r['email'], $r['role'], $r['before'], $r['after'],
+                $now === $r['after'] ? '' : '  (changed since: ' . ($now === '' ? 'account deleted' : $now) . ')'));
+        }
+        $this->out(count($rows) . ' account(s). Undo with: php bin/console roles:rollback');
+        return 0;
+    }
+
+    /**
+     * Gives the accounts moved by 017_roles their previous access back — only those
+     * nobody changed since (a correction made by hand is kept). The program itself
+     * goes back with the previous package (guide, step 23).
+     */
+    private function rolesRollback(): int
+    {
+        $rows = $this->rolesMigrated();
+        if ($rows === null) {
+            return 1;
+        }
+        $done = 0;
+        foreach ($rows as $r) {
+            if ((string) $r['permissions'] !== $r['after']) {
+                $this->out('Kept (changed since the upgrade): ' . $r['email']);
+                continue;
+            }
+            $this->app->db()->run('UPDATE users SET permissions = ?, updated_at = ? WHERE id = ? AND permissions = ?', [$r['before'], time(), $r['user_id'], $r['after']]);
+            $this->app->activity(null, 'user_updated', (string) $r['user_id'], ['by' => 'console', 'rollback' => '017_roles']);
+            $done++;
+        }
+        $this->out("Previous access restored for $done account(s).");
+        return 0;
+    }
+
+    /** @return list<array<string,mixed>>|null */
+    private function rolesMigrated(): ?array
+    {
+        try {
+            return $this->app->db()->all('SELECT m.*, u.permissions FROM roles_migration_017 m LEFT JOIN users u ON u.id = m.user_id ORDER BY m.email');
+        } catch (\Throwable) {
+            fwrite(STDERR, "Migration 017_roles has not run here yet (php bin/console migrate).\n");
+            return null;
+        }
+    }
+
+    /** Demo accounts, one per role plus an extra section and a disabled one (development only). id => [name, permissions, status, label] */
     private const DEMO_USERS = [
-        'demo.completo' => ['Demo Administrador del Sitio', ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'users'], 'active', 'Administrador del sitio (incluye gestión de usuarios)'],
-        'demo.editor' => ['Demo Editor de Contenido', ['texts', 'contact', 'photos', 'documents'], 'active', 'Editor de contenido'],
-        'demo.textos' => ['Demo Redactor', ['texts'], 'active', 'Redactor (solo textos)'],
-        'demo.fotos' => ['Demo Fotos y Portafolio', ['photos', 'documents'], 'active', 'Fotos y portafolio'],
-        'demo.contacto' => ['Demo Datos de Contacto', ['contact'], 'active', 'Datos de contacto y formulario'],
-        'demo.ventas' => ['Demo Ventas', ['leads', 'stats'], 'active', 'Ventas: prospectos y estadísticas'],
-        'demo.gerencia' => ['Demo Gerencia', ['stats', 'monitor'], 'active', 'Gerencia: estadísticas y salud del sitio (consulta)'],
-        'demo.soporte' => ['Demo Soporte Técnico', ['support', 'monitor', 'report', 'site'], 'active', 'Soporte técnico: solicitudes, salud del sitio, informe técnico y publicación'],
-        'demo.personalizado' => ['Demo Personalizado', ['texts', 'photos'], 'active', 'Personalizado: textos + fotos'],
-        'demo.desactivado' => ['Demo Cuenta Desactivada', ['texts'], 'disabled', 'Desactivada (no puede entrar)'],
+        'demo.completo' => ['Demo Administrador', ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'users'], 'active', 'Administrador (incluye gestión de usuarios)'],
+        'demo.editor' => ['Demo Editor del Sitio Web', ['texts', 'contact', 'photos', 'documents'], 'active', 'Editor del sitio web'],
+        'demo.ventas' => ['Demo Ventas y Prospectos', ['leads', 'stats'], 'active', 'Ventas y prospectos'],
+        'demo.consulta' => ['Demo Consulta', ['stats', 'monitor', 'report'], 'active', 'Consulta (solo lectura)'],
+        'demo.adicional' => ['Demo Editor con Prospectos', ['texts', 'contact', 'photos', 'documents', 'leads'], 'active', 'Editor del sitio web + Prospectos (sección adicional)'],
+        'demo.soporte' => ['Demo Soporte Técnico', ['stats', 'monitor', 'report', 'support'], 'active', 'Consulta + Gestión de solicitudes de soporte (sección adicional)'],
+        'demo.desactivado' => ['Demo Cuenta Desactivada', ['texts', 'contact', 'photos', 'documents'], 'disabled', 'Desactivada (no puede entrar)'],
     ];
 
     /**
@@ -296,15 +362,15 @@ final class Cli
         $ownerName = $owner['name'] ?? 'Soporte IT';
         $now = time();
         $samples = [
-            ['demo.textos', 'problem', 'admin', 'No puedo guardar las Preguntas frecuentes', "Cuando cambio la respuesta 3 y presiono «Guardar cambios», aparece un mensaje de error.\nLo intenté dos veces.", '/admin/#/textos/faq', 'new', 'high', 2 * 3600, []],
-            ['demo.fotos', 'design', 'website', 'La foto del proyecto 2 se ve recortada en el celular', 'En el celular la foto de la tarjeta corta la parte de arriba de la casa.', '/#proyectos', 'waiting', 'normal', 26 * 3600, [
+            ['demo.adicional', 'problem', 'admin', 'No puedo guardar las Preguntas frecuentes', "Cuando cambio la respuesta 3 y presiono «Guardar cambios», aparece un mensaje de error.\nLo intenté dos veces.", '/admin/#/textos/faq', 'new', 'high', 2 * 3600, []],
+            ['demo.ventas', 'design', 'website', 'La foto del proyecto 2 se ve recortada en el celular', 'En el celular la foto de la tarjeta corta la parte de arriba de la casa.', '/#proyectos', 'waiting', 'normal', 26 * 3600, [
                 ['support', 'message', '¿Puedes decirnos qué modelo de celular usas y enviar una captura de cómo se ve?'],
             ]],
             ['demo.editor', 'improvement', 'website', 'Agregar una sección de testimonios', 'Sería bueno mostrar comentarios de clientes satisfechos en la página principal.', '/', 'in_progress', 'low', 3 * 86400, [
                 ['support', 'message', 'Buena idea. Lo estamos evaluando con diseño y te contamos la próxima semana.'],
                 ['support', 'note', 'Estimar 4 horas: nueva sección + campos en el panel.'],
             ]],
-            ['demo.contacto', 'content', 'website', 'Cambiar el número de WhatsApp', 'El número de WhatsApp del sitio cambió, el nuevo es +502 5555 0000.', '/admin/#/contacto', 'resolved', 'normal', 6 * 86400, [
+            ['demo.consulta', 'content', 'website', 'Cambiar el número de WhatsApp', 'El número de WhatsApp del sitio cambió, el nuevo es +502 5555 0000.', '/admin/#/contacto', 'resolved', 'normal', 6 * 86400, [
                 ['support', 'message', 'Listo, ya puedes cambiarlo tú mismo en «Datos de contacto». Te dejamos el número actualizado.'],
             ]],
         ];

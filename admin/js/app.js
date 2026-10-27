@@ -8,7 +8,7 @@ import { initTheme, setThemePref, getThemePref } from './theme.js';
 import { api, setCsrf, onSessionExpired, onTwoFactorRequired, onPasswordChangeRequired, setViewAsExpected, onViewAsChanged } from './api.js';
 import { toast, openDialog, confirmDialog, dropdown, segmented, passwordField, textField, setBusy, errorText, alertBox, loading, button } from './ui.js';
 import { initTelemetry } from './telemetry.js';
-import { can } from './access.js';
+import { can, askable } from './access.js';
 import { codeField } from './twofactor.js';
 import { viewAsBar } from './viewas.js';
 
@@ -34,6 +34,7 @@ const V = {
   status: lazy(() => import('./views/status.js')),
   translation: lazy(() => import('./views/translation.js')),
   activity: lazy(() => import('./views/activity.js')),
+  sections: lazy(() => import('./views/sections.js')),
 };
 const loadAccessRequest = lazy(() => import('./accessrequest.js'));
 const loadReport = lazy(() => import('./report.js'));
@@ -71,6 +72,7 @@ const PRIVATE = [
   { re: /^\/reportes\/([1-9][0-9]{0,8})$/, mod: V.reports, fn: 'detail', nav: 'reports' },
   { re: /^\/cuenta$/, mod: V.account, fn: 'render', nav: 'account' },
   { re: /^\/ayuda$/, mod: V.help, fn: 'render', nav: 'help' },
+  { re: /^\/secciones$/, mod: V.sections, fn: 'render', nav: 'moreSections' },
 ];
 
 const currentPath = () => {
@@ -232,10 +234,10 @@ window.addEventListener('beforeunload', (e) => {
 });
 
 // --------------------------------------------------------------- shell
-function navLink(path, key, ic, active) {
+function navLink(path, key, ic, active, cls) {
   const route = PRIVATE.find((r) => r.nav === key);
   const prefetch = () => { if (route) route.mod().catch(() => {}); };
-  return h('a', { href: '#' + path, 'data-nav': key, 'aria-current': active === key ? 'page' : null, onclick: closeNav, onpointerenter: prefetch, onfocus: prefetch },
+  return h('a', { class: cls, href: '#' + path, 'data-nav': key, 'aria-current': active === key ? 'page' : null, onclick: closeNav, onpointerenter: prefetch, onfocus: prefetch },
     icon(ic), h('span', { text: t('nav.' + key) }), key === 'reports' || key === 'leads' ? h('span', { class: 'nav-badge', hidden: true }) : null);
 }
 
@@ -363,6 +365,8 @@ function renderShell(activeNav, force = false) {
       user.owner ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active), navLink('/actividad', 'activity', 'clock-history', active),
         navLink('/monitoreo', 'monitor', 'activity', active), navLink('/informe', 'siteReport', 'bar-chart', active),
         navLink('/correo', 'email', 'envelope', active), navLink('/traduccion', 'translation', 'translate', active), navLink('/seguridad', 'security', 'shield-lock', active)] : null,
+      // The menu lists only what this account can open; «Más secciones» shows the rest, ready to ask for.
+      askable(user).length ? navLink('/secciones', 'moreSections', 'plus-lg', active, 'nav-more') : null,
       h('div', { class: 'nav-section', text: t('nav.groupSupport') }),
       navLink('/reportes', 'reports', 'headset', active),
       navLink('/ayuda', 'help', 'question-circle', active),
@@ -476,7 +480,7 @@ async function route(force = false) {
     let mod;
     try { mod = await V.auth(); } catch (e) { return showLoadFailed(document.getElementById('app'), e); }
     if (stale()) return;
-    mod.enroll({ app: document.getElementById('app'), onLogout: logout, onDone: async () => {
+    mod.enroll({ app: document.getElementById('app'), onLogout: logout, reenroll: !!state.session.user.twoFactorReenroll, onDone: async () => {
       await loadSession();
       state.path = null;
       navigate('/');
@@ -510,7 +514,9 @@ async function route(force = false) {
     main.append(h('div', { class: 'card empty' }, h('span', { class: 'icon-tile' }, icon(forbidden ? 'lock' : 'exclamation-circle')),
       h('h1', { tabindex: '-1', text: title }),
       h('p', { text: forbidden ? t(priv.owner ? 'notFound.ownerOnly' : 'notFound.forbiddenBody') : t('notFound.body') }),
-      h('div', { class: 'row row-center' }, ask, h('a', { class: ['btn', !ask && 'btn-primary'], href: '#/' }, t('notFound.home')))));
+      h('div', { class: 'row row-center' }, ask, ask
+        ? h('a', { class: 'btn', href: '#/secciones' }, t('moreSections.seeAll'))
+        : h('a', { class: 'btn btn-primary', href: '#/' }, t('notFound.home')))));
     document.title = title + ' · ' + t('app.name');
     focusHeading(main);
     return;

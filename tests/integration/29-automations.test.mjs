@@ -146,9 +146,11 @@ test('«Pedir acceso»: the request reaches whoever manages users; one click gra
   await waitForMail(p.email, 2);
   assert.ok((await subjects(p.email)).includes('Ya tienes acceso a Prospectos, Estadísticas de visitas'));
   assert.equal((await mgr.c.post(`/api/users/requests/${req.id}`, { grant: true })).status, 404, 'answered once');
-  // Something a manager can't give (support): only the owner grants it; declining tells the person.
+  // Support management is the owner's to give: it can't be asked for. A request from before
+  // (or anything a manager can't give) is granted only by the owner; declining tells the person.
   resetLimits();
-  await p.c.post('/api/account/access-request', { permissions: ['support'] });
+  assert.equal(field(await p.c.post('/api/account/access-request', { permissions: ['support'] })), 'not_requestable');
+  s.sql(`INSERT INTO access_requests (user_id, permissions, message, created_at) VALUES (${p.id}, 'support', '', ${now()})`);
   const req2 = (await mgr.c.get('/api/users')).data.requests.find((x) => x.userId === p.id);
   assert.equal(req2.canGrant, false);
   assert.equal(field(await mgr.c.post(`/api/users/requests/${req2.id}`, { grant: true })), 'not_assignable');
@@ -197,7 +199,7 @@ test('Actividad: kinds by access, a person\'s history, dates and paging', async 
 test('Seguridad → two-step sign-in for whoever administers; remembered browsers skip the code for 30 days', async () => {
   const mgr = await person(presets.admin, { name: 'Gerente Dos Pasos' });
   const editor = await person(presets.content, { name: 'Editor Sin Pasos' });
-  const support = await person(presets.support, { name: 'Soporte Publica' });
+  const support = await person(['support', 'monitor', 'report', 'site'], { name: 'Soporte Publica' });
   const p0 = await owner.put('/api/security/policy', { twoFactor: 'admins', currentPassword: ADMIN.password });
   assert.equal(p0.status, 200, p0.text);
   // The owner, whoever manages users and whoever publishes must set it up; everyone else carries on.

@@ -86,10 +86,10 @@ test('invite validation: duplicates, bad e-mails, access types', async () => {
   assert.deepEqual(r.data.user.permissions, ['texts', 'site']);
   assert.equal((await owner.post('/api/users', { ...ok, name: '<b>x</b>', email: unique('h') })).data.fields.name, 'no_html');
   assert.equal((await owner.post('/api/users', { ...ok, name: 'X', email: 'a@example.test\r\nBcc: victim@example.test' })).status, 422);
-  // The list offers the ready-made access types.
+  // The list offers the four roles.
   const list = (await owner.get('/api/users')).data;
   assert.deepEqual(list.permissions, ALL);
-  assert.deepEqual(list.accessTypes.texts, ['texts']);
+  assert.deepEqual(Object.keys(list.accessTypes), ['admin', 'content', 'sales', 'management']);
 });
 
 test('without "Gestión de usuarios" no account manages users, whatever its other access', async () => {
@@ -106,16 +106,20 @@ test('without "Gestión de usuarios" no account manages users, whatever its othe
   assert.equal((await full.get('/api/users')).status, 403);
 });
 
-test('each access type can change only its own information', async () => {
+test('each role or single section can change only its own information', async () => {
+  const presets = (await owner.get('/api/users')).data.accessTypes;
+  // A role, or single sections («Acceso por secciones», still accepted for older accounts).
+  const sets = { content: presets.content, texts: ['texts'], contact: ['contact'], media: ['photos', 'documents'] };
   const cases = {
+    content: { texts: true, contact: true, photos: true, documents: true, site: false },
     texts: { texts: true, contact: false, photos: false, documents: false, site: false },
     contact: { texts: false, contact: true, photos: false, documents: false, site: false },
     media: { texts: false, contact: false, photos: true, documents: true, site: false },
   };
-  const presets = (await owner.get('/api/users')).data.accessTypes;
   for (const [type, expect] of Object.entries(cases)) {
-    const { client: c, session } = await inviteAndAccept(presets[type]);
-    assert.deepEqual(session.user.permissions, presets[type]);
+    const { client: c, session } = await inviteAndAccept(sets[type]);
+    assert.deepEqual(session.user.permissions, sets[type]);
+    assert.equal(session.user.accessType, type === 'content' ? 'content' : 'custom');
     assert.equal(session.user.owner, false);
     const tries = {
       texts: async () => (await c.put('/api/content/footer', { version: await version(c, 'footer'), values: { 'footer.about_desc': { es: 'Texto ' + type } } })).status,

@@ -430,6 +430,28 @@ visitor's confirmation (off by default). Design: `SECURITY_AUDIT.md` §22.
 | Hands-on walkthrough | 26/26 again (user management, with the focus checks) and the design review of every new screen on desktop, phone and dark mode (`docs/private/automations-demo/`) |
 | Found and fixed on the way | On iPhone (WebKit), focusing the row's ⋮ before opening a dialog made typing land in another field: the menu no longer moves focus; the dialog remembers which ⋮ opened it and gives focus back there on close. A screen you can't open crashed the panel's router (inline `style`, refused by the CSP) — now a class. Status badges stretched when a note followed them. On phones the eight filter tabs became a «Mostrar» menu. The visitor's confirmation moved from Formulario (whose save bar publishes the site) to Prospectos. Wording: «Copiar contraseña» next to «Copiar mensaje», «Todo lo demás» instead of a label easy to confuse with the service «Otro», no duplicated name in Actividad |
 
+## Change — fewer roles, «Más secciones», removing registered devices, statistics report (2026-10-26)
+
+Four roles instead of nine profiles (Administrador, Editor del sitio web, Ventas y
+prospectos, Consulta) plus optional extra sections, with migration `017_roles` (nobody
+loses access; `bin/console roles` / `roles:rollback`). «Más secciones»: every section of
+the panel, the ones you can ask for with one click (from the menu, Inicio, Mi cuenta and a
+screen you can't open). «Actualizar información» (was «Editar nombre y correo»).
+«Quitar dispositivos registrados» (by a manager, by the person or from the console): the
+next sign-in asks for a code sent by e-mail, then the new device (`018_device_reset`).
+Estadísticas: 7/30/90 days, this month, a month or chosen dates, one service for the
+messages, «Exportar» (CSV, or print/PDF) and «Enviar por correo» (a branded report, CSV
+attached, totals only). Design: `SECURITY_AUDIT.md` §23.
+
+| Check | Result |
+|---|---|
+| API integration (30 files) | **266/266**; new `30-roles-devices-stats.test.mjs` (8 tests): the session's role and extra sections; `017_roles` on older access sets (Redactor, Fotos, Gerencia, Soporte, a mix, only `site`) — nothing taken away, never Administrador, owner untouched — then `roles` and `roles:rollback` (an account corrected by hand is kept) and the SQL rollback; `users`/`support` can't be requested and a request already covered goes away; removing your own devices (every session ends, notice), the e-mail code (masked address, not in the subject), «Reenviar código» (old code dead, 3 sends), the new device required before anything else, then the app again; e-mail codes expire after 10 minutes and five tries; statistics presets, chosen dates (validated), one service; the spreadsheet (totals only, no personal data; "Consulta" without the message figures); the report by e-mail (validation, ≤ 5, one message each, chosen parts, message, CSV attached, logged). Existing tests follow the intended changes (four roles, «Quitar dispositivos registrados», demo accounts per role) |
+| Browser E2E (3 profiles) | **186 passed**, 63 skipped by design, 0 failed; new `sections-stats.spec.js` (3 tests): «Más secciones» from the menu and Inicio, asking with one click (section ticked, «Solicitado»), Mi cuenta and a closed screen lead there; Estadísticas period filters (chosen dates checked), the CSV download and the report by e-mail; removing your own devices from Mi cuenta → e-mail code → new device. `protection.spec` covers the same flow when IT removes someone's devices (with «Reenviar código»). Role picker: four roles, extra sections folded, an older access keeps its sections. axe (no serious/critical) and no side scroll on the new screens |
+| Visual regression (public site) | **22/22** identical to the approved baseline (the public site did not change) |
+| Static analysis | PHPStan: no errors |
+| Design review | Every new screen checked in the browser (desktop and phone): the statistics bar was reorganised (period left, actions right; full width on phones), the report e-mail shows only the days with visits |
+| Found and fixed on the way | An older access (no complete role) lost its sections when another role was ticked: they now stay as extra sections. Pending requests already covered by a role change kept showing in Usuarios: now closed by themselves. Administrators saw «Más secciones» only for «Gestión de solicitudes de soporte»: that section, like «Gestión de usuarios», is now given only by the owner. The e-mail code field said «the number the app shows»: it now has its own hint |
+
 ## Other audits
 
 | Audit | Result |

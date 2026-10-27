@@ -97,11 +97,32 @@ final class AccountController extends Controller
         Response::ok(['forgotten' => $n]);
     }
 
+    /**
+     * «Quitar dispositivos registrados» for oneself (a new phone): the app and the
+     * remembered browsers go and every session ends, this one too. The next
+     * sign-in confirms a code sent by e-mail and registers the new device.
+     */
+    public function removeDevices(): never
+    {
+        if ($this->app->auth()->viewingAs($this->session)) {
+            throw new ApiError(403, 'forbidden');
+        }
+        $this->confirmPassword('two_factor_devices');
+        $user = (new Users($this->app))->find($this->uid());
+        $this->app->twoFactor()->removeDevices($this->uid());
+        $this->app->activity($this->uid(), 'two_factor_reset', (string) $this->uid(), ['self' => true], $this->req->ip());
+        $this->app->auth()->revokeSessions($this->uid());
+        Response::okAndContinue(['signedOut' => true]);
+        $this->app->watchdog()->twoFactorNotice($user, 'reset');
+        exit;
+    }
+
     // ------------------------------------------------------------------ «Pedir acceso»
 
     /** The person's pending request, if any. */
     public function accessRequest(): never
     {
+        (new Users($this->app))->closeCoveredRequests();
         $r = $this->app->db()->one("SELECT * FROM access_requests WHERE user_id = ? AND status = 'pending' ORDER BY id DESC LIMIT 1", [$this->uid()]);
         Response::ok(['request' => $r ? ['permissions' => Users::permissionsOf(['permissions' => $r['permissions']]), 'message' => (string) $r['message'], 'createdAt' => (int) $r['created_at']] : null]);
     }
@@ -118,6 +139,9 @@ final class AccountController extends Controller
         $permissions = Users::normalizePermissions($this->req->raw('permissions'));
         if (array_intersect($permissions, Users::permissionsOf($this->session))) {
             throw ApiError::validation(['permissions' => 'already_have']);
+        }
+        if (array_intersect($permissions, Users::NOT_REQUESTABLE)) {
+            throw ApiError::validation(['permissions' => 'not_requestable']);
         }
         $message = mb_substr(trim(preg_replace('/[\x00-\x09\x0B-\x1F\x7F]+/u', ' ', $this->str('message')) ?? ''), 0, 500);
         if (!$this->app->rateLimiter()->hit('access_request', (string) $this->uid(), 3, 86400)) {

@@ -12,7 +12,7 @@ async function login(page, user = ADMIN) {
   await expect(page.locator('main h1')).toHaveText(/^(Hola|Hi), /);
 }
 
-test('the owner invites someone with a ready-made access type and changes it later', async ({ page }, info) => {
+test('the owner invites someone with a role and changes it later, with an extra section', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop-chrome', 'one invitation is enough');
   await login(page);
   await page.goto('/admin/#/usuarios');
@@ -20,24 +20,29 @@ test('the owner invites someone with a ready-made access type and changes it lat
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Nombre').fill('Pedro Fotos');
   await dialog.getByLabel('Correo electrónico').fill(`pedro.${Date.now()}@example.test`);
-  await dialog.getByText('Fotos y portafolio', { exact: true }).click();
-  await expect(dialog.locator('.checks')).toBeHidden();
+  // Four roles; the extra sections are folded away (exceptions only).
+  await expect(dialog.locator('.choice')).toHaveText([/^Administrador/, /^Editor del sitio web/, /^Ventas y prospectos/, /^Consulta \(solo lectura\)/]);
+  await expect(dialog.getByText('Editor del sitio web', { exact: true }).locator('xpath=ancestor::label').locator('input')).toBeChecked();
+  await dialog.getByText('Consulta (solo lectura)', { exact: true }).click();
+  await expect(dialog.locator('details.extras')).not.toHaveAttribute('open', '');
   await dialog.getByRole('button', { name: 'Enviar invitación' }).click();
   await expect(page.getByText(/Invitación enviada a/)).toBeVisible();
   const row = page.locator('tr', { hasText: 'Pedro Fotos' });
-  await expect(row.getByText('Fotos y portafolio', { exact: true })).toBeVisible();
-  // Change to a custom set.
+  await expect(row.getByText('Consulta (solo lectura)', { exact: true })).toBeVisible();
+  // Another role, plus one section it doesn't include.
   await row.getByRole('button', { name: /Acciones para Pedro Fotos/ }).click();
-  await page.getByRole('button', { name: 'Cambiar tipo de acceso' }).click();
-  const dlg = page.getByRole('dialog', { name: /Acceso de Pedro Fotos/ });
-  await dlg.getByText('Personalizado').click();
-  await expect(dlg.locator('.checks')).toBeVisible();
-  await dlg.getByRole('checkbox', { name: 'Datos de contacto' }).check();
+  await page.getByRole('button', { name: 'Cambiar rol' }).click();
+  const dlg = page.getByRole('dialog', { name: /Rol de Pedro Fotos/ });
+  await dlg.getByText('Editor del sitio web', { exact: true }).click();
+  await dlg.locator('details.extras > summary').click();
+  await expect(dlg.getByRole('checkbox', { name: /^Textos del sitio/ })).toHaveCount(0); // already in the role
+  await dlg.getByRole('checkbox', { name: /^Prospectos/ }).check();
+  await expect(dlg.locator('.extras-count')).toHaveText('1 marcadas');
   const r = (await new AxeBuilder({ page }).include('dialog').withTags(['wcag2a', 'wcag2aa']).analyze()).violations.filter((v) => ['serious', 'critical'].includes(v.impact));
   expect(r.map((v) => v.id)).toEqual([]);
   await dlg.getByRole('button', { name: 'Guardar cambios' }).click();
-  await expect(page.getByText('Tipo de acceso actualizado. Se aplica de inmediato.')).toBeVisible();
-  await expect(row.getByText('Datos de contacto y formulario · Fotos · Portafolio en PDF')).toBeVisible();
+  await expect(page.getByText('Rol actualizado. Se aplica de inmediato.')).toBeVisible();
+  await expect(row.getByText('Editor del sitio web + Prospectos')).toBeVisible();
 });
 
 test('an account with "Solo textos" only sees and opens what it may change', async ({ page }) => {

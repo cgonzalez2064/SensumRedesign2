@@ -19,7 +19,7 @@ final class Emails
         return require $this->app->root('lang/' . ($lang === 'en' ? 'en' : 'es') . '.php');
     }
 
-    private static function fill(string $s, array $vars): string
+    public static function fill(string $s, array $vars): string
     {
         return strtr($s, array_combine(array_map(fn ($k) => '{' . $k . '}', array_keys($vars)), array_values($vars)));
     }
@@ -128,6 +128,28 @@ final class Emails
     public function passwordResetByAdmin(array $user, string $byName, string $token, int $hours): array
     {
         return $this->action($user['email'], $user['lang'], 'resetadmin', ['name' => $user['name'], 'by' => $byName, 'hours' => (string) $hours], $this->adminUrl('restablecer/' . $token), 'resetadmin.ignore');
+    }
+
+    /**
+     * The 6-digit code that stands in for the authenticator app after
+     * «Quitar dispositivos registrados». The code is not in the subject
+     * (lock screens show subjects).
+     */
+    public function loginCode(array $user, string $code, int $minutes): array
+    {
+        $s = $this->strings($user['lang']);
+        $vars = ['name' => explode(' ', trim((string) $user['name']))[0] ?: (string) $user['name'], 'minutes' => (string) $minutes, 'support' => $this->app->mailSettings()->supportEmail()];
+        $pretty = substr($code, 0, 3) . ' ' . substr($code, 3);
+        $intro = self::fill($s['logincode.intro'], $vars);
+        $valid = self::fill($s['logincode.valid'], $vars);
+        $next = $s['logincode.next'];
+        $notYou = self::fill($s['logincode.notyou'], $vars);
+        $text = self::fill($s['greeting'], $vars) . "\n\n{$intro}\n\n{$pretty}\n\n{$valid} {$next}\n\n{$notYou}\n\n— {$s['brand']} · {$s['product']}\n{$s['footer']}\n";
+        $html = '<p>' . self::esc(self::fill($s['greeting'], $vars)) . '</p><p>' . self::esc($intro) . '</p>'
+            . '<p style="margin:22px 0;font:700 30px/1.2 Menlo,Consolas,monospace;letter-spacing:.18em;color:#1c1c1c">' . self::esc($pretty) . '</p>'
+            . '<p>' . self::esc($valid) . ' ' . self::esc($next) . '</p>'
+            . '<p style="font-size:13px;color:#666">' . self::esc($notYou) . '</p>';
+        return ['to' => $user['email'], 'subject' => $s['logincode.subject'], 'text' => $text, 'html' => $this->layout($html, $s, $user['lang'])];
     }
 
     public function passwordChanged(array $user): array

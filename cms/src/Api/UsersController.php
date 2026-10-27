@@ -118,6 +118,7 @@ final class UsersController extends Controller
         $twoFactor = $this->app->twoFactor();
         $byId = array_column($rows, null, 'id');
         $requests = [];
+        (new Users($this->app))->closeCoveredRequests();
         foreach ($this->app->db()->all("SELECT * FROM access_requests WHERE status = 'pending' ORDER BY created_at") as $r) {
             $person = $byId[$r['user_id']] ?? null;
             if (!$person || $person['status'] !== 'active') {
@@ -403,7 +404,11 @@ final class UsersController extends Controller
         Response::ok();
     }
 
-    /** Turns off someone's two-step sign-in (lost phone). They set it up again at next sign-in if required. */
+    /**
+     * «Quitar dispositivos registrados» (lost or new phone): their app and remembered
+     * browsers go and their sessions end. At the next sign-in a code sent to their
+     * e-mail stands in for the app, then they register the new device.
+     */
     public function resetTwoFactor(int $id): never
     {
         // Your own second step is turned off in "Mi cuenta", which also asks for a code.
@@ -412,7 +417,7 @@ final class UsersController extends Controller
         }
         $user = $this->manageable($id);
         $this->confirmPassword('two_factor_reset');
-        $this->app->twoFactor()->disable($id);
+        $this->app->twoFactor()->removeDevices($id);
         $this->app->auth()->revokeSessions($id);
         $this->app->activity($this->uid(), 'two_factor_reset', (string) $id, [], $this->req->ip());
         Response::okAndContinue([

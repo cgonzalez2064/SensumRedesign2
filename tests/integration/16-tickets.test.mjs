@@ -197,34 +197,35 @@ test('the screenshot is shown only to the reporter and IT, as an image with safe
   assert.equal((await fetch(s.base + `/api/reports/${t2}/screenshot`, { headers: { Cookie: owner.cookieHeader() } })).status, 404, 'no screenshot');
 });
 
-test('demo accounts: one per access profile, passwords only in a private local file', async () => {
+test('demo accounts: one per role, passwords only in a private local file', async () => {
   const out = s.cli(['demo-users', '--reports']);
-  assert.match(out, /Demo accounts ready \(10\)/);
+  assert.match(out, /Demo accounts ready \(7\)/);
   assert.match(out, /Sample tickets: 4/);
   const { readFileSync, statSync } = await import('node:fs');
   const file = s.storage('LOCAL-TEST-USERS.txt');
   assert.equal(statSync(file).mode & 0o777, 0o600);
   const creds = Object.fromEntries(readFileSync(file, 'utf8').split('\n').map((l) => l.match(/(demo\.[a-z]+@example\.test)\s+(\S+)/)).filter(Boolean).map((m) => [m[1], m[2]]));
-  assert.equal(Object.keys(creds).length, 10);
+  assert.equal(Object.keys(creds).length, 7);
   const perms = Object.fromEntries(s.sql("SELECT email || '=' || permissions || '=' || status FROM users WHERE email LIKE 'demo.%'").split('\n').map((l) => { const [e, p, st] = l.split('='); return [e, `${p}|${st}`]; }));
-  assert.equal(perms['demo.textos@example.test'], 'texts|active');
-  assert.equal(perms['demo.fotos@example.test'], 'photos,documents|active');
-  assert.equal(perms['demo.contacto@example.test'], 'contact|active');
-  assert.equal(perms['demo.personalizado@example.test'], 'texts,photos|active');
   assert.equal(perms['demo.completo@example.test'], 'texts,contact,photos,documents,site,leads,stats,monitor,report,users|active');
+  assert.equal(perms['demo.editor@example.test'], 'texts,contact,photos,documents|active');
   assert.equal(perms['demo.ventas@example.test'], 'leads,stats|active');
-  assert.equal(perms['demo.gerencia@example.test'], 'stats,monitor|active');
-  assert.equal(perms['demo.soporte@example.test'], 'site,monitor,report,support|active');
-  assert.equal(perms['demo.desactivado@example.test'], 'texts|disabled');
+  assert.equal(perms['demo.consulta@example.test'], 'stats,monitor,report|active');
+  assert.equal(perms['demo.adicional@example.test'], 'texts,contact,photos,documents,leads|active');
+  assert.equal(perms['demo.soporte@example.test'], 'stats,monitor,report,support|active');
+  assert.equal(perms['demo.desactivado@example.test'], 'texts,contact,photos,documents|disabled');
   const c = new Client(s.base);
-  assert.equal((await c.login('demo.contacto@example.test', creds['demo.contacto@example.test'])).status, 200);
-  assert.deepEqual((await c.get('/api/auth/session')).data.user.permissions, ['contact']);
+  assert.equal((await c.login('demo.consulta@example.test', creds['demo.consulta@example.test'])).status, 200);
+  const me = (await c.get('/api/auth/session')).data.user;
+  assert.deepEqual(me.permissions, ['stats', 'monitor', 'report']);
+  assert.equal(me.accessType, 'management');
+  assert.deepEqual(me.accessExtras, []);
   assert.equal((await new Client(s.base).login('demo.desactivado@example.test', creds['demo.desactivado@example.test'])).status, 401);
   // Sample tickets in different states; running again resets passwords but adds no tickets.
   assert.equal(s.sql("SELECT group_concat(status) FROM (SELECT status FROM support_reports WHERE fingerprint LIKE 'demo-%' ORDER BY id)"), 'new,waiting,in_progress,resolved');
   const again = s.cli(['demo-users', '--reports']);
   assert.match(again, /Sample tickets: 0/);
-  assert.equal((await new Client(s.base).login('demo.contacto@example.test', creds['demo.contacto@example.test'])).status, 401, 'old password reset');
+  assert.equal((await new Client(s.base).login('demo.consulta@example.test', creds['demo.consulta@example.test'])).status, 401, 'old password reset');
   // Never in production.
   const { execFileSync } = await import('node:child_process');
   let refused = false;

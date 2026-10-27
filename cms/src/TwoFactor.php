@@ -19,6 +19,11 @@ use Sensum\Cms\Http\ApiError;
  * site, "all" for everyone, "none" leaves it optional. Whoever manages users
  * can also require it for one person (users.two_factor_required). An account
  * that must use it but has not set it up yet can only reach the set-up screen.
+ *
+ * «Quitar dispositivos registrados» (removeDevices) takes the app and the
+ * remembered browsers away; the next sign-in then asks, after the password,
+ * for a code sent to the account's e-mail, and the new device must be
+ * registered before using the panel.
  */
 final class TwoFactor
 {
@@ -27,6 +32,9 @@ final class TwoFactor
     private const PERIOD = 30;
     private const RECOVERY_CODES = 10;
     private const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    /** A code sent by e-mail: valid 10 minutes, sent 3 times at most per sign-in. */
+    public const EMAIL_CODE_MINUTES = 10;
+    private const EMAIL_CODE_SENDS = 3;
 
     public function __construct(private App $app)
     {
@@ -54,7 +62,7 @@ final class TwoFactor
 
     public function required(array $user): bool
     {
-        return $this->requiredByPolicy($user) || !empty($user['two_factor_required']);
+        return $this->requiredByPolicy($user) || !empty($user['two_factor_required']) || !empty($user['two_factor_reenroll_at']);
     }
 
     /** Required by the site-wide policy alone (not by a per-person requirement). */
@@ -84,7 +92,7 @@ final class TwoFactor
     public function overview(): array
     {
         $users = [];
-        foreach ($this->app->db()->all("SELECT id, name, email, status, totp_enabled_at, two_factor_required FROM users WHERE status <> 'invited' ORDER BY name") as $u) {
+        foreach ($this->app->db()->all("SELECT id, name, email, status, totp_enabled_at, two_factor_required, two_factor_reenroll_at FROM users WHERE status <> 'invited' ORDER BY name") as $u) {
             $users[] = [
                 'id' => (int) $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'status' => $u['status'],
                 'owner' => $this->app->auth()->isOwner($u), 'enabled' => $this->enabled($u),
@@ -103,6 +111,7 @@ final class TwoFactor
             'required' => $this->required($u),
             'recoveryRemaining' => (int) $this->app->db()->value('SELECT COUNT(*) FROM recovery_codes WHERE user_id = ? AND used_at IS NULL', [$userId]),
             'rememberedDevices' => (int) $this->app->db()->value('SELECT COUNT(*) FROM trusted_devices WHERE user_id = ? AND expires_at > ?', [$userId, time()]),
+            'reenroll' => !empty($u['two_factor_reenroll_at']),
         ];
     }
 
@@ -142,7 +151,8 @@ final class TwoFactor
         if ($step === null) {
             throw ApiError::validation(['code' => 'two_factor_invalid']);
         }
-        $this->app->db()->run('UPDATE users SET totp_secret_enc = totp_pending_enc, totp_pending_enc = NULL, totp_enabled_at = ?, totp_last_step = ? WHERE id = ?', [time(), $step, $userId]);
+        // A new device after «Quitar dispositivos registrados»: the e-mail code is no longer needed.
+        $this->app->db()->run('UPDATE users SET totp_secret_enc = totp_pending_enc, totp_pending_enc = NULL, totp_enabled_at = ?, totp_last_step = ?, two_factor_reenroll_at = NULL WHERE id = ?', [time(), $step, $userId]);
         return $this->newRecoveryCodes($userId);
     }
 
@@ -172,6 +182,18 @@ final class TwoFactor
             $this->app->db()->run('UPDATE users SET totp_secret_enc = NULL, totp_pending_enc = NULL, totp_enabled_at = NULL, totp_last_step = 0 WHERE id = ?', [$userId]);
             $this->app->db()->run('DELETE FROM recovery_codes WHERE user_id = ?', [$userId]);
             $this->app->db()->run('DELETE FROM trusted_devices WHERE user_id = ?', [$userId]);
+        });
+    }
+
+    /**
+     * «Quitar dispositivos registrados»: the app and the remembered browsers go;
+     * the next sign-in confirms a code sent by e-mail, then registers the new device.
+     */
+    public function removeDevices(int $userId): void
+    {
+        $this->app->db()->transaction(function () use ($userId) {
+            $this->disable($userId);
+            $this->app->db()->run('UPDATE users SET two_factor_reenroll_at = ? WHERE id = ?', [time(), $userId]);
         });
     }
 
@@ -285,9 +307,57 @@ final class TwoFactor
     }
 
     /**
+     * After a correct password, for an account whose devices were removed: a
+     * challenge answered with a 6-digit code sent to its e-mail.
+     * @return array{token:string, code:string}
+     */
+    public function createEmailChallenge(int $userId): array
+    {
+        $token = $this->createChallenge($userId);
+        $code = $this->newEmailCode();
+        $this->app->db()->run("UPDATE login_challenges SET kind = 'email', code_hash = ?, sends = 1, expires_at = ? WHERE id_hash = ?",
+            [$this->hashEmailCode($code), time() + self::EMAIL_CODE_MINUTES * 60, hash('sha256', $token)]);
+        return ['token' => $token, 'code' => $code];
+    }
+
+    /**
+     * «Reenviar código»: a new code for the same sign-in (the previous one stops
+     * working), three sends at most. Null when the challenge is over.
+     * @return array{userId:int, code:string}|null
+     */
+    public function resendEmailCode(string $token): ?array
+    {
+        if (!preg_match('/^[A-Za-z0-9_-]{43}$/', $token)) {
+            return null;
+        }
+        $hash = hash('sha256', $token);
+        $row = $this->app->db()->one("SELECT * FROM login_challenges WHERE id_hash = ? AND kind = 'email'", [$hash]);
+        if (!$row || (int) $row['expires_at'] < time() || (int) $row['attempts'] >= 5) {
+            return null;
+        }
+        if ((int) $row['sends'] >= self::EMAIL_CODE_SENDS) {
+            throw new ApiError(429, 'too_many_attempts');
+        }
+        $code = $this->newEmailCode();
+        $this->app->db()->run('UPDATE login_challenges SET code_hash = ?, sends = sends + 1, expires_at = ? WHERE id_hash = ?',
+            [$this->hashEmailCode($code), time() + self::EMAIL_CODE_MINUTES * 60, $hash]);
+        return ['userId' => (int) $row['user_id'], 'code' => $code];
+    }
+
+    private function newEmailCode(): string
+    {
+        return str_pad((string) random_int(0, 999999), self::DIGITS, '0', STR_PAD_LEFT);
+    }
+
+    private function hashEmailCode(string $code): string
+    {
+        return hash_hmac('sha256', $code, $this->app->key() . '|email-code');
+    }
+
+    /**
      * Second step of the sign-in. Returns the user id when the code is right.
      * Five wrong codes (or five minutes) end the challenge: the password is asked again.
-     * @return array{userId:int,method:string}
+     * @return array{userId:int,method:string} method: 'totp', 'recovery' or 'email'
      */
     public function completeChallenge(string $token, string $code): array
     {
@@ -304,7 +374,12 @@ final class TwoFactor
             throw new ApiError(401, 'two_factor_expired');
         }
         $db->run('UPDATE login_challenges SET attempts = attempts + 1 WHERE id_hash = ?', [$hash]);
-        $method = $this->verify((int) $row['user_id'], $code);
+        if (($row['kind'] ?? 'totp') === 'email') {
+            $digits = preg_replace('/\D+/', '', $code) ?? '';
+            $method = strlen($digits) === self::DIGITS && is_string($row['code_hash']) && hash_equals($row['code_hash'], $this->hashEmailCode($digits)) ? 'email' : null;
+        } else {
+            $method = $this->verify((int) $row['user_id'], $code);
+        }
         if ($method === null) {
             $this->app->activity((int) $row['user_id'], 'login_2fa_failed', '', []);
             throw new ApiError(422, 'validation', ['code' => 'two_factor_invalid'], ['attemptsLeft' => max(0, 4 - (int) $row['attempts'])]);

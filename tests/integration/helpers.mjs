@@ -150,6 +150,22 @@ export async function waitForMail(address, count = 1, timeout = 5000) {
   }
   return messagesTo(address);
 }
+/** The 6-digit sign-in code in the newest e-mail to the address (sent after `before` messages). */
+export async function emailedCode(address, before) {
+  const list = await waitForMail(address, before + 1);
+  const m = await message(list[0].ID);
+  const found = /(\d{3}) (\d{3})/.exec(m.Text || '');
+  return found ? found[1] + found[2] : null;
+}
+/** Signs in after «Quitar dispositivos registrados»: password, then the code e-mailed to the account. */
+export async function loginWithEmailCode(client, email, password) {
+  const before = await countTo(email);
+  const r = await client.login(email, password);
+  if (!r.data || r.data.method !== 'email') return r;
+  const done = await client.post('/api/auth/login/2fa', { challenge: r.data.challenge, code: await emailedCode(email, before) });
+  if (done.data && done.data.csrf) client.csrf = done.data.csrf;
+  return done;
+}
 export function linkToken(text, kind) {
   const m = text.match(new RegExp(`#/${kind}/([A-Za-z0-9_-]{43})`));
   return m ? m[1] : null;

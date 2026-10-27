@@ -39,6 +39,9 @@ async function openMenu(page, name) {
   // The list redraws after a save and after typing in the search (debounced):
   // wait for both, or the menu could open on a row that is about to be replaced.
   await page.waitForLoadState('networkidle');
+  // Empty the search first: the count must change, so the (debounced) redraw has happened.
+  await page.getByLabel(/Buscar por nombre/).fill('');
+  await expect(page.locator('.users-count')).toHaveText(/personas en total$/);
   await page.getByLabel(/Buscar por nombre/).fill(name);
   await expect(page.locator('.users-count')).toHaveText(/^1 de \d+ personas$/);
   const menu = page.locator('.table-wrap:visible, .list-cards:visible').getByRole('button', { name: `Acciones para ${name}`, exact: true });
@@ -81,7 +84,7 @@ test('a site administrator fixes someone’s details and gives them a password t
 
   // Name and e-mail: a different e-mail asks for the administrator's password.
   await openMenu(page, pablo);
-  await page.getByRole('button', { name: 'Editar nombre y correo' }).click();
+  await page.getByRole('button', { name: 'Actualizar información' }).click();
   const edit = page.getByRole('dialog');
   await edit.getByLabel('Nombre').fill(`${pablo} Ruiz`);
   const newEmail = person.email.replace('pablo.', 'pablo.ruiz.');

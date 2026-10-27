@@ -1,7 +1,7 @@
 // Two-step sign-in and the encrypted backup, in real browsers.
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { ADMIN, totp, waitForMail, countTo, unique } from '../integration/helpers.mjs';
+import { ADMIN, totp, waitForMail, countTo, unique, emailedCode } from '../integration/helpers.mjs';
 import { TWO_STEP } from './global-setup.mjs';
 
 async function signIn(page, user) {
@@ -11,7 +11,7 @@ async function signIn(page, user) {
   await page.getByRole('button', { name: /Iniciar sesión|Sign in/ }).click();
 }
 
-test('a person turns on two-step sign-in, signs in with a recovery code, and IT resets it', async ({ browser }, info) => {
+test('a person turns on two-step sign-in, signs in with a recovery code; IT removes their devices; a code by e-mail, then the new device', async ({ browser }, info) => {
   test.skip(info.project.name !== 'desktop-chrome', 'one set-up is enough');
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
@@ -49,18 +49,45 @@ test('a person turns on two-step sign-in, signs in with a recovery code, and IT 
   await page.getByRole('button', { name: 'Verificar' }).click();
   await expect(page.locator('main h1')).toHaveText(/^Hola, /);
 
-  // IT resets it (lost phone).
+  // IT removes their devices (lost phone).
   const owner = await (await browser.newContext()).newPage();
   await signIn(owner, ADMIN);
   await expect(owner.locator('main h1')).toHaveText(/^Hola, /);
   await owner.goto('/admin/#/seguridad');
   const row = owner.locator('.person-row', { hasText: TWO_STEP.name });
   await expect(row.getByText('Activada')).toBeVisible();
-  await row.getByRole('button', { name: /Restablecer/ }).click();
+  await row.getByRole('button', { name: `Quitar los dispositivos registrados de ${TWO_STEP.name}` }).click();
+  await expect(owner.getByRole('dialog')).toContainText('confirmará un código enviado a su correo');
   await owner.getByRole('dialog').getByLabel('Tu contraseña').fill(ADMIN.password);
-  await owner.getByRole('dialog').getByRole('button', { name: 'Restablecer' }).click();
-  await expect(owner.getByText(/Se restableció la verificación de/)).toBeVisible();
-  await expect(owner.locator('.person-row', { hasText: TWO_STEP.name }).getByText('Opcional')).toBeVisible();
+  await owner.getByRole('dialog').getByRole('button', { name: 'Quitar dispositivos' }).click();
+  await expect(owner.getByText(new RegExp(`Cuando ${TWO_STEP.name} entre, confirmará un código`))).toBeVisible();
+  await expect(owner.locator('.person-row', { hasText: TWO_STEP.name }).getByText('Pendiente')).toBeVisible();
+
+  // They sign in: password, the code sent to their e-mail («Reenviar código» works), then the new device.
+  await ctx.clearCookies();
+  await page.goto('about:blank');
+  const before = await countTo(TWO_STEP.email);
+  await signIn(page, TWO_STEP);
+  await expect(page.getByRole('heading', { name: 'Revisa tu correo' })).toBeVisible();
+  await expect(page.getByText(/Enviamos un código de 6 dígitos a t•••@example\.test/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Usar un código de recuperación' })).toHaveCount(0);
+  await emailedCode(TWO_STEP.email, before);
+  await page.getByRole('button', { name: 'Reenviar código' }).click();
+  await expect(page.getByText(/Te enviamos un código nuevo/)).toBeVisible();
+  const code = await emailedCode(TWO_STEP.email, before + 1);
+  await page.getByLabel('Código de 6 dígitos').fill(code);
+  await expect(page.getByRole('heading', { name: 'Registra tu dispositivo nuevo' })).toBeVisible();
+  const axe2 = (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations.filter((x) => ['serious', 'critical'].includes(x.impact));
+  expect(axe2.map((x) => x.id)).toEqual([]);
+  await page.getByLabel('Tu contraseña').fill(TWO_STEP.password);
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.getByText('¿No puedes escanear?').click();
+  const secret2 = await page.locator('.code-line code').textContent();
+  await page.getByLabel('Código de 6 dígitos').fill(await totp(secret2)); // six digits activate it
+  await expect(page.locator('.recovery-codes li')).toHaveCount(10);
+  await page.getByLabel('Guardé mis códigos').check();
+  await page.getByRole('button', { name: 'Ir al panel' }).click();
+  await expect(page.locator('main h1')).toHaveText(/^Hola, /);
   await ctx.close();
 });
 

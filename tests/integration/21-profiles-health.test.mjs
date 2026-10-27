@@ -24,13 +24,13 @@ before(async () => {
 });
 after(async () => { await s.stop(); });
 
-test('ready-made access types are concrete jobs, and the panel offers each permission', async () => {
+test('four roles, one per real job, and the panel offers each permission', async () => {
   const d = (await owner.get('/api/users')).data;
   assert.deepEqual(d.permissions, ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'support', 'users']);
-  assert.deepEqual(Object.keys(d.accessTypes), ['admin', 'content', 'texts', 'media', 'contact', 'sales', 'management', 'support']);
+  assert.deepEqual(Object.keys(d.accessTypes), ['admin', 'content', 'sales', 'management']);
   assert.deepEqual(d.accessTypes.admin, ['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'users'], 'administrators manage users but do not handle IT tickets');
-  assert.deepEqual(d.accessTypes.management, ['stats', 'monitor']);
-  assert.deepEqual(d.accessTypes.support, ['support', 'monitor', 'report', 'site']);
+  assert.deepEqual(d.accessTypes.content, ['texts', 'contact', 'photos', 'documents']);
+  assert.deepEqual(d.accessTypes.management, ['stats', 'monitor', 'report']);
   assert.deepEqual(d.accessTypes.sales, ['leads', 'stats']);
   // Accounts made from the terminal are site administrators (not support managers).
   assert.equal(s.sql(`SELECT permissions FROM users WHERE email='${MGMT.email}'`), 'stats,monitor');
@@ -169,5 +169,5 @@ test('upgrading: site administrators and support get the new monthly-report acce
   const types = (await owner.get('/api/users')).data.accessTypes;
   const same = (a, b) => [...a].sort().join() === [...b].sort().join();
   assert.ok(same(perms('r1@example.test').split(','), types.admin.filter((p) => p !== 'users')));
-  assert.ok(same(perms('r2@example.test').split(','), types.support));
+  assert.ok(same(perms('r2@example.test').split(','), ['support', 'monitor', 'report', 'site']), 'the support access of the time');
 });

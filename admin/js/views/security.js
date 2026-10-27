@@ -32,7 +32,7 @@ export async function render({ main, session }) {
       const state = u.enabled ? ['badge-ok', 'check-circle-fill', 'security.tfOn'] : u.required ? ['badge-warn', 'exclamation-triangle-fill', 'security.tfPending'] : ['', 'circle-half', 'security.tfOptional'];
       let reset = null;
       if (u.enabled && u.id !== sess.user.id) {
-        reset = button(t('security.reset'), { small: true, variant: 'ghost', icon: 'arrow-counterclockwise', attrs: { 'aria-label': t('security.resetFor', { name: u.name }) } });
+        reset = button(t('security.reset'), { small: true, variant: 'ghost', icon: 'phone', attrs: { 'aria-label': t('security.resetFor', { name: u.name }) } });
         reset.addEventListener('click', async () => {
           const password = await askPassword({ title: t('security.resetTitle', { name: u.name }), lead: t('security.resetLead'), confirmLabel: t('security.reset') });
           if (password === null) return;

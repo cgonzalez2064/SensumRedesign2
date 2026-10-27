@@ -1,6 +1,6 @@
 /**
  * "Ver como" (owner only): see the panel exactly as another account does, to
- * check what each access type can open — read-only, 30 minutes at most.
+ * check what each role can open — read-only, 30 minutes at most.
  * Starting asks for the owner's password; switching between accounts and
  * going back don't. While it is on, a bar on every screen says who you are
  * viewing as, how long is left, and lets you switch or go back.
@@ -26,7 +26,7 @@ export async function viewAs(user, { active }) {
   catch (err) { toast(errorText(err), { type: 'bad' }); return false; }
 }
 
-/** Every account (with its access type) the owner can view the panel as. */
+/** Every account (with its role) the owner can view the panel as. */
 export async function pickViewAs({ active = false, currentId = null, onDone }) {
   let data;
   try { data = await api.get('/view-as'); } catch (err) { toast(errorText(err), { type: 'bad' }); return; }
@@ -70,7 +70,8 @@ export function viewAsBar(session, onChange) {
     try { await api.post('/view-as/stop', {}); } catch (e) { /* the session check below settles it */ }
     onChange('/usuarios');
   });
-  const access = session.viewAs.accessType === 'custom' ? (user.permissions || []).map((p) => t('access.perms.' + p)).join(' · ') : t('access.types.' + session.viewAs.accessType)[0];
+  const extras = (user.accessExtras || []).map((p) => t('access.perms.' + p)).join(' · ');
+  const access = session.viewAs.accessType === 'custom' ? (user.permissions || []).map((p) => t('access.perms.' + p)).join(' · ') : t('access.types.' + session.viewAs.accessType)[0] + (extras ? ' + ' + extras : '');
   const el = h('div', { class: 'viewas-bar', role: 'region', 'aria-label': t('viewAs.region') },
     h('span', { class: 'viewas-icon', 'aria-hidden': 'true' }, icon('eye')),
     h('div', { class: 'grow viewas-text' },

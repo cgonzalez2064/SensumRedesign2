@@ -49,7 +49,7 @@ function accessUntilField(idPrefix, current) {
 
 export async function render({ main, query, navigate, can }) {
   const add = button(t('users.invite'), { variant: 'primary', icon: 'person-plus' });
-  // "Ver como" (owner only): check what each access type sees (read-only).
+  // "Ver como" (owner only): check what each role sees (read-only).
   const viewBtn = button(t('viewAs.pick'), { icon: 'eye', onClick: () => pickViewAs({ onDone: () => reloadSession('/') }) });
   viewBtn.hidden = true;
   main.append(pageHead({ title: t('users.title'), lead: t('users.lead'), actions: [viewBtn, add] }));
@@ -109,7 +109,8 @@ export async function render({ main, query, navigate, can }) {
       u.tempPasswordExpired ? h('span', { class: 'tiny user-flag warn-text' }, icon('hourglass-split'), t('users.tempExpiredBadge'))
         : u.mustChangePassword ? h('span', { class: 'tiny user-flag' }, icon('key'), t('users.mustChangeBadge')) : null,
       u.status !== 'disabled' && u.accessUntil ? h('span', { class: ['tiny', 'user-flag', u.accessUntil - Date.now() / 1000 < 7 * DAY ? 'warn-text' : 'muted'] }, icon('hourglass-split'), t('users.accessUntilBadge', { when: fmtDate(u.accessUntil, false) })) : null,
-      u.twoFactorEnabled ? h('span', { class: 'tiny muted user-flag' }, icon('shield-lock'), t('users.twoFactorBadge')) : null);
+      u.twoFactorEnabled ? h('span', { class: 'tiny muted user-flag' }, icon('shield-lock'), t('users.twoFactorBadge')) : null,
+      u.twoFactorReenroll ? h('span', { class: 'tiny user-flag' }, icon('phone'), t('users.reenrollBadge')) : null);
 
     // ---- search & filters
     const typeOf = (u) => (u.isOwner ? 'owner' : accessTypeOf(u.permissions || [], presets));
@@ -133,7 +134,7 @@ export async function render({ main, query, navigate, can }) {
     };
     const accessSel = h('select', { class: 'select', 'aria-label': t('users.filterAccess') },
       h('option', { value: '', text: t('users.allAccess') }), h('option', { value: 'owner', text: t('users.ownerAccess'), selected: filters.access === 'owner' || null }),
-      [...Object.keys(presets), 'custom'].map((k) => h('option', { value: k, text: t('access.types.' + k)[0], selected: k === filters.access || null })));
+      [...Object.keys(presets), ...(users.some((u) => typeOf(u) === 'custom') ? ['custom'] : [])].map((k) => h('option', { value: k, text: t('access.types.' + k)[0], selected: k === filters.access || null })));
     const count = h('p', { class: 'small muted users-count', 'aria-live': 'polite' });
     const listBox = h('div');
     const matches = (u) => {
@@ -423,7 +424,7 @@ export async function render({ main, query, navigate, can }) {
       } catch (err) { sw.input.checked = !sw.input.checked; toast(errorText(err), { type: 'bad' }); }
       sw.input.disabled = !!u.twoFactorByPolicy;
     });
-    const resetBtn = u.twoFactorEnabled ? button(t('users.twoFactorReset'), { icon: 'arrow-counterclockwise', small: true, onClick: async () => {
+    const resetBtn = u.twoFactorEnabled ? button(t('users.twoFactorReset'), { icon: 'phone', small: true, onClick: async () => {
       const currentPassword = await askPassword({ title: t('users.twoFactorResetTitle', { name: u.name }), lead: t('users.twoFactorResetLead'), confirmLabel: t('users.twoFactorReset') });
       if (!currentPassword) return;
       try {
@@ -435,7 +436,7 @@ export async function render({ main, query, navigate, can }) {
     } }) : null;
     const dlg = openDialog({
       title: t('users.twoFactorTitle', { name: u.name }), labelledIcon: 'phone',
-      body: h('div', { class: 'stack' }, state, requireRow, resetBtn ? h('div', null, resetBtn) : null),
+      body: h('div', { class: 'stack' }, state, u.twoFactorReenroll ? alertBox('info', null, t('users.reenrollNote')) : null, requireRow, resetBtn ? h('div', null, resetBtn) : null),
       actions: [{ label: t('common.close'), onClick: (b, close) => close() }],
     });
   };
@@ -444,7 +445,9 @@ export async function render({ main, query, navigate, can }) {
     const name = textField({ label: t('users.name'), autocomplete: 'off', max: 80, required: true });
     const email = textField({ label: t('users.email'), type: 'email', autocomplete: 'off', inputmode: 'email', required: true });
     attachEmailHint(email);
-    const picker = accessPicker(presets, assignable.length && presets.content.every((p) => assignable.includes(p)) ? presets.content : assignable.slice(0, 1), 'inv', assignable);
+    // Starts on «Editor del sitio web» (or the first role this person may give).
+    const firstRole = ['content', ...Object.keys(presets)].map((k) => presets[k]).find((perms) => perms && perms.every((p) => assignable.includes(p)));
+    const picker = accessPicker(presets, firstRole || assignable.slice(0, 1), 'inv', assignable);
     const until = accessUntilField('inv', null);
     const lang = h('div', { class: 'field' }, h('label', { class: 'label', for: 'inv-lang', text: t('users.language') }),
       h('select', { class: 'select', id: 'inv-lang' }, h('option', { value: 'es', text: 'Español' }), h('option', { value: 'en', text: 'English' })));

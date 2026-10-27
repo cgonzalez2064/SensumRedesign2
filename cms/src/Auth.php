@@ -97,7 +97,7 @@ final class Auth
         $db = $this->app->db();
         $row = $db->one(
             'SELECT s.*, u.id AS uid, u.email, u.name, u.role, u.status, u.lang, u.theme, u.last_login_at, u.permissions, u.totp_enabled_at, u.onboarded_at,
-                    u.must_change_password, u.two_factor_required, u.access_until
+                    u.must_change_password, u.two_factor_required, u.two_factor_reenroll_at, u.access_until
                FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id_hash = ?',
             [hash('sha256', $raw)]
         );
@@ -256,7 +256,10 @@ final class Auth
     // Login / logout
     // ------------------------------------------------------------------
 
-    /** @return array{user:array, csrf:string}|array{challenge:string, remember:bool} the session, or a challenge for the second step (and whether the browser may be remembered) */
+    /**
+     * @return array{user:array, csrf:string}|array{challenge:string, remember:bool, method?:string, sentTo?:string} the session, or a
+     *   challenge for the second step (whether the browser may be remembered; 'email' when the code went to the account's e-mail)
+     */
     public function login(Request $req, string $email, string $password): array
     {
         $email = mb_strtolower(trim($email), 'UTF-8');
@@ -303,8 +306,47 @@ final class Auth
             }
             return ['challenge' => $this->app->twoFactor()->createChallenge((int) $user['id']), 'remember' => $this->app->automations()->accountPolicy()['rememberDevice']];
         }
+        // Its devices were removed: a code sent to its e-mail stands in for the app,
+        // then the new device is registered (TwoFactor::required until then).
+        if (!empty($user['two_factor_reenroll_at'])) {
+            $c = $this->app->twoFactor()->createEmailChallenge((int) $user['id']);
+            $this->sendLoginCode($user, $c['code'], $ip);
+            return ['challenge' => $c['token'], 'remember' => false, 'method' => 'email', 'sentTo' => self::maskEmail((string) $user['email'])];
+        }
         $rl->clear('login_email', $email);
         return $this->finishLogin($req, $user, []);
+    }
+
+    /** «Reenviar código» on the e-mail step: a new code (the previous one stops working). */
+    public function resendLoginCode(Request $req, string $challenge): array
+    {
+        $ip = $req->ip();
+        if (!$this->app->rateLimiter()->hit('login_code_ip', $ip, 10, self::LOGIN_IP_WINDOW)) {
+            throw new ApiError(429, 'too_many_attempts');
+        }
+        $r = $this->app->twoFactor()->resendEmailCode($challenge);
+        $user = $r ? $this->app->db()->one('SELECT * FROM users WHERE id = ?', [$r['userId']]) : null;
+        if (!$r || !$user || $user['status'] !== 'active') {
+            throw new ApiError(401, 'two_factor_expired');
+        }
+        $this->sendLoginCode($user, $r['code'], $ip);
+        return ['sentTo' => self::maskEmail((string) $user['email'])];
+    }
+
+    private function sendLoginCode(array $user, string $code, string $ip): void
+    {
+        $sent = $this->app->mailer()->send((new Emails($this->app))->loginCode($user, $code, TwoFactor::EMAIL_CODE_MINUTES));
+        $this->app->activity((int) $user['id'], $sent ? 'login_code_sent' : 'login_code_failed', '', [], $ip);
+        if (!$sent) {
+            throw new ApiError(502, 'login_code_not_sent');
+        }
+    }
+
+    /** «c•••@hotmail.com»: enough to recognise the address, not to learn it. */
+    public static function maskEmail(string $email): string
+    {
+        [$local, $domain] = array_pad(explode('@', $email, 2), 2, '');
+        return mb_substr($local, 0, 1) . '•••@' . $domain;
     }
 
     /**
@@ -485,12 +527,17 @@ final class Auth
             'role' => (string) $u['role'],
             'owner' => $this->isOwner($u),
             'permissions' => $this->isOwner($u) ? Users::PERMISSIONS : Users::permissionsOf($u),
+            // The role (Users::ACCESS_TYPES) and what the account has beyond it.
+            'accessType' => $this->isOwner($u) ? 'owner' : Users::accessTypeOf(Users::permissionsOf($u)),
+            'accessExtras' => $this->isOwner($u) ? [] : Users::extrasOf(Users::permissionsOf($u)),
             'lang' => (string) $u['lang'],
             'theme' => (string) $u['theme'],
             'twoFactor' => !empty($u['totp_enabled_at']),
             'twoFactorRequired' => $this->app->twoFactor()->required($u),
             // A password someone else gave the account: the panel asks for a new one first.
             'mustChangePassword' => !empty($u['must_change_password']),
+            // Devices removed and the e-mail code confirmed: the set-up screen asks for the new device.
+            'twoFactorReenroll' => !empty($u['two_factor_reenroll_at']),
         ];
     }
 }

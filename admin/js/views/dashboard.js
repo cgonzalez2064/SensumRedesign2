@@ -4,6 +4,7 @@ import { t, tp, fmtRelative, fmtDate } from '../i18n.js';
 import { api } from '../api.js';
 import { pageHead, loading, loadError, alertBox, button, setBusy, toast, errorText, cardHead } from '../ui.js';
 import { openReportDialog } from '../report.js';
+import { askable } from '../access.js';
 
 const INTRO_KEY = (id) => 'sensum_admin_intro_done_' + id;
 
@@ -36,7 +37,7 @@ export async function render({ main, session, isOwner, can }) {
       body.append(intro);
     }
 
-    const quick = (href, ic, key, external) => h('a', { class: 'card card-link', href, target: external ? '_blank' : null, rel: external ? 'noopener' : null },
+    const quick = (href, ic, key, external, cls) => h('a', { class: ['card', 'card-link', cls], href, target: external ? '_blank' : null, rel: external ? 'noopener' : null },
       h('span', { class: 'icon-tile' }, icon(ic)), h('span', null, h('strong', { text: t(`dashboard.quick.${key}`)[0] }), h('span', { text: t(`dashboard.quick.${key}`)[1] })));
     body.append(h('nav', { class: 'quick', 'aria-label': t('nav.main') },
       can('texts') ? quick('#/textos', 'pencil-square', 'content') : null,
@@ -45,7 +46,8 @@ export async function render({ main, session, isOwner, can }) {
       can('leads') ? quick('#/prospectos', 'inbox', 'leads') : null,
       can('monitor') && !user.owner ? quick('#/salud-del-sitio', 'heart-pulse', 'status') : null,
       can('stats') && !can('leads') ? quick('#/estadisticas', 'graph-up', 'stats') : null,
-      quick(data.site.url + '/', 'box-arrow-up-right', 'site', true)));
+      quick(data.site.url + '/', 'box-arrow-up-right', 'site', true),
+      askable(user).length ? quick('#/secciones', 'plus-lg', 'more', false, 'quick-more') : null));
 
     // Website status.
     const healthy = data.health.status === 'ok';

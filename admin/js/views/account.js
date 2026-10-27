@@ -2,12 +2,12 @@
 import { h, clear, fill, icon } from '../dom.js';
 import { t, tp, getLang, setLang, fmtDate } from '../i18n.js';
 import { api, setCsrf } from '../api.js';
-import { pageHead, textField, passwordField, passwordGuide, alertBox, toast, errorText, fieldErrorText, setBusy, button, cardHead, openDialog } from '../ui.js';
+import { pageHead, textField, passwordField, passwordGuide, alertBox, toast, errorText, fieldErrorText, setBusy, button, cardHead, openDialog, askPassword } from '../ui.js';
 import { renderSetup, confirmWithCode, recoveryCodes } from '../twofactor.js';
 import { updateUser, themeSwitch } from '../app.js';
 import { getThemePref } from '../theme.js';
-import { permissionList } from '../access.js';
-import { openAccessRequest, askable } from '../accessrequest.js';
+import { permissionList, askable } from '../access.js';
+import { openAccessRequest } from '../accessrequest.js';
 
 export function render({ main, session }) {
   const user = session.user;
@@ -18,7 +18,8 @@ export function render({ main, session }) {
   const drawRequest = (req) => {
     if (user.owner || session.viewAs || !askable(user).length) { requestBox.hidden = true; return; }
     const ask = button(t(req ? 'accessRequest.change' : 'accessRequest.askMore'), { small: true, icon: 'send', onClick: () => openAccessRequest(user, [], drawRequest) });
-    fill(requestBox, req ? h('p', { class: 'tiny muted' }, icon('hourglass-split'), ' ', t('accessRequest.pendingShort', { perms: permissionList(req.permissions), when: fmtDate(req.createdAt, false) })) : null, h('div', null, ask));
+    fill(requestBox, req ? h('p', { class: 'tiny muted' }, icon('hourglass-split'), ' ', t('accessRequest.pendingShort', { perms: permissionList(req.permissions), when: fmtDate(req.createdAt, false) })) : null,
+      h('div', { class: 'row' }, ask, h('a', { class: 'btn btn-ghost btn-sm', href: '#/secciones' }, t('moreSections.seeAll'))));
   };
   drawRequest(null);
   api.get('/account/access-request').then((r) => drawRequest(r.request)).catch(() => {});
@@ -33,6 +34,7 @@ export function render({ main, session }) {
     h('h2', { id: 'prof-t', text: t('account.profile') }),
     name.wrap, email.wrap,
     h('div', { class: 'field' }, h('span', { class: 'label', text: t('access.yours') }),
+      user.owner || !user.accessType || user.accessType === 'custom' ? null : h('strong', { text: t('access.types.' + user.accessType)[0] }),
       h('span', { class: 'small', text: user.owner ? t('access.owner') : permissionList(user.permissions || []) }), requestBox),
     h('div', { class: 'field' }, h('label', { class: 'label', for: 'acc-lang', text: t('account.language') }), langSel),
     h('div', { class: 'field' }, h('span', { class: 'label', text: t('account.theme') }), themeSwitch()),
@@ -147,8 +149,20 @@ export function render({ main, session }) {
       st.required ? h('p', { class: 'tiny muted', text: t('twofa.requiredNote') }) : null,
       st.rememberedDevices ? h('div', { class: 'row-between remembered' },
         h('span', { class: 'small' }, icon('laptop'), ' ', tp('twofa.remembered', st.rememberedDevices)), forget(st)) : null,
-      h('div', { class: 'row' }, regen, off)));
+      h('div', { class: 'row' }, regen, removeDevices(), off)));
   };
+  // «Quitar dispositivos registrados» (a new or lost phone): every session ends; the next
+  // sign-in confirms a code sent by e-mail and registers the new device.
+  const removeDevices = () => button(t('twofa.removeDevices'), { icon: 'phone', small: true, variant: 'ghost', onClick: async () => {
+    const currentPassword = await askPassword({ title: t('twofa.removeDevicesTitle'), lead: t('twofa.removeDevicesLead'), confirmLabel: t('twofa.removeDevices') });
+    if (!currentPassword) return;
+    try {
+      await api.post('/account/2fa/remove-devices', { currentPassword });
+      setCsrf(null);
+      openDialog({ title: t('twofa.removedTitle'), lead: t('twofa.removedLead'), labelledIcon: 'phone', dismissible: false,
+        actions: [{ label: t('twofa.removedGo'), variant: 'primary', onClick: () => { location.hash = '#/ingresar'; location.reload(); } }] });
+    } catch (err) { toast(err.code === 'validation' ? fieldErrorText(Object.values(err.fields)[0]) : errorText(err), { type: 'bad' }); }
+  } });
   // Browsers remembered for 30 days (when the owner allows it): forget them all.
   const forget = (st) => button(t('twofa.forgetDevices'), { small: true, variant: 'ghost', onClick: async () => {
     try { await api.post('/account/2fa/forget-devices', {}); toast(t('twofa.devicesForgotten')); drawTwoStep({ ...st, rememberedDevices: 0 }); }

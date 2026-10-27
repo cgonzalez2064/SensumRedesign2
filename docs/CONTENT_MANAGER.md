@@ -105,7 +105,7 @@ so a slow screen can never write into the next one).
 | E-mail settings (owner) | Panel's SMTP sending account (+ Reply-To), contact-form receivers/sender/method, problem-report and alert recipients, optional Cloudflare Turnstile keys; password re-check, secrets encrypted at rest, security notice, test buttons; `EMAIL_SETTINGS_LOCKED` for .env-only setups |
 | Contact-form captcha | Built-in invisible proof-of-work captcha (always on, no keys) + optional Cloudflare Turnstile; counts of messages and blocked spam in the weekly summary |
 | Automatic alerts (owner) | 12 rules with their own periods and de-duplication (critical errors, file integrity, sign-in attack, new device, certificate, backup, scheduler, disk, error spike, weekly digest, monthly security review, report reminder), on/off per rule; file-integrity check with "accept" (password) |
-| Users (owner · `users`) | Invite, change access type (8 ready-made jobs or custom, §2b), disable/enable, delete; edit name and sign-in e-mail; e-mail a 24-hour link to choose a new password; set a password (typed or generated, easy to read, normally replaced at the next sign-in); require or reset two-step sign-in; search by name, e-mail or access (accent-insensitive) and filter by status and access type; «Ver como» (owner only) |
+| Users (owner · `users`) | Invite, change role (4 roles plus optional extra sections, §2b), disable/enable, delete; «Actualizar información» (name and sign-in e-mail); e-mail a 24-hour link to choose a new password; set a password (typed or generated, easy to read, normally replaced at the next sign-in); require two-step sign-in or «Quitar dispositivos registrados» (next sign-in: e-mail code, then the new device); search by name, e-mail or role (accent-insensitive) and filter by status and role; «Ver como» (owner only) |
 | Interface | Spanish by default, English optional; light/dark/system theme; responsive from 320 px phones to large monitors; reduced-motion aware |
 
 ### 2a. Automatic translation ES ⇄ EN
@@ -150,7 +150,7 @@ submitted text to improve its models; DeepL API **Pro** deletes it after
 translating. For website copy this is acceptable; switch to a Pro key (no code
 change) if that ever matters.
 
-### 2b. Owner account and access types
+### 2b. Owner account, roles and extra sections
 
 **Owner account.** The active account whose e-mail is `OWNER_EMAIL` (default
 **it@gruposensum.com**) is the owner: it manages every other account and is the
@@ -159,11 +159,11 @@ diagnostics/errors cards on the dashboard, changes settings and sends the
 **Informe mensual**. Nobody can change or delete it from the panel (not even
 itself), and no other account can be given its e-mail (`owner_email_reserved`).
 
-**User management by others (`users`).** Part of "Administrador del sitio". Such an
+**User management by others (`users`).** Part of the "Administrador" role. Such an
 account changes only accounts whose permissions are within its own and that don't
 have `users` themselves (`manager_protected`), never its own (`cannot_change_self`)
 or the owner's (`owner_protected`), and gives only permissions it has, never
-`users` (`not_assignable`). A new e-mail, a given password and a two-step reset ask
+`users` (`not_assignable`). A new e-mail, a given password and removing someone's registered devices ask
 for the acting account's password; the person's sessions end and they are told by
 e-mail (old and new address for an e-mail change; a given password is never
 e-mailed or logged). A given password normally sets `must_change_password`: every
@@ -173,7 +173,7 @@ password_change_required` (before the two-step set-up, if both apply).
 site-wide policy. Create it first (`bin/console create-admin --email=it@gruposensum.com`);
 `bin/console check` warns if it doesn't exist.
 
-**Access types.** Every other account has a set of permissions — what it may
+**Permissions.** Every other account has a set of permissions — what it may
 change. The server checks every change (`Auth::assertCan`); the panel only hides
 what an account cannot use.
 
@@ -190,22 +190,42 @@ what an account cannot use.
 | `report` | *Informe mensual (consulta)*: both versions of the monthly report (client and technical detail) for any of the last 13 months; cannot send, change recipients or download the PDF |
 | `support` | Manage **everyone's** support requests (status, priority, internal notes, response target) and the *Panorama de soporte* charts |
 
-Ready-made types (`Users::ACCESS_TYPES`, one concrete job each), or *Personalizado*:
+**Roles** (`Users::ACCESS_TYPES`, one per real job; October 2026, migration `017_roles`).
+An account is a role plus, optionally, **extra sections** («Secciones adicionales» in
+the role picker, or added when a «Pedir acceso» request is granted):
 
-| Type | Permissions |
+| Role | Permissions |
 |---|---|
-| *Administrador del sitio* (`admin`) | texts, contact, photos, documents, site, leads, stats, monitor, report, users |
-| *Editor de contenido* (`content`) | texts, contact, photos, documents |
-| *Redactor* (`texts`) | texts |
-| *Fotos y portafolio* (`media`) | photos, documents |
-| *Datos de contacto* (`contact`) | contact |
-| *Ventas* (`sales`) | leads, stats |
-| *Gerencia (consulta)* (`management`) | stats, monitor |
-| *Soporte técnico* (`support`) | support, monitor, report, site |
+| *Administrador* (`admin`) | texts, contact, photos, documents, site, leads, stats, monitor, report, users |
+| *Editor del sitio web* (`content`) | texts, contact, photos, documents |
+| *Ventas y prospectos* (`sales`) | leads, stats |
+| *Consulta (solo lectura)* (`management`) | stats, monitor, report |
 
-`Users::accessTypeOf()` maps a permission set to its type (order-insensitive;
-anything else is `custom`). `bin/console create-admin` gives the *Administrador del
-sitio* set. Everyone can manage their own account and send support requests (and
+`Users::accessTypeOf()` returns the account's role — the largest role it has in full
+(order-insensitive) — or `custom` («Acceso por secciones») when none; `Users::extrasOf()`
+the sections beyond it. The session (`publicUser`) carries `accessType` and
+`accessExtras`; the panel shows «Editor del sitio web + Prospectos». The API still
+accepts any valid permission set (older accounts, the console), so nothing breaks;
+the panel always builds role + extras, and an account with no complete role opens
+in «Cambiar rol» with the closest role ticked and its sections kept as extras.
+`support` and `users` are in no role but Administrador's `users`: the owner gives
+them as extras, and «Pedir acceso» refuses both (`Users::NOT_REQUESTABLE`,
+`not_requestable`).
+
+**Migration `017_roles`.** Accounts with no complete role get the role that adds the
+least to what they have (never Administrador; sharing nothing: Consulta), keeping
+everything they had — e.g. the old Redactor / Fotos y portafolio / Datos de contacto →
+Editor del sitio web; Gerencia (stats, monitor) → Consulta (+ report); Soporte técnico
+(support, monitor, report, site) → Consulta + support + site. Each changed account is
+recorded in `roles_migration_017` (user, e-mail, before, after, role, when); the
+owner and accounts already on a role are untouched. Rollback, also written in the
+migration file:
+`UPDATE users SET permissions = (SELECT m.before FROM roles_migration_017 m WHERE m.user_id = users.id) WHERE id IN (SELECT user_id FROM roles_migration_017);`
+Pending «Pedir acceso» requests that an account no longer needs (it already has all of
+it) are closed quietly (`Users::closeCoveredRequests`, when Usuarios, Inicio or the
+person's request is read).
+
+`bin/console create-admin` gives the *Administrador* set. Everyone can manage their own account and send support requests (and
 sees only their own unless they have `support`). Existing accounts were migrated in
 `003_access.sql` (former administrators: the first five; former editors: all but
 `site`), `009_monitor_lite.sql` (`site` → `+monitor`) and `011_access_profiles.sql`
@@ -255,7 +275,7 @@ recipient's language and are sent after the response.
 |---|---|
 | `users` | e-mail (unique, lower-case), name, permissions (access type), status (invited/active/disabled), Argon2id/bcrypt hash, language, theme, timestamps; encrypted TOTP secret (active and pending), enabled date, last used step (`007_two_factor.sql`) |
 | `recovery_codes` | keyed HMAC of each two-step recovery code, used-at |
-| `login_challenges` | SHA-256 of the 5-minute token between the password and the code, attempts |
+| `login_challenges` | SHA-256 of the 5-minute token between the password and the code, attempts; `kind` (`totp`/`email`), the e-mailed code's keyed hash and how many times it was sent (`018_device_reset`). The same migration adds `users.two_factor_reenroll_at`: devices removed — the next sign-in confirms an e-mailed code and the new device must be registered (`TwoFactor::required` until then) |
 | `leads` | contact-form messages: name, e-mail, phone, service, message, language, status, amount, notified, unread, created/updated/contacted/closed (`008_value.sql`) |
 | `lead_notes` | notes and history events (status, amount) of each lead, author, time |
 | `analytics_daily` | visit statistics, one row per day × metric × value (view/visitor/source/device/lang/click) — totals only |
@@ -265,6 +285,7 @@ recipient's language and are sent after the response.
 | `sessions` | SHA-256 of the session cookie, CSRF token, created/last-seen/expiry, pseudonymized IP, user agent; `view_as_user_id`/`view_as_until` while the owner views as someone (`010_view_as.sql`) |
 | `user_tokens` | SHA-256 of invitation/reset tokens, purpose, expiry, used-at |
 | `access_requests` | «Pedir acceso»: person, permissions, message, status (pending/granted/declined/cancelled), who answered and when (`016_automations`) |
+| `roles_migration_017` | the accounts `017_roles` moved onto a role: user, e-mail, permissions before and after, role, when (for the rollback) |
 | `trusted_devices` | browsers remembered for the second step: SHA-256 of the cookie token, device label, expiry (30 days) (`016_automations`). The same migration adds to `users` `access_until`, `temp_password_expires_at` and the "notice sent" marks of the automations, and to `leads` `assigned_to`, `followup_sent_at`, `confirmation_sent` |
 | `content` | key, language (`es`/`en`/`*`), value, who/when |
 | `media` | slot, position, server-generated file base, extension, size, generated widths, alt ES/EN, sanitized original name, soft-delete date |
@@ -283,7 +304,9 @@ recipient's language and are sent after the response.
 | `POST /api/telemetry/error` | public, throttled | JS error from the admin (and public site if enabled) |
 | `GET /api/auth/session` | public | current user + CSRF token, or `setupRequired` |
 | `POST /api/auth/login` · `/logout` | public | sign in/out; with two-step sign-in the login answers `{twoFactor:true, challenge}` instead of a session |
-| `POST /api/auth/login/2fa` | public, 5 attempts | second step: `challenge` + `code` (6-digit TOTP or recovery code) → session |
+| `POST /api/auth/login` | public | … with two-step sign-in: `{twoFactor, challenge, rememberAllowed, method}`; `method: 'email'` (+ `sentTo`, masked) when the account's devices were removed and a 6-digit code was e-mailed instead (`login_code_not_sent` 502 if it can't be sent) |
+| `POST /api/auth/login/2fa` | public, 5 attempts | second step: `challenge` + `code` (6-digit TOTP, recovery code, or the e-mailed code — valid 10 minutes) → session |
+| `POST /api/auth/login/2fa/resend` | public, 10/IP/window | «Reenviar código»: a new e-mailed code for the same challenge (the previous one stops working; 3 sends at most, then 429) |
 | `POST /api/auth/forgot` · `/reset/verify` · `/reset` | public | password reset |
 | `POST /api/auth/invitation/verify` · `/invitation/accept` | public | invitation |
 | `POST /api/setup` | public, one-time | first admin with `SETUP_TOKEN` |
@@ -295,7 +318,7 @@ recipient's language and are sent after the response.
 | `GET /api/monitor/overview` | `monitor` | *Salud del sitio*: status, `uptime` (`24h`/`7d`/`30d`/`90d` → `pct`, `checks`, `failed`), `incidents` (30 days: `start`, `end`, `ongoing`, `minutes`, `checks` — no check names), 7-day response time, error counts, last check, publish/certificate/domain/e-mail/backup dates — no messages or settings |
 | `GET`/`PUT /api/settings/translation` · `POST /api/settings/translation/test` | owner | DeepL key (encrypted, never returned; password to save), on/off, connection test with usage |
 | `GET /api/security` · `PUT /api/security/backup` · `POST /api/security/backup/send` · `POST /api/security/backup/download` · `PUT /api/security/policy` | owner | off-server encrypted backup settings (password), send now, download (password); who must use two-step sign-in (password) |
-| `POST /api/users/{id}/2fa-reset` | owner · `users` | turn off someone else's two-step sign-in (password; ends their sessions; never your own; rules above) |
+| `POST /api/users/{id}/2fa-reset` | owner · `users` | «Quitar dispositivos registrados» for someone else (password; their app and remembered browsers go, their sessions end; next sign-in: e-mailed code, then the new device; never your own; rules above) |
 | `GET`/`PUT /api/contact-form` | contact | The form's questions (`ContactFormFields`): `fields` [{id?, core, type, label{es,en}, help{es,en}, required, width, options?, max?, min?, future?}], `version`; publishes; 409 `conflict`; 422 keyed `fields.<n>.<what>` (`name_required`, `contact_required`, …). GET also returns `defaults`, `limits` and `recipients` {to, canEdit (owner), max} |
 | `PUT /api/contact-form/recipients` | owner | Who receives the form's messages: `to` (1–3 addresses) + `currentPassword`; security notice to the owner |
 | `GET`/`PUT /api/contact-form/services` | contact | "Servicio de interés" options only (older endpoint, kept in step: PUT `items` [{id?, es, en}], `version`; publishes; 409 `conflict`) |
@@ -315,7 +338,9 @@ recipient's language and are sent after the response.
 | `PUT /api/reports/settings` | owner · `support` | response-time target `slaHours` (4, 8, 24, 48, 72) |
 | `GET /api/leads?status=&q=&service=` · `GET /api/leads/badge` · `GET`/`PUT`/`DELETE /api/leads/{id}` · `POST /api/leads/{id}/notes` · `POST /api/leads/export` | `leads` | Prospectos: list with counts, unread badge, one lead (marks read), status/amount, notes, delete, CSV |
 | `PUT /api/leads/settings` | owner | retention `retention` (6, 12, 24, 36 months); republishes the privacy notice |
-| `GET /api/stats?period=30d|YYYY-MM` · `PUT /api/stats/settings` | `stats` or `leads` · owner | visit statistics with the previous period (without `leads`: `leads`/`previousLeads` are `null`); on/off (`enabled`, republishes) |
+| `GET /api/stats?period=7d|30d|90d|month|YYYY-MM|custom&from=&to=&service=` · `PUT /api/stats/settings` | `stats` or `leads` · owner | visit statistics with the previous period of the same length (`custom`: YYYY-MM-DD, a year at most — `date_before_start`, `range_too_long`); `service` filters only the contact-form figures; `services` lists those with messages (without `leads`: `leads`/`previousLeads` are `null`); on/off (`enabled`, republishes) |
+| `POST /api/stats/export` | `stats` or `leads`, 30/h | «Exportar → Hoja de cálculo»: CSV (UTF-8 with BOM, formula-safe) of every part of the report for the same filters (`StatsReport::csv`) |
+| `POST /api/stats/share` | `stats` or `leads`, 10/h | «Enviar por correo»: `recipients` (≤ 5), `copyMe`, `sections` (daily, sources, clicks, devices, leads), `message` (≤ 500), `lang`, plus the filters → one branded e-mail per address with the CSV attached; totals only (no names, e-mails or messages); `{sent, failed}` |
 | `POST /api/collect` | public, origin-checked | visit/click beacon from `assets/stats.js`; always 204 |
 | `POST /api/site-report/pdf` | owner | the report as a PDF (`period`, `lang`, optional `note`) |
 | `PUT /api/reports/{id}` · `POST /api/reports/{id}/status` | owner · `support` | edit fields/priority; status with optional `message` and `notify` |
@@ -327,8 +352,9 @@ recipient's language and are sent after the response.
 | `PUT /api/users/{id}/2fa` | owner · `users` | `required` (bool): two-step sign-in for this person on top of the site-wide policy |
 | `POST /api/users/{id}/sessions/revoke` | owner · `users` | ends all their sessions and forgets their remembered browsers; notice to the person |
 | `POST /api/users/requests/{id}` | owner · `users` | answers an access request: `grant` (bool); granting adds the asked permissions (manager rules apply); the person is told |
-| `GET`/`POST /api/account/access-request` | user (not the owner) | «Pedir acceso»: the pending request; a new one (`permissions` not held yet, `message` ≤ 500; replaces the pending one; 3 a day) |
+| `GET`/`POST /api/account/access-request` | user (not the owner) | «Pedir acceso»: the pending request; a new one (`permissions` not held yet and not `users`/`support` — `not_requestable`; `message` ≤ 500; replaces the pending one; 3 a day) |
 | `POST /api/account/2fa/forget-devices` | user | forgets the browsers remembered for the second step |
+| `POST /api/account/2fa/remove-devices` | user (password) | «Quitar dispositivos registrados» for oneself: the app and remembered browsers go, every session ends (this one too); next sign-in: e-mail code, then the new device |
 | `PUT /api/security/accounts` | owner | `inactiveDays` (0/90/120/180), `rememberDevice`, `breachedCheck` + `currentPassword`; turning `rememberDevice` off forgets every remembered browser |
 | `GET /api/activity?group=&person=&from=&to=&before=&export=1` | `site` or `users` (owner: everything) | Actividad: 50 per page (`more`, then `before=<id>`), groups by access (`content`, `media` with `site`; `users`; `leads`; owner also `security`, `settings`, `support`, `other`); `export=1` returns up to 5,000 for the panel's CSV |
 | `PUT /api/leads/automation` · `PUT /api/leads/confirmation` | `leads` | assignment `rules` (service → person), `fallbackUserId`, `followupHours` (0/24/48/72), `weeklySummary`; the visitor's confirmation (`enabled`, `es`/`en` `subject` + `body` with {nombre} {servicio} {telefono} {whatsapp} {correo}) |
@@ -569,7 +595,7 @@ certificate expiry is checked daily; under 3 weeks it is logged as a warning.
   export is UTF-8 with BOM and formula-safe (cells starting with `= + - @` tab/CR get
   an apostrophe). Retention 6/12/24/36 months (owner; default 24): the scheduled
   check deletes older leads and the privacy notice states the period. Access: owner
-  and the `leads` permission (access type "Ventas"). The `stats` permission alone
+  and the `leads` permission (role "Ventas y prospectos"). The `stats` permission alone
   gives the basic Estadísticas (no contact-form figures).
 * **Tickets.** `first_response_at` = first public answer or status change by IT
   (notes don't count); the reporter rates resolved tickets once (1–5 + comment; 1–2
@@ -613,10 +639,11 @@ generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`,
 `monitor` (scheduled check + automatic alerts, cron) · `alert:test` ·
 `reports:retry` · `backup` (consistent DB copy, keeps 14) ·
 `integrity:accept` (record the current public files as expected) ·
-`2fa:reset <email>` (turn off an account's two-step sign-in when it is locked out) ·
+`2fa:reset <email> [--off]` (an account locked out: removes its registered devices — next sign-in, a code by e-mail, then the new device; `--off` only turns two-step sign-in off, for when e-mail isn't working) ·
+`roles` / `roles:rollback` (what `017_roles` changed; give those accounts their previous access back, keeping any corrected by hand since) ·
 `automations [unix-time]` (only the automations, optionally as of a moment; `monitor` runs them too) ·
 `monitor` also closes resolved tickets after 7 days and deletes leads past retention ·
-`demo-users [--reports]` (local demo accounts per access profile; refused in production)
+`demo-users [--reports]` (local demo accounts: one per role, one with an extra section, one disabled; refused in production)
 
 ## 12. Logs, backups and recovery
 
