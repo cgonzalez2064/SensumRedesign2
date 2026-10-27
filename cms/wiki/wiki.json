@@ -28,7 +28,7 @@
         "points": ["Busca cualquier proceso: «cambiar una foto», «exportar prospectos»…", "Mira cada pantalla en computadora o en celular.", "Marca un texto y toca «Preguntar a soporte» para resolver una duda."] },
       "en": { "title": "A new wiki in the panel", "summary": "Processes and guides with real screenshots, in your language and in light or dark mode.",
         "points": ["Search for any task: \"change a photo\", \"export leads\"…", "See every screen on a computer or on a phone.", "Select any text and tap \"Ask support\" to clear up a doubt."] } },
-    { "id": "2026-10-mas-secciones", "date": "2026-10-27", "perms": [], "notOwner": true, "article": "mas-secciones", "shot": "mas-secciones",
+    { "id": "2026-10-mas-secciones", "date": "2026-10-27", "perms": [], "canAsk": true, "article": "mas-secciones", "shot": "mas-secciones",
       "es": { "title": "Más secciones: pide lo que necesitas", "summary": "El menú muestra lo que puedes abrir; «Más secciones» te muestra el resto.",
         "points": ["Ve qué incluye cada sección que todavía no tienes.", "Pídela con un clic: le avisamos a quien administra los usuarios.", "Mientras la revisan, aparece como «Solicitado»."] },
       "en": { "title": "More sections: ask for what you need", "summary": "The menu shows what you can open; \"More sections\" shows the rest.",

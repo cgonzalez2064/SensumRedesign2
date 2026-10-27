@@ -271,8 +271,8 @@ Processes, guides and answers inside the panel, for every signed-in account, at
   (other theme → Spanish → other device).
 * **Ask support:** marking text in an article shows «Preguntar a soporte», which opens the
   support dialog with the subject «Pregunta: <article>», the quote and the page.
-* **«Novedades»:** an entry in `wiki.json → news` (`id`, `date`, `perms`, `notOwner`,
-  `article`, `shot`, texts) is shown once, after signing in, to the accounts that can use it
+* **«Novedades»:** an entry in `wiki.json → news` (`id`, `date`, `perms`, `canAsk` —
+  only accounts with a section they could still ask for —, `article`, `shot`, texts) is shown once, after signing in, to the accounts that can use it
   and existed on that date (`wiki_news_seen`, migration `019_wiki`); «Ver más tarde» waits
   for the next session; the Wiki menu item counts the unseen ones. `WIKI_NEWS=off` turns
   them off (the browser tests).

@@ -16,6 +16,8 @@ archivos están fuera de `public_html` y se sirven por la API (`WikiController`)
    tal como los muestra el panel, entre acentos graves: `` `Guardar cambios` ``.
 2. **Función nueva:** agrega una entrada en `news` de `wiki.json` con `perms` (quién
    puede usarla; vacío = todos), `article`, `shot` y los textos en los dos idiomas.
+   `"canAsk": true` la limita a quienes todavía pueden pedir alguna sección (como
+   «Más secciones» en el menú: ni el propietario ni un Administrador).
    La verán una vez las cuentas que la pueden usar y ya existían ese día.
 3. **Capturas:** `npm --prefix tests run wiki:shots` (todas) o
    `npm --prefix tests run wiki:shots -- '^estadisticas'` (algunas). Después,

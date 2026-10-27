@@ -119,6 +119,10 @@ test('«Novedades»: for whoever can use them, once, and never older than the ac
   assert.ok(!ids.includes('2026-10-usuarios') && !ids.includes('2026-10-actividad'), 'not what their role lacks');
   const ownerIds = (await owner.get('/api/wiki/news')).data.news.map((n) => n.id);
   assert.ok(!ownerIds.includes('2026-10-mas-secciones') && ownerIds.includes('2026-10-usuarios'));
+  // «Más secciones» only for whoever still has something to ask for: not an Administrador.
+  const admin = await person(['texts', 'contact', 'photos', 'documents', 'site', 'leads', 'stats', 'monitor', 'report', 'users']);
+  const adminIds = (await admin.c.get('/api/wiki/news')).data.news.map((n) => n.id);
+  assert.ok(!adminIds.includes('2026-10-mas-secciones') && adminIds.includes('2026-10-usuarios'));
   // Seen once: the panel stops showing it, the wiki keeps it (marked seen).
   assert.equal((await sales.c.post('/api/wiki/news/seen', { ids: ['2026-10-estadisticas'] })).data.marked, 1);
   assert.equal((await sales.c.post('/api/wiki/news/seen', { ids: ['2026-10-estadisticas'] })).data.marked, 0);

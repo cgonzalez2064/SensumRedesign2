@@ -19,7 +19,8 @@ use Sensum\Cms\Http\ApiError;
  * (`perms: leads, stats` — any of them) or `owner: true` (only the owner sees
  * it). Articles about a section the account can't open are still readable,
  * marked as not included in its role. A «Novedad» reaches, once, the accounts
- * that can use it and existed when it shipped.
+ * that can use it and existed when it shipped (`canAsk`: only those with a
+ * section they could still ask for, like the «Más secciones» menu item).
  */
 final class Wiki
 {
@@ -89,6 +90,23 @@ final class Wiki
     }
 
     /**
+     * Whether «Más secciones» has something for this account: a section outside
+     * its role that it may ask for (never the owner, who has everything).
+     */
+    private function canAsk(array $session): bool
+    {
+        if ($this->app->auth()->isOwner($session)) {
+            return false;
+        }
+        foreach (array_diff(Users::PERMISSIONS, Users::NOT_REQUESTABLE) as $p) {
+            if (!$this->app->auth()->can($session, $p)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Every article this account may read, in its language, with whether its
      * role includes what the article is about.
      * @return list<array<string,mixed>>
@@ -140,7 +158,6 @@ final class Wiki
         }
         $lang = in_array($lang, self::LANGS, true) ? $lang : 'es';
         $uid = (int) ($session['uid'] ?? 0);
-        $owner = $this->app->auth()->isOwner($session);
         $created = (int) $this->app->db()->value('SELECT created_at FROM users WHERE id = ?', [$uid]);
         $seen = array_flip(array_column($this->app->db()->all('SELECT news_id FROM wiki_news_seen WHERE user_id = ?', [$uid]), 'news_id'));
         $out = [];
@@ -149,7 +166,7 @@ final class Wiki
             if (!is_array($n[$lang] ?? null) || $date === false || $date < $created) {
                 continue;
             }
-            if (!empty($n['notOwner']) && $owner) {
+            if (!empty($n['canAsk']) && !$this->canAsk($session)) {
                 continue;
             }
             if (!$this->allows($session, (array) ($n['perms'] ?? []))) {
