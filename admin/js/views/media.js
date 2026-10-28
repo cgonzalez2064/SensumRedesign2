@@ -1,8 +1,8 @@
 /** Fotos y archivos — photo slots, project galleries and the portfolio PDF. */
 import { h, icon, clear, fill } from '../dom.js';
-import { t, fmtBytes, fmtRelative } from '../i18n.js';
+import { t, tp, fmtBytes, fmtRelative } from '../i18n.js';
 import { api, upload } from '../api.js';
-import { pageHead, loading, loadError, textField, alertBox, toast, errorText, fieldErrorText, openDialog, confirmDialog, setBusy, button } from '../ui.js';
+import { pageHead, loading, loadError, textField, alertBox, toast, errorText, fieldErrorText, openDialog, confirmDialog, setBusy, button, scrollRow } from '../ui.js';
 import { autoTranslatePair } from '../autotranslate.js';
 
 /** Automatic ES ⇄ EN for photo descriptions (set from the session when the screen opens). */
@@ -24,6 +24,11 @@ export async function render({ main, params, navigate, can, session }) {
       h('a', { class: 'tab', href: '#/fotos/' + slug, 'aria-current': slug === tab ? 'page' : null }, icon(ic), t('media.tabs.' + key))));
   const body = h('div', { class: 'stack-lg' }, loading());
   main.append(tabs, body);
+  scrollRow(tabs); // on phones the open tab may sit past the edge
+
+  // Tipos de proyectos: on phones the six projects start closed (a list with each card photo)
+  // and open one at a time; wider screens show them open. Kept while the screen reloads after a change.
+  const openProjects = new Set(window.matchMedia('(min-width: 700px)').matches ? [1, 2, 3, 4, 5, 6] : []);
 
   const ctx = { maxImage: 0, maxPdf: 0, titles: {}, ctaLabel: '' };
   const load = async () => {
@@ -50,12 +55,19 @@ export async function render({ main, params, navigate, can, session }) {
     else {
       for (let i = 1; i <= 6; i++) {
         const pid = 'proj' + i;
-        body.append(h('section', { class: 'card project-panel', 'aria-labelledby': pid + '-t' },
-          h('div', { class: 'card-header' }, h('div', null,
-            h('div', { class: 'tiny muted', text: t('content.groups.project', { n: i }) }),
-            h('h2', { id: pid + '-t', text: ctx.titles[pid] }))),
-          singleSlot(slots[pid + '.card'], ctx, load, true),
-          gallerySlot(slots[pid + '.gallery'], ctx, load)));
+        const card = slots[pid + '.card'];
+        const gallery = slots[pid + '.gallery'];
+        const panel = h('details', { class: 'card project-panel', open: openProjects.has(i) },
+          h('summary', { class: 'project-summary' },
+            h('span', { class: 'project-thumb' }, card.items[0] ? h('img', { src: '../' + card.items[0].thumb, alt: '', loading: 'lazy' }) : icon('image')),
+            h('span', { class: 'grow' },
+              h('span', { class: 'tiny muted', text: t('content.groups.project', { n: i }) }),
+              h('h2', { id: pid + '-t', text: ctx.titles[pid] }),
+              h('span', { class: 'small muted', text: tp('media.projectPhotos', gallery.items.length) })),
+            icon('chevron-down')),
+          h('div', { class: 'project-body' }, singleSlot(card, ctx, load, true), gallerySlot(gallery, ctx, load)));
+        panel.addEventListener('toggle', () => { if (panel.open) openProjects.add(i); else openProjects.delete(i); });
+        body.append(panel);
       }
     }
     window.scrollTo(0, y);

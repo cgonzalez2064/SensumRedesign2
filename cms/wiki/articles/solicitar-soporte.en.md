@@ -18,7 +18,7 @@ updated: 2026-10-27
 4. If you can, add a screenshot.
 5. Tap `Send request`.
 
-Each request gets a number and stays in `Support` (Help Center), where you see its status and the conversation. We tell you by e-mail when there's an answer.
+Each request gets a number and stays in `Support`, where you see its status and the conversation. We tell you by e-mail when there's an answer.
 
 ![Support: your requests and their status](shot:centro-de-ayuda)
 

@@ -907,9 +907,9 @@ que **no hace falta banner de cookies**. Quien pide «No rastrear» no se cuenta
   Recomendado: que asesoría legal lo lea una vez; si cambias de hosting o de correo,
   hay que actualizar la sección 5.
 
-### 18.3 Soporte (Centro de Ayuda): tiempo de respuesta, satisfacción y gráficas
+### 18.3 Soporte: tiempo de respuesta, satisfacción y gráficas
 
-- Panel → menú **Soporte** → **Centro de Ayuda** (cuenta propietaria o personas con **Gestión de
+- Panel → menú **Soporte** (cuenta propietaria o personas con **Gestión de
   solicitudes de soporte**): arriba está el **Panorama de soporte** con el período
   (30, 90 o 365 días), las solicitudes **abiertas**, **recibidas** y **resueltas**
   (con el tiempo promedio de resolución), la **primera respuesta promedio**, el
@@ -1018,7 +1018,7 @@ en `.env` (50 a 99).
 - [ ] Los dos dominios tienen candado (paso 8.3).
 - [ ] **Formulario de contacto:** envía un mensaje real desde el sitio (en celular y computadora). Bajo el botón aparece «Verificación anti-spam completa.» y el mensaje llega a `contacto@sensumconstrucciones.com` con remitente `formulario@`; al responderlo, la respuesta va al visitante.
 - [ ] (Si activaste Turnstile) el formulario sigue enviando y no muestra errores; en Cloudflare → Turnstile aparecen las verificaciones.
-- [ ] **Soporte (Centro de Ayuda):** con otra cuenta pulsa **Nueva solicitud** y envía una de prueba (aparece en **Mis solicitudes**); como it@gruposensum.com ábrelo, usa **Pedir más información** y luego **Marcar como resuelto**; la persona recibe ambos correos.
+- [ ] **Soporte:** con otra cuenta pulsa **Nueva solicitud** y envía una de prueba (aparece en **Mis solicitudes**); como it@gruposensum.com ábrelo, usa **Pedir más información** y luego **Marcar como resuelto**; la persona recibe ambos correos.
 - [ ] (Opcional) Panel → **Formulario de contacto**: ajusta las preguntas y las opciones de «Servicio de interés» a lo que necesitas hoy. La **vista previa** funciona como el sitio: cambia entre **Celular, Tableta y Computadora**, las preguntas sin guardar dicen «Nueva» o «Modificada» y «Enviar mensaje» muestra los errores (no se envía nada). Luego **Guardar y publicar**, compruébalo en el sitio (español e inglés) y envía un mensaje de prueba: las respuestas extra aparecen en el correo y en **Prospectos**.
 - [ ] **Aviso de privacidad** (`/privacy-notice.html`): léelo completo; dice el plazo de conservación elegido en Prospectos y, si activaste Turnstile, menciona a Cloudflare. Si cambias de proveedor de hosting o correo, avísanos para actualizarlo.
 - [ ] **Correo del panel:** panel → Correo → **Enviar correo de prueba** → llega a it@gruposensum.com.
@@ -1038,7 +1038,7 @@ en `.env` (50 a 99).
 - [ ] Después de enviar el mensaje de prueba del formulario: aparece en **Prospectos** (con el enlace «Prospecto #…» en el correo). Cámbialo a «Contactado» y agrega una nota.
 - [ ] Prospectos → **Conservación de datos** elegida; el aviso de privacidad (`/privacy-notice.html`) dice el mismo número de meses.
 - [ ] Abre el sitio en tu celular (sin «No rastrear») y toca el botón de WhatsApp: al rato, **Estadísticas** muestra la visita y el clic.
-- [ ] Centro de Ayuda → **Gestión de solicitudes**: objetivo de respuesta elegido; resuelve la solicitud de prueba y califícala con la otra cuenta; el **Panorama de soporte** la cuenta como resuelta.
+- [ ] Soporte → **Gestión de solicitudes**: objetivo de respuesta elegido; resuelve la solicitud de prueba y califícala con la otra cuenta; el **Panorama de soporte** la cuenta como resuelta.
 - [ ] **Informe mensual → Descargar PDF** se abre bien; la prueba por correo trae el PDF adjunto.
 - [ ] Traducción → **Probar conexión** dice «La clave funciona». En Textos del sitio, escribe en español y mira cómo se llena el inglés (luego descarta el cambio).
 - [ ] Monitoreo → **Tendencias** muestra las gráficas (pasa el cursor para ver cada día) después de la primera hora de revisiones automáticas.
@@ -1127,6 +1127,13 @@ La base de datos se actualiza sola (migraciones `017_roles` y `018_device_reset`
   cada persona ve una vez las **Novedades** que le corresponden según su rol. No hay
   nada que configurar. Para comprobarla: abre `https://app.sensumconstrucciones.com/wiki`
   (te pide iniciar sesión y luego la muestra).
+* **Mejoras de uso** (migración `020_intro`, se aplica sola): Inicio habla según el rol
+  y «Primeros pasos» se recuerda en la cuenta; en el celular, filtros en un botón,
+  proyectos plegados y botones de 44 px; Usuarios en tarjetas por debajo de 1100 px; la
+  pantalla «Centro de Ayuda» se llama ahora **Soporte**, como el menú. **Textos más
+  largos:** cada texto conserva su largo recomendado y ahora admite más (párrafos el
+  doble, títulos la mitad más, etiquetas un 30 %); el editor avisa al pasar lo
+  recomendado. Los textos publicados no cambian. No hay nada que configurar.
 
 **Volver atrás de esta versión**, de menos a más:
 1. Solo los roles: `php ~/sensum-cms/bin/console roles:rollback` devuelve a cada cuenta

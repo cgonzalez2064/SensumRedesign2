@@ -42,12 +42,18 @@ test('HTML and script payloads are refused in every text field', async () => {
 });
 
 test('length limits, required fields and emphasis syntax are enforced server-side', async () => {
-  assert.equal((await save('hero', { 'hero.eyebrow': { es: 'x'.repeat(61) } })).data.fields['hero.eyebrow.es'], 'too_long');
+  // Each text has a recommended length (the approved design) and a larger maximum.
+  const eyebrow = (await c.get('/api/content')).data.sections.find((x) => x.id === 'hero').fields.find((f) => f.key === 'hero.eyebrow');
+  assert.deepEqual([eyebrow.rec, eyebrow.max], [48, 65]);
+  assert.equal((await save('hero', { 'hero.eyebrow': { es: 'x'.repeat(65) } })).status, 200, 'past the recommendation, within the maximum');
+  assert.equal((await save('hero', { 'hero.eyebrow': { es: eyebrow.value.es } })).status, 200, 'back to the approved text');
+  assert.equal((await save('hero', { 'hero.eyebrow': { es: 'x'.repeat(66) } })).data.fields['hero.eyebrow.es'], 'too_long');
   assert.equal((await save('hero', { 'hero.eyebrow': { es: '   ' } })).data.fields['hero.eyebrow.es'], 'required');
   assert.equal((await save('hero', { 'hero.title': { es: 'Con *precisión y sin cierre' } })).data.fields['hero.title.es'], 'emphasis_unbalanced');
   assert.equal((await save('hero', { 'hero.title': { es: 'Vacío ** aquí' } })).data.fields['hero.title.es'], 'emphasis_empty');
   // Asterisks don't count towards the limit of emphasis fields.
-  assert.equal((await save('hero', { 'hero.title': { es: '*' + 'a'.repeat(90) + '*' } })).status, 200);
+  assert.equal((await save('hero', { 'hero.title': { es: '*' + 'a'.repeat(135) + '*' } })).status, 200);
+  assert.equal((await save('hero', { 'hero.title': { es: '*' + 'a'.repeat(136) + '*' } })).data.fields['hero.title.es'], 'too_long');
 });
 
 test('unknown fields, languages and sections are rejected', async () => {
@@ -139,7 +145,7 @@ test('unicode, quotes and long-but-valid text round-trip safely', async () => {
   const html = s.readPublic('index.html');
   assert.ok(html.includes('data-i18n="footer.about_desc">Ñandú «comillas» “tipográficas” — emoji 🏗️ &amp; símbolos ©®™ &apos;apóstrofo&apos;<'));
   assert.equal(siteContent(html).i18n.es['footer.about_desc'], text);
-  const max = 'a'.repeat(90);
+  const max = 'a'.repeat(180);
   assert.equal((await save('footer', { 'footer.about_desc': { es: max } })).status, 200);
 });
 

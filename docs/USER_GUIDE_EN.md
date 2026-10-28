@@ -48,6 +48,11 @@ you) and the **appearance** (Light, Dark or **Automatic**, which follows your de
 is selected by default). Each option applies at once so you can see it; press **Save
 and continue**. You can change both any time in **My account**.
 
+**Home:** greets you with what you can do in your role (for example, Sales and leads
+sees "follow up on leads and see the visit statistics") and shows three **Getting
+started** steps for your role. Once you tap **Got it** they don't show again, on any
+device.
+
 ## 2. Language and appearance
 
 In the menu with your name (top right):
@@ -69,7 +74,11 @@ happens inside the slide-out menu.
 3. Every text has two versions: **Spanish** (the main one) and **English**
    (shown when a visitor chooses "EN" on the website).
 4. Type the new text. Below it you'll see how many characters you've used and the
-   maximum; limits keep the website's design intact on phones and computers.
+   **recommended length**: what looks best in the design, on phones and computers. If
+   you need more, keep typing: paragraphs take twice the recommendation, titles half as
+   much again and labels and buttons a little more (the Google title and description
+   keep their limit: Google cuts longer ones). Past the recommendation the counter
+   turns orange and reminds you to check how it looks on the site, especially on phones.
 5. Press **Save changes** in the bar at the bottom. You'll see "Changes published
    on the website" with a link to view it.
 
@@ -251,7 +260,7 @@ email or phone.
 
 If something doesn't work, looks wrong, or you have an idea, tap **Request support**
 (at the top of every panel screen; on phones it's the life-buoy icon) or **New
-request** in the Help Center. **New support request** opens:
+request** in **Support**. **New support request** opens:
 
 1. Choose the **Type**: Problem, Improvement / suggestion, Content, Design / visual or Other.
 2. Write a short **Title** (e.g. "The Projects image doesn't load").
@@ -263,7 +272,7 @@ request** in the Help Center. **New support request** opens:
 
 The request goes straight to the technical support team (it@gruposensum.com).
 
-**Follow-up:** the **Support** menu opens the **Help Center**. Under **My requests**
+**Follow-up:** the **Support** menu opens your requests. Under **My requests**
 each request has its own page with its status (New, In progress, Waiting for
 information, Resolved, Closed) and the conversation with support. You get an e-mail when support
 replies, asks for more information or resolves it, and the menu shows a number next
@@ -286,7 +295,7 @@ other forms are **never** sent.
 > **Don't include passwords or sensitive information in the request.**
 
 If the email couldn't be sent at that moment, the panel tells you: your request
-**is saved** and you can retry right away or later from **Support** (Help Center),
+**is saved** and you can retry right away or later from **Support**,
 where you can also see your request history.
 
 ## 8. If a change doesn't appear on the website
@@ -494,7 +503,7 @@ can be forged) and shows when the domain expires. It is also checked once a day.
 
 ## 15. Request management (owner account and technical support)
 
-Under **Support** (Help Center) the owner account —and anyone with the **Support
+Under **Support** the owner account —and anyone with the **Support
 request management** access (an extra section the owner gives)— sees **everyone's** requests
 in **Request management**:
 
@@ -691,3 +700,20 @@ signing in, to every account.
   signing in, what it is and what you can do, with **See how it works**. **Later**
   brings it back next time. In the menu, **Wiki** counts the updates you haven't seen;
   they're also at the top of the wiki's home page.
+
+## 24. On phones and tablets
+
+The panel is the same on any screen; on small ones it adapts like this:
+
+* **Buttons for fingers:** on touch screens buttons are at least 44 px, including the
+  ✕ of dialogs and the menu button.
+* **Filters:** in Leads and Support the statuses are one row that slides sideways (the
+  selected one always in view). In Leads (person in charge and service) and Activity
+  (person, kind and dates) the other filters are under **Filters**; the button says how
+  many you're using. That way the list starts on the first screen.
+* **Photos & files:** the open tab is always visible. Under **Types of projects** the six
+  projects start folded, each with its card photo and how many photos its gallery has;
+  tap one to open it.
+* **Users:** below 1100 px wide (tablets and small laptops) the list is one card per
+  person; on wider screens, a table with every e-mail in full.
+* **What's new:** the progress ("1 of 5") sits under the title, always in view.

@@ -86,7 +86,7 @@ so a slow screen can never write into the next one).
 
 | Area | What users can do |
 |---|---|
-| Texts | 92 bilingual fields (ES + EN) across Inicio → Sección principal, Nosotros, Servicios, Proceso, Tipos de proyectos, Llamado a la acción, Contacto, Preguntas frecuentes, Pie de página. Friendly names, help text, limits, live counters, highlight preview (`*palabra*`), restore original, unsaved-changes protection, edit-conflict detection |
+| Texts | 92 bilingual fields (ES + EN) across Inicio → Sección principal, Nosotros, Servicios, Proceso, Tipos de proyectos, Llamado a la acción, Contacto, Preguntas frecuentes, Pie de página. Friendly names, help text, a recommended length and a larger maximum per text (labels 1.3×, titles 1.5×, paragraphs 2×; the Google title and description keep one limit; past the recommendation the counter turns amber and asks to check the site), live counters, highlight preview (`*palabra*`), restore original, unsaved-changes protection, edit-conflict detection |
 | Automatic translation (optional, DeepL) | Typing in one language fills the other with a machine translation, shown in the editor for review before saving (§2a) |
 | Contact details | Office/mobile phone (mobile optional), WhatsApp number, e-mail, address (building, street, office, city), map card title, Google Maps link (host allow-list), Instagram link and handle. Updates contact section, footer, WhatsApp button, form fallback text, structured data, 404 and privacy pages |
 | Photos | "Nosotros" photo; per project: card photo and a "Ver detalles" gallery (up to 10, ordered). Preview of the exact crop per screen shape, framing control, alt text ES/EN, replace, remove |
@@ -95,11 +95,12 @@ so a slow screen can never write into the next one).
 | Account | Name, panel language, theme; change password (signs out other devices); sign out other sessions |
 | Support | "Solicitar soporte" (a new support request) from every screen; history with delivery status and retry |
 | First sign-in | Once per account: a welcome screen to choose the panel language (also used for its e-mails) and the appearance (light, dark or automatic, preselected), previewed live; a welcome e-mail when an invitation is accepted |
-| Dashboard | Site status, last publish, sync check + republish (admins), recent activity, monitoring status; diagnostics and recent errors for the owner |
+| Dashboard | A lead and «Primeros pasos» that follow the account's sections (closing it is stored on the account: `users.intro_done_at`, migration `020_intro`); site status, last publish, sync check + republish (admins), recent activity, monitoring status; diagnostics and recent errors for the owner |
+| Small screens | Below 720 px the status tabs are one sliding row with the selected one in view (`scrollRow` in `ui.js`), secondary filters wait behind «Filtros» with a count (`filtersToggle`: Prospectos, Actividad) and each project of *Tipos de proyectos* folds (`<details>`, open from 700 px); *Usuarios* is cards below 1100 px; on touch screens (`pointer: coarse`) small buttons, segmented controls, tabs and chips are 44 px |
 | Monitoring (owner) | Uptime (24 h / 7 / 30 / 90 days), incidents with the checks that failed, interactive trend charts (daily uptime, response time, errors, sign-ins), error log with filters and details, key figures, most frequent errors, system details, e-mail alerts for critical errors + test e-mail (§9a, §9d) |
 | Salud del sitio (`monitor`) | Summary of Monitoring for the team: status, uptime, charts, incidents, error counts and key dates — no messages or settings (§9d) |
 | Monthly report (owner) | Short plain-language site-health and visibility report for clients; recipients (owner always copied), preview, test, send, history; reminder after day 5 (§9b) |
-| Support — *Centro de Ayuda* | Menu *Soporte* (headset icon) → *Centro de Ayuda*: *Nueva solicitud*, *Mis solicitudes* (everyone) and *Gestión de solicitudes* (managers). Reports become requests: status (new, in progress, waiting for information, resolved, closed), priority, conversation; the owner and the `support` access edit, reply, add internal notes, ask for information, resolve/close/reopen with optional e-mail to the reporter, and see the *Panorama de soporte* charts (30/90/365 days); reporters follow and answer their own (an answer reopens); menu badge; screenshot viewer |
+| Support — *Soporte* | Menu *Soporte* (headset icon; the page has the same name since October 2026, formerly «Centro de Ayuda»): *Nueva solicitud*, *Mis solicitudes* (everyone) and *Gestión de solicitudes* (managers). Reports become requests: status (new, in progress, waiting for information, resolved, closed), priority, conversation; the owner and the `support` access edit, reply, add internal notes, ask for information, resolve/close/reopen with optional e-mail to the reporter, and see the *Panorama de soporte* charts (30/90/365 days); reporters follow and answer their own (an answer reopens); menu badge; screenshot viewer |
 | Monthly report value | Support summary (received, resolved, average resolution time, resolved items, pending) and automatic maintenance (health checks, file-security scans, backups, certificate checks, Google measurements, blocked spam, notices) + messages received through the form |
 | Contact-form options | "Servicio de interés" list: add, rename (ES/EN), reorder, remove (up to 20), restore the approved options; published at once; stable ids so renaming never breaks open pages (access: contact details). The preview is a working replica of the site's form: phone / tablet / computer widths (scaled to fit), ES/EN, the list opens with unsaved options tagged *Nueva* / *Modificada*, and «Enviar mensaje» shows the site's validation messages without sending anything |
 | E-mail settings (owner) | Panel's SMTP sending account (+ Reply-To), contact-form receivers/sender/method, problem-report and alert recipients, optional Cloudflare Turnstile keys; password re-check, secrets encrypted at rest, security notice, test buttons; `EMAIL_SETTINGS_LOCKED` for .env-only setups |
@@ -282,7 +283,7 @@ Processes, guides and answers inside the panel, for every signed-in account, at
 
 ## 3. Editable content model
 
-* `cms/content/schema.php` — sections, fields, type, max length, required.
+* `cms/content/schema.php` — sections, fields, type, recommended length (`rec`) and maximum (`max`), required.
   Bilingual keys are the same keys the public site's i18n uses
   (`data-i18n="hero.title"`), so values flow into both the server-rendered
   Spanish and the ES/EN toggle.
@@ -317,6 +318,7 @@ Processes, guides and answers inside the panel, for every signed-in account, at
 | `user_tokens` | SHA-256 of invitation/reset tokens, purpose, expiry, used-at |
 | `access_requests` | «Pedir acceso»: person, permissions, message, status (pending/granted/declined/cancelled), who answered and when (`016_automations`) |
 | `wiki_news_seen` | which «Novedades» of the wiki each person has seen: user, news id, when (`019_wiki`) |
+| `users.intro_done_at` | when the person closed «Primeros pasos» on Inicio (`020_intro`) |
 | `roles_migration_017` | the accounts `017_roles` moved onto a role: user, e-mail, permissions before and after, role, when (for the rollback) |
 | `trusted_devices` | browsers remembered for the second step: SHA-256 of the cookie token, device label, expiry (30 days) (`016_automations`). The same migration adds to `users` `access_until`, `temp_password_expires_at` and the "notice sent" marks of the automations, and to `leads` `assigned_to`, `followup_sent_at`, `confirmation_sent` |
 | `content` | key, language (`es`/`en`/`*`), value, who/when |
@@ -361,6 +363,7 @@ Processes, guides and answers inside the panel, for every signed-in account, at
 | `POST /api/content/translate` | texts/contact/photos/documents | machine-translate ES⇄EN for review: field text (`key`) or plain labels without a key (form options, photo descriptions); saves nothing; off without a key |
 | `GET /api/media` · `POST /api/media/{slot}/upload` · `PUT /api/media/{slot}/order` · `PUT`/`DELETE /api/media/item/{id}` | user | photos & PDF |
 | `PUT /api/account/profile` · `POST /api/account/password` · `POST /api/account/sessions/revoke-others` | user | own account |
+| `PUT /api/account/intro` | user | «Primeros pasos» on Inicio was closed: `intro_done_at` (kept from the first time); the session's `user.introDone`, so it stays closed on every device (refused with `view_only` while viewing as someone) |
 | `PUT /api/account/welcome` | user | first sign-in: `lang` (es/en) and `theme` (light/dark/system) stored with `onboarded_at` (kept from the first time); the session's `user.welcome` is true until then (never while viewing as someone, where the change is refused with `view_only`). Migration `013_welcome` marks accounts that had signed in before |
 | `GET /api/account/2fa` · `POST /api/account/2fa/setup` · `/enable` · `/recovery-codes` · `/disable` | user | own two-step sign-in: setup (password → secret + QR), enable (code → recovery codes), new codes and disable (password + code). The only routes open to an account that must still enrol |
 | `GET /api/reports?status=&q=` · `POST /api/reports` · `POST /api/reports/{id}/retry` · `GET /api/reports/badge` | user | support requests (owner and `support`: all, filters, search, `canManage: true`; others: own) |
@@ -446,7 +449,7 @@ admins can republish with one click (or `php bin/console publish`).
 ## 8. Support requests ("Solicitar soporte")
 
 * Entry points: top bar on every screen (*Solicitar soporte*, icon-only on phones),
-  sidebar footer, the wiki («Preguntar a soporte» on marked text, §2d), Dashboard (editors), *Centro de Ayuda* (*Nueva
+  sidebar footer, the wiki («Preguntar a soporte» on marked text, §2d), Dashboard (editors), *Soporte* (*Nueva
   solicitud*). The dialog is *Nueva solicitud de soporte*; e-mails and screens call
   each one a *solicitud* (#id).
 * Fields: Tipo (Problema, Mejora / sugerencia, Contenido, Diseño / visual, Otro),
@@ -465,7 +468,7 @@ admins can republish with one click (or `php bin/console publish`).
   `[Sensum Website] <Tipo>: <Título>`, Reply-To = reporter, plain text + escaped
   HTML, screenshot attached. HTTP 201 = sent, 202 = saved but not sent.
 * Failure handling: status `failed`, the text stays on screen, the user can
-  retry immediately or later from **Soporte** (Centro de Ayuda); admins see failures on
+  retry immediately or later from **Soporte**; admins see failures on
   the dashboard; `php bin/console reports:retry` resends all pending.
 * Abuse limits: 5 reports per 10 minutes and 20 per day per user; identical
   reports within 15 minutes are recognized as duplicates; retries 10 per 10 min.
@@ -717,5 +720,7 @@ generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`,
 * The contact form's recipient (`TO_EMAIL` in `assets/contact-handler.php`) and
   its service options are not editable from the panel.
 * PDFs are checked for being real PDFs but not scanned for malware.
-* Content limits protect the layout; extremely long words can still wrap
-  awkwardly on 320 px phones.
+* Each text has a recommended length (the approved design) and a larger maximum;
+  the layout was checked at 320–1440 px with every field at its maximum, but texts
+  past the recommendation make blocks taller (the editor says so). Extremely long
+  words can still wrap awkwardly on 320 px phones.

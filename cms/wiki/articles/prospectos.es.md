@@ -32,6 +32,7 @@ Cada cambio queda en el historial con quién y cuándo.
 ## Buscar y exportar
 
 - Filtros por estado y por servicio; búsqueda por nombre, correo, teléfono, texto o número (#12).
+- En el celular, los estados forman una fila que se desliza de lado, y el responsable y el servicio están en `Filtros`.
 - `Exportar CSV` descarga la lista filtrada para Excel o Google Sheets.
 
 > [!important] Prospectos tiene **datos personales** de los clientes. No los compartas fuera de la empresa. Si alguien pide que borremos sus datos, usa `Eliminar` en su mensaje.

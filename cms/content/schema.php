@@ -7,10 +7,13 @@
  * published value flows into both the server-rendered Spanish page and the
  * ES/EN language toggle.
  *
- * Limits were sized from the approved copy and verified against the layout
- * at 320–1440 px by filling every field to its maximum (tests/e2e/public.spec.js,
- * "content stress test"). Hero and project-card limits sit just above the
- * longest approved text, because those blocks change shape fastest on phones.
+ * Each text has a recommended length (`rec`, sized from the approved copy: what
+ * fits the design best) and a maximum (`max`) for when Sensum needs more: the
+ * editor accepts up to the maximum and warns past the recommendation. Labels
+ * (eyebrows, buttons, badges) allow 1.3× the recommendation, titles 1.5× and
+ * paragraphs 2×. The layout was verified at 320–1440 px with every field at its
+ * maximum (tests/e2e/public.spec.js, "content stress test"). The Google title and
+ * description keep one limit (Google cuts longer ones).
  *
  * Field types:
  *   text      one line                      textarea  paragraph (line breaks become spaces)
@@ -22,8 +25,11 @@
  * files (admin/js/i18n/*.js), keyed by section id and field key.
  */
 
-$t = static fn (string $key, int $max, array $extra = []) => ['key' => $key, 'type' => 'text', 'max' => $max] + $extra;
-$p = static fn (string $key, int $max, array $extra = []) => ['key' => $key, 'type' => 'textarea', 'max' => $max] + $extra;
+// $rec: recommended length; the maximum is a multiple of it, rounded up to 5.
+$lim = static fn (int $rec, float $k): array => ['rec' => $rec, 'max' => (int) (ceil($rec * $k / 5) * 5)];
+$l = static fn (string $key, int $rec) => ['key' => $key, 'type' => 'text'] + $lim($rec, 1.3);     // label
+$t = static fn (string $key, int $rec) => ['key' => $key, 'type' => 'text'] + $lim($rec, 1.5);     // title, one line
+$p = static fn (string $key, int $rec) => ['key' => $key, 'type' => 'textarea'] + $lim($rec, 2.0); // paragraph
 
 $services = [];
 foreach (range(1, 6) as $i) {
@@ -37,7 +43,7 @@ foreach (range(1, 4) as $i) {
 }
 $projects = [];
 foreach (range(1, 6) as $i) {
-    $projects[] = $t("proj{$i}.tag", 20);
+    $projects[] = $l("proj{$i}.tag", 20);
     $projects[] = $t("proj{$i}.title", 30);
     $projects[] = $p("proj{$i}.desc", 60);
 }
@@ -50,21 +56,21 @@ foreach (range(1, 6) as $i) {
 return [
     'sections' => [
         ['id' => 'hero', 'anchor' => '#inicio', 'fields' => [
-            $t('hero.eyebrow', 48),
-            ['key' => 'hero.title', 'type' => 'emphasis', 'max' => 90],
+            $l('hero.eyebrow', 48),
+            ['key' => 'hero.title', 'type' => 'emphasis'] + $lim(90, 1.5),
             $p('hero.desc', 180),
-            $t('hero.cta1', 30),
-            $t('hero.cta2', 30),
-            $t('hero.badge1', 28),
-            $t('hero.badge2', 28),
-            $t('hero.badge3', 28),
-            $t('pillar.plan_label', 22),
-            $t('pillar.precision_label', 22),
-            $t('pillar.comm_label', 22),
-            $t('pillar.support_label', 22),
+            $l('hero.cta1', 30),
+            $l('hero.cta2', 30),
+            $l('hero.badge1', 28),
+            $l('hero.badge2', 28),
+            $l('hero.badge3', 28),
+            $l('pillar.plan_label', 22),
+            $l('pillar.precision_label', 22),
+            $l('pillar.comm_label', 22),
+            $l('pillar.support_label', 22),
         ]],
         ['id' => 'about', 'anchor' => '#nosotros', 'fields' => [
-            $t('about.eyebrow', 30),
+            $l('about.eyebrow', 30),
             $t('about.title', 30),
             $p('about.desc', 500),
             $t('about.art_caption', 90),
@@ -74,29 +80,29 @@ return [
             $p('about.vision_desc', 240),
         ]],
         ['id' => 'services', 'anchor' => '#servicios', 'fields' => array_merge([
-            $t('services.eyebrow', 30),
+            $l('services.eyebrow', 30),
             $t('services.title', 30),
             $p('services.desc', 180),
-            $t('services.cta', 28),
+            $l('services.cta', 28),
         ], $services)],
         ['id' => 'process', 'anchor' => '#servicios', 'fields' => array_merge([
-            $t('process.eyebrow', 30),
+            $l('process.eyebrow', 30),
             $t('process.title', 30),
         ], $process)],
         ['id' => 'projects', 'anchor' => '#proyectos', 'fields' => array_merge([
-            $t('projects.eyebrow', 30),
+            $l('projects.eyebrow', 30),
             $t('projects.title', 30),
             $p('projects.desc', 160),
         ], $projects, [
-            $t('projects.cta', 48),
+            $l('projects.cta', 48),
         ])],
         ['id' => 'cta', 'anchor' => '#contacto', 'fields' => [
             $t('ctabanner.title', 36),
             $p('ctabanner.desc', 120),
-            $t('ctabanner.cta', 28),
+            $l('ctabanner.cta', 28),
         ]],
         ['id' => 'contact', 'anchor' => '#contacto', 'fields' => [
-            $t('contact.eyebrow', 30),
+            $l('contact.eyebrow', 30),
             $t('contact.title', 30),
             $p('contact.desc', 220),
             $t('contact.hours_value', 90),
@@ -104,17 +110,18 @@ return [
             $p('whatsapp.message', 200),
         ]],
         ['id' => 'faq', 'anchor' => '#faq', 'fields' => array_merge([
-            $t('faq.eyebrow', 30),
+            $l('faq.eyebrow', 30),
             $t('faq.title', 36),
         ], $faq)],
         ['id' => 'footer', 'anchor' => '#contacto', 'fields' => [
-            $t('footer.about_desc', 90),
+            ['key' => 'footer.about_desc', 'type' => 'text'] + $lim(90, 2.0),
         ]],
         // What search engines show for the site (title and description in the
-        // results, and in link previews). Not visible on the page itself.
+        // results, and in link previews). Not visible on the page itself. These
+        // keep a single limit: Google cuts longer texts, so more would not help.
         ['id' => 'seo', 'anchor' => '', 'fields' => [
-            $t('meta.title', 70),
-            $p('meta.description', 160),
+            ['key' => 'meta.title', 'type' => 'text', 'max' => 70],
+            ['key' => 'meta.description', 'type' => 'textarea', 'max' => 160],
         ]],
         // Language-independent business details.
         ['id' => 'details', 'anchor' => '#contacto', 'fields' => [

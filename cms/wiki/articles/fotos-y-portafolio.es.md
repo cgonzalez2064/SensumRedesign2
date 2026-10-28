@@ -9,6 +9,8 @@ updated: 2026-10-27
 ---
 En `Fotos y archivos` hay tres pestañas: **Nosotros**, **Tipos de proyectos** y **Documentos**. Cada espacio explica dónde aparece la foto en el sitio.
 
+En el celular, los seis proyectos de **Tipos de proyectos** aparecen plegados, cada uno con su foto de tarjeta y cuántas fotos tiene su galería: toca uno para abrirlo.
+
 ![Fotos y archivos: la foto de «Nosotros» con su descripción](shot:fotos)
 
 ## Subir o cambiar una foto

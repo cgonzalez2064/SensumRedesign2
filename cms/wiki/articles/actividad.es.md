@@ -17,6 +17,8 @@ updated: 2026-10-27
 2. Toca `Cargar más` para ver días anteriores.
 3. `Exportar` descarga lo que estás viendo en una hoja de cálculo.
 
+En el celular, los filtros están en `Filtros`; el botón dice cuántos estás usando.
+
 > [!tip] Desde `Usuarios`, el menú ⋮ de una persona → `Ver actividad` abre directamente su historial.
 
 Ves los tipos de cambio que tu rol permite. Los inicios de sesión, la seguridad y la configuración solo los ve la cuenta propietaria.

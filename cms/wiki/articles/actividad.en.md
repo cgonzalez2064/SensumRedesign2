@@ -17,6 +17,8 @@ updated: 2026-10-27
 2. Tap `Load more` to see earlier days.
 3. `Export` downloads what you're seeing as a spreadsheet.
 
+On a phone, the filters are under `Filters`; the button says how many you're using.
+
 > [!tip] From `Users`, a person's ⋮ menu → `See activity` opens their history directly.
 
 You see the kinds of change your role allows. Sign-ins, security and settings are only for the owner account.

@@ -64,12 +64,14 @@ export async function checkNews({ viewAs, navigate }) {
     next.lastChild.textContent = i < items.length - 1 ? t('news.next') : t('news.done');
   };
   const dlg = openDialog({
-    title: t('news.title'), labelledIcon: 'star-fill', body: h('div', { class: 'stack' }, body, h('div', { class: 'news-foot' }, dots, counter)), wide: true,
+    title: t('news.title'), labelledIcon: 'star-fill', body, wide: true,
     actions: [
       { label: t('news.later'), variant: 'ghost', onClick: (b, close) => { try { sessionStorage.setItem(LATER_KEY, '1'); } catch (e) { /* ignore */ } close(); } },
     ],
   });
   dlg.foot.append(how, next);
+  // How many there are, under the title: always in view, also on phones where the text scrolls.
+  dlg.el.querySelector('.dialog-head h2').after(h('div', { class: 'news-progress' }, dots, counter));
   // On phones the text scrolls inside the dialog: it must be reachable with the keyboard too.
   if (dlg.body) dlg.body.tabIndex = 0;
   how.addEventListener('click', () => {

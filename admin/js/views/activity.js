@@ -7,7 +7,7 @@
 import { h, icon, fill } from '../dom.js';
 import { t, fmtDate, locale } from '../i18n.js';
 import { api, saveBlob } from '../api.js';
-import { pageHead, loading, loadError, emptyState, button, setBusy, toast, errorText } from '../ui.js';
+import { pageHead, loading, loadError, emptyState, button, setBusy, toast, errorText, filtersToggle } from '../ui.js';
 
 const GROUP_ICON = { content: 'pencil-square', media: 'images', users: 'people', leads: 'inbox', security: 'shield-lock', settings: 'person-gear', support: 'headset', other: 'clock-history' };
 
@@ -26,7 +26,7 @@ export async function render({ main, query }) {
   const from = h('input', { class: 'input', type: 'date', id: 'act-from', 'aria-label': t('activity.from') });
   const to = h('input', { class: 'input', type: 'date', id: 'act-to', 'aria-label': t('activity.to') });
   const clearBtn = button(t('activity.clear'), { variant: 'ghost', small: true, icon: 'x-lg' });
-  const toolbar = h('div', { class: 'activity-toolbar' },
+  const toolbar = h('div', { class: 'activity-toolbar filters-more' },
     h('div', { class: 'field' }, h('label', { class: 'label', for: 'act-person', text: t('activity.person') }), personSel),
     h('div', { class: 'field' }, h('label', { class: 'label', for: 'act-group', text: t('activity.kind') }), groupSel),
     h('div', { class: 'field' }, h('label', { class: 'label', for: 'act-from', text: t('activity.from') }), from),
@@ -35,7 +35,9 @@ export async function render({ main, query }) {
   const list = h('div', { 'aria-live': 'polite' }, loading());
   const more = button(t('activity.more'), { icon: 'arrow-down' });
   more.hidden = true;
-  main.append(h('div', { class: 'stack' }, h('div', { class: 'card' }, toolbar), list, h('div', { class: 'row row-center' }, more)));
+  // Phones: the four filters wait behind «Filtros», so the list starts on the first screen.
+  const filtersBtn = filtersToggle(toolbar, () => Object.values(filters).filter(Boolean).length);
+  main.append(h('div', { class: 'stack' }, h('div', { class: 'card activity-filters' }, filtersBtn.button, toolbar), list, h('div', { class: 'row row-center' }, more)));
 
   let items = [];
   let alive = true;
@@ -90,6 +92,7 @@ export async function render({ main, query }) {
   const change = () => {
     Object.assign(filters, { person: personSel.value, group: groupSel.value, from: from.value, to: to.value });
     clearBtn.hidden = !Object.values(filters).some(Boolean);
+    filtersBtn.update();
     load();
   };
   [personSel, groupSel, from, to].forEach((el) => el.addEventListener('change', change));

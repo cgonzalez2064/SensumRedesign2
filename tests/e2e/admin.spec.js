@@ -153,7 +153,13 @@ test('upload a photo through the dialog: preview, framing, alt text, publish', a
   await login(page);
   await page.goto('/admin/#/fotos/proyectos');
   const panelIndex = { 'desktop-chrome': 3, 'tablet-chrome': 4, 'iphone-webkit': 5 }[info.project.name];
-  const panel = page.locator('section.project-panel').nth(panelIndex);
+  const panel = page.locator('details.project-panel').nth(panelIndex);
+  // On phones each project starts folded: a list with the card photo; tapping one opens it.
+  if (info.project.name === 'iphone-webkit') {
+    await expect(panel).not.toHaveAttribute('open', '');
+    await panel.locator('summary').click();
+  }
+  await expect(panel).toHaveAttribute('open', '');
   await panel.getByRole('button', { name: 'Subir foto' }).click();
   const dlg = page.getByRole('dialog');
   await dlg.locator('#media-file').setInputFiles(join(FIXTURES, 'wide-1600x900.jpg'));
@@ -174,7 +180,9 @@ test('a photo that already has the right shape: no framing control and no stray 
   const problems = watch(page);
   await login(page);
   await page.goto('/admin/#/fotos/proyectos');
-  await page.getByRole('button', { name: 'Subir foto' }).first().click();
+  const first = page.locator('details.project-panel').first();
+  if (!(await first.evaluate((d) => d.open))) await first.locator('summary').click();
+  await first.getByRole('button', { name: 'Subir foto' }).click();
   const dlg = page.getByRole('dialog');
   await dlg.locator('#media-file').setInputFiles(join(FIXTURES, 'photo-1600x1200.webp')); // exactly 4:3
   await expect(dlg.locator('.frame img')).toHaveCount(1);

@@ -220,6 +220,8 @@ button{ cursor:pointer; }
 .counter.over{ color:var(--bad); font-weight:700; }
 .field-foot{ display:flex; justify-content:space-between; gap:.75rem; align-items:baseline; min-height:1.1rem; }
 .field-foot .counter{ flex:none; }
+.field-note{ display:flex; gap:.4rem; align-items:flex-start; font-size:.84rem; color:var(--warn); line-height:1.45; }
+.field-note .icon{ margin-top:.12rem; }
 /* Grid and flex children may shrink below their content's natural width
    (otherwise one long URL can widen a whole column on a phone). */
 .stack > *, .stack-sm > *, .stack-lg > *, .editor-group > *, .field, .field-card, .lang-cols > *{ min-width:0; }
@@ -451,8 +453,18 @@ dialog.dialog.closing::backdrop{ animation: fade-out var(--t) var(--ease) forwar
   background:transparent; color:var(--text-2); font-weight:650; font-size:.88rem; transition: border-color var(--t-fast), color var(--t-fast), background-color var(--t-fast);
 }
 .gallery-add:hover{ border-color:var(--brand); color:var(--accent); background:var(--accent-soft); }
-.project-panel{ display:grid; gap:1.1rem; }
 .project-panel + .project-panel{ margin-top:1rem; }
+/* Each project folds: a summary row with its card photo, then its photos and texts. */
+.project-summary{ list-style:none; display:flex; align-items:center; gap:.9rem; cursor:pointer; min-height:44px; border-radius:8px; }
+.project-summary::-webkit-details-marker{ display:none; }
+.project-summary:focus-visible{ outline:3px solid var(--focus); outline-offset:4px; }
+.project-summary .grow{ display:grid; gap:.1rem; flex:1; min-width:0; }
+.project-summary h2{ font-size:1.08rem; }
+.project-summary > .icon{ color:var(--text-3); transition: transform var(--t) var(--ease); }
+.project-panel[open] > .project-summary > .icon{ transform: rotate(180deg); }
+.project-thumb{ flex:none; width:68px; aspect-ratio:4 / 3; border-radius:8px; overflow:hidden; background:var(--surface-3); display:grid; place-items:center; color:var(--text-3); }
+.project-thumb img{ width:100%; height:100%; object-fit:cover; }
+.project-body{ display:grid; gap:1.1rem; margin-top:1.1rem; padding-top:1.1rem; border-top:1px solid var(--border); }
 
 .dropzone{
   display:grid; place-items:center; text-align:center; gap:.5rem; padding:1.5rem 1rem; border-radius:var(--r-lg);
@@ -483,6 +495,13 @@ table.table{ width:100%; border-collapse:collapse; font-size:.92rem; }
 .table-wrap.responsive thead th:first-child{ border-top-left-radius:calc(var(--r-lg) - 1px); }
 .table-wrap.responsive thead th:last-child{ border-top-right-radius:calc(var(--r-lg) - 1px); }
 .list-cards{ display:grid; gap:.75rem; }
+/* Usuarios: cards below 1100 px (two per row from 720 px); the table above, with each e-mail on one line. */
+@media (max-width: 1099px){ .users-table{ display:none !important; } }
+@media (min-width: 1100px){ .users-cards{ display:none !important; } }
+.users-cards{ grid-template-columns:repeat(auto-fill, minmax(min(100%, 320px), 1fr)); align-items:start; }
+.users-table td:first-child{ min-width:15rem; }
+.users-table .person .grow{ min-width:0; }
+.users-table .person-email{ max-width:22rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; overflow-wrap:normal; word-break:normal; }
 .person{ display:flex; gap:.75rem; align-items:center; min-width:0; }
 .avatar{ width:38px; height:38px; border-radius:50%; display:grid; place-items:center; flex:none; font-weight:700; font-size:.9rem; background:var(--accent-soft); color:var(--accent); }
 .kv{ display:grid; grid-template-columns: auto 1fr; gap:.35rem 1rem; font-size:.9rem; margin:0; }
@@ -503,6 +522,7 @@ table.table{ width:100%; border-collapse:collapse; font-size:.92rem; }
 .overview-summary{ list-style:none; display:flex; align-items:center; gap:.85rem; padding:1rem 1.25rem; cursor:pointer; border-radius:var(--r-lg); }
 .overview-summary::-webkit-details-marker{ display:none; }
 .overview-summary .grow{ display:grid; gap:.1rem; }
+.overview-summary .overview-title{ margin:0; font-size:1rem; font-weight:700; letter-spacing:0; }
 .overview-controls .row{ flex-wrap:nowrap; }
 .overview-controls .select{ width:auto; min-width:7rem; }
 .overview-summary:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
@@ -712,7 +732,7 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 .kpi{ display:flex; flex-direction:column; gap:.2rem; padding:1rem 1.1rem; border:1px solid var(--border); border-radius:var(--r-lg); background:var(--surface); min-width:0; }
 .kpi-num{ display:flex; align-items:center; gap:.45rem; font-size:clamp(1.15rem, 3.6vw, 1.45rem); font-weight:800; line-height:1.15; overflow-wrap:break-word; }
 .kpi-num .icon{ flex:none; }
-@media (max-width: 560px){ .kpi-grid > .kpi:first-child{ grid-column: 1 / -1; } .uptime-tiles > .kpi:first-child{ grid-column: auto; } .uptime-tiles, .kpi-compact{ grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px){ .kpi-grid > .kpi:first-child{ grid-column: 1 / -1; } .uptime-tiles > .kpi:first-child{ grid-column: auto; } .kpi-grid, .uptime-tiles, .kpi-compact{ grid-template-columns: 1fr 1fr; } }
 .kpi-label{ font-size:.82rem; color:var(--text-2); }
 .kpi-ok .kpi-num{ color:var(--ok); } .kpi-bad .kpi-num{ color:var(--bad); } .kpi-warn .kpi-num{ color:var(--warn); }
 .log-filters{ display:grid; gap:.6rem .75rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items:end; margin-bottom:.9rem; }
@@ -934,7 +954,26 @@ details.disclosure[open] > summary .icon{ transform: rotate(180deg); }
 /* Support tickets */
 .nav-badge{ margin-left:auto; min-width:22px; height:22px; padding:0 .4rem; border-radius:999px; background:var(--brand); color:var(--brand-ink); font-size:.75rem; font-weight:800; display:inline-grid; place-items:center; animation: pop-in var(--t) var(--ease) both; }
 .ticket-toolbar{ display:grid; gap:.75rem; }
-.filter-tabs{ display:flex; flex-wrap:wrap; gap:.4rem; } /* wrap on phones: every filter stays visible */
+.filter-tabs{ display:flex; flex-wrap:wrap; gap:.4rem; }
+/* Phones: the status tabs are one row that slides (the selected one in view, a fade where there is more),
+   and secondary filters wait behind «Filtros», so the list starts on the first screen. */
+@media (max-width: 719px){
+  .filter-tabs.scroll-row{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+  .filter-tabs.scroll-row::-webkit-scrollbar{ display:none; }
+  .filter-tabs.scroll-row > *{ flex:none; }
+  .filters-more:not(.open){ display:none !important; }
+  .ticket-search.row > .filters-more{ order:2; flex-basis:100%; display:flex; flex-wrap:wrap; gap:.6rem; }
+  .ticket-search.row > .filters-toggle{ order:1; flex:none; }
+  .ticket-toolbar .ticket-search.row > .input{ flex:1 1 140px; min-width:0; } /* the search and «Filtros» share a line */
+}
+@media (max-width: 719px){
+  .activity-filters{ display:grid; gap:.9rem; }
+  .activity-filters > .filters-toggle{ justify-self:start; }
+}
+@media (min-width: 720px){
+  .filters-toggle{ display:none !important; }
+  .ticket-search.row > .filters-more{ display:contents; }
+}
 .filter-tab{ display:inline-flex; align-items:center; gap:.45rem; min-height:38px; padding:.35rem .8rem; border-radius:999px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-2); font-weight:600; font-size:.88rem; white-space:nowrap; transition: background-color var(--t-fast), color var(--t-fast), border-color var(--t-fast); }
 .filter-tab:hover{ color:var(--text); border-color:var(--text-3); }
 .filter-tab[aria-pressed="true"]{ background:var(--accent-soft); border-color:var(--brand); color:var(--accent); }
@@ -1497,6 +1536,7 @@ details.extras .extras-hint{ margin:.35rem 0 0; }
 .wiki-table thead th{ font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:var(--text-3); background:var(--surface-2); }
 .wiki-table tbody th{ font-weight:650; white-space:nowrap; }
 .wiki-body .table-scroll{ overflow-x:auto; border:1px solid var(--border); border-radius:var(--r-lg); background:var(--surface); }
+.wiki-body .table-scroll:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
 .wiki-body .table-scroll tr:last-child > *{ border-bottom:0; }
 
 /* Screenshots: a browser window on computers, a phone on phones. */
@@ -1567,7 +1607,9 @@ details.extras .extras-hint{ margin:.35rem 0 0; }
 .news-points{ list-style:none; margin:0; padding:0; display:grid; gap:.45rem; }
 .news-points li{ display:flex; gap:.55rem; align-items:flex-start; line-height:1.45; }
 .news-points .icon{ width:16px; height:16px; color:var(--ok); flex:none; margin-top:.15em; }
-.news-foot{ display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.news-progress{ display:flex; align-items:center; gap:.6rem; margin-top:.4rem; }
+.news-progress:has(.news-counter:empty){ display:none; }
+@media (max-width: 719px){ .news-shot{ max-height:170px; } .news{ gap:.85rem; } }
 .news-dots{ display:inline-flex; gap:6px; }
 .news-dots span{ width:8px; height:8px; border-radius:999px; background:var(--border-strong); transition:width var(--t) var(--ease), background var(--t); }
 .news-dots span.is-on{ width:22px; background:var(--brand); }
@@ -1592,3 +1634,22 @@ details.extras .extras-hint{ margin:.35rem 0 0; }
 }
 .wiki-figure.is-missing .shot-frame img{ visibility:hidden; min-height:180px; }
 .wiki-figure.is-missing .shot-frame{ cursor:default; background:repeating-linear-gradient(45deg, var(--surface-2) 0 10px, var(--surface-3) 10px 20px); }
+
+/* ---------- Touch targets, focus and small fixes (UX review, October 2026) ---------- */
+/* Icon buttons never shrink: the ✕ of a dialog with a long intro, the ☰ of the top bar. */
+.dialog-head > .btn-icon, .topbar .btn{ flex:none; }
+/* Headings get focus when a screen opens (screen readers start there); the ring is for keyboard moves only. */
+h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus{ outline:none; }
+/* Small links and toggles: at least 24 px tall. */
+.chart-data summary{ min-height:24px; }
+.crumbs a{ display:inline-flex; align-items:center; min-height:24px; }
+/* Fingers: 44 px (Apple and Google), only on touch screens; the desktop layout doesn't change. */
+@media (pointer: coarse){
+  .btn-sm, .segmented button, .tab, .chip label{ min-height:44px; }
+  .btn-icon.btn-sm{ width:44px; }
+  .chart-data summary, details.disclosure > summary, .crumbs a{ min-height:44px; }
+}
+/* A row that scrolls sideways (tabs, status filters) fades at the edge that has more. */
+.scroll-row.more-right{ -webkit-mask-image:linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image:linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+.scroll-row.more-left{ -webkit-mask-image:linear-gradient(to left, #000 calc(100% - 40px), transparent); mask-image:linear-gradient(to left, #000 calc(100% - 40px), transparent); }
+.scroll-row.more-left.more-right{ -webkit-mask-image:linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); mask-image:linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); }

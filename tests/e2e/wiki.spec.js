@@ -16,6 +16,8 @@ async function signIn(page, user) {
   await expect(page.locator('main h1')).toHaveText(/^Hola, /);
 }
 async function axe(page) {
+  // The theme was just switched: colors are checked once their transitions end.
+  await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect && a.effect.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => {}))));
   const v = (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations.filter((x) => ['serious', 'critical'].includes(x.impact));
   expect(v.map((x) => `${x.id}: ${x.nodes.map((n) => n.target).join(', ')}`)).toEqual([]);
 }
@@ -99,7 +101,7 @@ test('«Novedades»: shown once after signing in, «Ver cómo funciona» opens t
   const dlg = page.getByRole('dialog', { name: 'Novedades para ti' });
   await expect(dlg).toBeVisible();
   await expect(dlg.getByRole('heading', { name: 'Estadísticas para compartir' })).toBeVisible();
-  await expect(dlg.getByText('1 de 2')).toBeVisible();
+  await expect(dlg.locator('.dialog-head .news-progress')).toContainText('1 de 2'); // under the title, always in view
   await expect(page.locator('.nav a[data-nav="wiki"] .nav-badge')).toHaveText('2');
   await axe(page);
   await dlg.getByRole('button', { name: 'Siguiente' }).click();

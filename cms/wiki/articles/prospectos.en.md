@@ -32,6 +32,7 @@ Every change is kept in the history with who and when.
 ## Searching and exporting
 
 - Filters by status and service; search by name, e-mail, phone, text or number (#12).
+- On a phone, the statuses are a row that slides sideways, and the person in charge and the service are under `Filters`.
 - `Export CSV` downloads the filtered list for Excel or Google Sheets.
 
 > [!important] Leads holds clients' **personal data**. Don't share it outside the company. If someone asks us to delete their data, use `Delete` on their message.

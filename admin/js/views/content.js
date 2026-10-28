@@ -298,10 +298,12 @@ function buildEditor(main, section, { siteUrl, onSaved, extras = null, translate
           label: field.bilingual ? (lang === 'es' ? t('common.spanish') : t('common.english')) : ft.label,
           langTag: field.bilingual ? lang.toUpperCase() : null,
           value: loaded[lang], max: field.type === 'phone' || field.type === 'whatsapp' ? null : field.max,
+          // Past the recommended length the counter turns amber and says so; the maximum still applies.
+          rec: field.rec || null,
           // Long one-line texts get a 2-line box so they can be read whole;
           // Enter is blocked below because the site shows them on one line.
-          multiline: field.type === 'textarea' || (['text', 'emphasis'].includes(field.type) && field.max >= 80),
-          rows: field.type === 'textarea' ? (field.max > 250 ? 5 : 3) : 2,
+          multiline: field.type === 'textarea' || (['text', 'emphasis'].includes(field.type) && (field.rec || field.max) >= 80),
+          rows: field.type === 'textarea' ? ((field.rec || field.max) > 250 ? 5 : 3) : 2,
           type: INPUT_TYPES[field.type] || 'text', inputmode: field.type === 'phone' || field.type === 'whatsapp' ? 'tel' : null,
           hint: field.bilingual && lang === 'en' ? t('content.enHint') : (!field.bilingual ? ft.help : null),
           optionalTag: !field.required, lang: lang === '*' ? null : lang,

@@ -1,4 +1,4 @@
-// Centro de Ayuda (menu «Soporte»), the fixed header (logo block + top bar)
+// Soporte (support requests), the fixed header (logo block + top bar)
 // and the frame following the account's language on a new device.
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
@@ -17,14 +17,14 @@ async function openNavIfNeeded(page) {
 }
 const top = (page, sel) => page.locator(sel).evaluate((e) => Math.abs(Math.round(e.getBoundingClientRect().top)));
 
-test('the menu says «Soporte» (headset icon); the page is the Centro de Ayuda with «Mis solicitudes»', async ({ page }) => {
+test('the menu says «Soporte» (headset icon); the page has the same name, with «Mis solicitudes»', async ({ page }) => {
   await signIn(page, EDITOR);
   await openNavIfNeeded(page);
   const link = page.locator('.nav a[href="#/reportes"]');
   await expect(link).toHaveText(/^Soporte/);
   await expect(link.locator('use')).toHaveAttribute('href', 'icons.svg#i-headset');
   await link.click();
-  await expect(page.locator('main h1')).toHaveText('Centro de Ayuda');
+  await expect(page.locator('main h1')).toHaveText('Soporte');
   await expect(page.getByRole('heading', { name: 'Mis solicitudes' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Gestión de solicitudes' })).toHaveCount(0);
   await expect(page.locator('.ticket-row', { hasText: 'La galería no abre en el celular' })).toBeVisible();
@@ -32,24 +32,28 @@ test('the menu says «Soporte» (headset icon); the page is the Centro de Ayuda 
   await expect(page.getByRole('dialog', { name: /Nueva solicitud de soporte/ })).toBeVisible();
   await page.keyboard.press('Escape');
   await page.locator('.ticket-row').first().click();
-  await expect(page.locator('.crumbs, nav[aria-label]').filter({ hasText: 'Centro de Ayuda' }).first()).toBeVisible();
+  await expect(page.locator('main .crumbs').getByRole('link', { name: 'Soporte' })).toBeVisible();
   const v = (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations.filter((x) => ['serious', 'critical'].includes(x.impact));
   expect(v.map((x) => x.id)).toEqual([]);
 });
 
-test('managers see «Gestión de solicitudes»; on phones every filter is visible and the overview starts folded', async ({ page }, info) => {
+test('managers see «Gestión de solicitudes»; on phones the filters slide in one row and the overview starts folded', async ({ page }, info) => {
   await signIn(page);
   await page.goto('/admin/#/reportes');
-  await expect(page.locator('main h1')).toHaveText('Centro de Ayuda');
+  await expect(page.locator('main h1')).toHaveText('Soporte');
   await expect(page.getByRole('heading', { name: 'Gestión de solicitudes' })).toBeVisible();
   const overview = page.locator('details.ticket-overview');
   if (info.project.name === 'iphone-webkit') await expect(overview).not.toHaveAttribute('open', '');
   else await expect(overview).toHaveAttribute('open', '');
-  // The filters wrap instead of running off the screen.
+  // The filters never push the page sideways: on phones they are one row that slides, with the selected one in view.
   const width = await page.evaluate(() => document.documentElement.clientWidth);
   const tabs = page.locator('.filter-tab');
   await expect(tabs).toHaveCount(7);
-  for (const box of await tabs.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().right))) expect(box).toBeLessThanOrEqual(width);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const selected = await page.locator('.filter-tab[aria-pressed="true"]').evaluate((e) => [e.getBoundingClientRect().left, e.getBoundingClientRect().right]);
+  expect(selected[0]).toBeGreaterThanOrEqual(0);
+  expect(selected[1]).toBeLessThanOrEqual(width);
+  if (info.project.name !== 'iphone-webkit') for (const box of await tabs.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().right))) expect(box).toBeLessThanOrEqual(width);
   // The folded state is remembered on this device.
   await overview.locator(':scope > summary').click();
   const after = await overview.evaluate((e) => e.open);
@@ -62,7 +66,7 @@ test('the logo block and the top bar stay at the top while the page or the menu 
   await page.setViewportSize({ width: page.viewportSize().width, height: Math.min(page.viewportSize().height, 640) });
   await signIn(page);
   await page.goto('/admin/#/reportes');
-  await expect(page.locator('main h1')).toHaveText('Centro de Ayuda');
+  await expect(page.locator('main h1')).toHaveText('Soporte');
   await expect(page.locator('.ticket-row').first()).toBeVisible(); // the page is full height
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);

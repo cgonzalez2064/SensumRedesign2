@@ -95,3 +95,15 @@ test('upgrading: people who already signed in are not asked', async () => {
   assert.equal(s.sql("SELECT onboarded_at FROM users WHERE email = 'antes@example.test'"), '1700000000');
   assert.equal(s.sql("SELECT onboarded_at IS NULL FROM users WHERE email = 'nunca@example.test'"), '1');
 });
+
+test('«Primeros pasos» on Inicio: closed once, it stays closed on every device', async () => {
+  assert.equal((await new Client(s.base).put('/api/account/intro', {})).status, 401);
+  const phone = new Client(s.base); await phone.login(NEW.email, NEW.password);
+  const laptop = new Client(s.base); await laptop.login(NEW.email, NEW.password);
+  assert.equal((await laptop.get('/api/auth/session')).data.user.introDone, false);
+  assert.equal((await phone.put('/api/account/intro', {})).status, 200);
+  assert.equal((await laptop.get('/api/auth/session')).data.user.introDone, true, 'the other device knows');
+  const at = s.sql(`SELECT intro_done_at FROM users WHERE email='${NEW.email}'`);
+  assert.equal((await laptop.put('/api/account/intro', {})).status, 200);
+  assert.equal(s.sql(`SELECT intro_done_at FROM users WHERE email='${NEW.email}'`), at, 'the first time is kept');
+});

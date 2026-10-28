@@ -33,6 +33,14 @@ final class AccountController extends Controller
         Response::ok(['user' => $this->app->auth()->publicUser((new Users($this->app))->find($this->uid()))]);
     }
 
+    /** «Primeros pasos» on Inicio was closed: not shown again on any device. */
+    public function introDone(): never
+    {
+        $now = time();
+        $this->app->db()->run('UPDATE users SET intro_done_at = COALESCE(intro_done_at, ?) WHERE id = ?', [$now, $this->uid()]);
+        Response::ok();
+    }
+
     /**
      * Changes the password. Requires the current password; afterwards every
      * other session is signed out and this one gets a fresh session id.

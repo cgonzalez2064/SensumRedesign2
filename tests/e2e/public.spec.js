@@ -85,7 +85,7 @@ test('no horizontal overflow and no errors at every width (current content)', as
   expect(problems).toEqual([]);
 });
 
-test('content stress test: every field at its maximum length keeps the layout intact', async ({ page }, info) => {
+test('content stress test: every field at its maximum length (past the recommendation) keeps the layout intact', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop-chrome', 'content is shared; one browser sets it up');
   const c = await api();
   // Worst case: realistic words (they wrap) filling every field to its limit.

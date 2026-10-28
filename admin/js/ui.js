@@ -170,10 +170,56 @@ export function button(label, { icon: ic, variant, onClick, type = 'button', sma
   return h('button', { type, class: ['btn', variant && 'btn-' + variant, small && 'btn-sm'], onclick: onClick, ...attrs }, ic ? icon(ic) : null, label);
 }
 
+/**
+ * A row that scrolls sideways on small screens (tabs, status filters): brings the
+ * selected item into view and fades the edge that has more (CSS .scroll-row).
+ * Call row.refresh() after refilling it.
+ */
+export function scrollRow(row, selected = '[aria-pressed="true"], [aria-current="page"]') {
+  row.classList.add('scroll-row');
+  const update = () => {
+    row.classList.toggle('more-left', row.scrollLeft > 4);
+    row.classList.toggle('more-right', row.scrollLeft + row.clientWidth < row.scrollWidth - 4);
+  };
+  row.refresh = () => requestAnimationFrame(() => {
+    const el = row.querySelector(selected);
+    if (el && row.scrollWidth > row.clientWidth) {
+      row.scrollLeft += el.getBoundingClientRect().left - row.getBoundingClientRect().left - (row.clientWidth - el.offsetWidth) / 2;
+    }
+    update();
+  });
+  row.addEventListener('scroll', update, { passive: true });
+  if (window.ResizeObserver) new ResizeObserver(update).observe(row);
+  row.refresh();
+  return row;
+}
+
+/**
+ * «Filtros» on phones: a button that shows or hides a block of secondary filters
+ * (always shown from 720 px), labelled with how many are in use. Call update()
+ * after a filter changes.
+ */
+export function filtersToggle(panel, inUse) {
+  if (!panel.id) panel.id = nextId('flt');
+  panel.classList.add('filters-more');
+  const label = h('span');
+  const btn = h('button', { type: 'button', class: 'btn btn-sm filters-toggle', 'aria-expanded': 'false', 'aria-controls': panel.id }, icon('funnel'), label);
+  btn.addEventListener('click', () => {
+    const open = !panel.classList.contains('open');
+    panel.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', String(open));
+  });
+  const update = () => { const n = inUse(); label.textContent = n ? t('common.filtersN', { n }) : t('common.filters'); };
+  update();
+  return { button: btn, update };
+}
+
 // ---------------------------------------------------------------- fields
 /**
  * Text field with label, hint, counter and inline error.
- * opts: { label, hint, value, type, required, max, autocomplete, placeholder, multiline, rows, optionalTag, inputmode, readOnly }
+ * opts: { label, hint, value, type, required, max, rec, autocomplete, placeholder, multiline, rows, optionalTag, inputmode, readOnly }
+ * rec: recommended length (below max). The counter counts towards it; past it
+ * the counter shows the maximum in amber with a note to check the site.
  */
 export function textField(opts) {
   const id = opts.id || nextId('in');
@@ -192,12 +238,17 @@ export function textField(opts) {
   if (opts.multiline) input.value = opts.value ?? '';
   const error = h('div', { class: 'field-error', id: errId, hidden: true });
   const counter = opts.max ? h('span', { class: 'counter', 'aria-hidden': 'true' }) : null;
+  const rec = opts.rec && opts.max && opts.rec < opts.max ? opts.rec : null;
+  const recNote = rec ? h('div', { class: 'field-note', role: 'status', hidden: true }, icon('info-circle-fill'), h('span', { text: t('common.overRec', { rec }) })) : null;
   const updateCounter = () => {
     if (!counter) return;
     const len = opts.countFn ? opts.countFn(input.value) : [...input.value].length;
-    counter.textContent = t('common.counter', { n: len, max: opts.max });
-    counter.classList.toggle('near', len > opts.max * 0.9 && len <= opts.max);
+    const past = rec !== null && len > rec;
+    const limit = rec !== null && !past ? rec : opts.max;
+    counter.textContent = t('common.counter', { n: len, max: limit });
+    counter.classList.toggle('near', (len > limit * 0.9 || past) && len <= opts.max);
     counter.classList.toggle('over', len > opts.max);
+    if (recNote) recNote.hidden = !past || len > opts.max;
   };
   input.addEventListener('input', updateCounter);
   updateCounter();
@@ -210,6 +261,7 @@ export function textField(opts) {
     opts.prefix || null,
     opts.wrapInput ? opts.wrapInput(input) : input,
     (opts.hint || counter) ? h('div', { class: 'field-foot' }, opts.hint ? h('span', { class: 'hint', id: hintId, text: opts.hint }) : h('span'), counter) : null,
+    recNote,
     error);
   return {
     wrap, input, label,

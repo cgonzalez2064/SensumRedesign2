@@ -11,6 +11,8 @@ En `Usuarios` administras las cuentas del equipo. Si no eres la cuenta propietar
 
 ![Usuarios: solicitudes de acceso, filtros y cada persona con su rol](shot:usuarios)
 
+En computadora la lista es una tabla; en tableta y celular, una tarjeta por persona.
+
 ## Invitar a alguien
 
 1. Toca `Invitar usuario`.

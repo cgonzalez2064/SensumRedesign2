@@ -57,6 +57,16 @@
       "es": { "title": "Prospectos: nada se queda sin respuesta", "summary": "Un responsable para cada mensaje, asignación automática y recordatorios.",
         "points": ["Cada mensaje nuevo llega a quien atiende su servicio.", "Si sigue «Nuevo» después de 48 horas, avisamos.", "Los lunes, un resumen de la semana."] },
       "en": { "title": "Leads: nothing goes unanswered", "summary": "Someone in charge of each message, automatic assignment and reminders.",
-        "points": ["Each new message goes to whoever handles its service.", "If it's still \"New\" after 48 hours, we remind them.", "Every Monday, a summary of the week."] } }
+        "points": ["Each new message goes to whoever handles its service.", "If it's still \"New\" after 48 hours, we remind them.", "Every Monday, a summary of the week."] } },
+    { "id": "2026-10-textos-largos", "date": "2026-10-27", "perms": ["texts"], "article": "textos", "shot": "textos-editor",
+      "es": { "title": "Textos más largos", "summary": "Cada texto tiene una longitud recomendada, y ahora puedes pasarla cuando lo necesites.",
+        "points": ["El contador muestra la longitud recomendada: la que mejor se ve en el diseño.", "Si escribes más, se pone en naranja y te recuerda revisar el sitio en el celular.", "Los párrafos admiten el doble; los títulos, la mitad más."] },
+      "en": { "title": "Longer texts", "summary": "Each text has a recommended length, and now you can go past it when you need to.",
+        "points": ["The counter shows the recommended length: what looks best in the design.", "If you type more, it turns orange and reminds you to check the site on a phone.", "Paragraphs take twice as much; titles, half as much again."] } },
+    { "id": "2026-10-mas-comodo", "date": "2026-10-27", "perms": [], "article": "primeros-pasos", "shot": "inicio",
+      "es": { "title": "El panel, más cómodo", "summary": "Inicio te habla según tu rol y el celular es más fácil de usar.",
+        "points": ["Inicio y sus primeros pasos muestran lo que haces tú.", "En el celular: botones más grandes, los filtros en un solo botón y los proyectos plegados.", "Al cerrar los primeros pasos, ya no aparecen en ningún dispositivo."] },
+      "en": { "title": "A more comfortable panel", "summary": "Home speaks to your role and the panel is easier to use on a phone.",
+        "points": ["Home and its first steps show what you do.", "On a phone: bigger buttons, the filters behind one button and the projects folded.", "Once you close the first steps, they don't show again on any device."] } }
   ]
 }

@@ -455,3 +455,10 @@ Replaces the owner-only rule of §9: the owner and accounts with the new permiss
 | Ask support | Marked text is only copied into the support dialog the person then sends (same validation, limits and e-mail as any request). | `wiki.spec` |
 | «Novedades» | Ids are checked against `wiki.json`; the seen marks are per account (`wiki_news_seen`, cascade on delete); never shown while «Ver como». | `31-wiki`, `wiki.spec` |
 
+## 25. Change review — UX review fixes and longer texts (October 2026)
+
+| Area | Design | Verified by |
+|---|---|---|
+| Longer texts | Each field keeps its recommended length (`rec`) and gets a larger `max` (labels 1.3×, titles 1.5×, paragraphs 2×). `max` is still enforced server-side (`too_long`), the same validator refuses `<`/`>`, and every text is escaped when published. Every field filled to the new maximum keeps the public site without overflow or spilling text at 320–1440 px. | `05-content`, `public.spec` (content stress test) |
+| «Primeros pasos» per account | `PUT /api/account/intro` (signed-in, CSRF, refused while «Ver como») only sets the caller's own `intro_done_at`; nothing else is accepted. | `22-welcome`, `ux-review.spec` |
+| Interface only | Role-aware Inicio texts, «Filtros» on phones, folding projects, Usuarios cards, 44 px touch targets, «Soporte» as the page name, keyboard-reachable wiki tables and named landmarks change only how the panel shows what each account could already see. | `ux-review.spec`, `help-center.spec`, axe in every browser spec |

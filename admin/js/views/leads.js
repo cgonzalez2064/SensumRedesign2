@@ -7,7 +7,7 @@
 import { h, icon, fill, initials } from '../dom.js';
 import { t, fmtDate, fmtRelative, getLang } from '../i18n.js';
 import { api, download, saveBlob } from '../api.js';
-import { pageHead, loading, loadError, emptyState, toast, errorText, setBusy, button, textField, fieldErrorText, alertBox, cardHead, confirmDialog, switchInput, segmented } from '../ui.js';
+import { pageHead, loading, loadError, emptyState, toast, errorText, setBusy, button, textField, fieldErrorText, alertBox, cardHead, confirmDialog, switchInput, segmented, filtersToggle, scrollRow } from '../ui.js';
 import { refreshLeadsBadge } from '../app.js';
 
 const STATUSES = ['new', 'contacted', 'quoted', 'won', 'lost'];
@@ -37,13 +37,16 @@ export async function render({ main, isOwner }) {
   const search = h('input', { class: 'input', type: 'search', placeholder: t('leads.search'), 'aria-label': t('leads.search'), autocomplete: 'off' });
   search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { q = search.value.trim(); load(); }, 300); });
   const serviceSel = h('select', { class: 'select', 'aria-label': t('leads.serviceFilter') });
-  serviceSel.addEventListener('change', () => { service = serviceSel.value; load(); });
+  serviceSel.addEventListener('change', () => { service = serviceSel.value; filtersBtn.update(); load(); });
   // Who follows it up: everyone's, mine, or nobody's yet.
   const assignedSel = h('select', { class: 'select', 'aria-label': t('leads.assignedFilter') },
     [['', t('leads.assignedAll')], ['me', t('leads.assignedMe')], ['none', t('leads.assignedNone')]].map(([v, l]) => h('option', { value: v, text: l })));
-  assignedSel.addEventListener('change', () => { assigned = assignedSel.value; load(); });
+  assignedSel.addEventListener('change', () => { assigned = assignedSel.value; filtersBtn.update(); load(); });
   const automationBox = h('div');
-  const tabs = h('div', { class: 'filter-tabs', role: 'group', 'aria-label': t('leads.filterLabel') });
+  const tabs = scrollRow(h('div', { class: 'filter-tabs', role: 'group', 'aria-label': t('leads.filterLabel') }));
+  // Phones: who follows it up and the service wait behind «Filtros».
+  const moreFilters = h('div', { class: 'ticket-filters' }, assignedSel, serviceSel);
+  const filtersBtn = filtersToggle(moreFilters, () => (assigned ? 1 : 0) + (service ? 1 : 0));
   const listBox = h('div', { 'aria-live': 'polite' });
   const settingsBox = h('div');
 
@@ -68,11 +71,13 @@ export async function render({ main, isOwner }) {
       type: 'button', class: 'filter-tab', 'aria-pressed': String(f === filter),
       onclick: () => { filter = f; load(); },
     }, t('leads.filter.' + f), h('span', { class: 'count', text: String(data.counts[f] ?? 0) }))));
+    tabs.refresh();
     fill(serviceSel, h('option', { value: '', text: t('leads.allServices') }),
       data.services.map((sv) => h('option', { value: sv, text: sv, selected: sv === service || null })));
     serviceSel.hidden = data.services.length < 2;
     // Assignment only makes sense with more than one person following leads up.
     assignedSel.hidden = data.people.length < 2 && !assigned;
+    filtersBtn.button.hidden = assignedSel.hidden && serviceSel.hidden;
     const names = Object.fromEntries(data.people.map((p) => [p.id, p.name]));
     if (!automationBox.firstChild) fill(automationBox, automationCard(data), confirmCard(data.confirmation));
     if (isOwner) fill(settingsBox, retentionCard(data.retention));
@@ -206,7 +211,7 @@ export async function render({ main, isOwner }) {
       h('div', { class: 'field' }, h('label', { class: 'label', for: 'lead-retention', text: t('leads.retentionLabel') }), sel));
   };
 
-  fill(body, h('div', { class: 'ticket-toolbar' }, tabs, h('div', { class: 'ticket-search row' }, assignedSel, serviceSel, search)), listBox, automationBox, settingsBox);
+  fill(body, h('div', { class: 'ticket-toolbar' }, tabs, h('div', { class: 'ticket-search row' }, moreFilters, search, filtersBtn.button)), listBox, automationBox, settingsBox);
   listBox.append(loading());
   await load();
   return { destroy: () => { alive = false; clearTimeout(timer); } };

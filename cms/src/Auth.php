@@ -97,7 +97,7 @@ final class Auth
         $db = $this->app->db();
         $row = $db->one(
             'SELECT s.*, u.id AS uid, u.email, u.name, u.role, u.status, u.lang, u.theme, u.last_login_at, u.permissions, u.totp_enabled_at, u.onboarded_at,
-                    u.must_change_password, u.two_factor_required, u.two_factor_reenroll_at, u.access_until
+                    u.intro_done_at, u.must_change_password, u.two_factor_required, u.two_factor_reenroll_at, u.access_until
                FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id_hash = ?',
             [hash('sha256', $raw)]
         );
@@ -538,6 +538,8 @@ final class Auth
             'mustChangePassword' => !empty($u['must_change_password']),
             // Devices removed and the e-mail code confirmed: the set-up screen asks for the new device.
             'twoFactorReenroll' => !empty($u['two_factor_reenroll_at']),
+            // «Primeros pasos» on Inicio was closed (on any device).
+            'introDone' => !empty($u['intro_done_at']),
         ];
     }
 }

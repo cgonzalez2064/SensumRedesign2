@@ -236,7 +236,7 @@ const TREE = N('root', 'Sensum Construcciones', 'Website + Content Manager', {
       d: 'api.js wraps fetch (CSRF header, timeouts, a sign-in dialog when the session expires that keeps unsaved edits); dom.js builds elements and icons; ui.js holds dialogs, toasts, fields and buttons; i18n.js with 1,700+ keys per language; theme.js handles light, dark and automatic.',
       files: ['admin/js/api.js', 'admin/js/dom.js', 'admin/js/ui.js', 'admin/js/i18n.js', 'admin/js/i18n/es.js', 'admin/js/i18n/en.js', 'admin/js/theme.js'] }),
     N('adm-screens', 'Screens', '17 views', {
-      d: 'Sitio web: Textos del sitio, Fotos y archivos, Datos de contacto, Formulario de contacto (with a live preview of the form). Clientes y resultados: Prospectos, Estadísticas. Estado del sitio: Salud del sitio, Informe mensual. Administración (owner): Usuarios, Monitoreo, Informe mensual, Correo, Traducción, Seguridad. Ayuda y soporte: Soporte (Centro de Ayuda), Guía de uso, Mi cuenta. Plus sign-in, password recovery, invitation and welcome screens.',
+      d: 'Sitio web: Textos del sitio, Fotos y archivos, Datos de contacto, Formulario de contacto (with a live preview of the form). Clientes y resultados: Prospectos, Estadísticas. Estado del sitio: Salud del sitio, Informe mensual. Administración (owner): Usuarios, Monitoreo, Informe mensual, Correo, Traducción, Seguridad. Ayuda y soporte: Soporte, Wiki, Mi cuenta. Plus sign-in, password recovery, invitation and welcome screens.',
       files: ['admin/js/views/*.js'] }),
     N('adm-parts', 'Shared pieces', 'Charts, access, dialogs', {
       d: 'charts.js draws interactive SVG charts (tooltip, keyboard, legend, data table); monitorCharts.js adds uptime and incident views; access.js is the access-type and permission picker; report.js is the “Solicitar soporte” dialog; viewas.js the “Ver como” bar; autotranslate.js fills the other language while typing; twofactor.js the authenticator setup; telemetry.js sends panel errors to the error log.',
@@ -315,7 +315,7 @@ const TREE = N('root', 'Sensum Construcciones', 'Website + Content Manager', {
       steps: ['The page loads stats.js', 'One beacon per visit and per contact click goes to /api/collect (origin checked)', 'Counts are added per day; no cookies, no IP addresses', 'Estadísticas shows visits, sources, devices, clicks and the path to won projects', 'People with the basic statistics access see visits without contact-form data'],
       rel: ['site-stats'] }),
     N('p-support', 'Support request', 'Solicitar soporte → resolved', {
-      d: 'The help desk inside the panel (Soporte → Centro de Ayuda).',
+      d: 'The help desk inside the panel (menu and page «Soporte»).',
       steps: ['Anyone taps “Solicitar soporte” (a screenshot is optional; browser details are added automatically)', 'The request is saved and e-mailed to IT; a failed e-mail can be retried', 'The owner and the support access handle it: status, priority, internal notes, asking for information', 'The person gets e-mails and replies inside the panel', 'Resolved: they rate the help from 1 to 5; it closes itself after 7 days', 'Response times and ratings feed the Panorama de soporte and the monthly report'],
       rel: ['be-business', 'adm-parts'] }),
     N('p-monitor', 'Monitoring & alerts', 'Every 15 minutes', {

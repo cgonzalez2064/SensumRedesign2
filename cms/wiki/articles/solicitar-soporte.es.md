@@ -18,7 +18,7 @@ updated: 2026-10-27
 4. Si puedes, agrega una captura de pantalla.
 5. Toca `Enviar solicitud`.
 
-Cada solicitud recibe un número y queda en `Soporte` (Centro de Ayuda), donde ves su estado y la conversación. Te avisamos por correo cuando hay una respuesta.
+Cada solicitud recibe un número y queda en `Soporte`, donde ves su estado y la conversación. Te avisamos por correo cuando hay una respuesta.
 
 ![Soporte: tus solicitudes y su estado](shot:centro-de-ayuda)
 

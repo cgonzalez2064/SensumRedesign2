@@ -80,6 +80,7 @@ final class Kernel
 
         ['PUT', '/api/account/profile', AccountController::class, 'profile', 'user'],
         ['PUT', '/api/account/welcome', AccountController::class, 'welcome', 'user'],
+        ['PUT', '/api/account/intro', AccountController::class, 'introDone', 'user'],
         ['POST', '/api/account/password', AccountController::class, 'password', 'user'],
         ['POST', '/api/account/sessions/revoke-others', AccountController::class, 'revokeOthers', 'user'],
         ['GET', '/api/account/2fa', AccountController::class, 'twoFactor', 'user'],

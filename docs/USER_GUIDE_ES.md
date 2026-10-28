@@ -48,6 +48,11 @@ la **apariencia** (Claro, Oscuro o **Automático**, que sigue a tu dispositivo y
 elegido de inicio). Cada opción se aplica al instante para que la veas; pulsa
 **Guardar y continuar**. Puedes cambiarlo cuando quieras en **Mi cuenta**.
 
+**Inicio:** te saluda con lo que puedes hacer según tu rol (por ejemplo, Ventas y
+prospectos ve «dar seguimiento a los prospectos y ver las estadísticas de visitas») y
+muestra tres **Primeros pasos** para tu rol. Al tocar **Entendido** ya no aparecen, en
+ningún dispositivo.
+
 ## 2. Idioma y apariencia
 
 En el menú con tu nombre (arriba a la derecha):
@@ -68,9 +73,13 @@ sea largo; en celular y tableta pasa lo mismo dentro del menú desplegable.
    Cada tarjeta explica qué parte del sitio contiene.
 3. Cada texto tiene dos versiones: **Español** (la principal) e **Inglés** (se
    muestra cuando el visitante elige «EN» en el sitio).
-4. Escribe el nuevo texto. Debajo verás cuántos caracteres llevas y el máximo
-   permitido; los límites existen para que el diseño del sitio se mantenga bien
-   en celulares y computadoras.
+4. Escribe el nuevo texto. Debajo verás cuántos caracteres llevas y la **longitud
+   recomendada**: la que mejor se ve en el diseño, en celulares y computadoras. Si
+   necesitas más, sigue escribiendo: los párrafos admiten el doble de lo recomendado,
+   los títulos la mitad más y las etiquetas y botones un poco más (el título y la
+   descripción para Google mantienen su límite: Google corta lo más largo). Pasada la
+   recomendación, el contador se pone en naranja y te recuerda revisar cómo se ve en
+   el sitio, sobre todo en el celular.
 5. Presiona **Guardar cambios** en la barra que aparece abajo.
    Verás el mensaje «Cambios publicados en el sitio» y un enlace para verlo.
 
@@ -263,7 +272,7 @@ por teléfono.
 
 Si algo no funciona, se ve mal o tienes una idea, toca **Solicitar soporte**
 (arriba, en cualquier pantalla del panel; en el celular es el ícono del
-salvavidas) o **Nueva solicitud** en el Centro de Ayuda. Se abre **Nueva solicitud
+salvavidas) o **Nueva solicitud** en **Soporte**. Se abre **Nueva solicitud
 de soporte**:
 
 1. Elige el **Tipo**: Problema, Mejora / sugerencia, Contenido, Diseño / visual u Otro.
@@ -276,7 +285,7 @@ de soporte**:
 
 La solicitud llega directamente al equipo de soporte técnico (it@gruposensum.com).
 
-**Seguimiento:** en el menú **Soporte** se abre el **Centro de Ayuda**. Ahí, en **Mis
+**Seguimiento:** el menú **Soporte** abre tus solicitudes. Ahí, en **Mis
 solicitudes**, cada solicitud tiene su página con su estado (Nueva, En progreso,
 Esperando información, Resuelta, Cerrada) y la conversación con soporte. Te llega un
 correo cuando soporte te responde, te pide más información o la resuelve, y el menú
@@ -301,7 +310,7 @@ verla antes de enviar en «Ver la información técnica que se envía».
 
 Si el correo no se pudo enviar en ese momento, el panel te lo dirá: tu solicitud
 **queda guardada** y puedes reintentar el envío ahí mismo o más tarde desde
-**Soporte** (Centro de Ayuda), donde también ves el historial de tus solicitudes.
+**Soporte**, donde también ves el historial de tus solicitudes.
 
 ## 8. Si un cambio no aparece en el sitio
 
@@ -516,7 +525,7 @@ pueden falsificarse) y muestra cuándo vence el dominio. Se revisa solo una vez 
 
 ## 15. Gestión de solicitudes (cuenta propietaria y soporte técnico)
 
-En **Soporte** (Centro de Ayuda) la cuenta propietaria —y quien tenga el acceso
+En **Soporte** la cuenta propietaria —y quien tenga el acceso
 **Gestión de solicitudes de soporte** (sección adicional que da la cuenta propietaria)— ve, en **Gestión de
 solicitudes**, las solicitudes de **todas** las personas:
 
@@ -722,3 +731,20 @@ y la ven todas las cuentas.
   una vez (qué es y qué puedes hacer), con **Ver cómo funciona**. **Ver más tarde** lo
   vuelve a mostrar la próxima vez. En el menú, **Wiki** muestra cuántas novedades no has
   visto; también están arriba en la portada de la wiki.
+
+## 24. En el celular y la tableta
+
+El panel es el mismo en cualquier pantalla; en las pequeñas se acomoda así:
+
+* **Botones para el dedo:** en pantallas táctiles los botones miden al menos 44 px,
+  incluidos la ✕ de las ventanas y el botón del menú.
+* **Filtros:** en Prospectos y Soporte los estados forman una sola fila que se desliza
+  de lado (el elegido siempre a la vista). En Prospectos (responsable y servicio) y en
+  Actividad (persona, tipo y fechas) los demás filtros están en **Filtros**; el botón
+  dice cuántos estás usando. Así la lista empieza en la primera pantalla.
+* **Fotos y archivos:** la pestaña abierta siempre se ve. En **Tipos de proyectos** los
+  seis proyectos aparecen plegados, cada uno con su foto de tarjeta y cuántas fotos tiene
+  su galería; toca uno para abrirlo.
+* **Usuarios:** por debajo de 1100 px de ancho (tabletas y laptops pequeñas) la lista es
+  una tarjeta por persona; en pantallas más anchas, una tabla con cada correo completo.
+* **Novedades:** el avance («1 de 5») está bajo el título, siempre a la vista.

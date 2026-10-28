@@ -1,5 +1,5 @@
 /**
- * Centro de Ayuda (menu «Soporte») — support requests.
+ * Soporte — support requests (everyone's own; all of them for whoever handles support).
  *  - «Mis solicitudes» / «Gestión de solicitudes» (managers).
  *  - Everyone: their own reports, their status and the conversation with IT;
  *    they can answer (which reopens a ticket waiting for information or resolved).
@@ -10,7 +10,7 @@
 import { h, icon, fill, initials } from '../dom.js';
 import { t, tp, fmtDate, fmtRelative, getLang } from '../i18n.js';
 import { api } from '../api.js';
-import { pageHead, loading, loadError, emptyState, toast, errorText, setBusy, button, openDialog, textField, fieldErrorText, alertBox, cardHead } from '../ui.js';
+import { pageHead, loading, loadError, emptyState, toast, errorText, setBusy, button, openDialog, textField, fieldErrorText, alertBox, cardHead, scrollRow } from '../ui.js';
 import { openReportDialog } from '../report.js';
 import { refreshReportsBadge } from '../app.js';
 import { chart, barList } from '../charts.js';
@@ -46,7 +46,7 @@ export async function render({ main, can }) {
 
   const search = h('input', { class: 'input', type: 'search', placeholder: t('tickets.search'), 'aria-label': t('tickets.search'), autocomplete: 'off' });
   search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { q = search.value.trim(); load(); }, 300); });
-  const tabs = h('div', { class: 'filter-tabs', role: 'group', 'aria-label': t('tickets.filterLabel') });
+  const tabs = scrollRow(h('div', { class: 'filter-tabs', role: 'group', 'aria-label': t('tickets.filterLabel') }));
   const listBox = h('div', { 'aria-live': 'polite' });
 
   const load = async () => {
@@ -61,6 +61,7 @@ export async function render({ main, can }) {
         type: 'button', class: 'filter-tab', 'aria-pressed': String(f === filter),
         onclick: () => { filter = f; load(); },
       }, t('tickets.filter.' + f), h('span', { class: 'count', text: String(data.counts[f] ?? 0) }))));
+      tabs.refresh();
     }
     if (!data.reports.length) {
       fill(listBox, h('div', { class: 'card' }, q || (isOwner && filter !== 'all')
@@ -150,7 +151,8 @@ function overviewCard() {
   const startOpen = stored ? stored === 'open' : !(window.matchMedia && window.matchMedia('(max-width: 719px)').matches);
   const el = h('details', { class: 'card ticket-overview', open: startOpen || null },
     h('summary', { class: 'overview-summary' }, h('span', { class: 'icon-tile' }, icon('bar-chart')),
-      h('span', { class: 'grow' }, h('strong', { text: t('tickets.charts.title') }), h('span', { class: 'small muted', text: t('tickets.charts.lead') })), icon('chevron-down', 'overview-chevron')),
+      // A heading (looks like the bold title it was): the charts below are its h3s.
+      h('span', { class: 'grow' }, h('h2', { class: 'overview-title', text: t('tickets.charts.title') }), h('span', { class: 'small muted', text: t('tickets.charts.lead') })), icon('chevron-down', 'overview-chevron')),
     h('div', { class: 'stack' }, h('div', { class: 'row-between overview-controls' }, h('div', { class: 'row' }, h('label', { for: 'tk-sla', class: 'small', text: t('tickets.sla.targetLabel') }), target), range), box));
   // Only the person's own choice is remembered (clicking or pressing Enter/Space on the title).
   el.firstChild.addEventListener('click', () => setTimeout(() => { try { localStorage.setItem('sensum_support_overview', el.open ? 'open' : 'closed'); } catch (e) { /* storage unavailable */ } }));

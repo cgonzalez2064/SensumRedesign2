@@ -1,6 +1,6 @@
 /** Inicio — overview, quick actions, website health. */
 import { h, icon, clear } from '../dom.js';
-import { t, tp, fmtRelative, fmtDate } from '../i18n.js';
+import { t, tp, fmtRelative, fmtDate, getLang } from '../i18n.js';
 import { api } from '../api.js';
 import { pageHead, loading, loadError, alertBox, button, setBusy, toast, errorText, cardHead } from '../ui.js';
 import { openReportDialog } from '../report.js';
@@ -8,9 +8,34 @@ import { askable } from '../access.js';
 
 const INTRO_KEY = (id) => 'sensum_admin_intro_done_' + id;
 
+/** What this account can do from here, by its sections: «Desde aquí puedes …». */
+function leadFor(user, can) {
+  if (user.owner) return t('dashboard.leadOwner');
+  if (can('users')) return t('dashboard.leadAdmin');
+  const site = ['texts', 'photos', 'contact'].every((p) => can(p)) ? 'site' : (['texts', 'photos', 'documents', 'contact'].some((p) => can(p)) ? 'someSite' : null);
+  const parts = [site, ...['leads', 'stats', 'monitor', 'report', 'support'].filter((p) => can(p))].filter(Boolean).map((k) => t('dashboard.leadParts.' + k));
+  if (!parts.length) return t('dashboard.leadNone');
+  let what = parts.join(', ');
+  try { what = new Intl.ListFormat(getLang(), { type: 'conjunction' }).format(parts); } catch (e) { /* older browsers: commas */ }
+  return t('dashboard.lead', { what });
+}
+
+/** «Primeros pasos»: two steps for what this account does most, then where to find help. */
+function introSteps(can) {
+  const edit = ['texts', 'photos', 'documents', 'contact'].some((p) => can(p));
+  const steps = [];
+  if (edit) steps.push('edit');
+  if (can('users')) steps.push('users');
+  else if (edit) steps.push('save');
+  if (can('leads')) steps.push('leads', 'leadsStatus');
+  for (const p of ['support', 'monitor', 'report', 'stats']) if (can(p)) steps.push(p);
+  if (!steps.length) steps.push('more');
+  return [...steps.slice(0, 2), 'help'].map((k) => t('dashboard.intro.' + k));
+}
+
 export async function render({ main, session, isOwner, can }) {
   const user = session.user;
-  main.append(pageHead({ title: t('dashboard.hello', { name: user.name.split(' ')[0] }), lead: t('dashboard.lead') }), loading());
+  main.append(pageHead({ title: t('dashboard.hello', { name: user.name.split(' ')[0] }), lead: leadFor(user, can) }), loading());
   const body = h('div', { class: 'stack-lg' });
 
   const load = async () => {
@@ -23,15 +48,21 @@ export async function render({ main, session, isOwner, can }) {
     }
     clear(body);
 
-    // First-use introduction (dismissible, remembered on this device).
-    let introDone = false;
-    try { introDone = localStorage.getItem(INTRO_KEY(user.id)) === '1'; } catch (e) { introDone = true; }
-    if (!introDone) {
+    // First-use introduction, until closed (remembered on the account, so on every device).
+    const markIntroDone = () => {
+      user.introDone = true;
+      if (!session.viewAs) api.put('/account/intro').catch(() => {});
+    };
+    let closedHere = false;
+    try { closedHere = localStorage.getItem(INTRO_KEY(user.id)) === '1'; } catch (e) { /* ignore */ }
+    if (closedHere && !user.introDone) markIntroDone(); // closed on this device before it was remembered on the account
+    if (!user.introDone) {
       const intro = h('section', { class: 'card intro-card', 'aria-labelledby': 'intro-title' },
         cardHead({ id: 'intro-title', icon: 'lightbulb', title: t('dashboard.introTitle') }),
-        h('ol', { class: 'intro-steps' }, t('dashboard.introSteps').map((s) => h('li', null, h('span', { text: s })))),
+        h('ol', { class: 'intro-steps' }, introSteps(can).map((s) => h('li', null, h('span', { text: s })))),
         h('div', { class: 'row intro-actions' }, button(t('dashboard.introDismiss'), { variant: 'primary', small: true, onClick: () => {
           try { localStorage.setItem(INTRO_KEY(user.id), '1'); } catch (e) { /* ignore */ }
+          markIntroDone();
           intro.remove();
         } })));
       body.append(intro);
@@ -39,7 +70,7 @@ export async function render({ main, session, isOwner, can }) {
 
     const quick = (href, ic, key, external, cls) => h('a', { class: ['card', 'card-link', cls], href, target: external ? '_blank' : null, rel: external ? 'noopener' : null },
       h('span', { class: 'icon-tile' }, icon(ic)), h('span', null, h('strong', { text: t(`dashboard.quick.${key}`)[0] }), h('span', { text: t(`dashboard.quick.${key}`)[1] })));
-    body.append(h('nav', { class: 'quick', 'aria-label': t('nav.main') },
+    body.append(h('nav', { class: 'quick', 'aria-label': t('dashboard.quickLabel') },
       can('texts') ? quick('#/textos', 'pencil-square', 'content') : null,
       can('photos') || can('documents') ? quick('#/fotos', 'images', 'media') : null,
       can('contact') ? quick('#/contacto', 'telephone', 'details') : null,

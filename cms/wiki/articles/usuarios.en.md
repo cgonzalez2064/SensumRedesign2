@@ -11,6 +11,8 @@ In `Users` you manage the team's accounts. If you're not the owner account, you 
 
 ![Users: access requests, filters and each person with their role](shot:usuarios)
 
+On a computer the list is a table; on tablets and phones, one card per person.
+
 ## Inviting someone
 
 1. Tap `Invite user`.

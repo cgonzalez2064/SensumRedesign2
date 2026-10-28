@@ -90,7 +90,8 @@ export function render(md, opts) {
       const head = cells(rows[0]);
       const body = rows.slice(rows[1] && /^\|[\s:|-]+\|?\s*$/.test(rows[1]) ? 2 : 1).map(cells);
       textParts.push([head, ...body].flat().map(plain).join(' '));
-      nodes.push(h('div', { class: 'table-scroll' }, h('table', { class: 'wiki-table' },
+      // The box scrolls sideways on phones: it takes keyboard focus and is named by its columns.
+      nodes.push(h('div', { class: 'table-scroll', tabindex: '0', role: 'region', 'aria-label': head.map(plain).join(' · ') }, h('table', { class: 'wiki-table' },
         h('thead', null, h('tr', null, head.map((c) => h('th', { scope: 'col' }, inline(c))))),
         h('tbody', null, body.map((r) => h('tr', null, r.map((c, j) => h(j ? 'td' : 'th', j ? null : { scope: 'row' }, inline(c)))))))));
     } else if (/^\s*(-|\d+\.)\s+/.test(line)) {

@@ -24,7 +24,7 @@ El **Administrador de contenido** es donde el equipo de Sensum Construcciones ac
 
 - **Menú lateral:** solo muestra las secciones de tu rol. En el celular se abre con el botón de la esquina superior izquierda.
 - **Barra superior:** `Solicitar soporte`, `Ver sitio web` y tu nombre, que abre tu menú (Mi cuenta, idioma, apariencia y cerrar sesión).
-- **Centro:** primeros pasos, accesos directos y el estado del sitio.
+- **Centro:** los primeros pasos de tu rol, accesos directos y el estado del sitio. Al tocar `Entendido`, los primeros pasos ya no aparecen en ningún dispositivo.
 
 ## Idioma y apariencia
 

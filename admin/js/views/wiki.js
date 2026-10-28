@@ -80,7 +80,7 @@ export async function home({ main, session }) {
 
   let filter = store.get(FILTER_KEY) === 'all' ? 'all' : 'mine';
   const owner = !!session.user.owner;
-  const search = h('input', { class: 'wiki-search-input', type: 'search', id: 'wiki-search', autocomplete: 'off', placeholder: t('wiki.searchPlaceholder'), 'aria-describedby': 'wiki-search-count' });
+  const search = h('input', { class: 'wiki-search-input', type: 'search', id: 'wiki-search', autocomplete: 'off', placeholder: t(window.matchMedia('(max-width: 600px)').matches ? 'wiki.searchLabel' : 'wiki.searchPlaceholder'), 'aria-describedby': 'wiki-search-count' }); // the long example doesn't fit on phones
   const count = h('p', { class: 'small muted wiki-count', id: 'wiki-search-count', 'aria-live': 'polite' });
   const results = h('div', { class: 'wiki-results' });
   const browse = h('div', { class: 'wiki-browse' });

@@ -34,6 +34,7 @@ final class ContentController extends Controller
                     'key' => $key,
                     'type' => $f['type'],
                     'max' => (int) $f['max'],
+                    'rec' => isset($f['rec']) ? (int) $f['rec'] : null,
                     'required' => (bool) $f['required'],
                     'bilingual' => (bool) $f['bilingual'],
                     'hosts' => $f['hosts'] ?? null,

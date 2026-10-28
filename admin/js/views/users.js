@@ -103,7 +103,7 @@ export async function render({ main, query, navigate, can }) {
       ]).el;
     };
     const person = (u) => h('div', { class: 'person' }, h('span', { class: 'avatar', 'aria-hidden': 'true', text: initials(u.name) }),
-      h('div', { class: 'grow' }, h('strong', { class: 'break', text: u.name }), h('div', { class: 'small muted break', text: u.email })));
+      h('div', { class: 'grow' }, h('strong', { class: 'break', text: u.name }), h('div', { class: 'small muted break person-email', title: u.email, text: u.email })));
     const statusBadge = (u) => h('div', { class: 'stack-sm user-status' }, h('span', { class: ['badge', STATUS_BADGE[u.status]], text: t('users.status.' + u.status) }),
       statusText(u) ? h('span', { class: 'tiny muted', text: statusText(u) }) : null,
       u.tempPasswordExpired ? h('span', { class: 'tiny user-flag warn-text' }, icon('hourglass-split'), t('users.tempExpiredBadge'))
@@ -159,7 +159,8 @@ export async function render({ main, query, navigate, can }) {
     accessSel.addEventListener('change', () => { filters.access = accessSel.value; renderList(); });
     const toolbar = h('div', { class: 'users-toolbar' }, h('div', { class: 'users-search' }, icon('search'), search), accessSel);
 
-    const tableOf = (list) => h('div', { class: 'table-wrap responsive hide-sm' }, h('table', { class: 'table' },
+    // Below 1100 px (tablets, small laptops) the list is cards: five columns don't fit there.
+    const tableOf = (list) => h('div', { class: 'table-wrap responsive users-table' }, h('table', { class: 'table' },
       h('thead', null, h('tr', null, ['name', 'access', 'status', 'lastLogin'].map((c) => h('th', { scope: 'col', text: t('users.cols.' + c) })), h('th', { scope: 'col' }, h('span', { class: 'sr-only', text: t('users.cols.actions') })))),
       h('tbody', null, list.map((u) => h('tr', null,
         h('td', null, person(u)),
@@ -167,7 +168,7 @@ export async function render({ main, query, navigate, can }) {
         h('td', null, statusBadge(u)),
         h('td', { class: 'small muted', text: u.lastLoginAt ? fmtRelative(u.lastLoginAt) : t('users.neverLoggedIn') }),
         h('td', { class: 'nowrap' }, actionsMenu(u)))))));
-    const cardsOf = (list) => h('div', { class: 'list-cards only-sm' }, list.map((u) => h('div', { class: 'card stack-sm' },
+    const cardsOf = (list) => h('div', { class: 'list-cards users-cards' }, list.map((u) => h('div', { class: 'card stack-sm' },
       h('div', { class: 'row-between' }, person(u), actionsMenu(u)),
       h('div', { class: 'small', text: accessLabel(u, presets) }),
       h('div', { class: 'row' }, statusBadge(u)),

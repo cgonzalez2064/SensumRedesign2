@@ -24,7 +24,7 @@ The **Content Manager** is where the Sensum Construcciones team updates the webs
 
 - **Side menu:** only shows your role's sections. On a phone, open it with the button at the top left.
 - **Top bar:** `Request support`, `View website` and your name, which opens your menu (My account, language, appearance and sign out).
-- **Centre:** first steps, shortcuts and the site's status.
+- **Centre:** the first steps for your role, shortcuts and the site's status. Once you tap `Got it`, the first steps don't show again on any device.
 
 ## Language and appearance
 

@@ -15,10 +15,12 @@ En `Textos del sitio` cambias lo que dice el sitio web. Cada tarjeta es una part
 
 1. Abre la sección, por ejemplo **Inicio → Servicios**.
 2. Cada texto tiene dos versiones: **Español** (la principal) e **Inglés** (la que ve quien elige «EN» en el sitio).
-3. Escribe el texto nuevo. Debajo ves cuántos caracteres llevas y el máximo: los límites cuidan que el diseño se vea bien en celulares y computadoras.
+3. Escribe el texto nuevo. Debajo ves cuántos caracteres llevas y la **longitud recomendada**: la que mejor se ve en el diseño, en celulares y computadoras.
 4. Toca `Guardar cambios` en la barra de abajo. El cambio se publica en ese momento y aparece un enlace para verlo.
 
 ![Editor de una sección, con español e inglés](shot:textos-editor)
+
+> [!note] ¿Necesitas un texto más largo? Sigue escribiendo: los párrafos admiten el doble de lo recomendado y los títulos la mitad más. El contador se pone en naranja y te recuerda revisar cómo se ve en el sitio, sobre todo en el celular. El título y la descripción para Google mantienen su límite, porque Google corta lo más largo.
 
 ## Traducción automática
 

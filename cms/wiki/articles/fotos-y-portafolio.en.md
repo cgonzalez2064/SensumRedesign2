@@ -9,6 +9,8 @@ updated: 2026-10-27
 ---
 `Photos & files` has three tabs: **About**, **Types of projects** and **Documents**. Each spot explains where its photo appears on the site.
 
+On a phone, the six projects under **Types of projects** start folded, each with its card photo and how many photos its gallery has: tap one to open it.
+
 ![Photos & files: the "About" photo with its description](shot:fotos)
 
 ## Uploading or changing a photo

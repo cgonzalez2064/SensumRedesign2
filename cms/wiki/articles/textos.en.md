@@ -15,10 +15,12 @@ In `Website text` you change what the website says. Each card is one part of the
 
 1. Open the section, for example **Home → Services**.
 2. Each text has two versions: **Spanish** (the main one) and **English** (shown when a visitor picks "EN" on the site).
-3. Type the new text. Below it you see how many characters you've used and the maximum: the limits keep the design right on phones and computers.
+3. Type the new text. Below it you see how many characters you've used and the **recommended length**: what looks best in the design, on phones and computers.
 4. Tap `Save changes` in the bar at the bottom. The change is published right away, with a link to see it.
 
 ![A section's editor, with Spanish and English](shot:textos-editor)
+
+> [!note] Need a longer text? Keep typing: paragraphs take twice the recommended length and titles half as much again. The counter turns orange and reminds you to check how it looks on the site, especially on phones. The Google title and description keep their limit, because Google cuts longer ones.
 
 ## Automatic translation
 

@@ -99,7 +99,7 @@ test('Soporte técnico: everyone\'s requests, the overview charts and no adminis
   for (const href of ['#/usuarios', '#/monitoreo', '#/textos', '#/prospectos', '#/correo']) expect(links).not.toContain(href);
 
   await page.goto('/admin/#/reportes');
-  await expect(page.locator('main h1')).toHaveText('Centro de Ayuda');
+  await expect(page.locator('main h1')).toHaveText('Soporte');
   await expect(page.getByRole('heading', { name: 'Gestión de solicitudes' })).toBeVisible();
   await expect(page.getByText('La galería no abre en el celular')).toBeVisible(); // Elena's request
   const overview = page.locator('details.ticket-overview');
@@ -140,7 +140,7 @@ test('Soporte técnico: everyone\'s requests, the overview charts and no adminis
 test('a site administrator does not manage support: own requests only, no overview', async ({ page }) => {
   await signIn(page, OTHER_ADMIN);
   await page.goto('/admin/#/reportes');
-  await expect(page.locator('main h1')).toHaveText('Centro de Ayuda');
+  await expect(page.locator('main h1')).toHaveText('Soporte');
   await expect(page.getByRole('heading', { name: 'Mis solicitudes' })).toBeVisible();
   await expect(page.locator('details.ticket-overview')).toHaveCount(0);
   await expect(page.getByText('La galería no abre en el celular')).toHaveCount(0);
