@@ -472,6 +472,27 @@ marked text, and «Novedades» shown once to whoever can use each new feature. D
 | Design review | Home, articles, search, the marked-text button, the support dialog, the «Novedades» dialog, light and dark, desktop and phone, checked in the browser; 208 screenshots reviewed by sample |
 | Found and fixed on the way | Three button names in the articles didn't match the panel (caught by the new check). The «Proyecto 1» photo screenshot was empty (no photo on the real site): Fotos now shows «Nosotros». On phones the «Novedades» text scrolled inside the dialog without being focusable (axe): fixed. The same support question sent from each device was refused as a duplicate (correct behaviour): the test now asks a different question per device. On a walk-through of the local panel, an Administrador got the «Más secciones» news although that menu item never shows for them (nothing left to ask for): that news now goes only to accounts with a section they could still ask for (`canAsk`, checked in `31-wiki.test.mjs`) |
 
+## Change — UX review fixes and longer texts (2026-10-27)
+
+Every screen with each role (owner, Administrador, Editor del sitio web, Ventas y prospectos,
+Consulta, support handler, signed out) at 1366, 768 and 375 px, light and dark, Spanish and
+English: 152 screens and dialogs measured (touch targets, overflow, clipped text, tiny text,
+axe, console and network errors) and reviewed by eye. 16 findings, all fixed, plus longer
+texts in the editor (recommended length and a larger maximum per field). Design:
+`SECURITY_AUDIT.md` §25.
+
+| Check | Result |
+|---|---|
+| API integration (31 files) | **272/272** (+1): «Primeros pasos» closed on one device stays closed on another and keeps the first date; 401 without a session (`22-welcome`); every text reports its recommended length and maximum, saves past the recommendation, refuses past the maximum (`05-content`); the Google title and description keep their single limit (`27-seo`) |
+| Browser E2E (3 profiles) | **211 passed**, 65 skipped by design, 0 failed; new `ux-review.spec.js` (6 tests × 3 devices): Inicio speaks to the role and «Primeros pasos» stays closed on another browser; on phones the status tabs slide in one row with the selected one in view and Actividad's filters sit behind «Filtros» (with the count); Fotos keeps the open tab in view and Tipos de proyectos folds on phones; Usuarios is cards below 1100 px and a table with one-line e-mails above; the editor counts to the recommendation, shows the note past it and stops at the maximum; dialog ✕ ≥ 44 px on touch, a focused title shows no ring, wiki tables take keyboard focus. Updated: `help-center` (page «Soporte», sliding filters), `admin` (folding projects), `wiki` (progress under the title; axe waits for the theme transition) |
+| Content stress test | Every field filled to its new maximum keeps the public site without overflow or spilling text at 320, 390, 768, 1024, 1280 and 1440 px |
+| Visual regression (public site) | **22/22** identical |
+| Phone UX measurements, before → after | axe findings 8 → 0; small touch targets 515 → 385 (the rest are inside folded projects, measured stale by the browser, and 44 px once open); Tipos de proyectos 17,504 → 1,257 px tall; Actividad and Prospectos start the list on the first screen |
+| Built release under Apache + PHP-FPM | **14/14** (`dist/release-20261027-eb5b1ce`) |
+| Production rehearsal | A copy in production's exact state — the release production runs (`ffbb133`, SEO), a database at migration `014`, the site photos, a client text edit and two leads made with that version — updated with the deploy guide's commands (backup, `cp -a` of the program, two `rsync`, `publish`). `publish` answered «Changed: nothing»; the three generated public pages are byte-identical before and after; the public CSS, JS and fonts served by production today are byte-identical to the new release; the only public files that change are `.htaccess` (app. `/wiki` redirect) and the contact handler (lead automation after saving). Screenshots of the public site (ES/EN, 1440 and 390) differ only where the WhatsApp button pulses — the same difference two captures of the same version show. The panel keeps every account (the four single-section ones move to Editor del sitio web, listed by `roles`, undoable), the client's text and both leads; migrations reach `020_intro`; integrity check «ok» with the old files left by `rsync`. **Rollback rehearsed too:** `roles:rollback`, then the previous package with the same commands: the panel opens on `ffbb133` over the updated database with the same accounts, text and leads, and the public pages are byte-identical to before. The deploy guide's rollback now uses the previous package, so the panel (`public_html/admin`) goes back with the program |
+| Static analysis | PHPStan: no errors |
+| Found and fixed on the way | The Google title and description were going to grow with the other texts; Google cuts longer ones, so they keep their single limit. On a 375 px phone «Filtros» wrapped under the search box: they now share the line. The new close-button check first measured the dialog mid-animation (scale 0.98): it now waits for the dialog to open |
+
 ## Other audits
 
 | Audit | Result |

@@ -1137,10 +1137,17 @@ La base de datos se actualiza sola (migraciones `017_roles` y `018_device_reset`
 
 **Volver atrás de esta versión**, de menos a más:
 1. Solo los roles: `php ~/sensum-cms/bin/console roles:rollback` devuelve a cada cuenta
-   el acceso que tenía (respeta las que ya corregiste a mano).
-2. El programa: `rsync -a --delete --exclude=".env" --exclude="storage/" ~/sensum-cms-antes-roles/ ~/sensum-cms/`
-   y luego `php ~/sensum-cms/bin/console publish`. La versión anterior funciona con la base
-   de datos nueva (las columnas y la tabla nuevas no le estorban).
+   el acceso que tenía (respeta las que ya corregiste a mano). Hazlo **antes** del punto 2:
+   ese comando solo existe en la versión nueva.
+2. El programa y el panel: sube el zip de la versión anterior (el que publicaste la vez
+   pasada, por ejemplo `release-20261019-seo.zip`) y repite los mismos comandos de
+   arriba con ese nombre (`unzip`, los dos `rsync` y `publish`). Así vuelven juntos el
+   programa (`sensum-cms`) y el panel (`public_html/admin`). La versión anterior funciona
+   con la base de datos nueva: las columnas y tablas nuevas no le estorban. Comprobado
+   en un ensayo con la versión que está en producción (`ffbb133`): el panel abre con
+   las mismas cuentas, textos y prospectos, y las páginas del sitio quedan idénticas.
+   (Solo el programa, sin el panel: `rsync -a --delete --exclude=".env" --exclude="storage/" ~/sensum-cms-antes-roles/ ~/sensum-cms/`
+   y `publish`; el panel nuevo pediría funciones que ese programa no tiene.)
 3. Todo, incluida la base de datos: el paso 23 con la copia que hizo `backup` antes de
    actualizar.
 
