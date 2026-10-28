@@ -1172,10 +1172,13 @@ La base de datos se actualiza sola (migraciones `017_roles` y `018_device_reset`
   `cron:install` (ya está en los comandos de arriba) lo instala; para verla correr al
   momento: `php ~/sensum-cms/bin/console monitor`. Desde esta versión, un paso que
   falla queda en Monitoreo → Errores («Falló un paso de la revisión automática») y los
-  demás siguen; el correo de la alerta indica el comando que la arregla. En la primera
-  revisión después de tantos días pueden llegar avisos acumulados, una sola vez cada
-  uno; por ejemplo, el **recordatorio de cada prospecto «Nuevo»** de los últimos 30
-  días a quien atiende Prospectos.
+  demás siguen; el correo de la alerta indica el comando que la arregla. La primera
+  revisión envía, una sola vez, lo que quedó pendiente en estos días: a it@ la
+  **revisión mensual de seguridad**, el **resumen técnico semanal** y, si la revisión del
+  dominio encuentra algo en SPF, DKIM, DMARC o MX, ese aviso; y a quien atiende
+  Prospectos, un **recordatorio por cada prospecto que sigue «Nuevo»** de los últimos 30
+  días (si no lo quieres, márcalos como atendidos antes de instalar el cron, o elige «No
+  recordar» en Prospectos → Automatización → Recordatorio si sigue «Nuevo»).
 * **Avisos al equipo** (migración `021_announcements`, se aplica sola): en
   **Administración → Avisos al equipo** la cuenta propietaria envía por correo las
   Novedades de cada actualización; cada persona recibe solo lo que puede usar. Solo

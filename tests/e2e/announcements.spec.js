@@ -34,7 +34,8 @@ test('the owner tells the team what is new: one «Novedad», a message, a test, 
   await expect(page.locator('main h1')).toHaveText('Avisos al equipo');
   await expect(page.locator('.nav a[href="#/avisos"]')).toHaveAttribute('aria-current', 'page');
 
-  // Only this device's «Novedad».
+  // Only this device's «Novedad» (.all() does not wait: the list loads after the title).
+  await expect(page.locator('.announce-item input').first()).toBeVisible();
   for (const box of await page.locator('.announce-item input').all()) await box.uncheck();
   await expect(page.getByText('Elige al menos una novedad.')).toBeVisible();
   await page.locator('.announce-item', { hasText: item }).locator('input').check();

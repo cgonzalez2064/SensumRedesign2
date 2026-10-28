@@ -9,10 +9,10 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 
 | Suite | Location | Size |
 |---|---|---|
-| API integration | `tests/integration/*.test.mjs` | 258 tests in 29 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation and PageSpeed tests use local stand-ins |
-| Browser E2E | `tests/e2e/*.spec.js` | 80 specs × 3 browser profiles (240 runs, 61 skipped by design: phone-only, desktop-only or single-submission tests) |
+| API integration | `tests/integration/*.test.mjs` | 282 tests in 34 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation, PageSpeed and `crontab` use local stand-ins |
+| Browser E2E | `tests/e2e/*.spec.js` | 93 specs × 3 browser profiles (279 runs, 65 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
-| Production build | `tests/apache/apache.test.mjs` | 6 checks of the built release under Apache + PHP-FPM |
+| Production build | `tests/apache/apache.test.mjs` | 14 checks of the built release under Apache + PHP-FPM (development and production-like copies) |
 
 ## Local Test Pass 1 — functional and integration
 
@@ -508,6 +508,23 @@ texts in the editor (recommended length and a larger maximum per field). Design:
 | Production rehearsal | A copy in production's exact state — the release production runs (`ffbb133`, SEO), a database at migration `014`, the site photos, a client text edit and two leads made with that version — updated with the deploy guide's commands (backup, `cp -a` of the program, two `rsync`, `publish`). `publish` answered «Changed: nothing»; the three generated public pages are byte-identical before and after; the public CSS, JS and fonts served by production today are byte-identical to the new release; the only public files that change are `.htaccess` (app. `/wiki` redirect) and the contact handler (lead automation after saving). Screenshots of the public site (ES/EN, 1440 and 390) differ only where the WhatsApp button pulses — the same difference two captures of the same version show. The panel keeps every account (the four single-section ones move to Editor del sitio web, listed by `roles`, undoable), the client's text and both leads; migrations reach `020_intro`; integrity check «ok» with the old files left by `rsync`. **Rollback rehearsed too:** `roles:rollback`, then the previous package with the same commands: the panel opens on `ffbb133` over the updated database with the same accounts, text and leads, and the public pages are byte-identical to before. The deploy guide's rollback now uses the previous package, so the panel (`public_html/admin`) goes back with the program |
 | Static analysis | PHPStan: no errors |
 | Found and fixed on the way | The Google title and description were going to grow with the other texts; Google cuts longer ones, so they keep their single limit. On a 375 px phone «Filtros» wrapped under the search box: they now share the line. The new close-button check first measured the dialog mid-animation (scale 0.98): it now waits for the dialog to open |
+
+## Change — the scheduled check installed from the console (2026-10-27)
+
+Production e-mailed «La revisión automática dejó de ejecutarse» (last run 2026-10-16 02:18,
+server time — the one run by hand at go-live): the cron job had never been installed, and
+cron discards the output, so nothing said why. `bin/console cron` now says what is missing,
+`bin/console cron:install` installs or repairs the scheduled check and the daily backup, and
+one failing step no longer stops the check. Design: `SECURITY_AUDIT.md` §27.
+
+| Check | Result |
+|---|---|
+| API integration (34 files) | **282/282** (+4, `34-cron`, against a stand-in `crontab`): `cron` reports both jobs missing and the check never run (exit 1); a crontab with `MAILTO`, the acme.sh renewal, a blank line, a hand-written line for this installation and one for another installation → the hand-written line is flagged, the other only mentioned; `--dry-run` changes nothing; `cron:install` saves the previous crontab, replaces the old line, keeps every other line byte for byte and adds both jobs once (a second run: «nothing changed»); after one check `cron` shows both `[ OK ]` and exits 0; errors written by cron are shown; a crontab that refuses the change leaves it as it was and prints the lines to add by hand; with the `monitor_runs` table unavailable the check logs `scheduled_step_failed` («Health») and still runs every later step, alerts and automations included, and records its time; a second check while one is running is skipped. The wiki check caught commands written like button names in the new Monitoreo section (fixed) |
+| Production rehearsal of the alert | A copy in production's state — the release production runs (`ffbb133`), the database at migration `014` (accounts, client text, leads, photos) and the scheduled check last run on 2026-10-16 06:18 UTC. The old version sends the same e-mail production sent («no corre desde el 2026-10-16…», «Revisa en cPanel → Cron Jobs…»). Updated with the deploy guide's commands (`backup`, `cp -a`, `unzip`, two `rsync`, `publish` → «Changed: nothing», then `cron:install` and `cron`) against a stand-in crontab holding the acme.sh renewal and the panel's old suggested line (`php ~/sensum-cms/bin/console monitor …`): the old line is replaced, acme.sh kept, a copy saved. The installed line run the way cron runs it (`sh -c`, empty environment, `PATH=/usr/bin:/bin`) exits 0 with an empty `cron.log`; `cron` shows both `[ OK ]` and «just now»; `/api/health` no longer sends the alert. The first check sends, once, what was pending: the monthly security review, the weekly technical summary and the e-mail DNS notice (the guide lists them). The three public pages are byte-identical before and after; no new entries in the error log; migrations reach `021_announcements` |
+| Browser E2E (3 profiles) | Full run: **213 passed**, 65 skipped by design, 1 failed — `announcements` on iPhone read the list of «Novedades» before it had loaded (Playwright's `.all()` does not wait, and the server was busy), so nothing was unchecked. The test now waits for the list; `announcements` on the three devices: **3 passed** (and 9 more targeted runs before the fix, all passed) |
+| Visual regression (public site) | **22/22** identical |
+| Built release under Apache + PHP-FPM | **14/14** (`dist/release-20261027-da678a5`) |
+| Static analysis | PHPStan: no errors |
 
 ## Other audits
 
