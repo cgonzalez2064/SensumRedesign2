@@ -245,7 +245,7 @@ return [
     'wd.cron.subject' => '[Sensum Website] La revisión automática dejó de ejecutarse',
     'wd.cron.title' => 'La revisión automática no corre desde el {when}',
     'wd.cron.intro' => 'Sin ella no se envían las alertas preventivas, no se miden los datos del informe mensual ni se reintentan correos pendientes.',
-    'wd.cron.action' => 'Revisa en cPanel → Cron Jobs la tarea «bin/console monitor» (cada 15 minutos) y la ruta de PHP.',
+    'wd.cron.action' => 'En cPanel → Terminal ejecuta «php ~/sensum-cms/bin/console cron»: muestra si faltan las tareas programadas y el último error. «php ~/sensum-cms/bin/console cron:install» las crea o corrige (cada 15 minutos, con la ruta correcta de PHP).',
     'wd.disk.subject' => '[Sensum Website] Poco espacio en disco en el hosting',
     'wd.disk.title' => 'Quedan {mb} MB libres',
     'wd.disk.intro' => 'Si el espacio se agota, no se podrán subir fotos, guardar cambios ni recibir correos en el hosting.',

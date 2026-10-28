@@ -272,6 +272,7 @@ locally they land in Mailpit. Try it:
 ```bash
 php cms/bin/console alert:test     # test alert → Mailpit
 php cms/bin/console monitor        # the scheduled check (cron in production)
+php cms/bin/console cron           # production: are the cron jobs installed and running? (cron:install adds them)
 ```
 
 To see a real critical alert, make the publish folder read-only

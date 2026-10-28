@@ -1010,6 +1010,7 @@ export default {
       offsite_backup_failed: 'Off-server backup failed', domain_check_failed: "The domain couldn't be checked", ticket_email_failed: "A ticket notice couldn't be sent",
       turnstile_unreachable: "Cloudflare Turnstile didn't answer (the built-in captcha was used)", turnstile_misconfigured: 'The Cloudflare Turnstile key is not valid',
       watchdog_failed: 'An automatic alert failed', contact_form_failed: "A contact form message couldn't be sent",
+      scheduled_step_failed: 'A step of the scheduled check failed (the others still ran)', automation_failed: 'An automation failed',
     },
     system: {
       title: 'System', version: 'Version', php: 'PHP', env: 'Environment', production: 'Production', development: 'Development (local)', site: 'Site',
@@ -1082,9 +1083,9 @@ export default {
     setup: {
       title: 'External monitoring and scheduled check',
       uptime: 'Recommended: create a free Better Stack or UptimeRobot account and add two monitors: {site} and {health}. They alert you if the site stops responding, even when the whole server is down (which this panel cannot detect by itself).',
-      cron: 'Scheduled check: in cPanel → Cron Jobs, run this command every 15 minutes. It checks diagnostics, disk space and published pages, re-sends pending alerts and support requests, and cleans up the old log.',
+      cron: 'Scheduled check: in cPanel → Terminal, run this command once. It creates both scheduled tasks (the check every 15 minutes and the daily backup) with the right PHP path. The check verifies diagnostics, disk space and published pages, sends the alerts and automations, re-sends what is pending and cleans up the old log.',
       copy: 'Copy command',
-      cronHint: 'If "php" is not the right version, use the path shown in cPanel → Select PHP Version (e.g. /opt/alt/php82/usr/bin/php).',
+      cronHint: 'To check them: "php ~/sensum-cms/bin/console cron" (shows whether they are missing, when they ran and the last error). Without Terminal, add the lines from the deployment guide (step 16) in cPanel → Cron Jobs.',
     },
   },
   email: {

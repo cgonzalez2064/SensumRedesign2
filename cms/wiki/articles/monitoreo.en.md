@@ -18,3 +18,13 @@ updated: 2026-10-27
 - **Automatic alerts:** which addresses get the critical notices and the summary.
 
 > [!note] People with "Site health" see a summary version, without error messages or settings.
+
+## If "The scheduled check stopped running" arrives
+
+The checks, alerts and automations (reminders, the leads summary) depend on a scheduled task on the server that runs every 15 minutes. If it stops, you get that e-mail once a day. To fix it, in cPanel → **Terminal**:
+
+1. "php ~/sensum-cms/bin/console cron" shows whether the task is missing, when it last ran and the last error.
+2. "php ~/sensum-cms/bin/console cron:install" creates or repairs it, together with the daily backup, without touching the server's other tasks.
+3. "php ~/sensum-cms/bin/console monitor" runs it once right away: the alert stops.
+
+If a step of the check fails, the others still run and the error shows in the log as "A step of the scheduled check failed".

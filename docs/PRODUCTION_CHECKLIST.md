@@ -77,8 +77,7 @@ Release: `release-________-_______` · Deployed by: __________ · Date: ________
 - [ ] Monthly report test e-mail arrives with the PDF attached
 - [ ] Error monitoring tested (Monitoreo → *Registro de errores*, signed in as it@gruposensum.com; other admins don't see it)
 - [ ] Critical-error alerts tested (Monitoreo → *Enviar correo de prueba* arrives at it@gruposensum.com, not in spam)
-- [ ] Scheduled check configured (cPanel cron every 15 min: `bin/console monitor`; Monitoreo shows *Última revisión automática*)
-- [ ] Daily database backup cron configured (`bin/console backup`)
+- [ ] Scheduled check and daily backup installed: `php ~/sensum-cms/bin/console cron:install`, then `php ~/sensum-cms/bin/console cron` shows both `[ OK ]` and, after 15 minutes, a recent *Last scheduled check* (Monitoreo shows *Última revisión automática*)
 - [ ] Team accounts invited by the owner with the right access type (Usuarios → Invitar usuario)
 - [ ] Monthly report: recipients saved, *Enviarme una prueba* received; optional `PAGESPEED_API_KEY` set
 - [ ] Contact form test message received at contacto@sensumconstrucciones.com
@@ -87,7 +86,7 @@ Release: `release-________-_______` · Deployed by: __________ · Date: ________
 - [ ] Logs reviewed (`sensum-cms/storage/logs/` — no secrets, no unexpected errors)
 - [ ] Browser console reviewed (public site and admin: no errors)
 - [ ] Network requests reviewed (no failed requests; admin loads no third-party resources)
-- [ ] Daily database backup cron configured (optional) — `bin/console backup`
+- [ ] Daily database backup in the crontab (installed by `bin/console cron:install` with the scheduled check)
 
 ## E. Recovery readiness
 

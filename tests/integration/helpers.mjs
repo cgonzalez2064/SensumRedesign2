@@ -57,7 +57,7 @@ export async function startServer({ port, smtpDown = false, env = {}, reuseDir =
     try { const r = await fetch(base + '/api/health'); await r.arrayBuffer(); if (r.status) break; } catch (e) { /* not up yet */ }
     await sleep(100);
   }
-  const cli = (args, input) => execFileSync(PHP, ['cms/bin/console', ...args], { cwd: ROOT, env: fullEnv, input, stdio: ['pipe', 'pipe', 'pipe'] }).toString();
+  const cli = (args, input, env = {}) => execFileSync(PHP, ['cms/bin/console', ...args], { cwd: ROOT, env: { ...fullEnv, ...env }, input, stdio: ['pipe', 'pipe', 'pipe'] }).toString();
   return {
     base, dir, env: fullEnv, cli,
     storage: (p = '') => join(dir, 'storage', p),

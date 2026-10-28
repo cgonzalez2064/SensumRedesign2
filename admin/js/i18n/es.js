@@ -1011,6 +1011,7 @@ export default {
       offsite_backup_failed: 'Falló el respaldo fuera del servidor', domain_check_failed: 'No se pudo revisar el dominio', ticket_email_failed: 'No se pudo enviar un aviso de ticket',
       turnstile_unreachable: 'Cloudflare Turnstile no respondió (se usó el captcha integrado)', turnstile_misconfigured: 'La clave de Cloudflare Turnstile no es válida',
       watchdog_failed: 'Falló una alerta automática', contact_form_failed: 'No se pudo enviar un mensaje del formulario de contacto',
+      scheduled_step_failed: 'Falló un paso de la revisión automática (los demás sí corrieron)', automation_failed: 'Falló una automatización',
     },
     system: {
       title: 'Sistema', version: 'Versión', php: 'PHP', env: 'Entorno', production: 'Producción', development: 'Desarrollo (local)', site: 'Sitio',
@@ -1083,9 +1084,9 @@ export default {
     setup: {
       title: 'Monitoreo externo y revisión automática',
       uptime: 'Recomendado: crea una cuenta gratuita en Better Stack o UptimeRobot y agrega dos monitores: {site} y {health}. Te avisarán si el sitio deja de responder, incluso si el servidor completo está caído (algo que este panel no puede detectar por sí mismo).',
-      cron: 'Revisión automática: en cPanel → Cron Jobs, programa este comando cada 15 minutos. Revisa el diagnóstico, el espacio en disco y las páginas publicadas, reenvía alertas y solicitudes pendientes y limpia el registro antiguo.',
+      cron: 'Revisión automática: en cPanel → Terminal, ejecuta este comando una vez. Crea las dos tareas programadas (la revisión cada 15 minutos y el respaldo diario) con la ruta correcta de PHP. La revisión verifica el diagnóstico, el espacio en disco y las páginas publicadas, envía las alertas y automatizaciones, reenvía lo pendiente y limpia el registro antiguo.',
       copy: 'Copiar comando',
-      cronHint: 'Si «php» no es la versión correcta, usa la ruta que muestra cPanel → Select PHP Version (por ejemplo /opt/alt/php82/usr/bin/php).',
+      cronHint: 'Para revisarlas: «php ~/sensum-cms/bin/console cron» (muestra si faltan, cuándo corrieron y el último error). Sin Terminal, en cPanel → Cron Jobs agrega las líneas que indica la guía de despliegue (paso 16).',
     },
   },
   email: {

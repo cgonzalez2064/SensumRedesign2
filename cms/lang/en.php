@@ -245,7 +245,7 @@ return [
     'wd.cron.subject' => '[Sensum Website] The scheduled check stopped running',
     'wd.cron.title' => "The scheduled check hasn't run since {when}",
     'wd.cron.intro' => "Without it, preventive alerts aren't sent, the monthly report's figures aren't measured and pending e-mails aren't retried.",
-    'wd.cron.action' => 'Check the "bin/console monitor" task in cPanel → Cron Jobs (every 15 minutes) and the PHP path.',
+    'wd.cron.action' => 'In cPanel → Terminal run "php ~/sensum-cms/bin/console cron": it shows whether the scheduled tasks are missing and the last error. "php ~/sensum-cms/bin/console cron:install" creates or repairs them (every 15 minutes, with the right PHP path).',
     'wd.disk.subject' => '[Sensum Website] Low disk space on the hosting',
     'wd.disk.title' => '{mb} MB free',
     'wd.disk.intro' => "If space runs out, photos can't be uploaded, changes can't be saved and the hosting can't receive e-mail.",

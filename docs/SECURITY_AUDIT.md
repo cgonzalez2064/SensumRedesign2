@@ -471,3 +471,17 @@ Replaces the owner-only rule of §9: the owner and accounts with the new permiss
 | Who receives | Active accounts only, never the owner; each gets only the «Novedades» its own sections allow (`Wiki::forAccount`, the rule the panel uses), only if it existed when the item shipped; ids must be known and not owner-only. Recipients are computed on the server at send time, never taken from the request. | `32-announcements`, `announcements.spec` |
 | Content | The owner's message is plain text (control characters removed, ≤ 600 characters) and escaped in the HTML e-mail; item texts come from `wiki.json`; links are built from `ADMIN_URL`, never from request data. | `32-announcements` (`<b>` arrives escaped) |
 | Abuse and duplicates | 10 tests and 6 sends an hour per owner; `news_emailed` keeps anyone from getting the same item twice unless the owner explicitly asks; each send is logged (`announcements`, Actividad). | `32-announcements` |
+
+## 27. Change review — scheduled tasks installed from the console (October 2026)
+
+Production sent «La revisión automática dejó de ejecutarse»: the cron job had not been
+installed at go-live (the only run was by hand) — and a step that threw would have
+stopped the rest of the check silently, since cron discards the output.
+
+| Area | Design | Verified by |
+|---|---|---|
+| Who can change the crontab | Only `bin/console cron:install`, run by the account in cPanel → Terminal; the panel and the web server never touch it (the console refuses to run under the web server). The panel's Monitoreo card only shows the command to copy. | code review |
+| Other lines | Every line that is not this installation's scheduled check or backup is kept byte for byte (acme.sh renewal, other sites); hand-written lines are recognised only by this installation's own console path (absolute, `~/`, `$HOME/` or the guide's `/home/USUARIO/` placeholder); a line for another installation is only reported. The previous crontab is saved to `storage/backups/crontab-*.txt` (0600) before writing, and the result is read back. | `34-cron` |
+| Commands | `crontab` and `php -r` run with `proc_open` and an argument list (no shell); the cron line quotes any path that is not plain (`escapeshellarg`) and refuses `%` (special to cron). `CRONTAB_BIN` lets tests use a stand-in. | `34-cron` |
+| Logs | Only errors go to `storage/logs/cron.log` (inside the private, 0700 storage folder; kept under 1 MB); normal output is discarded, so cPanel's cron e-mail stays quiet. | `34-cron` |
+| Resilience | The check records its time first and runs each step on its own: a failure is logged (`scheduled_step_failed`, Monitoreo → Errores) and the alerts and automations still run. One run at a time (`flock`). | `34-cron` |

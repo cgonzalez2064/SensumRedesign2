@@ -11,6 +11,9 @@
  *   php cms/bin/console mail:test <address>    send a test e-mail with the current SMTP settings
  *   php cms/bin/console reports:retry          retry support e-mails that failed to send
  *   php cms/bin/console backup                 consistent copy of the database (keeps 14)
+ *   php cms/bin/console monitor                the scheduled check (cron, every 15 minutes)
+ *   php cms/bin/console cron                   are the scheduled tasks installed and running?
+ *   php cms/bin/console cron:install           add or repair them in the account's crontab
  */
 declare(strict_types=1);
 
@@ -18,6 +21,9 @@ if (PHP_SAPI !== 'cli') {
     http_response_code(404);
     exit;
 }
+
+// From cron only errors are kept (storage/logs/cron.log), so PHP's own errors go there too.
+ini_set('display_errors', 'stderr');
 
 $app = require dirname(__DIR__) . '/bootstrap.php';
 $cmd = $argv[1] ?? 'help';

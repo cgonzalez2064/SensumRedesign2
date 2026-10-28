@@ -28,6 +28,8 @@ final class Cli
             'mail:test' => $this->mailTest($args[0] ?? ''),
             'translate:test' => $this->translateTest(),
             'monitor' => $this->monitor(),
+            'cron' => $this->cronStatus(),
+            'cron:install' => $this->cronInstall($args),
             'automations' => $this->automations($args[0] ?? ''),
             'alert:test' => $this->alertTest(),
             'reports:retry' => $this->retryReports(),
@@ -48,7 +50,7 @@ final class Cli
 
     private function help(): int
     {
-        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|translate:test|monitor|automations|alert:test|reports:retry|backup|integrity:accept|demo-users [--reports]|2fa:reset <email> [--off]|roles|roles:rollback>');
+        $this->out('Usage: php cms/bin/console <check|migrate|create-admin|publish|render <dir>|mail:test <email>|translate:test|monitor|cron|cron:install [--dry-run] [--php=<path>]|automations|alert:test|reports:retry|backup|integrity:accept|demo-users [--reports]|2fa:reset <email> [--off]|roles|roles:rollback>');
         return 0;
     }
 
@@ -166,10 +168,135 @@ final class Cli
      */
     private function monitor(): int
     {
-        foreach ($this->app->monitor()->run() as $line) {
-            $this->out($line);
+        // One run at a time: a slow run (or a second cron line) never overlaps the next.
+        $lock = fopen($this->app->storage('monitor.lock'), 'c');
+        if ($lock === false || !flock($lock, LOCK_EX | LOCK_NB)) {
+            $this->out('The scheduled check is already running; this run was skipped.');
+            return 0;
+        }
+        try {
+            foreach ($this->app->monitor()->run() as $line) {
+                $this->out($line);
+            }
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
         }
         return 0;
+    }
+
+    /**
+     * Scheduled tasks: whether the account's crontab has the scheduled check and
+     * the daily backup, when they last ran, and errors cron wrote. Exit code 1
+     * when something needs attention (`cron:install` fixes the crontab).
+     */
+    private function cronStatus(): int
+    {
+        $sch = new Scheduler($this->app);
+        $st = $sch->status();
+        $fix = 'php ' . $sch->console() . ' cron:install';
+        $this->out('Scheduled tasks (cron) for ' . dirname($sch->console(), 2));
+        $this->out('  PHP for cron: ' . $sch->php() . ' (PHP ' . PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION . ')');
+        $ok = true;
+        if (!$st['crontab']) {
+            $ok = false;
+            $this->out('  [WARN] The crontab cannot be read here (' . $st['error'] . '). Add these lines in cPanel → Cron Jobs:');
+            foreach ($st['jobs'] as $job) {
+                $this->out('         ' . $job['line']);
+            }
+        } else {
+            foreach ($st['jobs'] as $job) {
+                $ok = $ok && $job['installed'];
+                $this->out(sprintf('  [%s] %s', $job['installed'] ? ' OK ' : 'MISS', $job['label']));
+            }
+            foreach ($st['replace'] as $l) {
+                $ok = false;
+                $this->out('  [OLD ] ' . $l);
+            }
+            foreach ($st['others'] as $l) {
+                $this->out('  [NOTE] Another line runs the Content Manager (another installation?): ' . $l);
+            }
+        }
+        $age = time() - $st['lastRun'];
+        $running = $st['lastRun'] > 0 && $age < 2 * 3600;
+        $ok = $ok && $running;
+        $this->out('  Last scheduled check: ' . ($st['lastRun'] ? date('Y-m-d H:i', $st['lastRun']) . ' (' . self::ago($age) . ')' : 'never') . ($running ? '' : ' — NOT RUNNING'));
+        $this->out('  Newest database backup: ' . ($st['lastBackup'] ? date('Y-m-d H:i', $st['lastBackup']) . ' (' . self::ago(time() - $st['lastBackup']) . ')' : 'none'));
+        if ($st['log']) {
+            $this->out('  Last errors written by cron (' . $sch->logFile() . '):');
+            foreach ($st['log'] as $l) {
+                $this->out('    ' . $l);
+            }
+        }
+        $missing = in_array(false, array_column($st['jobs'], 'installed'), true) || $st['replace'];
+        if (!$st['crontab']) {
+            $this->out('After adding them, the first check runs within 15 minutes.');
+        } elseif ($missing) {
+            $this->out("To install or repair: {$fix}");
+        } elseif (!$running) {
+            $this->out('The jobs are installed. If the check still has not run 15 minutes after installing them, run it once by hand to see the error: php ' . $sch->console() . ' monitor');
+        }
+        return $ok ? 0 : 1;
+    }
+
+    /**
+     * Adds (or repairs) the scheduled check every 15 minutes and the daily backup
+     * in the account's crontab — the same jobs cPanel → Cron Jobs shows. Other
+     * lines are kept; the previous crontab is saved in storage/backups first.
+     */
+    private function cronInstall(array $args): int
+    {
+        $php = null;
+        foreach ($args as $a) {
+            if (str_starts_with($a, '--php=')) {
+                $php = substr($a, 6);
+                if (!is_file($php) || !is_executable($php)) {
+                    $this->out("Not an executable file: {$php}");
+                    return 1;
+                }
+            }
+        }
+        $dry = in_array('--dry-run', $args, true);
+        $sch = new Scheduler($this->app);
+        try {
+            $r = $sch->install($php, $dry);
+        } catch (\RuntimeException $e) {
+            $this->out($e->getMessage());
+            $this->out('Add these lines by hand in cPanel → Cron Jobs (Advanced / custom schedule):');
+            foreach ($sch->jobs($php) as $job) {
+                $this->out('  ' . $job['line']);
+            }
+            return 1;
+        }
+        if (!$r['changed']) {
+            $this->out('The scheduled tasks are already installed; nothing changed.');
+            return 0;
+        }
+        if ($r['backup']) {
+            $this->out('Saved a copy of the previous crontab: ' . $r['backup']);
+        }
+        foreach ($r['removed'] as $l) {
+            $this->out(($dry ? 'Would remove: ' : 'Removed: ') . $l);
+        }
+        foreach ($r['added'] as $l) {
+            $this->out(($dry ? 'Would add:    ' : 'Added:   ') . $l);
+        }
+        if ($dry) {
+            $this->out('Dry run: nothing was changed.');
+            return 0;
+        }
+        $this->out('Done. The scheduled check runs every 15 minutes; check it with: php ' . $sch->console() . ' cron');
+        return 0;
+    }
+
+    private static function ago(int $s): string
+    {
+        return match (true) {
+            $s < 120 => 'just now',
+            $s < 7200 => intdiv($s, 60) . ' minutes ago',
+            $s < 172800 => intdiv($s, 3600) . ' hours ago',
+            default => intdiv($s, 86400) . ' days ago',
+        };
     }
 
     /**

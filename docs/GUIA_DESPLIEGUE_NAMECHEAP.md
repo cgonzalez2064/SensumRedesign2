@@ -778,17 +778,46 @@ inglés).
 
 ## 16. Tareas programadas (Cron Jobs)
 
-cPanel → **Cron Jobs**. En *Cron Email* puedes dejar `it@gruposensum.com` (solo
-escribe si hay algún error). Agrega dos tareas, usando la ruta de PHP del paso 10:
+Dos tareas tienen que correr solas en el servidor:
 
-| Tarea | Frecuencia (Common Settings) | Comando |
+| Tarea | Cuándo | Qué hace |
 |---|---|---|
-| **Revisión automática** (monitoreo, alertas pendientes, calificación de Google, certificado, recordatorio del informe, limpieza y las **automatizaciones**: recordatorios de invitaciones, accesos temporales, cuentas sin uso, seguimiento y resumen de prospectos) | *Twice Per Hour* o personalizado `*/15 * * * *` | `/usr/local/bin/php /home/USUARIO/sensum-cms/bin/console monitor > /dev/null 2>&1` |
-| **Respaldo diario** de la base de datos (guarda las últimas 14 copias) | *Once Per Day* | `/usr/local/bin/php /home/USUARIO/sensum-cms/bin/console backup > /dev/null 2>&1` |
+| **Revisión automática** (`bin/console monitor`) | cada 15 minutos | monitoreo, alertas, calificación de Google, certificado, recordatorio del informe, limpieza y las **automatizaciones**: recordatorios de invitaciones, accesos temporales, cuentas sin uso, seguimiento y resumen de prospectos |
+| **Respaldo diario** de la base de datos (`bin/console backup`) | todos los días, 03:17 | guarda las últimas 14 copias |
 
-Reemplaza `/usr/local/bin/php` por la ruta que mostró `which php` y `USUARIO` por tu
-usuario de cPanel. En el panel → **Monitoreo**, «Última revisión automática» debe
-mostrar la hora de la última ejecución después de unos minutos.
+**Instálalas con un comando** en cPanel → **Terminal**:
+
+```bash
+php ~/sensum-cms/bin/console cron:install
+php ~/sensum-cms/bin/console cron
+```
+
+- `cron:install` agrega las dos tareas al cron de tu cuenta, las mismas que luego ves en
+  cPanel → **Cron Jobs**. Usa las rutas completas y la misma versión de PHP del panel,
+  así que no hace falta buscar la ruta de PHP. No toca las demás tareas (por ejemplo, la
+  renovación del certificado `acme.sh` u otros sitios) y antes guarda una copia del cron
+  anterior en `sensum-cms/storage/backups/crontab-….txt`. Si ya existían líneas de esta
+  guía para el panel, con `USUARIO`, `~/` o la ruta de PHP equivocada, las reemplaza.
+  Para ver el cambio antes de hacerlo: `cron:install --dry-run`.
+- `cron` revisa que todo esté bien: las dos tareas deben aparecer como `[ OK ]`; también
+  muestra la última revisión, el último respaldo y los errores que haya escrito el cron
+  (`sensum-cms/storage/logs/cron.log`). Si la revisión no corre 15 minutos después de
+  instalarla, ejecútala una vez a mano para ver el error:
+  `php ~/sensum-cms/bin/console monitor`.
+- En el panel → **Monitoreo**, «Última revisión automática» muestra la hora de la última
+  ejecución.
+
+**Sin Terminal:** en cPanel → **Cron Jobs** agrega las dos líneas que muestra
+`cron:install` cuando no puede escribir el cron. Son de este tipo, con la ruta que mostró
+`which php` y tu usuario de cPanel en lugar de `USUARIO`:
+
+```
+*/15 * * * * /usr/local/bin/php /home/USUARIO/sensum-cms/bin/console monitor > /dev/null 2>> /home/USUARIO/sensum-cms/storage/logs/cron.log # sensum-cms
+17 3 * * * /usr/local/bin/php /home/USUARIO/sensum-cms/bin/console backup > /dev/null 2>> /home/USUARIO/sensum-cms/storage/logs/cron.log # sensum-cms
+```
+
+En *Cron Email* puedes dejar `it@gruposensum.com`: estas tareas no escriben nada en una
+ejecución normal, así que no llegan correos del cron.
 
 Sin esta tarea, las automatizaciones (recordatorios por correo, fin de los accesos
 temporales por el aviso de 3 días, cuentas sin uso, recordatorios y resumen de
@@ -1034,7 +1063,7 @@ en `.env` (50 a 99).
 - [ ] Invitas a una persona como «Redactor» (usa un correo tuyo) → al crear su contraseña le llega el **correo de bienvenida** y, al entrar, la pantalla para elegir **idioma y apariencia**; después solo ve «Textos del sitio».
 - [ ] Cambias un texto, lo ves en el sitio (recarga con Ctrl+F5) y lo restauras.
 - [ ] Subes una foto de proyecto y aparece en la tarjeta.
-- [ ] Monitoreo → «Última revisión automática» muestra una hora reciente (cron funcionando).
+- [ ] `php ~/sensum-cms/bin/console cron` muestra las dos tareas `[ OK ]` y una revisión reciente; Monitoreo → «Última revisión automática» muestra una hora reciente.
 - [ ] Después de enviar el mensaje de prueba del formulario: aparece en **Prospectos** (con el enlace «Prospecto #…» en el correo). Cámbialo a «Contactado» y agrega una nota.
 - [ ] Prospectos → **Conservación de datos** elegida; el aviso de privacidad (`/privacy-notice.html`) dice el mismo número de meses.
 - [ ] Abre el sitio en tu celular (sin «No rastrear») y toca el botón de WhatsApp: al rato, **Estadísticas** muestra la visita y el clic.
@@ -1074,6 +1103,8 @@ unzip -q release-….zip && ls release-…
 rsync -a --exclude=".env" --exclude="storage/" ~/release-…/sensum-cms/ ~/sensum-cms/
 rsync -a --exclude="assets/uploads/" --exclude="/index.html" --exclude="/404.html" --exclude="/privacy-notice.html" ~/release-…/public_html/ ~/public_html/
 php ~/sensum-cms/bin/console publish
+php ~/sensum-cms/bin/console cron:install
+php ~/sensum-cms/bin/console cron
 rm -rf ~/release-… ~/release-….zip
 ```
 
@@ -1083,6 +1114,8 @@ rm -rf ~/release-… ~/release-….zip
 - `publish` vuelve a crear esas páginas con tu contenido (textos, fotos, captcha) y las
   plantillas nuevas; debe responder `Published. Changed: …`.
 - Comprueba el resultado con `cat ~/sensum-cms/BUILD` (el código de la versión nueva).
+- `cron:install` deja instaladas (o corrige) las tareas programadas del paso 16; si ya
+  estaban bien responde `nothing changed`. `cron` debe mostrar las dos `[ OK ]`.
 5. La revisión de archivos usa automáticamente la lista del nuevo paquete. Si alguna
    vez cambias un archivo del sitio a mano (a propósito), confirma el cambio en panel →
    **Monitoreo → Archivos del sitio → Revisar ahora → Marcar como esperados** (pide tu
@@ -1134,6 +1167,15 @@ La base de datos se actualiza sola (migraciones `017_roles` y `018_device_reset`
   largos:** cada texto conserva su largo recomendado y ahora admite más (párrafos el
   doble, títulos la mitad más, etiquetas un 30 %); el editor avisa al pasar lo
   recomendado. Los textos publicados no cambian. No hay nada que configurar.
+* **Revisión automática** (sin migración): si te llegó el correo «La revisión
+  automática dejó de ejecutarse», el cron del paso 16 no estaba instalado o fallaba.
+  `cron:install` (ya está en los comandos de arriba) lo instala; para verla correr al
+  momento: `php ~/sensum-cms/bin/console monitor`. Desde esta versión, un paso que
+  falla queda en Monitoreo → Errores («Falló un paso de la revisión automática») y los
+  demás siguen; el correo de la alerta indica el comando que la arregla. En la primera
+  revisión después de tantos días pueden llegar avisos acumulados, una sola vez cada
+  uno; por ejemplo, el **recordatorio de cada prospecto «Nuevo»** de los últimos 30
+  días a quien atiende Prospectos.
 * **Avisos al equipo** (migración `021_announcements`, se aplica sola): en
   **Administración → Avisos al equipo** la cuenta propietaria envía por correo las
   Novedades de cada actualización; cada persona recibe solo lo que puede usar. Solo
@@ -1242,7 +1284,7 @@ correctas. El paquete zip de esta guía es más simple y no depende de eso.
 | Llegan correos de «Nuevo inicio de sesión» | Es normal la primera vez en cada navegador. Si no fuiste tú: cambia la contraseña y usa «Cerrar sesión en otros dispositivos». |
 | «Demasiados píxeles» o falla al subir fotos | Sube `memory_limit` a 256M (paso 4). |
 | «El archivo es demasiado grande» | `upload_max_filesize` 20M y `post_max_size` 24M (paso 4). Con 16M, un PDF de más de 16 MB no sube. |
-| «Última revisión automática: Nunca» | El cron no corre: revisa la ruta de PHP y el comando (paso 16). |
+| «Última revisión automática: Nunca», o llega el correo «La revisión automática dejó de ejecutarse» | El cron no corre. En la Terminal: `php ~/sensum-cms/bin/console cron` (dice qué falta y el último error) y `php ~/sensum-cms/bin/console cron:install` (crea o corrige las tareas; paso 16). Luego `php ~/sensum-cms/bin/console monitor` una vez: la alerta deja de llegar. |
 | Nadie ve «Usuarios» | Falta la cuenta propietaria o `OWNER_EMAIL` no coincide con su correo (paso 11). |
 
 Registro técnico: `sensum-cms/storage/logs/app-AAAA-MM.log` y, en el panel,

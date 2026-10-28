@@ -273,7 +273,7 @@ export async function render({ main, session }) {
       : h('p', { class: 'muted', text: t('monitor.top.none') }));
 
     // External monitoring + scheduled check.
-    const cron = 'php ~/sensum-cms/bin/console monitor > /dev/null 2>&1';
+    const cron = 'php ~/sensum-cms/bin/console cron:install';
     const copyBtn = button(t('monitor.setup.copy'), { icon: 'clipboard', small: true, onClick: async () => { if (await copyText(cron)) toast(t('common.copied')); } });
     const setup = card('setup-title', t('monitor.setup.title'),
       h('p', { class: 'small', text: t('monitor.setup.uptime', { site: s.siteUrl, health: s.siteUrl + '/api/health' }) }),

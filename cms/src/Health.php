@@ -72,7 +72,7 @@ final class Health
                 $last = 0;
             }
             $c['scheduled_check'] = ['ok' => $last > time() - 2 * 3600, 'optional' => true,
-                'detail' => $last ? 'last run ' . date('Y-m-d H:i', $last) : 'not scheduled (cron: bin/console monitor)'];
+                'detail' => $last ? 'last run ' . date('Y-m-d H:i', $last) . ($last > time() - 2 * 3600 ? '' : ' — check it with: bin/console cron') : 'not scheduled — install it with: bin/console cron:install'];
             $c['upload_limit'] = ['ok' => $app->media()->maxUploadBytes() >= 8 * 1024 * 1024, 'optional' => true,
                 'detail' => round($app->media()->maxUploadBytes() / 1048576, 1) . ' MB' . (PHP_SAPI === 'cli' ? ' (command-line PHP; the web server may use other limits)' : '')];
         }

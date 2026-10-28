@@ -490,7 +490,7 @@ site and the panel work normally (tested with blocked requests).
 | Error log | every server, panel and (if enabled) public-site error, one row each, in **Monitoreo** (owner only) | on |
 | Critical-error alerts | e-mail to `ALERT_EMAIL` (it@gruposensum.com) for unexpected server errors, PHP fatal errors and failing health checks; throttled (§9a) | on |
 | Monitoring page | status, key figures (24 h / 7 d / 30 d), most frequent errors, system details, alert settings + test e-mail, setup help | on (owner) |
-| Scheduled check | `bin/console monitor` from cron every 15 min (§9a) | set up at deployment |
+| Scheduled check | `bin/console monitor` from cron every 15 min, installed with `bin/console cron:install` (§9a) | set up at deployment |
 | Public JS errors | `PUBLIC_ERROR_REPORTING=true` adds `assets/error-reporter.js` (≤3 reports/page, message + file:line + path only, no cookies) | **off** |
 | First-party visit statistics | `assets/stats.js` → `POST /api/collect`: daily totals only (views per page, visitors, source from a fixed list, device, language, clicks on WhatsApp/phone/e-mail/map/social/portfolio). No cookies or storage, no IP stored; one visitor per day via a hash with a random salt that is replaced (and the markers deleted) every day; DNT/GPC, `navigator.webdriver`, prefetch and bot user agents ignored; 120 events/IP/hour, 50 000/day. Page **Estadísticas** (owner + "leads" access); owner switch republishes the pages and the privacy-notice paragraph (§9c) | **on** |
 | Visitor analytics + Core Web Vitals (LCP, CLS, INP, TTFB) | Cloudflare Web Analytics: free, cookieless, no DNS change required. Set `CF_WEB_ANALYTICS_TOKEN` and republish | **off** |
@@ -526,16 +526,40 @@ unavailable the entry is marked "no enviada" and the scheduled check sends one
 summary later. The owner can send a test alert from Monitoreo (3 per hour) or run
 `bin/console alert:test`.
 
-**Scheduled check** — cPanel → Cron Jobs, every 15 minutes:
+**Scheduled check** — every 15 minutes from cron, plus the daily backup. Install
+both once from cPanel → Terminal (they then appear in cPanel → Cron Jobs):
 
 ```
-*/15 * * * * php ~/sensum-cms/bin/console monitor > /dev/null 2>&1
+php ~/sensum-cms/bin/console cron:install     # add or repair both jobs (--dry-run shows the change first)
+php ~/sensum-cms/bin/console cron             # installed? when did they last run? errors cron wrote
 ```
 
-It runs the health checks (critical → alert), checks free disk space
+`cron:install` (`Scheduler.php`) writes, with full paths and the PHP that runs it
+(the `php` on the PATH when it is the same version, so it follows cPanel's PHP
+selector; `--php=<path>` to choose):
+
+```
+*/15 * * * * /usr/local/bin/php /home/USUARIO/sensum-cms/bin/console monitor > /dev/null 2>> /home/USUARIO/sensum-cms/storage/logs/cron.log # sensum-cms
+17 3 * * * /usr/local/bin/php /home/USUARIO/sensum-cms/bin/console backup > /dev/null 2>> /home/USUARIO/sensum-cms/storage/logs/cron.log # sensum-cms
+```
+
+Every other crontab line is kept (acme.sh, other sites); lines for this
+installation written by hand from the guide (its path, `~/…` or `/home/USUARIO/…`)
+are replaced; a copy of the previous crontab goes to
+`storage/backups/crontab-*.txt` first, and the result is read back. Only errors
+reach `storage/logs/cron.log` (PHP's own errors included; the check keeps it under
+1 MB); `cron` shows its last lines. Where PHP cannot run `crontab` (proc_open
+disabled) both commands print the two lines to add by hand.
+
+The check runs the health checks (critical → alert), checks free disk space
 (`DISK_WARN_MB`, 500) and whether the published pages still match the saved
-content, re-sends pending support reports and failed alerts, and removes log
-entries older than `ERROR_LOG_DAYS`. Monitoreo shows when it last ran.
+content, re-sends pending support reports and failed alerts, removes log entries
+older than `ERROR_LOG_DAYS`, and runs the automatic alerts and the automations.
+It records its time **first** (`monitor_last_run`: "the scheduled check is
+running"; the stopped-cron alert reads it) and runs each step on its own: a step
+that throws is logged as `scheduled_step_failed` (Monitoreo → Errores, with the
+step's name) and the others still run. One run at a time (`storage/monitor.lock`);
+a run that finds the lock taken exits. Monitoreo shows when it last ran.
 
 **What it cannot see.** If the whole server or PHP is down, nothing inside it
 can send an alert — that is what the external uptime monitor is for (Better
@@ -681,7 +705,9 @@ generated into `storage/app.key`). Testing only: `STORAGE_DIR`, `DEEPL_API_URL`,
 
 `check` · `migrate` · `create-admin` · `publish` · `render <dir>` ·
 `mail:test <email>` · `translate:test` (checks the DeepL key, shows usage) ·
-`monitor` (scheduled check + automatic alerts, cron) · `alert:test` ·
+`monitor` (scheduled check + automatic alerts, cron; one run at a time) ·
+`cron` (are the scheduled check and the daily backup in the crontab, when did they last run, errors cron wrote; exit 1 when something needs attention) ·
+`cron:install [--dry-run] [--php=<path>]` (add or repair both jobs, keeping every other line) · `alert:test` ·
 `reports:retry` · `backup` (consistent DB copy, keeps 14) ·
 `integrity:accept` (record the current public files as expected) ·
 `2fa:reset <email> [--off]` (an account locked out: removes its registered devices — next sign-in, a code by e-mail, then the new device; `--off` only turns two-step sign-in off, for when e-mail isn't working) ·

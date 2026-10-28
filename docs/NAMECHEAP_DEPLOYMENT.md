@@ -32,8 +32,9 @@ replace the root ones) limits the API on the public host to `collect`, `health` 
 of the panel). The session cookie is `__Host-` (host-only), so it only ever exists on
 `app.`.
 No MySQL database, Node.js app or Composer on the server is required. Two cron
-jobs are recommended (scheduled check every 15 min, daily database backup — see
-the Spanish guide §15); the cPanel Terminal (Manage Shell → SSH) makes setup easier.
+jobs are needed (scheduled check every 15 min, daily database backup); one command
+in the cPanel Terminal installs both: `php ~/sensum-cms/bin/console cron:install`
+(see the Spanish guide §16).
 
 Estimated time: 60–90 minutes the first time.
 
@@ -391,7 +392,7 @@ Do these on the live site and tick them in `docs/PRODUCTION_CHECKLIST.md`:
 | What | How | When |
 |---|---|---|
 | Whole account | Stellar Plus automatic backups + cPanel → Backup → download | monthly download, before every deployment |
-| Database | `php ~/sensum-cms/bin/console backup` (consistent copy to `sensum-cms/storage/backups/db/`, keeps 14). Optional cron (cPanel → Cron Jobs, daily 03:15): `/usr/local/bin/php /home/<user>/sensum-cms/bin/console backup >/dev/null 2>&1` — use the PHP path cPanel shows | daily (cron) or before changes |
+| Database | `php ~/sensum-cms/bin/console backup` (consistent copy to `sensum-cms/storage/backups/db/`, keeps 14). Daily at 03:17 from cron, installed with the scheduled check by `php ~/sensum-cms/bin/console cron:install` | daily (cron) or before changes |
 | Uploaded photos/PDF | download `public_html/assets/uploads/` (Compress → download) | monthly / before deployments |
 | Published pages | automatic: last 30 versions in `sensum-cms/storage/backups/published/` | every save |
 | Configuration | `sensum-cms/.env` values in a password manager | when changed |
@@ -432,15 +433,19 @@ the admin API stops. Then disable accounts / reset passwords and restore.
 * **Owner account:** create the first administrator as **it@gruposensum.com**
   (§8): that account (`OWNER_EMAIL`) is the only one that sees **Monitoreo** —
   error log, figures, alert settings — and other administrators cannot remove it.
-* **Scheduled check (cron) — required for proactive alerts:** cPanel → **Cron
-  Jobs** → *Add New Cron Job* → Common Settings "Twice Per Hour" or custom
-  `*/15 * * * *`, command:
+* **Scheduled check (cron) — required for proactive alerts and automations:** in
+  cPanel → **Terminal**:
   ```
-  php ~/sensum-cms/bin/console monitor > /dev/null 2>&1
+  php ~/sensum-cms/bin/console cron:install
+  php ~/sensum-cms/bin/console cron
   ```
-  (use the full PHP path from *Select PHP Version* if `php` is another version,
-  e.g. `/opt/alt/php82/usr/bin/php`). Then Monitoreo → *Última revisión
-  automática* shows the time of the last run.
+  `cron:install` adds the check every 15 minutes and the daily backup to the
+  account's crontab (shown in cPanel → Cron Jobs) with full paths and the right PHP,
+  keeps every other line and saves the previous crontab in `storage/backups/`.
+  `cron` shows both as `[ OK ]`, when the check last ran and any error cron wrote
+  (`storage/logs/cron.log`). Without Terminal, add the two lines `cron:install`
+  prints (CONTENT_MANAGER §9a) in cPanel → Cron Jobs. Then Monitoreo → *Última
+  revisión automática* shows the time of the last run.
 * **Critical-error alerts:** Monitoreo → *Alertas por correo* → **Enviar correo de
   prueba** (or `php ~/sensum-cms/bin/console alert:test`). Check that it arrives at
   it@gruposensum.com and is not in spam; whitelist `notificaciones@sensumconstrucciones.com`.

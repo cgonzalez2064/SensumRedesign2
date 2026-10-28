@@ -172,75 +172,103 @@ final class Monitor
 
     /**
      * The scheduled check (cron, e.g. every 15 minutes). Returns lines describing what it did.
+     *
+     * The time is recorded first: it means "the scheduled check is running" (the
+     * alert for a stopped cron reads it). Each step is separate — one that fails
+     * is logged (scheduled_step_failed, in Monitoreo → Errores) and the rest still
+     * run, so a single problem never stops the alerts and automations.
      * @return list<string>
      */
     public function run(): array
     {
-        $out = [];
-        $checks = Health::checks($this->app, true);
-        $this->reportHealth($checks);
-        $failed = array_keys(array_filter($checks, fn ($c) => !$c['ok'] && empty($c['optional'])));
-        $out[] = $failed ? 'Health: DEGRADED (' . implode(', ', $failed) . ')' : 'Health: ok';
-        [$ms, $status] = $this->measureHome();
-        $out[] = 'Home page: ' . ($ms !== null ? "HTTP {$status} in {$ms} ms" : 'not reachable from the server (not counted)');
-        // Each run counts toward the monthly report's availability figure.
-        $this->app->db()->run('INSERT INTO monitor_runs (created_at, ok, failed, response_ms, http_status) VALUES (?, ?, ?, ?, ?)', [time(), $failed ? 0 : 1, implode(',', $failed), $ms, $status]);
-        if (random_int(1, 20) === 1) {
-            $this->app->db()->run('DELETE FROM monitor_runs WHERE created_at < ?', [time() - 400 * 86400]);
-        }
-
-        $minFree = $this->app->config->int('DISK_WARN_MB', 500, 10, 1_000_000) * 1024 * 1024;
-        $free = @disk_free_space($this->app->storage());
-        if ($free !== false && $free < $minFree && !$this->recentlyLogged('disk_space_low', '', 86400)) {
-            $this->app->logger()->warning('disk_space_low', ['message' => 'Free disk space: ' . round($free / 1048576) . ' MB']);
-        }
-        $out[] = 'Disk free: ' . ($free === false ? 'unknown' : round($free / 1048576) . ' MB');
-
-        $inSync = $this->siteInSync();
-        if (!$inSync && !$this->recentlyLogged('publish_drift_detected', 'Live pages differ from the saved content', 86400)) {
-            $this->app->logger()->warning('publish_drift_detected', ['message' => 'Live pages differ from the saved content']);
-        }
-        $out[] = 'Published pages: ' . ($inSync ? 'in sync' : 'DIFFERENT from saved content');
-
-        $reports = new Reports($this->app);
-        $delivered = 0;
-        foreach ($this->app->db()->all("SELECT id FROM support_reports WHERE email_status <> 'sent' AND created_at > ?", [time() - 7 * 86400]) as $r) {
-            $delivered += $reports->deliver((int) $r['id']) ? 1 : 0;
-        }
-        $out[] = "Pending support reports delivered: {$delivered}";
-        $out[] = 'Failed alerts re-sent: ' . $this->app->alerts()->retryFailed();
-        $out[] = 'Old error-log entries removed: ' . $this->app->errors()->prune();
-        $report = $this->app->siteReport();
-        $until = $report->refreshCertificate();
-        $out[] = 'HTTPS certificate: ' . ($until ? 'valid until ' . date('Y-m-d', $until) : 'not checked (needs a public https APP_URL)');
-        $out[] = 'Google PageSpeed: ' . $this->app->pageSpeed()->refreshIfStale();
-        try {
-            $out[] = 'Off-site backup: ' . $this->app->offsiteBackup()->runIfDue();
-        } catch (\Throwable $e) {
-            $out[] = 'Off-site backup: failed';
-        }
-        try {
-            $out[] = 'Domain and e-mail DNS: ' . $this->app->domainHealth()->refreshIfStale();
-        } catch (\Throwable $e) {
-            $this->app->logger()->warning('domain_check_failed', ['type' => get_class($e)]);
-            $out[] = 'Domain and e-mail DNS: failed';
-        }
-        try {
-            $out[] = 'Resolved tickets closed after ' . Tickets::AUTO_CLOSE_DAYS . ' days: ' . (new Tickets($this->app))->autoClose();
-            $out[] = 'Leads past the retention period removed: ' . $this->app->leads()->purge();
-            $this->app->analytics()->purge();
-        } catch (\Throwable $e) {
-            $this->app->logger()->warning('housekeeping_failed', ['type' => get_class($e)]);
-            $out[] = 'Tickets / leads housekeeping: failed';
-        }
-        $out[] = 'Monthly report reminder: ' . ($report->maybeRemind() ? 'sent to the owner' : 'not needed');
         $this->app->settings()->set('monitor_last_run', (string) time());
-        foreach ($this->app->watchdog()->run() as $line) {
-            $out[] = 'Alert ' . $line;
-        }
-        foreach ($this->app->automations()->run() as $line) {
-            $out[] = 'Automation ' . $line;
-        }
+        $out = [];
+        $step = function (string $name, callable $fn) use (&$out): void {
+            try {
+                array_push($out, ...(array) $fn());
+            } catch (\Throwable $e) {
+                $this->app->logger()->error('scheduled_step_failed', ['step' => $name, 'type' => get_class($e), 'message' => $e->getMessage()]);
+                $out[] = "{$name}: failed";
+            }
+        };
+        $step('Health', function () {
+            $checks = Health::checks($this->app, true);
+            $this->reportHealth($checks);
+            $failed = array_keys(array_filter($checks, fn ($c) => !$c['ok'] && empty($c['optional'])));
+            [$ms, $status] = $this->measureHome();
+            // Each run counts toward the monthly report's availability figure.
+            $this->app->db()->run('INSERT INTO monitor_runs (created_at, ok, failed, response_ms, http_status) VALUES (?, ?, ?, ?, ?)', [time(), $failed ? 0 : 1, implode(',', $failed), $ms, $status]);
+            if (random_int(1, 20) === 1) {
+                $this->app->db()->run('DELETE FROM monitor_runs WHERE created_at < ?', [time() - 400 * 86400]);
+            }
+            return [
+                $failed ? 'Health: DEGRADED (' . implode(', ', $failed) . ')' : 'Health: ok',
+                'Home page: ' . ($ms !== null ? "HTTP {$status} in {$ms} ms" : 'not reachable from the server (not counted)'),
+            ];
+        });
+        $step('Disk free', function () {
+            $minFree = $this->app->config->int('DISK_WARN_MB', 500, 10, 1_000_000) * 1024 * 1024;
+            $free = @disk_free_space($this->app->storage());
+            if ($free !== false && $free < $minFree && !$this->recentlyLogged('disk_space_low', '', 86400)) {
+                $this->app->logger()->warning('disk_space_low', ['message' => 'Free disk space: ' . round($free / 1048576) . ' MB']);
+            }
+            return 'Disk free: ' . ($free === false ? 'unknown' : round($free / 1048576) . ' MB');
+        });
+        $step('Published pages', function () {
+            $inSync = $this->siteInSync();
+            if (!$inSync && !$this->recentlyLogged('publish_drift_detected', 'Live pages differ from the saved content', 86400)) {
+                $this->app->logger()->warning('publish_drift_detected', ['message' => 'Live pages differ from the saved content']);
+            }
+            return 'Published pages: ' . ($inSync ? 'in sync' : 'DIFFERENT from saved content');
+        });
+        $step('Pending support reports delivered', function () {
+            $reports = new Reports($this->app);
+            $delivered = 0;
+            foreach ($this->app->db()->all("SELECT id FROM support_reports WHERE email_status <> 'sent' AND created_at > ?", [time() - 7 * 86400]) as $r) {
+                $delivered += $reports->deliver((int) $r['id']) ? 1 : 0;
+            }
+            return "Pending support reports delivered: {$delivered}";
+        });
+        $step('Failed alerts re-sent', fn () => 'Failed alerts re-sent: ' . $this->app->alerts()->retryFailed());
+        $step('Old error-log entries removed', fn () => 'Old error-log entries removed: ' . $this->app->errors()->prune());
+        $step('HTTPS certificate', function () {
+            $until = $this->app->siteReport()->refreshCertificate();
+            return 'HTTPS certificate: ' . ($until ? 'valid until ' . date('Y-m-d', $until) : 'not checked (needs a public https APP_URL)');
+        });
+        $step('Google PageSpeed', fn () => 'Google PageSpeed: ' . $this->app->pageSpeed()->refreshIfStale());
+        $step('Off-site backup', function () {
+            try {
+                return 'Off-site backup: ' . $this->app->offsiteBackup()->runIfDue();
+            } catch (\Throwable $e) {
+                return 'Off-site backup: failed'; // its own alert reports it (offsite_backup)
+            }
+        });
+        $step('Domain and e-mail DNS', function () {
+            try {
+                return 'Domain and e-mail DNS: ' . $this->app->domainHealth()->refreshIfStale();
+            } catch (\Throwable $e) {
+                $this->app->logger()->warning('domain_check_failed', ['type' => get_class($e)]);
+                return 'Domain and e-mail DNS: failed';
+            }
+        });
+        $step('Tickets / leads housekeeping', function () {
+            try {
+                $lines = ['Resolved tickets closed after ' . Tickets::AUTO_CLOSE_DAYS . ' days: ' . (new Tickets($this->app))->autoClose(),
+                    'Leads past the retention period removed: ' . $this->app->leads()->purge()];
+                $this->app->analytics()->purge();
+                return $lines;
+            } catch (\Throwable $e) {
+                $this->app->logger()->warning('housekeeping_failed', ['type' => get_class($e)]);
+                return 'Tickets / leads housekeeping: failed';
+            }
+        });
+        $step('Monthly report reminder', fn () => 'Monthly report reminder: ' . ($this->app->siteReport()->maybeRemind() ? 'sent to the owner' : 'not needed'));
+        $step('Alerts', fn () => array_map(fn ($line) => 'Alert ' . $line, $this->app->watchdog()->run()));
+        $step('Automations', fn () => array_map(fn ($line) => 'Automation ' . $line, $this->app->automations()->run()));
+        $step('Cron log', function () {
+            (new Scheduler($this->app))->trimLog();
+            return [];
+        });
         return $out;
     }
 
