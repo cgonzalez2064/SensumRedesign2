@@ -597,6 +597,17 @@ return [
     'sr.t.sec.pending' => 'Pendientes técnicos',
     // Welcome e-mail (account activated) and access names used in e-mails
     'welcome.subject' => 'Tu cuenta del Administrador de contenido está lista',
+    // «Avisos al equipo» (Announcements): the panel's «Novedades» by e-mail.
+    'announce.subject' => 'Novedades en el Administrador de contenido',
+    'announce.tag' => 'Novedades',
+    'announce.title' => 'Novedades para ti, {name}',
+    'announce.intro' => 'Agregamos al Administrador de contenido de Sensum Construcciones cosas que puedes usar. Así funcionan:',
+    'announce.from' => 'Mensaje de {owner}',
+    'announce.how' => 'Ver cómo funciona',
+    'announce.button' => 'Entrar al panel',
+    'announce.footer' => 'Te escribimos porque tienes una cuenta en el Administrador de contenido de Sensum Construcciones; solo incluimos lo que puedes usar con tu rol. ¿Dudas? En el panel, usa «Solicitar soporte».',
+    'announce.testNote' => 'Esto es una prueba: así lo verá el equipo. Cada persona recibe solo las novedades que puede usar.',
+    'announce.testTag' => 'Prueba',
     'welcome.tag' => 'Bienvenida',
     'welcome.preheader' => 'Ya puedes entrar al panel. Esto es lo que puedes hacer y cómo pedir ayuda.',
     'welcome.badge' => 'Cuenta activa',

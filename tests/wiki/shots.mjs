@@ -87,7 +87,7 @@ for (let i = 0; i < 30 * 48; i++) {
 s.sql(`INSERT INTO monitor_runs (created_at, ok, failed, response_ms, http_status) VALUES ${runs.join(', ')}`);
 s.sql(`INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('monitor_last_run', '${now - 600}', ${now})`);
 s.sql(`INSERT INTO access_requests (user_id, permissions, message, created_at) VALUES (${id('editor')}, 'leads,stats', 'Para dar seguimiento a los mensajes de la campaña de remodelaciones.', ${now - 2 * H})`);
-s.sql(`UPDATE users SET onboarded_at = ${now}, last_login_at = ${now - D}, theme = 'system'`);
+s.sql(`UPDATE users SET onboarded_at = ${now}, last_login_at = ${now - D}, theme = 'system', created_at = 1700000000`); // older than every «Novedad»
 s.cli(['publish']);
 
 // ------------------------------------------------------------------ capture
@@ -264,9 +264,10 @@ for (const lang of LANGS) {
         await c.close();
       }
       // The owner account.
-      if (want('seguridad', 'monitoreo')) {
+      if (want('seguridad', 'monitoreo', 'avisos')) {
         const c = await context(lang, theme, device);
         const page = await signIn(c, 'owner');
+        await step('avisos', v, async () => { await go(page, 'avisos', 1500); await page.locator('.announce-people li').first().waitFor(); await settle(page, 400); await shot(page, 'avisos', v); });
         await step('seguridad', v, async () => { await go(page, 'seguridad', 1200); await shot(page, 'seguridad', v); });
         await step('monitoreo', v, async () => { await go(page, 'monitoreo', 1800); await shot(page, 'monitoreo', v); });
         await c.close();

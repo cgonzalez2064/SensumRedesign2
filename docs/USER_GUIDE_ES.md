@@ -748,3 +748,27 @@ El panel es el mismo en cualquier pantalla; en las pequeñas se acomoda así:
 * **Usuarios:** por debajo de 1100 px de ancho (tabletas y laptops pequeñas) la lista es
   una tarjeta por persona; en pantallas más anchas, una tabla con cada correo completo.
 * **Novedades:** el avance («1 de 5») está bajo el título, siempre a la vista.
+
+## 25. Para la cuenta propietaria: Avisos al equipo
+
+Cuando el panel recibe funciones nuevas, cada persona las ve una vez al entrar (las
+**Novedades** de la wiki). Con **Administración → Avisos al equipo** además se las
+cuentas por correo:
+
+1. Después de cada actualización, **Inicio** muestra «N novedades que el equipo aún no
+   recibió por correo» con **Avisar al equipo**.
+2. Marca las novedades (vienen marcadas las que todavía no enviaste a todos). Cada una
+   dice para quién es y cuántas personas ya la vieron en el panel o la recibieron por correo.
+3. Opcional: escribe un **mensaje** (hasta 600 caracteres); aparece arriba, con tu nombre.
+4. **¿Quién lo recibe?** muestra cada persona, cuántas novedades le llegan y en qué idioma.
+   Puedes limitarlo a **quienes no la han visto en el panel** o **incluir a quienes ya la
+   recibieron por correo**.
+5. **Enviarme una prueba** te manda el correo a ti (marcado «Prueba»); luego **Enviar a N
+   personas** → **Enviar aviso**.
+
+Cada persona activa recibe un solo correo, en su idioma, con **solo** las novedades que
+puede usar (la misma regla del panel) y un enlace «Ver cómo funciona» a la wiki. Nadie
+recibe dos veces la misma novedad; si un correo falla, vuelve a enviar y solo le llega a
+quien falta. No lo reciben la cuenta propietaria, las cuentas desactivadas ni quien se unió
+después de la novedad. Cada envío queda en **Envíos anteriores** y en **Actividad**.
+Necesita el correo del panel configurado (**Correo**).

@@ -80,6 +80,19 @@ export async function render({ main, session, isOwner, can }) {
       quick(data.site.url + '/', 'box-arrow-up-right', 'site', true),
       askable(user).length ? quick('#/secciones', 'plus-lg', 'more', false, 'quick-more') : null));
 
+    // Owner, after an update: «Novedades» the team hasn't had by e-mail yet → «Avisos al equipo».
+    if (user.owner && !session.viewAs) {
+      const slot = h('div');
+      body.append(slot);
+      api.get('/announcements').then((a) => {
+        const pending = a.news.filter((n) => n.eligible > n.emailed).length;
+        if (!pending || !slot.isConnected) return;
+        slot.replaceWith(h('section', { class: 'card announce-nudge', 'aria-labelledby': 'nudge-t' },
+          cardHead({ id: 'nudge-t', icon: 'bell', tone: 'warn', title: tp('dashboard.announcePending', pending), lead: t('dashboard.announceLead') }),
+          h('div', { class: 'row' }, h('a', { class: 'btn btn-primary btn-sm', href: '#/avisos' }, icon('send'), t('dashboard.announceOpen')))));
+      }).catch(() => {});
+    }
+
     // Website status.
     const healthy = data.health.status === 'ok';
     const statusCard = h('section', { class: 'card', 'aria-labelledby': 'status-title' },

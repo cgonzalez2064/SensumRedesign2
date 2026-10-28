@@ -35,6 +35,7 @@ const V = {
   translation: lazy(() => import('./views/translation.js')),
   activity: lazy(() => import('./views/activity.js')),
   sections: lazy(() => import('./views/sections.js')),
+  announcements: lazy(() => import('./views/announcements.js')),
 };
 const loadAccessRequest = lazy(() => import('./accessrequest.js'));
 const loadNews = lazy(() => import('./news.js'));
@@ -76,6 +77,7 @@ const PRIVATE = [
   { re: /^\/(wiki|ayuda)$/, mod: V.wiki, fn: 'home', nav: 'wiki' },
   { re: /^\/wiki\/([a-z0-9-]{1,60})$/, mod: V.wiki, fn: 'article', nav: 'wiki' },
   { re: /^\/secciones$/, mod: V.sections, fn: 'render', nav: 'moreSections' },
+  { re: /^\/avisos$/, mod: V.announcements, fn: 'render', nav: 'announcements', owner: true },
 ];
 
 const currentPath = () => {
@@ -367,6 +369,7 @@ function renderShell(activeNav, force = false) {
         can(user, 'site') && !can(user, 'users') ? navLink('/actividad', 'activity', 'clock-history', active) : null] : null,
       !user.owner && can(user, 'users') ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active), navLink('/actividad', 'activity', 'clock-history', active)] : null,
       user.owner ? [h('div', { class: 'nav-section', text: t('nav.groupAdmin') }), navLink('/usuarios', 'users', 'people', active), navLink('/actividad', 'activity', 'clock-history', active),
+        navLink('/avisos', 'announcements', 'bell', active),
         navLink('/monitoreo', 'monitor', 'activity', active), navLink('/informe', 'siteReport', 'bar-chart', active),
         navLink('/correo', 'email', 'envelope', active), navLink('/traduccion', 'translation', 'translate', active), navLink('/seguridad', 'security', 'shield-lock', active)] : null,
       // The menu lists only what this account can open; «Más secciones» shows the rest, ready to ask for.

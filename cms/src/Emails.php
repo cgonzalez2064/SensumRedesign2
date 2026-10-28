@@ -118,6 +118,55 @@ final class Emails
         return ['to' => (string) $user['email'], 'subject' => $s['welcome.subject'], 'text' => $text, 'html' => $layout['html'], 'embedded' => $layout['embedded']];
     }
 
+    /**
+     * «Avisos al equipo» (Announcements): the panel's «Novedades» this person can
+     * use, each with what it is, what they can do and a link to its wiki article,
+     * plus the owner's optional words. In the person's language.
+     *
+     * @param list<array{title:string,summary:string,points:list<string>,link:string}> $items
+     * @return array{to:string,subject:string,text:string,html:string,embedded:list<array{path:string,cid:string,name:string,mime:string}>}
+     */
+    public function announcement(array $user, array $items, string $message, string $ownerName, bool $test = false): array
+    {
+        $lang = ($user['lang'] ?? 'es') === 'en' ? 'en' : 'es';
+        $s = $this->strings($lang);
+        $e = fn (string $v) => self::esc($v);
+        $first = explode(' ', trim((string) $user['name']))[0] ?: (string) $user['name'];
+        $f = fn (string $key, array $vars = []) => self::fill($s[$key], $vars + ['name' => $first, 'owner' => $ownerName, 'n' => (string) count($items)]);
+        $cards = '';
+        $text = '';
+        foreach ($items as $it) {
+            $points = '';
+            foreach ($it['points'] as $p) {
+                $points .= '<tr><td valign="top" width="22" style="padding:3px 0;color:#16a34a;font:700 14px/1.45 Arial,Helvetica,sans-serif">&#10003;</td>'
+                    . '<td style="padding:3px 0;font-size:14px;line-height:1.45;color:#2b2b31">' . $e($p) . '</td></tr>';
+            }
+            $cards .= '<div style="margin:0 0 14px;padding:16px 18px;border:1px solid #ececf0;border-radius:14px;background:#ffffff">'
+                . '<div style="margin:0 0 4px;font-size:17px;font-weight:800;line-height:1.35;color:#1c1c1c">' . $e($it['title']) . '</div>'
+                . ($it['summary'] !== '' ? '<div style="margin:0 0 8px;font-size:14px;line-height:1.5;color:#5c5c66">' . $e($it['summary']) . '</div>' : '')
+                . ($points !== '' ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:2px 0 8px">' . $points . '</table>' : '')
+                . '<a href="' . $e($it['link']) . '" style="font-size:14px;font-weight:700;color:#c2410c;text-decoration:none">' . $e($s['announce.how']) . ' &rarr;</a></div>';
+            $text .= '* ' . $it['title'] . ($it['summary'] !== '' ? "\n  " . $it['summary'] : '')
+                . implode('', array_map(fn ($p) => "\n  - " . $p, $it['points'])) . "\n  " . $s['announce.how'] . ': ' . $it['link'] . "\n\n";
+        }
+        $note = $message !== ''
+            ? '<div style="margin:0 0 18px;padding:14px 16px;background:#fff8f1;border-left:4px solid #f6740a;border-radius:10px">'
+                . '<div style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9a3412;font-family:Arial,Helvetica,sans-serif">' . $e($f('announce.from')) . '</div>'
+                . '<div style="font-size:14px;line-height:1.55;color:#2b2b31">' . nl2br($e($message), false) . '</div></div>'
+            : '';
+        $link = $this->app->config->adminUrl() . '/';
+        $body = ($test ? '<p style="margin:0 0 14px;padding:8px 12px;background:#eef2ff;border-radius:8px;font-size:13px;color:#3730a3">' . $e($s['announce.testNote']) . '</p>' : '')
+            . '<h1 style="margin:0 0 8px;font-size:23px;line-height:1.3;color:#1c1c1c">' . $e($f('announce.title')) . '</h1>'
+            . '<p style="margin:0 0 18px;color:#2b2b31">' . $e($f('announce.intro')) . '</p>'
+            . $note . $cards
+            . self::cta($s['announce.button'], $link);
+        $layout = $this->branded($lang, $s['announce.tag'], $items[0]['title'] ?? '', $body, $e($f('announce.footer')));
+        $plain = ($test ? $s['announce.testNote'] . "\n\n" : '') . $f('announce.title') . "\n\n" . $f('announce.intro') . "\n\n"
+            . ($message !== '' ? $f('announce.from') . ":\n" . $message . "\n\n" : '') . $text
+            . $s['announce.button'] . ': ' . $link . "\n\n— " . $f('announce.footer') . "\n";
+        return ['to' => (string) $user['email'], 'subject' => ($test ? '[' . $s['announce.testTag'] . '] ' : '') . $f('announce.subject'), 'text' => $plain, 'html' => $layout['html'], 'embedded' => $layout['embedded']];
+    }
+
     public function passwordReset(array $user, string $token): array
     {
         $minutes = (string) $this->app->config->int('RESET_TTL_MINUTES', 60, 10, 1440);

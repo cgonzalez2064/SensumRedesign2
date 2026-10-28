@@ -1134,6 +1134,11 @@ La base de datos se actualiza sola (migraciones `017_roles` y `018_device_reset`
   largos:** cada texto conserva su largo recomendado y ahora admite más (párrafos el
   doble, títulos la mitad más, etiquetas un 30 %); el editor avisa al pasar lo
   recomendado. Los textos publicados no cambian. No hay nada que configurar.
+* **Avisos al equipo** (migración `021_announcements`, se aplica sola): en
+  **Administración → Avisos al equipo** la cuenta propietaria envía por correo las
+  Novedades de cada actualización; cada persona recibe solo lo que puede usar. Solo
+  necesita el correo del panel funcionando (`mail:test`). Después de actualizar,
+  Inicio te recordará las novedades que el equipo todavía no recibió por correo.
 
 **Volver atrás de esta versión**, de menos a más:
 1. Solo los roles: `php ~/sensum-cms/bin/console roles:rollback` devuelve a cada cuenta

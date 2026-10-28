@@ -67,6 +67,11 @@
       "es": { "title": "El panel, más cómodo", "summary": "Inicio te habla según tu rol y el celular es más fácil de usar.",
         "points": ["Inicio y sus primeros pasos muestran lo que haces tú.", "En el celular: botones más grandes, los filtros en un solo botón y los proyectos plegados.", "Al cerrar los primeros pasos, ya no aparecen en ningún dispositivo."] },
       "en": { "title": "A more comfortable panel", "summary": "Home speaks to your role and the panel is easier to use on a phone.",
-        "points": ["Home and its first steps show what you do.", "On a phone: bigger buttons, the filters behind one button and the projects folded.", "Once you close the first steps, they don't show again on any device."] } }
+        "points": ["Home and its first steps show what you do.", "On a phone: bigger buttons, the filters behind one button and the projects folded.", "Once you close the first steps, they don't show again on any device."] } },
+    { "id": "2026-10-avisos", "date": "2026-10-27", "perms": [], "owner": true, "article": "avisos-al-equipo", "shot": "avisos",
+      "es": { "title": "Avisos al equipo", "summary": "Cuéntale al equipo por correo lo nuevo del panel: cada persona recibe solo lo que puede usar.",
+        "points": ["Elige las novedades y, si quieres, escribe un mensaje.", "Mira quién lo recibe y envíate una prueba.", "Nadie recibe dos veces la misma novedad."] },
+      "en": { "title": "Team announcements", "summary": "Tell the team by e-mail what's new in the panel: each person gets only what they can use.",
+        "points": ["Choose the updates and, if you want, write a message.", "See who gets it and send yourself a test.", "Nobody gets the same update twice."] } }
   ]
 }

@@ -144,6 +144,11 @@ final class Kernel
         ['POST', '/api/account/2fa/forget-devices', AccountController::class, 'forgetDevices', 'user'],
         ['POST', '/api/account/2fa/remove-devices', AccountController::class, 'removeDevices', 'user'],
         ['PUT', '/api/security/accounts', SecurityController::class, 'saveAccounts', 'owner'],
+        // «Avisos al equipo»: the panel's «Novedades» by e-mail (Announcements).
+        ['GET', '/api/announcements', AnnouncementsController::class, 'index', 'owner'],
+        ['POST', '/api/announcements/recipients', AnnouncementsController::class, 'recipients', 'owner'],
+        ['POST', '/api/announcements/test', AnnouncementsController::class, 'test', 'owner'],
+        ['POST', '/api/announcements/send', AnnouncementsController::class, 'send', 'owner'],
         ['PUT', '/api/leads/confirmation', LeadsController::class, 'confirmation', 'user'],
     ];
 

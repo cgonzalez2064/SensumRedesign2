@@ -462,3 +462,12 @@ Replaces the owner-only rule of §9: the owner and accounts with the new permiss
 | Longer texts | Each field keeps its recommended length (`rec`) and gets a larger `max` (labels 1.3×, titles 1.5×, paragraphs 2×). `max` is still enforced server-side (`too_long`), the same validator refuses `<`/`>`, and every text is escaped when published. Every field filled to the new maximum keeps the public site without overflow or spilling text at 320–1440 px. | `05-content`, `public.spec` (content stress test) |
 | «Primeros pasos» per account | `PUT /api/account/intro` (signed-in, CSRF, refused while «Ver como») only sets the caller's own `intro_done_at`; nothing else is accepted. | `22-welcome`, `ux-review.spec` |
 | Interface only | Role-aware Inicio texts, «Filtros» on phones, folding projects, Usuarios cards, 44 px touch targets, «Soporte» as the page name, keyboard-reachable wiki tables and named landmarks change only how the panel shows what each account could already see. | `ux-review.spec`, `help-center.spec`, axe in every browser spec |
+
+## 26. Change review — «Avisos al equipo» (October 2026)
+
+| Area | Design | Verified by |
+|---|---|---|
+| Who can send | Owner-only routes (401 signed out, 403 for every other account, including administrators); never available while «Ver como». | `32-announcements` |
+| Who receives | Active accounts only, never the owner; each gets only the «Novedades» its own sections allow (`Wiki::forAccount`, the rule the panel uses), only if it existed when the item shipped; ids must be known and not owner-only. Recipients are computed on the server at send time, never taken from the request. | `32-announcements`, `announcements.spec` |
+| Content | The owner's message is plain text (control characters removed, ≤ 600 characters) and escaped in the HTML e-mail; item texts come from `wiki.json`; links are built from `ADMIN_URL`, never from request data. | `32-announcements` (`<b>` arrives escaped) |
+| Abuse and duplicates | 10 tests and 6 sends an hour per owner; `news_emailed` keeps anyone from getting the same item twice unless the owner explicitly asks; each send is logged (`announcements`, Actividad). | `32-announcements` |

@@ -28,7 +28,8 @@ final class ActivityController extends Controller
             'two_factor_enabled', 'two_factor_disabled', 'two_factor_recovery_codes', 'trusted_devices_forgotten', 'security_policy_changed',
             'view_as_started', 'view_as_switched', 'view_as_ended', 'setup_completed', 'setup_denied'],
         'settings' => ['email_settings_changed', 'email_test', 'translation_settings_changed', 'alert_rules_changed', 'alert_test', 'backup_settings_changed',
-            'backup_downloaded', 'integrity_accepted', 'site_report_settings', 'stats_settings_changed', 'ticket_settings_changed'],
+            'backup_downloaded', 'integrity_accepted', 'site_report_settings', 'stats_settings_changed', 'ticket_settings_changed',
+            'team_announced', 'team_announcement_test'],
         'support' => ['report_submitted', 'report_email_failed', 'ticket_status', 'ticket_edited', 'ticket_rated'],
     ];
     /** Actions about one person (their id is the target). */

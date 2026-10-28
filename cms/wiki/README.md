@@ -19,6 +19,9 @@ archivos están fuera de `public_html` y se sirven por la API (`WikiController`)
    `"canAsk": true` la limita a quienes todavía pueden pedir alguna sección (como
    «Más secciones» en el menú: ni el propietario ni un Administrador).
    La verán una vez las cuentas que la pueden usar y ya existían ese día.
+   `"owner": true` la muestra solo a la cuenta propietaria. Después de publicar la
+   actualización, la cuenta propietaria la envía por correo desde **Avisos al equipo**
+   (cada persona recibe solo lo que puede usar, una sola vez).
 3. **Capturas:** `npm --prefix tests run wiki:shots` (todas) o
    `npm --prefix tests run wiki:shots -- '^estadisticas'` (algunas). Después,
    `-- '^wiki$'` para que la portada de la wiki muestre las capturas nuevas.

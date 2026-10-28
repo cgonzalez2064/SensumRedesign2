@@ -717,3 +717,27 @@ The panel is the same on any screen; on small ones it adapts like this:
 * **Users:** below 1100 px wide (tablets and small laptops) the list is one card per
   person; on wider screens, a table with every e-mail in full.
 * **What's new:** the progress ("1 of 5") sits under the title, always in view.
+
+## 25. For the owner account: Team announcements
+
+When the panel gets new features, each person sees them once when they sign in (the
+wiki's **What's new** items). With **Administration → Team announcements** you also tell
+them by e-mail:
+
+1. After each update, **Home** shows "N updates the team hasn't had by e-mail yet" with
+   **Tell the team**.
+2. Tick the updates (the ones you haven't sent to everyone yet come ticked). Each says who
+   it's for and how many people already saw it in the panel or got it by e-mail.
+3. Optional: write a **message** (up to 600 characters); it appears at the top, with your name.
+4. **Who gets it?** lists each person, how many updates they get and in which language.
+   You can limit it to **whoever hasn't seen it in the panel** or **include whoever already
+   got it by e-mail**.
+5. **Send me a test** e-mails it to you (marked "Test"); then **Send to N people** →
+   **Send announcement**.
+
+Each active person gets one e-mail, in their language, with **only** the updates they can
+use (the panel's own rule) and a "See how it works" link to the wiki. Nobody gets the same
+update twice; if an e-mail fails, send again and it only goes to whoever is missing. The
+owner account, disabled accounts and whoever joined after the update don't get it. Each
+send stays under **Earlier sends** and in **Activity**. It needs the panel's e-mail set up
+(**E-mail**).

@@ -597,6 +597,17 @@ return [
     'sr.t.sec.pending' => 'Technical to-dos',
     // Welcome e-mail (account activated) and access names used in e-mails
     'welcome.subject' => 'Your Content Manager account is ready',
+    // «Avisos al equipo» (Announcements): the panel's «Novedades» by e-mail.
+    'announce.subject' => 'What\'s new in the Content Manager',
+    'announce.tag' => 'What\'s new',
+    'announce.title' => 'What\'s new for you, {name}',
+    'announce.intro' => 'We added things you can use to the Sensum Construcciones Content Manager. Here is how they work:',
+    'announce.from' => 'A message from {owner}',
+    'announce.how' => 'See how it works',
+    'announce.button' => 'Open the panel',
+    'announce.footer' => 'You get this because you have an account in the Sensum Construcciones Content Manager; we only include what your role can use. Questions? In the panel, use "Request support".',
+    'announce.testNote' => 'This is a test: this is how the team will see it. Each person only gets the updates they can use.',
+    'announce.testTag' => 'Test',
     'welcome.tag' => 'Welcome',
     'welcome.preheader' => 'You can now sign in to the panel. Here is what you can do and how to get help.',
     'welcome.badge' => 'Account active',

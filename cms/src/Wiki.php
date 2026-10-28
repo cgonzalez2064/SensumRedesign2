@@ -20,7 +20,8 @@ use Sensum\Cms\Http\ApiError;
  * it). Articles about a section the account can't open are still readable,
  * marked as not included in its role. A «Novedad» reaches, once, the accounts
  * that can use it and existed when it shipped (`canAsk`: only those with a
- * section they could still ask for, like the «Más secciones» menu item).
+ * section they could still ask for, like the «Más secciones» menu item;
+ * `owner`: only the owner). The owner can also e-mail them (Announcements).
  */
 final class Wiki
 {
@@ -162,14 +163,7 @@ final class Wiki
         $seen = array_flip(array_column($this->app->db()->all('SELECT news_id FROM wiki_news_seen WHERE user_id = ?', [$uid]), 'news_id'));
         $out = [];
         foreach ($this->meta()['news'] as $n) {
-            $date = strtotime((string) ($n['date'] ?? '') . ' 23:59:59');
-            if (!is_array($n[$lang] ?? null) || $date === false || $date < $created) {
-                continue;
-            }
-            if (!empty($n['canAsk']) && !$this->canAsk($session)) {
-                continue;
-            }
-            if (!$this->allows($session, (array) ($n['perms'] ?? []))) {
+            if (!is_array($n[$lang] ?? null) || !$this->forAccount($n, $session, $created)) {
                 continue;
             }
             $out[] = [
@@ -185,6 +179,26 @@ final class Wiki
         }
         usort($out, fn ($a, $b) => strcmp($b['date'], $a['date']));
         return $out;
+    }
+
+    /**
+     * Whether a «Novedad» is for this account (a session or a users row): shipped
+     * once the account existed, about something its sections allow, and within
+     * its `canAsk` / `owner` limits.
+     */
+    public function forAccount(array $n, array $account, int $createdAt): bool
+    {
+        $date = strtotime((string) ($n['date'] ?? '') . ' 23:59:59');
+        if ($date === false || $date < $createdAt) {
+            return false;
+        }
+        if (!empty($n['owner']) && !$this->app->auth()->isOwner($account)) {
+            return false;
+        }
+        if (!empty($n['canAsk']) && !$this->canAsk($account)) {
+            return false;
+        }
+        return $this->allows($account, (array) ($n['perms'] ?? []));
     }
 
     /** @param list<mixed> $ids */
