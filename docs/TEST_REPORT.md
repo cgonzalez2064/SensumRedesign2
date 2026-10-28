@@ -472,6 +472,22 @@ marked text, and «Novedades» shown once to whoever can use each new feature. D
 | Design review | Home, articles, search, the marked-text button, the support dialog, the «Novedades» dialog, light and dark, desktop and phone, checked in the browser; 208 screenshots reviewed by sample |
 | Found and fixed on the way | Three button names in the articles didn't match the panel (caught by the new check). The «Proyecto 1» photo screenshot was empty (no photo on the real site): Fotos now shows «Nosotros». On phones the «Novedades» text scrolled inside the dialog without being focusable (axe): fixed. The same support question sent from each device was refused as a duplicate (correct behaviour): the test now asks a different question per device. On a walk-through of the local panel, an Administrador got the «Más secciones» news although that menu item never shows for them (nothing left to ask for): that news now goes only to accounts with a section they could still ask for (`canAsk`, checked in `31-wiki.test.mjs`) |
 
+## Change — «Avisos al equipo» and the database map (2026-10-27)
+
+The owner e-mails the team the panel's «Novedades» (`Administración → Avisos al equipo`);
+each active person gets one e-mail, in their language, with only the items their sections
+allow and the wiki link, never the same item twice. Design: `SECURITY_AUDIT.md` §26. The
+database map (`tools/plano-bd`) and the technical docs as PDFs (`tools/docs-pdf`) join the
+documentation.
+
+| Check | Result |
+|---|---|
+| API integration (33 files) | **278/278** (+6): `32-announcements` — owner only (401/403 for everyone else, administrators too); the overview counts who can use, saw and got each item; recipients per role (Ventas: statistics and «Más secciones», Editor: only «Más secciones», Administrador: only statistics), never the owner, disabled accounts or people who joined later; the test goes only to the owner, marked «[Prueba]», with the message escaped; one e-mail per person in their language (an English Editor gets English), only their items and links; a second send of the same items is refused (`nobody`) until «again»; history, `news_emailed` and Actividad; owner-only «Novedades». `33-db-map` — every table and migration is described in the map |
+| Browser E2E (3 profiles) | Full run: **202 passed**, 65 skipped by design, 12 failed — 9 owner sign-ins while the test server stopped answering for a few minutes, the wiki contrast check measured before the new theme applied, and the recipients list on iPhone overwritten by a late answer (a real race, fixed: only the latest answer counts). Those 12 again: **12 passed**; `announcements` and `wiki` again on the three devices: **12 passed**. New `announcements.spec.js`: Inicio's reminder, one «Novedad» per device, a message, the test e-mail (Mailpit), the send from the bottom bar on phones, the history, and the e-mail Elena receives with the message and the wiki link |
+| Visual regression (public site) | **22/22** identical |
+| Static analysis | PHPStan: no errors |
+| Design review | Two columns on wide screens (the message, who gets it and «Enviar» stay in view), a bottom bar on phones, light and dark, Spanish and English; 8 wiki screenshots |
+
 ## Change — UX review fixes and longer texts (2026-10-27)
 
 Every screen with each role (owner, Administrador, Editor del sitio web, Ventas y prospectos,

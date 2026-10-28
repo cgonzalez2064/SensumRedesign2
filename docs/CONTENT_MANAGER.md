@@ -304,6 +304,8 @@ Processes, guides and answers inside the panel, for every signed-in account, at
 
 ## 4. Data model (SQLite, `cms/migrations/*.sql`)
 
+**Database map:** `python3 tools/plano-bd/build.py` applies every migration to an empty database and writes `dist/plano-base-de-datos.html` — every table with its columns, rules, indexes and SQL, the relations (and what deleting does), animated walkthroughs of the main processes and the migration timeline (published as a private artifact). After a migration, describe the new tables and the migration in `tools/plano-bd/meta.py`; `33-db-map.test.mjs` fails until you do.
+
 | Table | Purpose |
 |---|---|
 | `users` | e-mail (unique, lower-case), name, permissions (access type), status (invited/active/disabled), Argon2id/bcrypt hash, language, theme, timestamps; encrypted TOTP secret (active and pending), enabled date, last used step (`007_two_factor.sql`) |

@@ -48,7 +48,10 @@ export async function render({ main }) {
     bar.classList.toggle('show', show);
     bar.inert = !show;
   };
+  // Only the latest answer counts: an earlier one arriving late must not overwrite it.
+  let seq = 0;
   const loadPeople = async () => {
+    const mine = ++seq;
     if (!chosen.size) {
       current = [];
       fill(people, h('p', { class: 'muted', text: t('announce.pickOne') }));
@@ -56,8 +59,11 @@ export async function render({ main }) {
       return;
     }
     try {
-      current = (await api.post('/announcements/recipients', { ids: [...chosen], again, unseenOnly })).recipients;
+      const r = await api.post('/announcements/recipients', { ids: [...chosen], again, unseenOnly });
+      if (mine !== seq) return;
+      current = r.recipients;
     } catch (err) {
+      if (mine !== seq) return;
       current = [];
       fill(people, alertBox('bad', null, errorText(err)));
       updateButtons();

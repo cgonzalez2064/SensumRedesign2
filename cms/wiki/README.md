@@ -43,3 +43,8 @@ Nunca HTML: el panel arma todo como texto.
 - `perms: leads, stats`: se lee igual, pero quien no tiene ninguna de esas secciones lo
   ve marcado «No incluido en tu rol» (con «Pedir acceso»).
 - `owner: true`: solo la cuenta propietaria.
+
+## Si el cambio toca la base de datos
+
+Describe las tablas nuevas y la migración en `tools/plano-bd/meta.py` y vuelve a generar el
+plano con `python3 tools/plano-bd/build.py` (la prueba `33-db-map` lo exige).

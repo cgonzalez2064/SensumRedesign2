@@ -1,0 +1,465 @@
+<title>Plano de la base de datos</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a blueprint sheet — the plan (users at the centre, zones around it) beside an inspector; walkthroughs and the migration timeline drive the plan. */
+:root{
+  --bg:#eef2f6; --sheet:#f8fafc; --surface:#ffffff; --ink:#132030; --muted:#5a6b7d; --line:#cdd7e2; --grid:#e1e8ef;
+  --accent:#e8650a; --accent-ink:#a94700; --accent-soft:#fde9d9;
+  --z-acc:#3b6fe0; --z-sys:#64748b; --z-cnt:#15803d; --z-fil:#8a94a3; --z-cli:#d0590a; --z-sup:#8b47d6; --z-sta:#0b86b8; --z-wik:#c0268f;
+  --ok:#15803d; --warn:#b45309;
+  --f-display:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0b1520; --sheet:#0f1c2a; --surface:#132233; --ink:#e4ecf5; --muted:#93a6ba; --line:#253a50; --grid:#152638;
+  --accent:#ff8b2c; --accent-ink:#ffb377; --accent-soft:#3a2412;
+  --z-acc:#7aa2ff; --z-sys:#94a3b8; --z-cnt:#4ade80; --z-fil:#9aa6b6; --z-cli:#ff9a4d; --z-sup:#c49bff; --z-sta:#4cc3f0; --z-wik:#f27cc8;
+  --ok:#4ade80; --warn:#f5b34a; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0b1520; --sheet:#0f1c2a; --surface:#132233; --ink:#e4ecf5; --muted:#93a6ba; --line:#253a50; --grid:#152638;
+  --accent:#ff8b2c; --accent-ink:#ffb377; --accent-soft:#3a2412;
+  --z-acc:#7aa2ff; --z-sys:#94a3b8; --z-cnt:#4ade80; --z-fil:#9aa6b6; --z-cli:#ff9a4d; --z-sup:#c49bff; --z-sta:#4cc3f0; --z-wik:#f27cc8;
+  --ok:#4ade80; --warn:#f5b34a; color-scheme:dark }
+*{ box-sizing:border-box; }
+body{ background:var(--bg); color:var(--ink); font-family:var(--f-body); font-size:15px; line-height:1.55; }
+.wrap{ max-width:1440px; margin:0 auto; padding-block:28px 64px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); display:flex; flex-direction:column; gap:28px; }
+h1,h2,h3{ margin:0; text-wrap:balance; }
+p{ margin:0; }
+.eyebrow{ font-family:var(--f-mono); font-size:.74rem; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-ink); }
+header.top{ display:grid; gap:12px; }
+header.top h1{ font-family:var(--f-display); font-weight:700; font-size:clamp(2.2rem, 5vw, 3.4rem); line-height:1; letter-spacing:.01em; text-transform:uppercase; }
+.lead{ color:var(--muted); max-width:72ch; font-size:1.02rem; }
+.stats{ display:flex; flex-wrap:wrap; gap:0; border:1px solid var(--line); border-radius:var(--r); overflow:hidden; background:var(--surface); width:fit-content; max-width:100%; }
+.stats div{ padding:10px 16px; border-right:1px solid var(--line); display:grid; }
+.stats div:last-child{ border-right:0; }
+.stats b{ font-family:var(--f-display); font-size:1.7rem; line-height:1; font-variant-numeric:tabular-nums; }
+.stats span{ font-size:.78rem; color:var(--muted); }
+
+/* Controls */
+.controls{ display:grid; gap:12px; }
+.row{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.label{ font-family:var(--f-mono); font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-right:4px; }
+.search{ flex:1 1 260px; max-width:420px; display:flex; align-items:center; gap:8px; padding:0 12px; border:1px solid var(--line); border-radius:10px; background:var(--surface); min-height:42px; }
+.search input{ border:0; outline:0; background:transparent; color:var(--ink); font:inherit; width:100%; min-height:40px; }
+.search:focus-within{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+.chip{ display:inline-flex; align-items:center; gap:7px; min-height:36px; padding:4px 12px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:500 .86rem var(--f-body); cursor:pointer; }
+.chip i{ width:10px; height:10px; border-radius:3px; background:var(--c); display:inline-block; }
+.chip[aria-pressed="true"]{ border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
+.chip:focus-visible, button:focus-visible, [tabindex]:focus-visible, input:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+.btn{ display:inline-flex; align-items:center; gap:6px; min-height:38px; padding:6px 14px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 .88rem var(--f-body); cursor:pointer; }
+.btn:hover{ border-color:var(--ink); }
+.btn.primary{ background:var(--accent); border-color:var(--accent); color:#1b0f05; }
+.btn[disabled]{ opacity:.45; cursor:default; }
+.flows .btn[aria-pressed="true"]{ background:var(--accent-soft); border-color:var(--accent); color:var(--accent-ink); }
+.timeline{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.timeline input[type=range]{ flex:1 1 240px; accent-color:var(--accent); min-height:36px; }
+.mono{ font-family:var(--f-mono); }
+
+/* Plan + inspector */
+.plan{ display:grid; grid-template-columns:minmax(0, 1fr) 380px; gap:16px; align-items:start; }
+@media (max-width: 1100px){ .plan{ grid-template-columns:minmax(0, 1fr); } }
+.stage{ position:relative; border:1px solid var(--line); border-radius:var(--r); background:var(--sheet); overflow:hidden; min-width:0; }
+.scroller{ overflow:auto; }
+.stage svg{ display:block; width:100%; min-width:900px; height:auto; }
+.hint{ display:none; font-size:.8rem; color:var(--muted); padding:8px 12px 0; }
+@media (max-width: 900px){ .hint{ display:block; } }
+.caption{ position:absolute; left:12px; right:12px; bottom:12px; padding:12px 14px; border-radius:10px; background:var(--surface); border:1px solid var(--line); box-shadow:0 10px 30px rgba(10,20,35,.18); display:flex; gap:12px; align-items:flex-start; }
+.caption[hidden]{ display:none !important; }
+.caption .step{ font-family:var(--f-display); font-size:1.4rem; line-height:1; color:var(--accent-ink); min-width:3.2ch; font-variant-numeric:tabular-nums; }
+.caption .text{ flex:1; min-width:0; }
+.caption .text strong{ display:block; font-size:.92rem; }
+.caption .text span{ font-size:.88rem; color:var(--muted); }
+.caption .nav{ display:flex; gap:6px; flex:none; }
+.caption .nav .btn{ min-height:34px; padding:4px 10px; }
+
+/* SVG */
+.zone rect{ fill:transparent; stroke:var(--line); stroke-dasharray:5 5; }
+.zone text{ font:600 13px var(--f-mono); letter-spacing:.08em; text-transform:uppercase; fill:var(--muted); }
+.pill{ cursor:pointer; transition:opacity .25s; }
+.pill rect.body{ fill:var(--surface); stroke:var(--line); transition:stroke .2s, fill .2s; }
+.pill rect.stripe{ fill:var(--c); }
+.pill text.name{ font:500 13px var(--f-mono); fill:var(--ink); }
+.pill text.count{ font:500 11px var(--f-mono); fill:var(--muted); }
+.pill.file rect.body{ stroke-dasharray:4 3; fill:transparent; }
+.pill:hover rect.body, .pill:focus-visible rect.body{ stroke:var(--ink); }
+.pill.sel rect.body{ stroke:var(--accent); stroke-width:2; fill:var(--accent-soft); }
+.pill.near rect.body{ stroke:var(--accent); }
+.pill.match rect.body{ stroke:var(--accent); stroke-width:2; }
+.dim .pill:not(.sel):not(.near):not(.match):not(.flow-on){ opacity:.22; }
+.dim .edge:not(.on){ opacity:.12; }
+.pill.future{ opacity:.07 !important; pointer-events:none; }
+.pill.born rect.body{ stroke:var(--ok); stroke-width:2.5; }
+.pill.changed rect.body{ stroke:var(--warn); stroke-width:2.5; }
+.pill.flow-on rect.body{ stroke:var(--accent); stroke-width:2.5; fill:var(--accent-soft); }
+.hub rect.body{ fill:var(--ink); stroke:none; }
+.hub text.name{ font:700 22px var(--f-display); letter-spacing:.06em; fill:var(--bg); }
+.hub text.count{ font:500 12px var(--f-mono); fill:var(--bg); opacity:.75; }
+.hub.sel rect.body, .hub.flow-on rect.body{ fill:var(--accent); }
+.edge{ fill:none; stroke:var(--line); stroke-width:1.4; transition:opacity .25s, stroke .2s; }
+.edge.logical{ stroke-dasharray:3 4; }
+.edge.on{ stroke:var(--accent); stroke-width:2.2; stroke-dasharray:7 6; animation:flow 1.1s linear infinite; }
+@keyframes flow{ to{ stroke-dashoffset:-26; } }
+@keyframes pulse{ 0%{ transform:scale(1); } 40%{ transform:scale(1.035); } 100%{ transform:scale(1); } }
+.pill.flow-on, .pill.born{ transform-box:fill-box; transform-origin:center; animation:pulse .9s ease-out; }
+@media (prefers-reduced-motion: reduce){ .edge.on, .pill.flow-on, .pill.born{ animation:none; } }
+
+/* Inspector */
+.inspector{ position:sticky; top:16px; border:1px solid var(--line); border-radius:var(--r); background:var(--surface); max-height:calc(100vh - 32px); overflow:auto; }
+@media (max-width: 1100px){ .inspector{ position:static; max-height:none; } }
+.inspector .pad{ padding:16px 18px; display:grid; gap:14px; }
+.inspector h2{ font-family:var(--f-mono); font-size:1.15rem; word-break:break-all; }
+.zonetag{ display:inline-flex; align-items:center; gap:6px; font-size:.78rem; color:var(--muted); }
+.zonetag i{ width:9px; height:9px; border-radius:3px; background:var(--c); }
+.meta{ font-size:.82rem; color:var(--muted); }
+.meta .mono{ color:var(--ink); }
+.sec{ display:grid; gap:8px; }
+.sec h3{ font-family:var(--f-mono); font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+.tbl-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:10px; }
+table{ border-collapse:collapse; width:100%; font-size:.82rem; }
+th, td{ text-align:left; padding:6px 9px; border-bottom:1px solid var(--line); vertical-align:top; }
+tr:last-child td{ border-bottom:0; }
+th{ font-family:var(--f-mono); font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600; background:var(--sheet); }
+td.c{ font-family:var(--f-mono); white-space:nowrap; }
+.tag{ display:inline-block; margin:1px 3px 1px 0; padding:0 6px; border-radius:5px; font:600 .68rem var(--f-mono); background:var(--sheet); border:1px solid var(--line); color:var(--muted); white-space:nowrap; }
+.tag.pk{ color:var(--accent-ink); border-color:var(--accent); }
+.tag.fk{ color:var(--z-acc); border-color:currentColor; }
+.link{ background:none; border:0; padding:0; color:var(--accent-ink); font:inherit; text-decoration:underline; cursor:pointer; }
+.rel{ display:grid; gap:6px; }
+.rel li{ font-size:.86rem; }
+ul.plain{ list-style:none; margin:0; padding:0; display:grid; gap:6px; }
+pre{ margin:0; padding:10px 12px; background:var(--sheet); border:1px solid var(--line); border-radius:10px; font:12px/1.5 var(--f-mono); overflow-x:auto; white-space:pre; }
+details summary{ cursor:pointer; font-weight:600; font-size:.88rem; }
+.index{ display:grid; gap:12px; }
+.index .grp{ display:grid; gap:6px; }
+.index .grp b{ font-size:.82rem; display:flex; gap:6px; align-items:center; }
+.index .grp b i{ width:9px; height:9px; border-radius:3px; background:var(--c); }
+.index .grp div{ display:flex; flex-wrap:wrap; gap:6px; }
+.index button{ font:500 .8rem var(--f-mono); padding:5px 9px; border-radius:8px; border:1px solid var(--line); background:var(--sheet); color:var(--ink); cursor:pointer; min-height:32px; }
+.index button:hover{ border-color:var(--ink); }
+
+/* Relations */
+.section{ display:grid; gap:14px; }
+.section h2{ font-family:var(--f-display); font-size:1.9rem; text-transform:uppercase; letter-spacing:.02em; }
+.section > p{ color:var(--muted); max-width:72ch; }
+.rules{ display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap:12px; }
+.rule{ border:1px solid var(--line); border-radius:var(--r); background:var(--surface); padding:14px 16px; display:grid; gap:4px; }
+.rule b{ font-family:var(--f-display); font-size:1.8rem; line-height:1; font-variant-numeric:tabular-nums; }
+.rule span{ font-size:.86rem; color:var(--muted); }
+.effect-cascade{ color:var(--accent-ink); font-weight:600; }
+.effect-null{ color:var(--ok); font-weight:600; }
+.effect-logic{ color:var(--muted); font-weight:600; }
+footer{ color:var(--muted); font-size:.82rem; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Sensum Construcciones · Administrador de contenido</span>
+    <h1>Plano de la base de datos</h1>
+    <p class="lead">Cada tabla del panel, qué guarda y cómo se relaciona con las demás. Toca una tabla para ver sus columnas y reglas, reproduce un recorrido para ver qué tablas usa cada proceso, o mueve la línea de tiempo para ver cómo creció la base con cada versión.</p>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <section class="controls" aria-label="Controles del plano">
+    <div class="row">
+      <label class="search"><span aria-hidden="true">⌕</span><input id="q" type="search" placeholder="Buscar una tabla o columna: email, status, news_id…" aria-label="Buscar una tabla o columna"></label>
+      <div class="row" id="zones" aria-label="Zonas"></div>
+    </div>
+    <div class="row flows" id="flows"><span class="label">Recorridos</span></div>
+    <div class="timeline">
+      <span class="label">Línea de tiempo</span>
+      <button class="btn" id="tl-play" type="button" aria-label="Reproducir la línea de tiempo">▶ Reproducir</button>
+      <input id="tl" type="range" min="0" max="20" value="20" aria-label="Migración">
+      <span class="mono" id="tl-label"></span>
+    </div>
+  </section>
+
+  <div class="plan">
+    <div class="stage" id="stage">
+      <p class="hint">Desliza el plano hacia los lados para verlo completo.</p>
+      <div class="scroller"><svg id="svg" viewBox="0 0 1200 860" role="img" aria-label="Plano de tablas y relaciones"></svg></div>
+      <div class="caption" id="caption" hidden>
+        <span class="step" id="cap-step"></span>
+        <div class="text"><strong id="cap-title"></strong><span id="cap-text"></span></div>
+        <div class="nav"><button class="btn" id="cap-prev" type="button" aria-label="Paso anterior">◀</button><button class="btn" id="cap-play" type="button" aria-label="Pausar">❚❚</button><button class="btn" id="cap-next" type="button" aria-label="Paso siguiente">▶</button><button class="btn" id="cap-close" type="button" aria-label="Cerrar el recorrido">✕</button></div>
+      </div>
+    </div>
+    <aside class="inspector" id="inspector" aria-live="polite"></aside>
+  </div>
+
+  <section class="section" aria-labelledby="rel-t">
+    <h2 id="rel-t">Relaciones y reglas</h2>
+    <p>Qué pasa con los datos relacionados cuando se borra un registro. <span class="effect-cascade">Se borra también</span> (CASCADE) para lo que solo existe por esa cuenta, como sus sesiones; <span class="effect-null">queda sin dueño</span> (SET NULL) para lo que debe conservarse, como la actividad o los prospectos. Las relaciones <span class="effect-logic">lógicas</span> apuntan a archivos o guardan ids como texto: el panel las cuida, la base no.</p>
+    <div class="rules" id="rules"></div>
+    <div class="tbl-wrap"><table id="rel"><thead><tr><th>Tabla</th><th>Columna</th><th>Apunta a</th><th>Al borrar el destino</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <footer>Generado del esquema real: las 21 migraciones aplicadas a una base vacía (más la tabla que crea el propio sistema de migraciones). Sin datos de personas.</footer>
+</div>
+
+<script>
+const DATA = /*DATA*/null;
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const $ = (s) => document.querySelector(s);
+  const el = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(attrs)) { if (v == null || v === false) continue; if (k === 'text') e.textContent = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v); } for (const k of kids.flat()) if (k != null && k !== false) e.append(k); return e; };
+  const sv = (tag, attrs = {}) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) if (v != null) e.setAttribute(k, v); return e; };
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const T = Object.fromEntries(DATA.tables.map((t) => [t.name, t]));
+  const MIG = Object.keys(DATA.migrations);
+  const zoneOf = {};
+  for (const z of DATA.zones) for (const t of z.tables) zoneOf[t] = z;
+  const zoneColor = (z) => `var(--z-${z.id})`;
+  const isFile = (n) => !!DATA.files[n];
+
+  // ---------- stats
+  const nCols = DATA.tables.reduce((a, t) => a + t.columns.length, 0);
+  const nFk = DATA.tables.reduce((a, t) => a + t.fks.length, 0);
+  const nIdx = DATA.tables.reduce((a, t) => a + t.indexes.filter((i) => i.origin === 'c').length, 0);
+  for (const [n, l] of [[DATA.tables.length, 'tablas'], [nCols, 'columnas'], [nFk, 'relaciones'], [DATA.logical.length, 'relaciones lógicas'], [nIdx, 'índices'], [MIG.length, 'migraciones']]) $('#stats').append(el('div', {}, el('b', { text: String(n) }), el('span', { text: l })));
+
+  // ---------- geometry
+  const pos = {};
+  const PH = 32, GAP = 40, HEAD = 46;
+  for (const z of DATA.zones) {
+    z.h = HEAD + z.tables.length * GAP + 6;
+    z.tables.forEach((t, i) => { pos[t] = { x: z.x + 12, y: z.y + HEAD + i * GAP, w: z.w - 24, h: PH, side: z.x < 400 ? 'right' : z.x > 800 ? 'left' : (z.y < 300 ? 'bottom' : 'top') }; });
+  }
+  pos.users = { x: 500, y: 372, w: 200, h: 120, hub: true };
+  const anchor = (n, toward) => {
+    const p = pos[n];
+    if (p.hub) {
+      const s = pos[toward];
+      if (s.side === 'right') return [p.x, p.y + p.h / 2 + (s.y - 400) * 0.06];
+      if (s.side === 'left') return [p.x + p.w, p.y + p.h / 2 + (s.y - 400) * 0.06];
+      if (s.side === 'bottom') return [p.x + p.w / 2 + (s.y - 100) * 0.4, p.y];
+      return [p.x + p.w / 2 + (s.y - 700) * 0.4, p.y + p.h];
+    }
+    if (p.side === 'right') return [p.x + p.w, p.y + p.h / 2];
+    if (p.side === 'left') return [p.x, p.y + p.h / 2];
+    if (p.side === 'bottom') return [p.x + p.w / 2, p.y + p.h];
+    return [p.x + p.w / 2, p.y];
+  };
+  const curve = (a, b, side) => {
+    const [x1, y1] = a, [x2, y2] = b;
+    if (side === 'right' || side === 'left') { const dx = (x2 - x1) * 0.5; return `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`; }
+    const dy = (y2 - y1) * 0.5; return `M${x1},${y1} C${x1},${y1 + dy} ${x2},${y2 - dy} ${x2},${y2}`;
+  };
+  // A relation between two tables in the same zone: a loop out of the side.
+  const loop = (a, b) => { const pa = pos[a], pb = pos[b]; const out = pa.side === 'left' ? -1 : 1; const x = out > 0 ? pa.x + pa.w : pa.x; const y1 = pa.y + pa.h / 2, y2 = pb.y + pb.h / 2; const k = x + out * (28 + Math.abs(y2 - y1) * 0.25); return `M${x},${y1} C${k},${y1} ${k},${y2} ${x},${y2}`; };
+
+  // ---------- edges (one per table pair, listing the columns)
+  const edges = [];
+  const add = (from, to, col, kind, extra) => {
+    let e = edges.find((x) => x.from === from && x.to === to && x.kind === kind);
+    if (!e) { e = { from, to, cols: [], kind, extra }; edges.push(e); }
+    e.cols.push(col);
+  };
+  for (const t of DATA.tables) for (const f of t.fks) add(t.name, f.table, f.col, 'fk', f.onDelete);
+  for (const l of DATA.logical) add(l.from, l.to, l.col, 'logical', l.text);
+
+  // ---------- draw
+  const svg = $('#svg');
+  const defs = sv('defs');
+  const pat = sv('pattern', { id: 'g', width: 24, height: 24, patternUnits: 'userSpaceOnUse' });
+  pat.append(sv('path', { d: 'M24 0H0V24', fill: 'none', stroke: 'var(--grid)', 'stroke-width': 1 }));
+  defs.append(pat); svg.append(defs);
+  svg.append(sv('rect', { x: 0, y: 0, width: 1200, height: 860, fill: 'url(#g)' }));
+  const gZones = sv('g'), gEdges = sv('g'), gNodes = sv('g');
+  svg.append(gZones, gEdges, gNodes);
+  for (const z of DATA.zones) {
+    const g = sv('g', { class: 'zone' });
+    g.append(sv('rect', { x: z.x, y: z.y, width: z.w, height: z.h, rx: 14 }));
+    const tx = sv('text', { x: z.x + 14, y: z.y + 27 }); tx.textContent = z.name; g.append(tx);
+    g.append(sv('rect', { x: z.x + 14, y: z.y + 33, width: 26, height: 3, rx: 1.5, fill: zoneColor(z), stroke: 'none', 'stroke-dasharray': 'none' }));
+    gZones.append(g);
+  }
+  for (const e of edges) {
+    let d;
+    if (e.from === e.to) { const p = pos.users; d = `M${p.x + 150},${p.y} C${p.x + 170},${p.y - 60} ${p.x + 50},${p.y - 60} ${p.x + 70},${p.y}`; }
+    else if (zoneOf[e.from] && zoneOf[e.from] === zoneOf[e.to]) d = loop(e.from, e.to);
+    else if (e.to === 'users' || pos[e.to]?.hub) d = curve(anchor(e.from), anchor('users', e.from), pos[e.from].side);
+    else d = curve(anchor(e.from), anchor(e.to), pos[e.from].side);
+    e.path = sv('path', { d, class: 'edge' + (e.kind === 'logical' ? ' logical' : '') });
+    const title = sv('title'); title.textContent = `${e.from}.${e.cols.join(', ')} → ${e.to}`; e.path.append(title);
+    gEdges.append(e.path);
+  }
+  const nodes = {};
+  const drawNode = (name) => {
+    const p = pos[name];
+    const z = zoneOf[name];
+    const t = T[name];
+    const g = sv('g', { class: 'pill' + (p.hub ? ' hub' : '') + (isFile(name) ? ' file' : ''), tabindex: 0, role: 'button', 'aria-label': `Tabla ${name}` + (t ? `, ${t.columns.length} columnas` : ', archivo'), style: z ? `--c:${zoneColor(z)}` : null });
+    g.append(sv('rect', { class: 'body', x: p.x, y: p.y, width: p.w, height: p.h, rx: p.hub ? 18 : 9 }));
+    if (!p.hub) g.append(sv('rect', { class: 'stripe', x: p.x, y: p.y + 7, width: 4, height: p.h - 14, rx: 2 }));
+    const n = sv('text', { class: 'name', x: p.hub ? p.x + p.w / 2 : p.x + 14, y: p.hub ? p.y + 58 : p.y + 21, 'text-anchor': p.hub ? 'middle' : null }); n.textContent = p.hub ? 'USERS' : name; g.append(n);
+    const c = sv('text', { class: 'count', x: p.hub ? p.x + p.w / 2 : p.x + p.w - 10, y: p.hub ? p.y + 82 : p.y + 21, 'text-anchor': p.hub ? 'middle' : 'end' }); c.textContent = t ? `${t.columns.length} col.` : 'archivo'; g.append(c);
+    if (p.hub) { const s = sv('text', { class: 'count', x: p.x + p.w / 2, y: p.y + 100, 'text-anchor': 'middle' }); s.textContent = 'las cuentas · el centro'; g.append(s); }
+    const go = () => select(name);
+    g.addEventListener('click', go);
+    g.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } });
+    gNodes.append(g);
+    nodes[name] = g;
+  };
+  Object.keys(pos).forEach(drawNode);
+
+  // ---------- state
+  let selected = null;
+  const neighbors = (n) => new Set(edges.filter((e) => e.from === n || e.to === n).flatMap((e) => [e.from, e.to]));
+  const paint = () => {
+    const q = $('#q').value.trim().toLowerCase();
+    const match = new Set(q ? Object.keys(pos).filter((n) => n.toLowerCase().includes(q) || (T[n] && T[n].columns.some((c) => c.name.toLowerCase().includes(q)))) : []);
+    const near = selected ? neighbors(selected) : new Set();
+    for (const [n, g] of Object.entries(nodes)) {
+      g.classList.toggle('sel', n === selected);
+      g.classList.toggle('near', !!selected && near.has(n) && n !== selected);
+      g.classList.toggle('match', match.has(n));
+      g.setAttribute('aria-pressed', String(n === selected));
+    }
+    for (const e of edges) e.path.classList.toggle('on', !!selected && (e.from === selected || e.to === selected) || flowEdge(e));
+    svg.classList.toggle('dim', !!selected || match.size > 0 || flow.active);
+  };
+
+  // ---------- inspector
+  const ins = $('#inspector');
+  const onDelete = (v) => v === 'CASCADE' ? el('span', { class: 'effect-cascade', text: 'se borra también' }) : v === 'SET NULL' ? el('span', { class: 'effect-null', text: 'queda sin dueño (vacío)' }) : el('span', { class: 'effect-logic', text: v || 'nada' });
+  const jump = (n) => el('button', { class: 'link mono', type: 'button', text: n, onclick: () => select(n) });
+  const indexView = () => el('div', { class: 'pad' },
+    el('div', { class: 'sec' }, el('h3', { text: 'Elige una tabla' }), el('p', { class: 'meta', text: 'Toca una en el plano o aquí. «users» está al centro: casi todas las relaciones llegan a las cuentas.' })),
+    el('div', { class: 'index' }, el('div', { class: 'grp', style: '--c:var(--ink)' }, el('b', {}, el('i'), 'Centro'), el('div', {}, el('button', { type: 'button', text: 'users', onclick: () => select('users') }))),
+      DATA.zones.map((z) => el('div', { class: 'grp', style: `--c:${zoneColor(z)}` }, el('b', {}, el('i'), z.name), el('div', {}, z.tables.map((t) => el('button', { type: 'button', text: t, onclick: () => select(t) })))))));
+  const tableView = (name) => {
+    const t = T[name];
+    const z = zoneOf[name];
+    if (!t) {
+      const refs = DATA.logical.filter((l) => l.to === name);
+      return el('div', { class: 'pad' },
+        el('div', { class: 'sec' }, el('span', { class: 'zonetag', style: `--c:${zoneColor(z)}` }, el('i'), z.name), el('h2', { text: name }), el('p', { text: DATA.files[name] })),
+        el('div', { class: 'sec' }, el('h3', { text: 'Quién lo usa (relaciones lógicas)' }), el('ul', { class: 'plain rel' }, refs.map((l) => el('li', {}, jump(l.from), el('span', { class: 'mono', text: '.' + l.col }), ' — ', l.text)))),
+        el('button', { class: 'btn', type: 'button', text: '← Todas las tablas', onclick: () => select(null) }));
+    }
+    const out = t.fks;
+    const incoming = DATA.tables.flatMap((o) => o.fks.filter((f) => f.table === name).map((f) => ({ ...f, from: o.name })));
+    const logicalOut = DATA.logical.filter((l) => l.from === name);
+    const logicalIn = DATA.logical.filter((l) => l.to === name);
+    const fkOf = (col) => out.find((f) => f.col === col);
+    return el('div', { class: 'pad' },
+      el('div', { class: 'sec' },
+        el('span', { class: 'zonetag', style: `--c:${z ? zoneColor(z) : 'var(--ink)'}` }, el('i'), z ? z.name : 'Centro'),
+        el('h2', { text: name }),
+        el('p', { text: DATA.descriptions[name] || '' }),
+        el('p', { class: 'meta' }, 'Creada en ', el('span', { class: 'mono', text: t.created }), t.altered.length ? [' · cambiada en ', el('span', { class: 'mono', text: t.altered.join(', ') })] : null)),
+      el('div', { class: 'sec' }, el('h3', { text: `Columnas (${t.columns.length})` }),
+        el('div', { class: 'tbl-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, el('th', { text: 'Columna' }), el('th', { text: 'Tipo' }), el('th', { text: 'Reglas' }))),
+          el('tbody', {}, t.columns.map((c) => { const fk = fkOf(c.name); return el('tr', {},
+            el('td', { class: 'c', text: c.name }), el('td', { class: 'c', text: c.type || '—' }),
+            el('td', {}, c.pk ? el('span', { class: 'tag pk', text: 'CLAVE' }) : null, c.notnull ? el('span', { class: 'tag', text: 'OBLIGATORIA' }) : null,
+              c.default != null ? el('span', { class: 'tag', text: 'por defecto ' + c.default }) : null,
+              fk ? [el('span', { class: 'tag fk', text: '→ ' + fk.table }), ' '] : null)); }))))),
+      out.length || logicalOut.length ? el('div', { class: 'sec' }, el('h3', { text: 'Apunta a' }), el('ul', { class: 'plain rel' },
+        out.map((f) => el('li', {}, el('span', { class: 'mono', text: f.col }), ' → ', jump(f.table), el('span', { class: 'mono', text: '.' + f.to }), '. Si se borra: ', onDelete(f.onDelete), '.')),
+        logicalOut.map((l) => el('li', {}, el('span', { class: 'mono', text: l.col }), ' → ', jump(l.to), ' — ', el('span', { class: 'effect-logic', text: 'lógica: ' }), l.text, '.')))) : null,
+      incoming.length || logicalIn.length ? el('div', { class: 'sec' }, el('h3', { text: `Le apuntan (${incoming.length + logicalIn.length})` }), el('ul', { class: 'plain rel' },
+        incoming.map((f) => el('li', {}, jump(f.from), el('span', { class: 'mono', text: '.' + f.col }), '. Si se borra este registro: ', onDelete(f.onDelete), '.')),
+        logicalIn.map((l) => el('li', {}, jump(l.from), el('span', { class: 'mono', text: '.' + l.col }), ' — ', el('span', { class: 'effect-logic', text: 'lógica' }), '.')))) : null,
+      t.checks.length ? el('div', { class: 'sec' }, el('h3', { text: 'Valores permitidos (CHECK)' }), el('ul', { class: 'plain' }, t.checks.map((c) => el('li', {}, el('code', { class: 'mono', text: c }))))) : null,
+      t.indexes.length ? el('div', { class: 'sec' }, el('h3', { text: 'Índices' }), el('ul', { class: 'plain' }, t.indexes.map((i) => el('li', { class: 'meta' }, el('span', { class: 'mono', text: i.cols.join(', ') }), i.unique ? ' · único' : '', i.origin === 'pk' ? ' · clave' : i.origin === 'u' ? ' · restricción UNIQUE' : '')))) : null,
+      el('details', {}, el('summary', { text: 'Ver el SQL' }), el('pre', { text: t.sql })),
+      el('button', { class: 'btn', type: 'button', text: '← Todas las tablas', onclick: () => select(null) }));
+  };
+  function select(name, scroll = true) {
+    selected = name;
+    ins.replaceChildren(name ? tableView(name) : indexView());
+    paint();
+    // Narrow screens: the inspector is below the plan, so bring it into view.
+    if (name && scroll && matchMedia('(max-width: 1100px)').matches) ins.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  }
+
+  // ---------- search and zones
+  $('#q').addEventListener('input', () => paint());
+  for (const z of DATA.zones) {
+    const b = el('button', { class: 'chip', type: 'button', style: `--c:${zoneColor(z)}`, 'aria-pressed': 'false' }, el('i'), z.name);
+    b.addEventListener('click', () => {
+      const on = b.getAttribute('aria-pressed') !== 'true';
+      document.querySelectorAll('#zones .chip').forEach((x) => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', String(on));
+      for (const [n, g] of Object.entries(nodes)) g.classList.toggle('match', on && zoneOf[n] === z);
+      svg.classList.toggle('dim', on);
+      if (!on) paint();
+    });
+    $('#zones').append(b);
+  }
+
+  // ---------- walkthroughs
+  const flow = { active: null, i: 0, timer: null, playing: false };
+  const flowEdge = (e) => { if (!flow.active) return false; const s = flow.active.steps[flow.i][0]; const prev = flow.i ? flow.active.steps[flow.i - 1][0] : []; return (s.includes(e.from) || s.includes(e.to)) && (s.includes(e.to) || prev.includes(e.to) || prev.includes(e.from) || e.to === 'users'); };
+  const showStep = () => {
+    const f = flow.active;
+    const [tables, text] = f.steps[flow.i];
+    for (const [n, g] of Object.entries(nodes)) { g.classList.remove('flow-on'); if (tables.includes(n)) { void g.getBBox(); g.classList.add('flow-on'); } }
+    $('#cap-step').textContent = `${flow.i + 1}/${f.steps.length}`;
+    $('#cap-title').textContent = f.name;
+    $('#cap-text').textContent = text;
+    $('#cap-prev').disabled = flow.i === 0;
+    $('#cap-next').disabled = flow.i === f.steps.length - 1;
+    selected = null; paint();
+  };
+  const schedule = () => { clearTimeout(flow.timer); if (flow.playing && flow.i < flow.active.steps.length - 1) flow.timer = setTimeout(() => { flow.i++; showStep(); schedule(); }, 3200); else { flow.playing = false; $('#cap-play').textContent = '▶'; $('#cap-play').setAttribute('aria-label', 'Reproducir'); } };
+  const startFlow = (f, btn) => {
+    document.querySelectorAll('#flows .btn').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+    flow.active = f; flow.i = 0; flow.playing = !reduce;
+    $('#caption').hidden = false;
+    $('#cap-play').textContent = flow.playing ? '❚❚' : '▶';
+    showStep(); schedule();
+  };
+  const stopFlow = () => { clearTimeout(flow.timer); flow.active = null; $('#caption').hidden = true; for (const g of Object.values(nodes)) g.classList.remove('flow-on'); document.querySelectorAll('#flows .btn').forEach((b) => b.setAttribute('aria-pressed', 'false')); paint(); };
+  for (const f of DATA.flows) { const b = el('button', { class: 'btn', type: 'button', 'aria-pressed': 'false', text: f.name }); b.addEventListener('click', () => startFlow(f, b)); $('#flows').append(b); }
+  $('#cap-prev').addEventListener('click', () => { flow.playing = false; if (flow.i > 0) { flow.i--; showStep(); } schedule(); });
+  $('#cap-next').addEventListener('click', () => { flow.playing = false; if (flow.i < flow.active.steps.length - 1) { flow.i++; showStep(); } schedule(); });
+  $('#cap-play').addEventListener('click', () => { flow.playing = !flow.playing; if (flow.playing && flow.i === flow.active.steps.length - 1) { flow.i = 0; showStep(); } $('#cap-play').textContent = flow.playing ? '❚❚' : '▶'; $('#cap-play').setAttribute('aria-label', flow.playing ? 'Pausar' : 'Reproducir'); schedule(); });
+  $('#cap-close').addEventListener('click', stopFlow);
+
+  // ---------- timeline
+  const tl = $('#tl');
+  tl.max = String(MIG.length - 1); tl.value = tl.max;
+  const showMig = () => {
+    const k = Number(tl.value);
+    const m = MIG[k];
+    for (const [n, g] of Object.entries(nodes)) {
+      const t = T[n];
+      const created = t ? MIG.indexOf(t.created) : -1; // files and the migrator's own table: always there
+      g.classList.toggle('future', created > k);
+      g.classList.toggle('born', created === k && k !== MIG.length - 1 || created === k && tlPlaying);
+      g.classList.toggle('changed', !!t && t.altered.includes(m));
+    }
+    for (const e of edges) { const a = T[e.from], b = T[e.to]; const hidden = (a && MIG.indexOf(a.created) > k) || (b && MIG.indexOf(b.created) > k); e.path.style.opacity = hidden ? '0.05' : ''; }
+    $('#tl-label').textContent = `${m} — ${DATA.migrations[m]}`;
+  };
+  let tlPlaying = false; let tlTimer = null;
+  tl.addEventListener('input', () => { tlPlaying = false; clearTimeout(tlTimer); $('#tl-play').textContent = '▶ Reproducir'; showMig(); });
+  $('#tl-play').addEventListener('click', () => {
+    tlPlaying = !tlPlaying;
+    $('#tl-play').textContent = tlPlaying ? '❚❚ Pausar' : '▶ Reproducir';
+    if (tlPlaying && Number(tl.value) === MIG.length - 1) tl.value = '0';
+    const tick = () => { showMig(); if (!tlPlaying) return; if (Number(tl.value) < MIG.length - 1) { tlTimer = setTimeout(() => { tl.value = String(Number(tl.value) + 1); tick(); }, reduce ? 1400 : 1100); } else { tlPlaying = false; $('#tl-play').textContent = '▶ Reproducir'; } };
+    clearTimeout(tlTimer); tick();
+  });
+
+  // ---------- relations table and counts
+  const all = DATA.tables.flatMap((t) => t.fks.map((f) => ({ from: t.name, col: f.col, to: `${f.table}.${f.to}`, target: f.table, effect: f.onDelete })));
+  const cascade = all.filter((r) => r.effect === 'CASCADE').length;
+  const setnull = all.filter((r) => r.effect === 'SET NULL').length;
+  const toUsers = all.filter((r) => r.target === 'users').length;
+  for (const [n, l] of [[toUsers, `de las ${all.length} relaciones llegan a users`], [cascade, 'se borran junto con su registro (CASCADE)'], [setnull, 'se conservan sin dueño (SET NULL)'], [DATA.logical.length, 'lógicas: archivos o ids guardados como texto']]) $('#rules').append(el('div', { class: 'rule' }, el('b', { text: String(n) }), el('span', { text: l })));
+  const tb = $('#rel tbody');
+  for (const r of all.sort((a, b) => a.from.localeCompare(b.from))) tb.append(el('tr', {}, el('td', {}, jump(r.from)), el('td', { class: 'c', text: r.col }), el('td', { class: 'c', text: r.to }), el('td', {}, r.effect === 'CASCADE' ? el('span', { class: 'effect-cascade', text: 'se borra también' }) : el('span', { class: 'effect-null', text: 'queda sin dueño' }))));
+  for (const l of DATA.logical) tb.append(el('tr', {}, el('td', {}, jump(l.from)), el('td', { class: 'c', text: l.col }), el('td', { class: 'c', text: l.to }), el('td', {}, el('span', { class: 'effect-logic', text: 'lógica: ' + l.text }))));
+
+  select(null, false);
+  showMig();
+})();
+</script>
