@@ -979,7 +979,7 @@ export default {
     autoHint: 'On day {day}, from 8:00, last month\'s report goes to the recipients with its PDF, with you in copy. If you already sent it yourself, it is not sent again. While this is on, check the preview before that day.',
     autoOffHint: 'Off: the report only goes out when you send it. If you have not sent it by day 5, we remind you.',
     autoNoRecipients: 'Add at least one recipient: without recipients the report is not sent and we remind you.',
-    autoNext: 'Next automatic sending: {when}.',
+    autoNext: 'Next automatic sending: {when}',
     autoSave: 'Save automatic sending',
     autoOn: 'Done: the report will go out on its own on day {day} of each month.',
     autoOff: 'Automatic sending turned off.',

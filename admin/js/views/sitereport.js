@@ -12,7 +12,7 @@ import { pageHead, loading, loadError, button, setBusy, toast, errorText, alertB
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const CARD_ICONS = { 'sr-prev': 'eye', 'sr-rec': 'people', 'sr-send': 'send', 'sr-hist': 'clock-history' };
+const CARD_ICONS = { 'sr-prev': 'eye', 'sr-rec': 'people', 'sr-auto-card': 'arrow-repeat', 'sr-send': 'send', 'sr-hist': 'clock-history' };
 
 function card(id, title, ...children) {
   return h('section', { class: 'card', 'aria-labelledby': id }, cardHead({ id, icon: CARD_ICONS[id], title }), h('div', { class: 'stack' }, ...children));
@@ -174,7 +174,7 @@ export async function render({ main, isOwner }) {
     });
     renderAuto();
     const autoCard = card('sr-auto-card', t('siteReport.autoTitle'),
-      h('div', { class: 'row' }, autoSw.wrap, h('label', { for: 'sr-auto', text: t('siteReport.autoToggle') })),
+      h('div', { class: 'switch-line' }, autoSw.wrap, h('label', { for: 'sr-auto', text: t('siteReport.autoToggle') })),
       h('label', { class: 'field' }, h('span', { class: 'label', text: t('siteReport.autoDay') }), daySel),
       autoHint, autoState, h('div', null, autoBtn));
 

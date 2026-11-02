@@ -1661,6 +1661,12 @@ h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus{ outline:none; }
 .announce-item input{ width:20px; height:20px; margin:.15rem 0 0; accent-color:var(--brand); flex:none; }
 .announce-item label{ display:grid; gap:.25rem; flex:1; min-width:0; cursor:pointer; }
 .announce-item-head{ display:flex; justify-content:space-between; gap:.75rem; align-items:baseline; flex-wrap:wrap; }
+.announce-item-body{ display:grid; gap:.35rem; flex:1; min-width:0; }
+.announce-item-title{ display:inline-flex; align-items:baseline; gap:.5rem; flex-wrap:wrap; min-width:0; }
+.announce-undo{ justify-self:start; }
+/* A switch with its label beside it (settings saved from a card). */
+.switch-line{ display:flex; align-items:flex-start; gap:.75rem; }
+.switch-line > label{ flex:1; min-width:0; padding-top:.15rem; cursor:pointer; }
 .announce-who{ display:inline-flex; gap:.35rem; align-items:center; color:var(--text-2); }
 .announce-done{ display:inline-flex; gap:.35rem; align-items:center; color:var(--ok); }
 .announce-options{ margin-bottom:.4rem; }

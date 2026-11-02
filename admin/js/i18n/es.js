@@ -980,7 +980,7 @@ export default {
     autoHint: 'El día {day}, desde las 8:00, se envía el informe del mes anterior a los destinatarios, con su PDF y tú en copia. Si ya lo enviaste a mano, no se repite. Mientras esté activado, revisa la vista previa antes de ese día.',
     autoOffHint: 'Apagado: el informe sale solo cuando tú lo envías. Si no lo envías antes del día 5, te enviamos un recordatorio.',
     autoNoRecipients: 'Agrega al menos un destinatario: sin destinatarios el informe no se envía y te enviamos un recordatorio.',
-    autoNext: 'Próximo envío automático: {when}.',
+    autoNext: 'Próximo envío automático: {when}',
     autoSave: 'Guardar envío automático',
     autoOn: 'Listo: el informe se enviará solo el día {day} de cada mes.',
     autoOff: 'Envío automático apagado.',

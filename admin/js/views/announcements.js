@@ -91,14 +91,15 @@ export async function render({ main }) {
     // Put aside with «No avisar»: still sendable; «Volver a proponer» brings it back to the reminder.
     const undo = n.dismissed && !done ? h('button', { type: 'button', class: 'btn btn-link btn-sm announce-undo', text: t('announce.undoSkip'), onclick: () => dismiss([n.id], false) }) : null;
     return h('li', { class: ['announce-item', done && 'is-done'] }, box,
-      h('label', { for: id },
-        h('span', { class: 'announce-item-head' }, h('strong', { text: n.title }),
-          n.dismissed && !done ? h('span', { class: 'badge badge-warn nowrap', text: t('announce.dismissedTag') }) : null,
+      h('div', { class: 'announce-item-body' }, h('label', { for: id },
+        h('span', { class: 'announce-item-head' },
+          h('span', { class: 'announce-item-title' }, h('strong', { text: n.title }),
+            n.dismissed && !done ? h('span', { class: 'badge badge-warn nowrap', text: t('announce.dismissedTag') }) : null),
           h('span', { class: 'tiny muted nowrap', text: fmtDate(dayTs(n.date), false) })),
         n.summary ? h('span', { class: 'small muted', text: n.summary }) : null,
         h('span', { class: 'tiny announce-who' }, icon('people'), h('span', { text: who(n) })),
         h('span', { class: ['tiny', done ? 'announce-done' : 'muted'] }, done ? icon('check-circle-fill') : null,
-          h('span', { text: n.eligible ? t('announce.stats', { eligible: n.eligible, seen: n.seen, emailed: n.emailed }) : t('announce.noOne') }))), undo);
+          h('span', { text: n.eligible ? t('announce.stats', { eligible: n.eligible, seen: n.seen, emailed: n.emailed }) : t('announce.noOne') }))), undo));
   };
 
   // «No avisar» for the checked items, or undo it for one; the list reloads with the new state.
@@ -124,7 +125,7 @@ export async function render({ main }) {
     } });
     return h('section', { class: 'card', 'aria-labelledby': 'announce-n' },
       cardHead({ id: 'announce-n', icon: 'envelope', title: t('announce.notifyTitle') }),
-      h('div', { class: 'row' }, sw.wrap, h('label', { for: 'announce-notify', text: t('announce.notifyLabel') })),
+      h('div', { class: 'switch-line' }, sw.wrap, h('label', { for: 'announce-notify', text: t('announce.notifyLabel') })),
       h('p', { class: 'small muted', id: 'announce-notify-d', text: t('announce.notifyHint') }));
   };
   const option = (id, label, onChange, checked) => {
