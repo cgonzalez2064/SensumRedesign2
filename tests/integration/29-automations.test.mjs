@@ -27,6 +27,13 @@ const now = () => Math.floor(Date.now() / 1000);
 const resetLimits = () => s.sql("DELETE FROM rate_limits WHERE bucket IN ('invite', 'user_admin', 'admin_reset_link', 'password_change', 'login_email', 'login_ip', 'access_request', 'contact_confirmation')");
 const field = (r) => r.data && r.data.fields && Object.values(r.data.fields)[0];
 const subjects = async (email) => (await messagesTo(email)).map((m) => m.Subject);
+/** Waits for the e-mail with this subject (text or pattern): most are sent after the response. */
+async function mailTo(email, subject, timeout = 5000) {
+  const found = (list) => list.some((x) => (typeof subject === 'string' ? x === subject : subject.test(x)));
+  for (const start = Date.now(); Date.now() - start < timeout; await new Promise((r) => setTimeout(r, 150))) {
+    if (found(await subjects(email))) return;
+  }
+}
 const automations = (at) => s.cli(['automations', ...(at ? [String(at)] : [])]);
 const day = (n) => { const d = new Date(Date.now() + n * 86400000); return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); };
 
@@ -95,7 +102,7 @@ test('temporary access: a date when inviting or changing access; the account tur
   resetLimits();
   assert.equal((await new Client(s.base).login(p.email, PW)).data.error, 'invalid_credentials', 'same answer as any turned-off account');
   // Whoever invited them (the owner) is told.
-  await waitForMail(ADMIN.email, 1);
+  await mailTo(ADMIN.email, 'Terminó el acceso temporal de Pedro Fotógrafo');
   assert.ok((await subjects(ADMIN.email)).some((x) => x === 'Terminó el acceso temporal de Pedro Fotógrafo'));
   // Reactivating removes the date that passed.
   const back = await owner.put(`/api/users/${p.id}`, { status: 'active' });
@@ -112,7 +119,7 @@ test('closing someone\'s sessions: they sign in again, are told, and remembered 
   assert.ok(r.data.ended >= 1);
   assert.equal((await p.c.get('/api/dashboard')).status, 401);
   assert.equal(s.sql(`SELECT COUNT(*) FROM trusted_devices WHERE user_id = ${p.id}`), '0');
-  await waitForMail(p.email, 3);
+  await mailTo(p.email, 'Se cerraron tus sesiones del panel');
   assert.ok((await subjects(p.email)).includes('Se cerraron tus sesiones del panel'));
   // Not the owner, not another manager, not yourself.
   const ownerId = (await owner.get('/api/users')).data.users.find((u) => u.isSelf).id;
@@ -131,7 +138,7 @@ test('«Pedir acceso»: the request reaches whoever manages users; one click gra
   assert.deepEqual((await p.c.get('/api/account/access-request')).data.request.permissions, ['leads', 'stats']);
   assert.equal(s.sql(`SELECT COUNT(*) FROM access_requests WHERE user_id = ${p.id} AND status = 'pending'`), '1');
   // Managers hear about it (the owner and Andrea).
-  await waitForMail(mgr.email, 2);
+  await mailTo(mgr.email, 'Marketing Sensum pide acceso a Prospectos, Estadísticas de visitas');
   assert.ok((await subjects(mgr.email)).includes('Marketing Sensum pide acceso a Prospectos, Estadísticas de visitas'));
   const body = (await message((await messagesTo(mgr.email)).find((m) => /pide acceso/.test(m.Subject)).ID)).Text;
   assert.match(body, /Para la campaña de remodelaciones\./);
@@ -143,7 +150,7 @@ test('«Pedir acceso»: the request reaches whoever manages users; one click gra
   const ok = await mgr.c.post(`/api/users/requests/${req.id}`, { grant: true });
   assert.equal(ok.status, 200, ok.text);
   assert.deepEqual(ok.data.user.permissions, [...presets.content, 'leads', 'stats']);
-  await waitForMail(p.email, 2);
+  await mailTo(p.email, 'Ya tienes acceso a Prospectos, Estadísticas de visitas');
   assert.ok((await subjects(p.email)).includes('Ya tienes acceso a Prospectos, Estadísticas de visitas'));
   assert.equal((await mgr.c.post(`/api/users/requests/${req.id}`, { grant: true })).status, 404, 'answered once');
   // Support management is the owner's to give: it can't be asked for. A request from before
@@ -155,7 +162,7 @@ test('«Pedir acceso»: the request reaches whoever manages users; one click gra
   assert.equal(req2.canGrant, false);
   assert.equal(field(await mgr.c.post(`/api/users/requests/${req2.id}`, { grant: true })), 'not_assignable');
   assert.equal((await owner.post(`/api/users/requests/${req2.id}`, { grant: false })).status, 200);
-  await waitForMail(p.email, 3);
+  await mailTo(p.email, 'Tu solicitud de acceso no se aprobó');
   assert.ok((await subjects(p.email)).includes('Tu solicitud de acceso no se aprobó'));
   // The owner can't ask (has everything).
   assert.equal((await owner.post('/api/account/access-request', { permissions: ['texts'] })).status, 403);
@@ -312,7 +319,7 @@ test('invitations: a reminder with a fresh link 24 h before expiry (once), the i
   s.sql(`UPDATE user_tokens SET expires_at = ${now() - 60} WHERE user_id = ${id} AND purpose = 'invite'`);
   automations();
   automations();
-  await waitForMail(mgr.email, 1);
+  await mailTo(mgr.email, 'La invitación de Diego Invitado venció sin aceptarse');
   assert.equal((await subjects(mgr.email)).filter((x) => x === 'La invitación de Diego Invitado venció sin aceptarse').length, 1);
   // Accepted: whoever invited hears that too.
   resetLimits();
@@ -329,9 +336,9 @@ test('temporary access: 3 days before, the person and whoever invited them are t
   const p = await person(['photos'], { name: 'Pedro Agencia', by: mgr.c, extra: { accessUntil: day(2) } });
   automations();
   automations();
-  await waitForMail(p.email, 2);
+  await mailTo(p.email, /^Tu acceso al panel termina el /);
   assert.equal((await subjects(p.email)).filter((x) => /^Tu acceso al panel termina el /.test(x)).length, 1);
-  await waitForMail(mgr.email, 1);
+  await mailTo(mgr.email, /^El acceso de Pedro Agencia termina el /);
   assert.equal((await subjects(mgr.email)).filter((x) => /^El acceso de Pedro Agencia termina el /.test(x)).length, 1);
   // Then it ends.
   s.sql(`UPDATE users SET access_until = ${now() - 1} WHERE id = ${p.id}`);
@@ -347,7 +354,7 @@ test('Seguridad → unused accounts: a warning 7 days before, then turned off; s
   s.sql(`UPDATE users SET last_login_at = ${now() - 85 * 86400} WHERE id IN (${idle.id}, ${back.id})`);
   s.sql(`UPDATE users SET last_login_at = ${now() - 400 * 86400} WHERE lower(email) = '${ADMIN.email}'`);
   automations();
-  await waitForMail(idle.email, 2);
+  await mailTo(idle.email, /^Tu cuenta del panel se desactivará el /);
   assert.ok((await subjects(idle.email)).some((x) => /^Tu cuenta del panel se desactivará el /.test(x)));
   assert.notEqual(s.sql(`SELECT inactive_warned_at FROM users WHERE id = ${back.id}`), '');
   // Raúl signs in: the warning is cleared.
@@ -359,7 +366,7 @@ test('Seguridad → unused accounts: a warning 7 days before, then turned off; s
   automations();
   assert.equal(s.sql(`SELECT status FROM users WHERE id = ${idle.id}`), 'disabled');
   assert.equal(s.sql(`SELECT status FROM users WHERE lower(email) = '${ADMIN.email}'`), 'active', 'never the owner');
-  await waitForMail(mgr.email, 1);
+  await mailTo(mgr.email, 'Se desactivó la cuenta de Sofía Inactiva por falta de uso');
   assert.ok((await subjects(mgr.email)).includes('Se desactivó la cuenta de Sofía Inactiva por falta de uso'));
   s.sql(`UPDATE users SET last_login_at = ${now()} WHERE lower(email) = '${ADMIN.email}'`);
   await owner.put('/api/security/accounts', { inactiveDays: 0, currentPassword: ADMIN.password });
@@ -389,17 +396,16 @@ test('Prospectos: assignment by service (from either language), the assignee\'s 
   assert.equal(by('Lucía Remodela').assignedTo, luis.id);
   assert.equal(by('Mary Remodel').assignedTo, luis.id, 'same service from the English page');
   assert.equal(by('Otto Obra').assignedTo, andrea.id, 'no rule: the default person');
-  await waitForMail(luis.email, 3);
+  await mailTo(luis.email, 'Nuevo prospecto para ti: Lucía Remodela');
   assert.ok((await subjects(luis.email)).includes('Nuevo prospecto para ti: Lucía Remodela'));
   const hist = (await andrea.c.get(`/api/leads/${by('Otto Obra').id}`)).data.notes;
   assert.ok(hist.some((n) => n.details.action === 'assigned' && n.details.auto === true && n.details.to === 'Andrea Diseño'));
   // «Mis prospectos».
   assert.deepEqual((await luis.c.get('/api/leads?status=all&assigned=me')).data.leads.map((l) => l.name).sort(), ['Lucía Remodela', 'Mary Remodel']);
   // Andrea hands Otto over to Luis: Luis hears it; taking one yourself sends nothing.
-  const before = await countTo(luis.email);
   const moved = await andrea.c.put(`/api/leads/${by('Otto Obra').id}`, { assignedTo: luis.id });
   assert.equal(moved.data.lead.assignedTo, luis.id);
-  await waitForMail(luis.email, before + 1);
+  await mailTo(luis.email, 'Andrea Diseño te asignó un prospecto: Otto Obra');
   assert.ok((await subjects(luis.email)).includes('Andrea Diseño te asignó un prospecto: Otto Obra'));
   assert.equal(field(await andrea.c.put(`/api/leads/${by('Otto Obra').id}`, { assignedTo: 424242 })), 'invalid');
   const editor = await person(presets.content);
@@ -415,7 +421,7 @@ test('Prospectos: one reminder for a lead still "new" after 48 h, and the Monday
   s.sql(`UPDATE leads SET created_at = ${now() - 50 * 3600} WHERE id = ${lead.id}`);
   automations();
   automations();
-  await waitForMail(luis.email, 3);
+  await mailTo(luis.email, 'Ana Espera sigue esperando respuesta');
   assert.equal((await subjects(luis.email)).filter((x) => x === 'Ana Espera sigue esperando respuesta').length, 1);
   // Monday, 12:00 (any time zone the server uses keeps it Monday after 08:00).
   const d = new Date();
@@ -426,7 +432,7 @@ test('Prospectos: one reminder for a lead still "new" after 48 h, and the Monday
   const out = automations(monday);
   assert.match(out, /Weekly lead summary: sent to \d+/);
   assert.match(automations(monday), /Weekly lead summary: not due/, 'once a week');
-  await waitForMail(luis.email, 4);
+  await mailTo(luis.email, /^Prospectos de la semana/);
   const weekly = (await messagesTo(luis.email)).find((m) => /^Prospectos de la semana/.test(m.Subject));
   assert.ok(weekly);
   assert.match((await message(weekly.ID)).Text, /Ana Espera · Otro · hace \d+ días/);
