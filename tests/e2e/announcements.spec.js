@@ -82,7 +82,7 @@ test('«No avisar»: an item set aside is marked, and «Volver a proponer» brin
   await expect(page.locator('main h1')).toHaveText('Avisos al equipo');
   const item = page.locator('.announce-item', { hasText: 'Más secciones: pide lo que necesitas' });
   await expect(item).toBeVisible();
-  for (const box of await page.locator('.announce-item input:checked').all()) await box.uncheck();
+  for (const box of await page.locator('.announce-item input').all()) await box.uncheck();
   await item.locator('input').check();
   await page.getByRole('button', { name: 'No avisar las marcadas' }).click();
   await expect(page.getByText('Listo: esas novedades quedan sin aviso.', { exact: false })).toBeVisible();

@@ -169,7 +169,7 @@ test('monthly report: trends in the preview and the PDF download', async ({ page
   test.skip(info.project.name !== 'desktop-chrome', 'downloads are checked on desktop');
   await signIn(page);
   await page.goto('/admin/#/informe');
-  await page.getByLabel('Mes').selectOption({ index: 0 });
+  await page.getByLabel('Mes del informe').selectOption({ index: 0 });
   await expect(page.locator('.report-preview')).toContainText('Visitas y clientes potenciales');
   // Comparisons in both directions are in the team's technical detail.
   await page.getByRole('button', { name: 'Detalle técnico' }).click();
