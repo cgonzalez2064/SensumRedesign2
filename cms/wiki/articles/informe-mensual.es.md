@@ -25,6 +25,8 @@ La cuenta propietaria elige los **Destinatarios** y el idioma; ella siempre va e
 - **A mano:** en `Enviar`, con un mensaje opcional al inicio. Antes puedes enviarte una prueba o descargar el PDF.
 - **Solo, cada mes:** en `Envío automático`, activa el interruptor, elige el `Día del envío` (el 5, si no lo cambias) y toca `Guardar envío automático`. Ese día, desde las 8:00, sale el informe del mes anterior a los destinatarios, con su PDF.
 
+![Envío automático: el día del envío y el próximo envío](shot:informe-envio)
+
 El envío automático nunca manda dos veces el mismo mes: si ya lo enviaste a mano, no se repite. Sin destinatarios no sale nada. Si el correo falla, se intenta otra vez 6 horas después, hasta 3 veces. En el historial, los informes que salieron solos dicen **Envío automático**.
 
 > [!tip] Con el envío automático activado, revisa la vista previa antes de ese día: es exactamente lo que recibirán. Si el informe no sale a tiempo, la cuenta propietaria recibe un recordatorio al día siguiente.

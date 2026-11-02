@@ -25,6 +25,8 @@ The owner account chooses the **Recipients** and the language, and is always in 
 - **By hand:** under `Send`, with an optional message at the top. You can send yourself a test or download the PDF first.
 - **On its own, every month:** under `Automatic sending`, turn the switch on, choose the `Sending day` (the 5th unless you change it) and tap `Save automatic sending`. On that day, from 8:00, last month's report goes to the recipients with its PDF.
 
+![Automatic sending: the sending day and the next sending](shot:informe-envio)
+
 The automatic sending never sends the same month twice: if you already sent it by hand, it is not repeated. Without recipients nothing goes out. If e-mail fails, it tries again 6 hours later, up to 3 times. In the history, reports that went out on their own say **Automatic sending**.
 
 > [!tip] With automatic sending on, check the preview before that day: it is exactly what they will receive. If the report doesn't go out on time, the owner account gets a reminder the next day.

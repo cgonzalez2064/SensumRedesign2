@@ -264,9 +264,17 @@ for (const lang of LANGS) {
         await c.close();
       }
       // The owner account.
-      if (want('seguridad', 'monitoreo', 'avisos')) {
+      if (want('seguridad', 'monitoreo', 'avisos', 'informe-envio')) {
         const c = await context(lang, theme, device);
         const page = await signIn(c, 'owner');
+        await step('informe-envio', v, async () => {
+          // Recipients saved and the automatic sending on, as the owner would leave it.
+          s.sql(`INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('report_settings', '{"recipients":["cliente@ejemplo.com"],"lang":"${lang}","auto":true,"day":5}', strftime('%s','now'))`);
+          await go(page, 'informe', 1500);
+          await page.locator('section[aria-labelledby="sr-auto-card"]').evaluate((el) => el.scrollIntoView({ block: 'center' }));
+          await settle(page, 400);
+          await shot(page, 'informe-envio', v);
+        });
         await step('avisos', v, async () => { await go(page, 'avisos', 1500); await page.locator('.announce-people li').first().waitFor(); await settle(page, 400); await shot(page, 'avisos', v); });
         await step('seguridad', v, async () => { await go(page, 'seguridad', 1200); await shot(page, 'seguridad', v); });
         await step('monitoreo', v, async () => { await go(page, 'monitoreo', 1800); await shot(page, 'monitoreo', v); });
