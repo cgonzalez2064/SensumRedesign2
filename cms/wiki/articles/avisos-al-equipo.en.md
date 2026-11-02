@@ -5,7 +5,7 @@ category: administracion
 order: 13
 icon: bell
 owner: true
-updated: 2026-10-27
+updated: 2026-11-02
 ---
 When the panel gets new features, each person sees them once when they sign in (the **What's new** items). With `Team announcements` you also tell them by e-mail, with a link to the wiki article that explains how they work.
 
@@ -31,3 +31,12 @@ When the panel gets new features, each person sees them once when they sign in (
 Each send stays under **Earlier sends** and in `Activity`.
 
 > [!important] It needs the panel's e-mail set up (**E-mail** menu). If it isn't, the page says so and doesn't let you send.
+
+## When an update brings news
+
+You decide whether the team hears about it by e-mail; nothing reaches them without your confirmation.
+
+- We write to you **once** per update: an e-mail with the list, how many people can use each one and the link to `Team announcements`. Turn it off with `E-mail me when an update brings news`.
+- Home shows the pending updates with two options: `Tell the team` or `Don't announce`.
+- `Don't announce` sets them aside: they are no longer reminded or pre-checked. They stay in the list tagged **Set aside**, and you can send them any time or tap `Propose again`.
+- In `Team announcements`, `Don't announce the checked ones` does the same with the ones you choose.

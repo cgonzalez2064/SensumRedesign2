@@ -72,6 +72,11 @@
       "es": { "title": "Avisos al equipo", "summary": "Cuéntale al equipo por correo lo nuevo del panel: cada persona recibe solo lo que puede usar.",
         "points": ["Elige las novedades y, si quieres, escribe un mensaje.", "Mira quién lo recibe y envíate una prueba.", "Nadie recibe dos veces la misma novedad."] },
       "en": { "title": "Team announcements", "summary": "Tell the team by e-mail what's new in the panel: each person gets only what they can use.",
-        "points": ["Choose the updates and, if you want, write a message.", "See who gets it and send yourself a test.", "Nobody gets the same update twice."] } }
+        "points": ["Choose the updates and, if you want, write a message.", "See who gets it and send yourself a test.", "Nobody gets the same update twice."] } },
+    { "id": "2026-11-informe-automatico", "date": "2026-11-02", "perms": [], "owner": true, "article": "informe-mensual", "shot": "informe",
+      "es": { "title": "El informe mensual, solo", "summary": "Activa el envío automático y el informe sale cada mes el día que elijas.",
+        "points": ["En Informe mensual → Envío automático, elige el día (el 5, si no cambias nada).", "Sale a los destinatarios con su PDF y tú en copia; nunca dos veces el mismo mes.", "Cuando una actualización trae novedades, te escribimos y tú decides si avisar al equipo o no."] },
+      "en": { "title": "The monthly report, on its own", "summary": "Turn on automatic sending and the report goes out every month on the day you choose.",
+        "points": ["In Monthly report → Automatic sending, choose the day (the 5th unless you change it).", "It goes to the recipients with its PDF and you in copy; never the same month twice.", "When an update brings news, we write to you and you decide whether to tell the team."] } }
   ]
 }

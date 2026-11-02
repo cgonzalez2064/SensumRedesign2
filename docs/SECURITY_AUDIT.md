@@ -485,3 +485,13 @@ stopped the rest of the check silently, since cron discards the output.
 | Commands | `crontab` and `php -r` run with `proc_open` and an argument list (no shell); the cron line quotes any path that is not plain (`escapeshellarg`) and refuses `%` (special to cron). `CRONTAB_BIN` lets tests use a stand-in. | `34-cron` |
 | Logs | Only errors go to `storage/logs/cron.log` (inside the private, 0700 storage folder; kept under 1 MB); normal output is discarded, so cPanel's cron e-mail stays quiet. | `34-cron` |
 | Resilience | The check records its time first and runs each step on its own: a failure is logged (`scheduled_step_failed`, Monitoreo → Errores) and the alerts and automations still run. One run at a time (`flock`). | `34-cron` |
+
+## 28. Change review — automatic monthly report and the owner's choice on announcements (November 2026)
+
+| Area | Design | Verified by |
+|---|---|---|
+| Who can turn it on | `PUT /api/site-report/auto` and `POST /api/announcements/dismiss` · `PUT /api/announcements/settings` are owner-only (401 signed out, 403 for every other account, administrators included); values are strictly typed (`auto` boolean, `day` integer 1–28, `notify` boolean, ids from the known catalogue) and each change is logged in Actividad. | `35-report-auto`, `32-announcements` |
+| What goes out on its own | Only the client version of the report, to the recipients the owner saved (validated, ≤ 20) with the owner in Cc — exactly what the owner's «Enviar» sends; no free text is added. Off by default. Never twice for a month, never after a manual send, never without recipients, never for a month before the site was in use. | `35-report-auto` |
+| Failures | A failed send is recorded and retried 6 hours later, 3 times at most, so a broken SMTP setup cannot send a burst; then the existing reminder tells the owner. | `35-report-auto` |
+| Announcements | The scheduled check only e-mails the owner (once per item, can be turned off); nothing reaches the team without the owner pressing «Enviar aviso». «No avisar» changes only what is reminded and pre-selected. | `32-announcements`, `announcements.spec` |
+

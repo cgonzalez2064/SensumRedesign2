@@ -85,11 +85,19 @@ export async function render({ main, session, isOwner, can }) {
       const slot = h('div');
       body.append(slot);
       api.get('/announcements').then((a) => {
-        const pending = a.news.filter((n) => n.eligible > n.emailed).length;
-        if (!pending || !slot.isConnected) return;
-        slot.replaceWith(h('section', { class: 'card announce-nudge', 'aria-labelledby': 'nudge-t' },
-          cardHead({ id: 'nudge-t', icon: 'bell', tone: 'warn', title: tp('dashboard.announcePending', pending), lead: t('dashboard.announceLead') }),
-          h('div', { class: 'row' }, h('a', { class: 'btn btn-primary btn-sm', href: '#/avisos' }, icon('send'), t('dashboard.announceOpen')))));
+        // «No avisar» puts them aside: the choice to tell the team is always the owner's.
+        const pending = a.news.filter((n) => n.eligible > n.emailed && !n.dismissed).map((n) => n.id);
+        if (!pending.length || !slot.isConnected) return;
+        const skip = button(t('dashboard.announceSkip'), { icon: 'eye-slash', small: true });
+        const nudge = h('section', { class: 'card announce-nudge', 'aria-labelledby': 'nudge-t' },
+          cardHead({ id: 'nudge-t', icon: 'bell', tone: 'warn', title: tp('dashboard.announcePending', pending.length), lead: t('dashboard.announceLead') }),
+          h('div', { class: 'row' }, h('a', { class: 'btn btn-primary btn-sm', href: '#/avisos' }, icon('send'), t('dashboard.announceOpen')), skip));
+        skip.addEventListener('click', async () => {
+          setBusy(skip, true, t('common.saving'));
+          try { await api.post('/announcements/dismiss', { ids: pending, dismiss: true }); nudge.remove(); toast(t('dashboard.announceSkipped')); }
+          catch (err) { setBusy(skip, false); toast(errorText(err), { type: 'bad' }); }
+        });
+        slot.replaceWith(nudge);
       }).catch(() => {});
     }
 

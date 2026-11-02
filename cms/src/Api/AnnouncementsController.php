@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Sensum\Cms\Api;
 
 use Sensum\Cms\Announcements;
+use Sensum\Cms\Http\ApiError;
 use Sensum\Cms\Http\Response;
 
 /** «Avisos al equipo» (owner only): the panel's «Novedades» by e-mail. See Announcements.php. */
@@ -42,6 +43,26 @@ final class AnnouncementsController extends Controller
         $a = new Announcements($this->app);
         $sent = $a->test($a->validIds($j['ids'] ?? null), Announcements::cleanMessage($j['message'] ?? ''), (array) $this->session, $this->req->ip());
         Response::ok(['sent' => $sent, 'to' => (string) $this->session['email']]);
+    }
+
+    /** «No avisar»: puts these items aside (no reminder, not pre-selected), or undoes it. */
+    public function dismiss(): never
+    {
+        $j = $this->req->json();
+        $a = new Announcements($this->app);
+        $a->dismiss($a->validIds($j['ids'] ?? null), ($j['dismiss'] ?? true) !== false, $this->uid(), $this->req->ip());
+        Response::ok($a->overview($this->ownLang()));
+    }
+
+    /** Whether the owner gets an e-mail when an update brings «Novedades». */
+    public function settings(): never
+    {
+        $notify = $this->req->raw('notify');
+        if (!is_bool($notify)) {
+            throw ApiError::validation(['notify' => 'invalid']);
+        }
+        (new Announcements($this->app))->setNotify($notify, $this->uid(), $this->req->ip());
+        Response::ok(['notify' => $notify]);
     }
 
     public function send(): never

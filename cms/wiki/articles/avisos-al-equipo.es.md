@@ -5,7 +5,7 @@ category: administracion
 order: 13
 icon: bell
 owner: true
-updated: 2026-10-27
+updated: 2026-11-02
 ---
 Cuando el panel recibe funciones nuevas, cada persona las ve una vez al entrar (las **Novedades**). Con `Avisos al equipo` además se las cuentas por correo, con un enlace al artículo de la wiki que explica cómo funcionan.
 
@@ -31,3 +31,12 @@ Cuando el panel recibe funciones nuevas, cada persona las ve una vez al entrar (
 Cada envío queda en **Envíos anteriores** y en `Actividad`.
 
 > [!important] Necesita el correo del panel configurado (menú **Correo**). Si no lo está, la página lo avisa y no deja enviar.
+
+## Cuando una actualización trae novedades
+
+Tú decides si el equipo se entera por correo; nada le llega sin tu confirmación.
+
+- Te escribimos **una sola vez** por novedad: un correo con la lista, cuántas personas pueden usar cada una y el enlace a `Avisos al equipo`. Se apaga con `Avisarme por correo cuando una actualización traiga novedades`.
+- Inicio te muestra las novedades pendientes con dos opciones: `Avisar al equipo` o `No avisar`.
+- `No avisar` las aparta: dejan de recordarse y ya no vienen marcadas. Siguen en la lista con la etiqueta **Sin aviso**, y puedes enviarlas cuando quieras o tocar `Volver a proponer`.
+- En `Avisos al equipo`, `No avisar las marcadas` hace lo mismo con las que elijas.

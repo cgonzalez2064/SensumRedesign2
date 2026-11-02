@@ -20,7 +20,7 @@ TABLES = {
     'report_messages': 'La conversación de cada solicitud: mensajes de soporte, de la persona y notas internas.',
     'error_log': 'Cada error registrado (crítico, error o advertencia) con su origen, ubicación en el código y referencia; se guarda 180 días.',
     'monitor_runs': 'Cada revisión automática del sitio: si respondió, qué falló y en cuánto tiempo cargó la portada.',
-    'site_reports': 'Informes mensuales enviados a los clientes: mes, quién lo envió, a quién, idioma, estado y cifras.',
+    'site_reports': 'Informes mensuales enviados a los clientes: mes, quién lo envió (o si salió solo, con el envío automático), a quién, idioma, estado y cifras.',
     'wiki_news_seen': 'Qué «Novedades» de la wiki vio cada persona en el panel (cada una se muestra una vez).',
     'announcements': 'Cada «Aviso al equipo»: cuándo, quién lo envió, qué novedades, el mensaje y a cuántas personas llegó.',
     'news_emailed': 'Qué novedad le llegó a quién por correo y en qué envío: así nadie recibe dos veces la misma.',
@@ -77,6 +77,7 @@ MIGRATIONS = {
     '019_wiki': 'Las «Novedades» vistas de la wiki.',
     '020_intro': '«Primeros pasos» recordados en la cuenta.',
     '021_announcements': 'Avisos al equipo por correo.',
+    '022_report_auto': 'Envío automático del informe mensual (marca los informes que salieron solos).',
 }
 
 FLOWS = [
@@ -124,7 +125,14 @@ FLOWS = [
         (['wiki.json'], 'Cada versión trae sus «Novedades» y para quién es cada una.'),
         (['users'], 'Se calcula quién puede usar cada novedad, con su rol y desde cuándo existe su cuenta.'),
         (['wiki_news_seen'], 'Al entrar, cada persona ve sus novedades una vez; se anota que las vio.'),
-        (['news_emailed', 'announcements'], 'Con «Avisos al equipo», el propietario las envía por correo: se anota a quién le llegó cada una y el envío.'),
-        (['activity_log'], 'El envío queda en Actividad.'),
+        (['settings'], 'La revisión automática le escribe una vez al propietario con las novedades nuevas; «No avisar» las aparta.'),
+        (['news_emailed', 'announcements'], 'Si decide avisar, «Avisos al equipo» las envía por correo: se anota a quién le llegó cada una y el envío.'),
+        (['activity_log'], 'El envío (o la decisión de no avisar) queda en Actividad.'),
+    ]},
+    {'id': 'report', 'name': 'El informe mensual, solo', 'steps': [
+        (['settings'], 'El propietario activa el envío automático y elige el día (5, si no cambia nada).'),
+        (['monitor_runs', 'analytics_daily', 'leads'], 'Ese día, desde las 8:00, la revisión automática arma el informe del mes anterior con sus cifras.'),
+        (['site_reports'], 'Se envía a los destinatarios con su PDF y el propietario en copia; queda marcado como automático. Nunca dos veces el mismo mes.'),
+        (['activity_log'], 'El envío queda en Actividad; si el correo falla, se reintenta 6 horas después, hasta 3 veces.'),
     ]},
 ]

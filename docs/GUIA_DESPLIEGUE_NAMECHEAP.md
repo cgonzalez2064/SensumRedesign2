@@ -1179,6 +1179,15 @@ La base de datos se actualiza sola (migraciones `017_roles` y `018_device_reset`
   Prospectos, un **recordatorio por cada prospecto que sigue «Nuevo»** de los últimos 30
   días (si no lo quieres, márcalos como atendidos antes de instalar el cron, o elige «No
   recordar» en Prospectos → Automatización → Recordatorio si sigue «Nuevo»).
+* **Informe automático y avisos con tu decisión** (migración `022_report_auto`, se aplica
+  sola): en **Informe mensual → Envío automático** puedes hacer que el informe salga solo
+  cada mes, el día que elijas (el 5 si no lo cambias), desde las 8:00. Viene **apagado**:
+  actívalo cuando quieras, con al menos un destinatario guardado. Si lo activas antes del 5
+  de noviembre, el informe de octubre saldrá solo ese día (recuerda que la vigilancia
+  automática empezó el 27 de octubre). Además, en la primera revisión automática después de
+  actualizar te llega **un correo** con las novedades que el equipo aún no recibió: decides
+  tú si avisar (**Avisos al equipo**) o no (**No avisar**, en Inicio). No se envía nada al
+  equipo sin tu confirmación.
 * **Avisos al equipo** (migración `021_announcements`, se aplica sola): en
   **Administración → Avisos al equipo** la cuenta propietaria envía por correo las
   Novedades de cada actualización; cada persona recibe solo lo que puede usar. Solo

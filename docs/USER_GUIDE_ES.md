@@ -475,8 +475,17 @@ La vista previa tiene dos pestañas:
    todos (siempre la versión **Para clientes**, con el PDF adjunto).
 5. El **Historial** muestra lo enviado.
 
-Si el informe del mes anterior no se envía en los **primeros 5 días del mes**, te
-llega un **recordatorio** por correo (una sola vez) y un aviso en **Inicio**.
+**Envío automático:** en esa misma pantalla, activa **Enviar el informe solo, cada mes**,
+elige el **Día del envío** (el 5 si no lo cambias) y pulsa **Guardar envío automático**.
+Ese día, desde las 8:00, el informe del mes anterior sale solo a los destinatarios, con su
+PDF y tu cuenta en copia; el **Historial** lo marca como «Envío automático». Nunca se envía
+dos veces el mismo mes (si ya lo enviaste a mano, no se repite) y sin destinatarios no sale
+nada. Si el correo falla, se intenta otra vez 6 horas después, hasta 3 veces. Viene
+**apagado**: mientras esté activado, revisa la vista previa antes de ese día.
+
+Si el informe del mes anterior no se envía a tiempo (el día 5, o el día elegido para el
+envío automático), te llega un **recordatorio** por correo al día siguiente (una sola vez)
+y un aviso en **Inicio**.
 
 **Administradores (consulta):** quien tenga el acceso **Informe mensual (consulta)**
 (incluido en los roles «Administrador» y «Consulta (solo lectura)») lo encuentra en **Estado
@@ -772,3 +781,11 @@ recibe dos veces la misma novedad; si un correo falla, vuelve a enviar y solo le
 quien falta. No lo reciben la cuenta propietaria, las cuentas desactivadas ni quien se unió
 después de la novedad. Cada envío queda en **Envíos anteriores** y en **Actividad**.
 Necesita el correo del panel configurado (**Correo**).
+
+**Tú decides si avisar.** Cuando una actualización trae novedades, te llega **un solo
+correo** con la lista y cuántas personas pueden usar cada una (se apaga con **Avisarme por
+correo cuando una actualización traiga novedades**, en la misma pantalla). Nada se envía al
+equipo sin que lo confirmes. En **Inicio**, el aviso de novedades tiene **Avisar al equipo**
+y **No avisar**: «No avisar» las aparta (dejan de recordarse y ya no vienen marcadas); en la
+lista quedan con la etiqueta **Sin aviso**, y puedes enviarlas cuando quieras o pulsar
+**Volver a proponer**. **No avisar las marcadas** hace lo mismo desde Avisos al equipo.

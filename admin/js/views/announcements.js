@@ -6,7 +6,7 @@
 import { h, icon, fill, initials } from '../dom.js';
 import { t, tp, fmtDate } from '../i18n.js';
 import { api } from '../api.js';
-import { pageHead, loading, loadError, alertBox, button, setBusy, toast, errorText, fieldErrorText, cardHead, textField, confirmDialog } from '../ui.js';
+import { pageHead, loading, loadError, alertBox, button, setBusy, toast, errorText, fieldErrorText, cardHead, textField, confirmDialog, switchInput } from '../ui.js';
 import { permissionList } from '../access.js';
 
 const dayTs = (d) => Math.floor(Date.parse(d + 'T12:00:00') / 1000);
@@ -41,6 +41,7 @@ export async function render({ main }) {
     sendBtn.lastChild.textContent = tp('announce.send', current.length);
     sendBtn.disabled = !current.length || !data.mailReady;
     testBtn.disabled = !chosen.size || !data.mailReady;
+    skipBtn.disabled = !chosen.size;
     barText.lastChild.textContent = tp('announce.barCount', current.length);
     barSend.lastChild.textContent = sendBtn.lastChild.textContent;
     barSend.disabled = sendBtn.disabled;
@@ -87,16 +88,47 @@ export async function render({ main }) {
     const box = h('input', { type: 'checkbox', id, checked: chosen.has(n.id) });
     box.addEventListener('change', () => { if (box.checked) chosen.add(n.id); else chosen.delete(n.id); refresh(); });
     const done = n.eligible > 0 && n.emailed >= n.eligible;
+    // Put aside with «No avisar»: still sendable; «Volver a proponer» brings it back to the reminder.
+    const undo = n.dismissed && !done ? h('button', { type: 'button', class: 'btn btn-link btn-sm announce-undo', text: t('announce.undoSkip'), onclick: () => dismiss([n.id], false) }) : null;
     return h('li', { class: ['announce-item', done && 'is-done'] }, box,
       h('label', { for: id },
-        h('span', { class: 'announce-item-head' }, h('strong', { text: n.title }), h('span', { class: 'tiny muted nowrap', text: fmtDate(dayTs(n.date), false) })),
+        h('span', { class: 'announce-item-head' }, h('strong', { text: n.title }),
+          n.dismissed && !done ? h('span', { class: 'badge badge-warn nowrap', text: t('announce.dismissedTag') }) : null,
+          h('span', { class: 'tiny muted nowrap', text: fmtDate(dayTs(n.date), false) })),
         n.summary ? h('span', { class: 'small muted', text: n.summary }) : null,
         h('span', { class: 'tiny announce-who' }, icon('people'), h('span', { text: who(n) })),
         h('span', { class: ['tiny', done ? 'announce-done' : 'muted'] }, done ? icon('check-circle-fill') : null,
-          h('span', { text: n.eligible ? t('announce.stats', { eligible: n.eligible, seen: n.seen, emailed: n.emailed }) : t('announce.noOne') }))));
+          h('span', { text: n.eligible ? t('announce.stats', { eligible: n.eligible, seen: n.seen, emailed: n.emailed }) : t('announce.noOne') }))), undo);
   };
-  const option = (id, label, onChange) => {
-    const box = h('input', { type: 'checkbox', id });
+
+  // «No avisar» for the checked items, or undo it for one; the list reloads with the new state.
+  const dismiss = async (ids, on) => {
+    try {
+      data = await api.post('/announcements/dismiss', { ids, dismiss: on });
+      toast(t(on ? 'announce.skipped' : 'announce.unskipped'));
+      for (const id of ids) chosen.delete(id);
+      if (!on) chosen.add(ids[0]);
+      render();
+    } catch (err) { toast(errorText(err), { type: 'bad' }); }
+  };
+  const skipBtn = button(t('announce.skip'), { icon: 'eye-slash', small: true });
+  skipBtn.addEventListener('click', () => { if (chosen.size) dismiss([...chosen], true); });
+
+  // The e-mail to the owner when an update brings «Novedades» (saved at once).
+  const notifyCard = () => {
+    const sw = switchInput({ id: 'announce-notify', checked: data.notify, describedBy: 'announce-notify-d', onChange: async (on, input) => {
+      input.disabled = true;
+      try { await api.put('/announcements/settings', { notify: on }); data.notify = on; toast(t(on ? 'announce.notifyOn' : 'announce.notifyOff')); }
+      catch (err) { input.checked = !on; toast(errorText(err), { type: 'bad' }); }
+      input.disabled = false;
+    } });
+    return h('section', { class: 'card', 'aria-labelledby': 'announce-n' },
+      cardHead({ id: 'announce-n', icon: 'envelope', title: t('announce.notifyTitle') }),
+      h('div', { class: 'row' }, sw.wrap, h('label', { for: 'announce-notify', text: t('announce.notifyLabel') })),
+      h('p', { class: 'small muted', id: 'announce-notify-d', text: t('announce.notifyHint') }));
+  };
+  const option = (id, label, onChange, checked) => {
+    const box = h('input', { type: 'checkbox', id, checked: checked || null });
     box.addEventListener('change', () => { onChange(box.checked); refresh(); });
     return h('label', { class: 'check', for: id }, box, h('span', { text: label }));
   };
@@ -115,14 +147,18 @@ export async function render({ main }) {
   const load = async () => {
     try { data = await api.get('/announcements'); } catch (err) { fill(body, loadError(err, load)); return; }
     if (!alive) return;
-    if (!chosen.size) for (const n of data.news) if (n.eligible > n.emailed) chosen.add(n.id);
+    if (!chosen.size) for (const n of data.news) if (n.eligible > n.emailed && !n.dismissed) chosen.add(n.id);
+    await render();
+  };
+  const render = async () => {
     fill(body,
       data.mailReady ? null : alertBox('warn', null, t('announce.noMail'), h('a', { class: 'btn btn-sm', href: '#/correo' }, icon('envelope'), t('announce.openEmail'))),
       // Wide screens: the list on the left; the message, who gets it and «Enviar» stay in view on the right.
       h('div', { class: 'announce-layout' },
         h('section', { class: 'card', 'aria-labelledby': 'announce-1' },
           cardHead({ id: 'announce-1', icon: 'star-fill', title: t('announce.step1'), lead: t('announce.step1Lead') }),
-          data.news.length ? h('ul', { class: 'announce-list' }, data.news.map(itemRow)) : h('p', { class: 'muted', text: t('announce.noNews') })),
+          data.news.length ? h('ul', { class: 'announce-list' }, data.news.map(itemRow)) : h('p', { class: 'muted', text: t('announce.noNews') }),
+          data.news.length ? h('div', { class: 'row' }, skipBtn) : null),
         h('div', { class: 'announce-side stack-lg' },
           h('section', { class: 'card', 'aria-labelledby': 'announce-2' },
             cardHead({ id: 'announce-2', icon: 'card-text', title: t('announce.step2') }),
@@ -130,11 +166,12 @@ export async function render({ main }) {
           h('section', { class: 'card', 'aria-labelledby': 'announce-3' },
             cardHead({ id: 'announce-3', icon: 'people', title: t('announce.step3') }),
             h('div', { class: 'stack-sm announce-options' },
-              option('announce-unseen', t('announce.unseenOnly'), (v) => { unseenOnly = v; }),
-              option('announce-again', t('announce.again'), (v) => { again = v; })),
+              option('announce-unseen', t('announce.unseenOnly'), (v) => { unseenOnly = v; }, unseenOnly),
+              option('announce-again', t('announce.again'), (v) => { again = v; }, again)),
             people,
             h('div', { class: 'row announce-actions' }, testBtn, sendBtn),
-            result))),
+            result),
+          notifyCard())),
       historyCard());
     await loadPeople();
   };

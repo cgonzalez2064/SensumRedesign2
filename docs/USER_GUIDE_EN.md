@@ -455,8 +455,16 @@ The preview has two tabs:
    everyone (always the **For clients** version, with the PDF attached).
 5. **History** shows what was sent.
 
-If last month's report isn't sent in the **first 5 days of the month**, you get a
-**reminder** email (once) and a notice on **Home**.
+**Automatic sending:** on the same screen, turn on **Send the report on its own, every
+month**, choose the **Sending day** (the 5th unless you change it) and press **Save
+automatic sending**. On that day, from 8:00, last month's report goes to the recipients on
+its own, with its PDF and your account in copy; the **History** marks it «Automatic
+sending». The same month is never sent twice (if you already sent it by hand, it isn't
+repeated) and without recipients nothing goes out. If e-mail fails, it tries again 6 hours
+later, up to 3 times. It starts **off**: while it is on, check the preview before that day.
+
+If last month's report isn't sent on time (the 5th, or the day chosen for automatic
+sending), you get a **reminder** e-mail the next day (once) and a notice on **Home**.
 
 **Administrators (view):** anyone with the **Monthly report (view)** access (part of
 the "Administrator" and "View only" roles) finds it under **Site status → Monthly
@@ -741,3 +749,11 @@ update twice; if an e-mail fails, send again and it only goes to whoever is miss
 owner account, disabled accounts and whoever joined after the update don't get it. Each
 send stays under **Earlier sends** and in **Activity**. It needs the panel's e-mail set up
 (**E-mail**).
+
+**It's your call.** When an update brings news, you get **one e-mail** with the list and how
+many people can use each item (turn it off with **E-mail me when an update brings news**,
+on the same screen). Nothing goes to the team without your confirmation. On **Home**, the
+news notice has **Tell the team** and **Don't announce**: «Don't announce» sets them aside
+(no longer reminded or pre-checked); in the list they are tagged **Set aside**, and you can
+send them any time or press **Propose again**. **Don't announce the checked ones** does the
+same from Team announcements.

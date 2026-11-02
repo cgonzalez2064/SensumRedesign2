@@ -8,7 +8,7 @@
 import { h, icon, clear, fill } from '../dom.js';
 import { t, fmtDate } from '../i18n.js';
 import { api, download, saveBlob } from '../api.js';
-import { pageHead, loading, loadError, button, setBusy, toast, errorText, alertBox, confirmDialog, textField, cardHead, segmented } from '../ui.js';
+import { pageHead, loading, loadError, button, setBusy, toast, errorText, alertBox, confirmDialog, textField, cardHead, segmented, switchInput } from '../ui.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -96,7 +96,8 @@ export async function render({ main, isOwner }) {
     const statusBox = st.sentAt
       ? alertBox('ok', t('siteReport.sentTitle', { month: periodLabel(st.period) }), t('siteReport.sentBody', { when: fmtDate(st.sentAt) }))
       : alertBox(st.overdue ? 'warn' : 'info', t('siteReport.pendingTitle', { month: periodLabel(st.period) }),
-        t(st.overdue ? 'siteReport.overdueBody' : 'siteReport.pendingBody') + (st.reminderSentAt ? ' ' + t('siteReport.reminded', { when: fmtDate(st.reminderSentAt) }) : ''));
+        (st.overdue ? t('siteReport.overdueBody', { day: st.dueDay }) : st.auto && data.settings.recipients.length ? t('siteReport.autoScheduled', { when: fmtDate(st.nextAuto) }) : t('siteReport.pendingBody'))
+        + (st.reminderSentAt ? ' ' + t('siteReport.reminded', { when: fmtDate(st.reminderSentAt) }) : ''));
 
     // Preview with month selector and the two versions.
     const prevCard = previewCard(data.periods, () => { sendBtn.lastChild.textContent = t('siteReport.send', { month: periodLabel(period) }); });
@@ -146,6 +147,37 @@ export async function render({ main, isOwner }) {
       h('label', { class: 'field' }, h('span', { class: 'label', text: t('siteReport.language') }), langSel),
       h('div', null, saveBtn));
 
+    // Automatic send: on or off, and the day of the month (saved with its own button).
+    const autoSw = switchInput({ id: 'sr-auto', checked: data.settings.auto, describedBy: 'sr-auto-hint' });
+    const daySel = h('select', { class: 'select', id: 'sr-day' }, Array.from({ length: 28 }, (_, i) => i + 1)
+      .map((d) => h('option', { value: String(d), text: t('siteReport.autoDayOption', { day: d }), selected: d === data.settings.day || null })));
+    const autoHint = h('p', { class: 'small muted', id: 'sr-auto-hint' });
+    const autoState = h('div');
+    const renderAuto = () => {
+      daySel.disabled = !autoSw.input.checked;
+      autoHint.textContent = t(autoSw.input.checked ? 'siteReport.autoHint' : 'siteReport.autoOffHint', { day: daySel.value });
+      fill(autoState, !data.settings.auto ? null
+        : !data.settings.recipients.length ? alertBox('warn', null, t('siteReport.autoNoRecipients'))
+          : h('p', { class: 'small' }, icon('clock-history'), ' ', t('siteReport.autoNext', { when: fmtDate(st.nextAuto) })));
+    };
+    autoSw.input.addEventListener('change', renderAuto);
+    daySel.addEventListener('change', renderAuto);
+    const autoBtn = button(t('siteReport.autoSave'), { icon: 'check-lg', small: true });
+    autoBtn.addEventListener('click', async () => {
+      setBusy(autoBtn, true, t('common.saving'));
+      try {
+        const r = await api.put('/site-report/auto', { auto: autoSw.input.checked, day: Number(daySel.value) });
+        toast(r.settings.auto ? t('siteReport.autoOn', { day: r.settings.day }) : t('siteReport.autoOff'));
+        fill(body, loading());
+        await load();
+      } catch (err) { setBusy(autoBtn, false); toast(errorText(err), { type: 'bad' }); }
+    });
+    renderAuto();
+    const autoCard = card('sr-auto-card', t('siteReport.autoTitle'),
+      h('div', { class: 'row' }, autoSw.wrap, h('label', { for: 'sr-auto', text: t('siteReport.autoToggle') })),
+      h('label', { class: 'field' }, h('span', { class: 'label', text: t('siteReport.autoDay') }), daySel),
+      autoHint, autoState, h('div', null, autoBtn));
+
     // Send.
     const note = h('textarea', { class: 'textarea', id: 'sr-note', rows: 3, maxlength: data.noteMax, placeholder: t('siteReport.notePlaceholder') });
     const testBtn = button(t('siteReport.test'), { icon: 'envelope', small: true });
@@ -193,12 +225,12 @@ export async function render({ main, isOwner }) {
       ? h('ul', { class: 'status-list' }, data.history.map((x) => h('li', null,
         h('span', { class: x.status === 'sent' ? 'ok-text' : 'bad-text' }, icon(x.status === 'sent' ? 'check-circle-fill' : 'x-circle-fill')),
         h('div', { class: 'grow' }, h('div', { text: x.periodLabel + ' · ' + t('siteReport.status.' + x.status) }),
-          h('div', { class: 'tiny muted break', text: [fmtDate(x.sentAt), x.sentBy, x.recipients.join(', ')].filter(Boolean).join(' · ') })))))
+          h('div', { class: 'tiny muted break', text: [fmtDate(x.sentAt), x.auto ? t('siteReport.autoBy') : x.sentBy, x.recipients.join(', ')].filter(Boolean).join(' · ') })))))
       : h('p', { class: 'muted', text: t('siteReport.noHistory') }));
 
     fill(body, statusBox, h('div', { class: 'dash-grid' },
       h('div', { class: 'stack-lg' }, prevCard),
-      h('div', { class: 'stack-lg' }, recipientsCard, sendCard, history)));
+      h('div', { class: 'stack-lg' }, recipientsCard, autoCard, sendCard, history)));
     loadPreview();
   };
   await load();

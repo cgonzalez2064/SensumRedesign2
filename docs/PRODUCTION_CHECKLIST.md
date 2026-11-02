@@ -87,6 +87,7 @@ Release: `release-________-_______` · Deployed by: __________ · Date: ________
 - [ ] Browser console reviewed (public site and admin: no errors)
 - [ ] Network requests reviewed (no failed requests; admin loads no third-party resources)
 - [ ] Daily database backup in the crontab (installed by `bin/console cron:install` with the scheduled check)
+- [ ] Monthly report: recipients saved and *Envío automático* decided (on with its day, or off with the reminder)
 
 ## E. Recovery readiness
 

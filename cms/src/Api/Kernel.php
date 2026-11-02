@@ -60,6 +60,7 @@ final class Kernel
         ['GET', '/api/site-report', SiteReportController::class, 'index', 'owner'],
         ['GET', '/api/site-report/preview', SiteReportController::class, 'preview', 'user'],
         ['PUT', '/api/site-report/settings', SiteReportController::class, 'settings', 'owner'],
+        ['PUT', '/api/site-report/auto', SiteReportController::class, 'auto', 'owner'],
         ['POST', '/api/site-report/send', SiteReportController::class, 'send', 'owner'],
         ['POST', '/api/site-report/pdf', SiteReportController::class, 'pdf', 'owner'],
         ['POST', '/api/site/republish', SystemController::class, 'republish', 'user'],
@@ -149,6 +150,8 @@ final class Kernel
         ['POST', '/api/announcements/recipients', AnnouncementsController::class, 'recipients', 'owner'],
         ['POST', '/api/announcements/test', AnnouncementsController::class, 'test', 'owner'],
         ['POST', '/api/announcements/send', AnnouncementsController::class, 'send', 'owner'],
+        ['POST', '/api/announcements/dismiss', AnnouncementsController::class, 'dismiss', 'owner'],
+        ['PUT', '/api/announcements/settings', AnnouncementsController::class, 'settings', 'owner'],
         ['PUT', '/api/leads/confirmation', LeadsController::class, 'confirmation', 'user'],
     ];
 

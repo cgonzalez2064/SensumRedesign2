@@ -192,6 +192,8 @@ final class Automations
             'Inactive accounts' => fn () => $this->inactivity($now),
             'Lead follow-up' => fn () => $this->leadFollowup($now),
             'Weekly lead summary' => fn () => $this->leadWeekly($now),
+            'Monthly report' => fn () => $this->app->siteReport()->autoSend($now),
+            'Team announcements' => fn () => (new Announcements($this->app))->notifyOwner($now),
         ] as $name => $job) {
             try {
                 $out[] = "{$name}: " . $job();

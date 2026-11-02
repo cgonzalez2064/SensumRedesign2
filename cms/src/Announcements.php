@@ -12,11 +12,18 @@ use Sensum\Cms\Http\ApiError;
  * the dialog in the panel — and never the same item twice (`news_emailed`,
  * unless the owner asks to send it again). Every send is logged
  * (`announcements`, migration 021_announcements).
+ *
+ * The choice stays the owner's: when an update brings «Novedades» the team has not
+ * had by e-mail, the owner gets one e-mail about them (notifyOwner, from the
+ * scheduled check; can be switched off) and Inicio shows a reminder. «No avisar»
+ * (dismiss) puts them aside: no reminder, not pre-selected, still sendable later.
+ * State in the `announce_state` setting.
  */
 final class Announcements
 {
     public const MESSAGE_MAX = 600;
     private const IDS_MAX = 20;
+    private const STATE = 'announce_state';
 
     public function __construct(private App $app)
     {
@@ -51,6 +58,19 @@ final class Announcements
         return $out;
     }
 
+    /** @return array{dismissed:list<string>, notified:list<string>, notify:bool} */
+    private function state(): array
+    {
+        $s = $this->app->settings()->getJson(self::STATE);
+        $ids = fn ($v) => array_values(array_filter((array) $v, 'is_string'));
+        return ['dismissed' => $ids($s['dismissed'] ?? []), 'notified' => $ids($s['notified'] ?? []), 'notify' => ($s['notify'] ?? true) !== false];
+    }
+
+    private function saveState(array $state): void
+    {
+        $this->app->settings()->setJson(self::STATE, $state);
+    }
+
     /**
      * The «Novedades» with, for each, how many people can use it, how many saw
      * it in the panel and how many got it by e-mail; and the last sends.
@@ -61,6 +81,7 @@ final class Announcements
         $accounts = $this->accounts();
         $seen = $this->marks('wiki_news_seen');
         $mailed = $this->marks('news_emailed');
+        $state = $this->state();
         $items = [];
         foreach ($this->catalog() as $id => $n) {
             $for = array_map('intval', array_column(array_filter($accounts, fn ($u) => $wiki->forAccount($n, $u, (int) $u['created_at'])), 'id'));
@@ -75,6 +96,7 @@ final class Announcements
                 'eligible' => count($for),
                 'seen' => count(array_filter($for, fn ($u) => isset($seen[$id][$u]))),
                 'emailed' => count(array_filter($for, fn ($u) => isset($mailed[$id][$u]))),
+                'dismissed' => in_array($id, $state['dismissed'], true),
             ];
         }
         usort($items, fn ($a, $b) => strcmp($b['date'], $a['date']));
@@ -87,7 +109,61 @@ final class Announcements
             'recipients' => (int) $r['recipients'],
             'failed' => (int) $r['failed'],
         ], $this->app->db()->all('SELECT a.*, u.name AS by_name FROM announcements a LEFT JOIN users u ON u.id = a.sent_by ORDER BY a.id DESC LIMIT 20'));
-        return ['news' => $items, 'history' => $history, 'mailReady' => $this->app->mailer()->isConfigured()];
+        return ['news' => $items, 'history' => $history, 'mailReady' => $this->app->mailer()->isConfigured(), 'notify' => $state['notify']];
+    }
+
+    /** @return list<array> items someone can use and has not had by e-mail, that the owner has not put aside */
+    public function pending(string $lang = 'es'): array
+    {
+        return array_values(array_filter($this->overview($lang)['news'], fn ($n) => $n['eligible'] > $n['emailed'] && !$n['dismissed']));
+    }
+
+    /** «No avisar» (or undo it) for these items. */
+    public function dismiss(array $ids, bool $dismiss, int $uid, ?string $ip): void
+    {
+        $state = $this->state();
+        $state['dismissed'] = array_values($dismiss ? array_unique(array_merge($state['dismissed'], $ids)) : array_diff($state['dismissed'], $ids));
+        $this->saveState($state);
+        $this->app->activity($uid, 'team_announcement_dismissed', '', ['news' => $ids, 'dismissed' => $dismiss], $ip);
+    }
+
+    /** Whether the owner gets an e-mail when an update brings «Novedades». */
+    public function setNotify(bool $notify, int $uid, ?string $ip): void
+    {
+        $state = $this->state();
+        $state['notify'] = $notify;
+        $this->saveState($state);
+        $this->app->activity($uid, 'team_announcement_settings', '', ['notify' => $notify], $ip);
+    }
+
+    /**
+     * From the scheduled check: once per item, tells the owner which new «Novedades» the team
+     * has not had by e-mail, with a link to send them or put them aside. Nothing is sent to the team.
+     */
+    public function notifyOwner(?int $now = null): string
+    {
+        $state = $this->state();
+        if (!$state['notify']) {
+            return 'owner notice off';
+        }
+        if (!$this->app->mailer()->isConfigured()) {
+            return 'e-mail not configured';
+        }
+        $owner = $this->app->db()->one('SELECT * FROM users WHERE lower(email) = ? AND status = ?', [$this->app->config->ownerEmail(), 'active']);
+        if (!$owner) {
+            return 'no owner account';
+        }
+        $lang = ($owner['lang'] ?? 'es') === 'en' ? 'en' : 'es';
+        $new = array_values(array_filter($this->pending($lang), fn ($n) => !in_array($n['id'], $state['notified'], true)));
+        if (!$new) {
+            return 'nothing new';
+        }
+        if (!$this->app->mailer()->send((new Emails($this->app))->announcementPending($owner, $new))) {
+            return 'owner notice failed (retried next time)';
+        }
+        $state['notified'] = array_values(array_unique(array_merge($state['notified'], array_column($new, 'id'))));
+        $this->saveState($state);
+        return 'told the owner about ' . count($new) . ' new item(s)';
     }
 
     /** @return list<string> known, receivable «Novedades» ids (1–20) */

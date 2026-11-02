@@ -100,7 +100,7 @@ so a slow screen can never write into the next one).
 | Team announcements (owner) | *Administración → Avisos al equipo* (`#/avisos`): pick wiki «Novedades», add a message, see who gets what, send a test, then one e-mail per person in their language with only the items they can use and the wiki link; never the same item twice; history; Inicio reminds the owner of items not e-mailed yet. `owner: true` «Novedades» are only for the owner |
 | Monitoring (owner) | Uptime (24 h / 7 / 30 / 90 days), incidents with the checks that failed, interactive trend charts (daily uptime, response time, errors, sign-ins), error log with filters and details, key figures, most frequent errors, system details, e-mail alerts for critical errors + test e-mail (§9a, §9d) |
 | Salud del sitio (`monitor`) | Summary of Monitoring for the team: status, uptime, charts, incidents, error counts and key dates — no messages or settings (§9d) |
-| Monthly report (owner) | Short plain-language site-health and visibility report for clients; recipients (owner always copied), preview, test, send, history; reminder after day 5 (§9b) |
+| Monthly report (owner) | Short plain-language site-health and visibility report for clients; recipients (owner always copied), preview, test, send, history; optional automatic sending on a chosen day (5 by default); reminder the day after it was due (§9b) |
 | Support — *Soporte* | Menu *Soporte* (headset icon; the page has the same name since October 2026, formerly «Centro de Ayuda»): *Nueva solicitud*, *Mis solicitudes* (everyone) and *Gestión de solicitudes* (managers). Reports become requests: status (new, in progress, waiting for information, resolved, closed), priority, conversation; the owner and the `support` access edit, reply, add internal notes, ask for information, resolve/close/reopen with optional e-mail to the reporter, and see the *Panorama de soporte* charts (30/90/365 days); reporters follow and answer their own (an answer reopens); menu badge; screenshot viewer |
 | Monthly report value | Support summary (received, resolved, average resolution time, resolved items, pending) and automatic maintenance (health checks, file-security scans, backups, certificate checks, Google measurements, blocked spam, notices) + messages received through the form |
 | Contact-form options | "Servicio de interés" list: add, rename (ES/EN), reorder, remove (up to 20), restore the approved options; published at once; stable ids so renaming never breaks open pages (access: contact details). The preview is a working replica of the site's form: phone / tablet / computer widths (scaled to fit), ES/EN, the list opens with unsaved options tagged *Nueva* / *Modificada*, and «Enviar mensaje» shows the site's validation messages without sending anything |
@@ -316,7 +316,7 @@ Processes, guides and answers inside the panel, for every signed-in account, at
 | `analytics_daily` | visit statistics, one row per day × metric × value (view/visitor/source/device/lang/click) — totals only |
 | `analytics_seen` | today's unique-visitor hashes (random daily salt + IP + browser); deleted when the day changes |
 | `monitor_runs` | one row per scheduled check (ok / failed checks; home-page `response_ms` and `http_status`, `009_monitor_lite.sql`) — availability and the response-time chart |
-| `site_reports` | monthly reports sent: month, when, by whom, recipients, language, status, figures |
+| `site_reports` | monthly reports sent: month, when, by whom, recipients, language, status, figures; `auto` marks the ones sent by the automatic sending (`022_report_auto`) |
 | `sessions` | SHA-256 of the session cookie, CSRF token, created/last-seen/expiry, pseudonymized IP, user agent; `view_as_user_id`/`view_as_until` while the owner views as someone (`010_view_as.sql`) |
 | `user_tokens` | SHA-256 of invitation/reset tokens, purpose, expiry, used-at |
 | `access_requests` | «Pedir acceso»: person, permissions, message, status (pending/granted/declined/cancelled), who answered and when (`016_automations`) |
@@ -368,7 +368,7 @@ Processes, guides and answers inside the panel, for every signed-in account, at
 | `POST /api/content/translate` | texts/contact/photos/documents | machine-translate ES⇄EN for review: field text (`key`) or plain labels without a key (form options, photo descriptions); saves nothing; off without a key |
 | `GET /api/media` · `POST /api/media/{slot}/upload` · `PUT /api/media/{slot}/order` · `PUT`/`DELETE /api/media/item/{id}` | user | photos & PDF |
 | `PUT /api/account/profile` · `POST /api/account/password` · `POST /api/account/sessions/revoke-others` | user | own account |
-| `GET /api/announcements` · `POST /api/announcements/recipients` · `/test` · `/send` | owner | «Avisos al equipo» (`Announcements.php`): the wiki's «Novedades» (not `owner` ones) with `eligible` / `seen` / `emailed` counts, the last 20 sends and `mailReady`; `recipients` for `ids` (1–20 known ids) with `again` and `unseenOnly`; `test` to the owner's address (10 an hour); `send` one e-mail per active account (never the owner, disabled accounts or people who joined after the item) with only the items it can use (`Wiki::forAccount`), in its language, `message` ≤ 600 plain characters (6 sends an hour; 422 `nobody` when everyone already has them). Logged as `team_announced` / `team_announcement_test` |
+| `GET /api/announcements` · `POST /api/announcements/recipients` · `/test` · `/send` · `/dismiss` · `PUT /api/announcements/settings` | owner | «Avisos al equipo» (`Announcements.php`): the wiki's «Novedades» (not `owner` ones) with `eligible` / `seen` / `emailed` counts, the last 20 sends and `mailReady`; `recipients` for `ids` (1–20 known ids) with `again` and `unseenOnly`; `test` to the owner's address (10 an hour); `send` one e-mail per active account (never the owner, disabled accounts or people who joined after the item) with only the items it can use (`Wiki::forAccount`), in its language, `message` ≤ 600 plain characters (6 sends an hour; 422 `nobody` when everyone already has them). Logged as `team_announced` / `team_announcement_test`. The choice is the owner's: `dismiss` `{ids, dismiss}` sets items aside («No avisar»: no reminder in Inicio, not pre-selected, `dismissed` in the list; undo with `dismiss: false`; `team_announcement_dismissed`); the automations e-mail the owner once per new pending item (`Announcements::notifyOwner`, «Team announcements: …»; `settings` `{notify}` turns it off, `team_announcement_settings`). State in the `announce_state` setting |
 | `PUT /api/account/intro` | user | «Primeros pasos» on Inicio was closed: `intro_done_at` (kept from the first time); the session's `user.introDone`, so it stays closed on every device (refused with `view_only` while viewing as someone) |
 | `PUT /api/account/welcome` | user | first sign-in: `lang` (es/en) and `theme` (light/dark/system) stored with `onboarded_at` (kept from the first time); the session's `user.welcome` is true until then (never while viewing as someone, where the change is refused with `view_only`). Migration `013_welcome` marks accounts that had signed in before |
 | `GET /api/account/2fa` · `POST /api/account/2fa/setup` · `/enable` · `/recovery-codes` · `/disable` | user | own two-step sign-in: setup (password → secret + QR), enable (code → recovery codes), new codes and disable (password + code). The only routes open to an account that must still enrol |
@@ -403,7 +403,7 @@ Processes, guides and answers inside the panel, for every signed-in account, at
 | `GET /api/activity?group=&person=&from=&to=&before=&export=1` | `site` or `users` (owner: everything) | Actividad: 50 per page (`more`, then `before=<id>`), groups by access (`content`, `media` with `site`; `users`; `leads`; owner also `security`, `settings`, `support`, `other`); `export=1` returns up to 5,000 for the panel's CSV |
 | `PUT /api/leads/automation` · `PUT /api/leads/confirmation` | `leads` | assignment `rules` (service → person), `fallbackUserId`, `followupHours` (0/24/48/72), `weeklySummary`; the visitor's confirmation (`enabled`, `es`/`en` `subject` + `body` with {nombre} {servicio} {telefono} {whatsapp} {correo}) |
 | `GET /api/view-as` · `POST /api/view-as` · `POST /api/view-as/switch` · `POST /api/view-as/stop` | owner (really) | "Ver como": candidates (active/invited, never the owner); start with `userId` + `currentPassword`; switch without password while active; stop. While active the session answers as that account, read-only (`403 view_only` for any change except switch/stop and the leads CSV), with `X-View-As: <id>` (0 otherwise) so the panel notices changes |
-| `GET /api/site-report` · `PUT /api/site-report/settings` · `POST /api/site-report/send` · `POST /api/site-report/pdf` | owner | monthly report: status, recipients, history, sending (client version only), PDF |
+| `GET /api/site-report` · `PUT /api/site-report/settings` · `PUT /api/site-report/auto` · `POST /api/site-report/send` · `POST /api/site-report/pdf` | owner | monthly report: status, recipients, automatic sending (on/off, day 1–28), history, sending (client version only), PDF |
 | `GET /api/site-report/preview?period=&lang=` | `report` (owner included) | both versions of a month: `report` (client: `audience: client`) and `technical` (`audience: technical`), plus `period` and `periods` |
 
 Errors are `{"ok":false,"error":"<code>","fields":{…}}`; the admin translates
@@ -617,10 +617,24 @@ to-dos (HTTPS, backups, domain renewal, speed, open requests).
 
 Recipients: up to 20 (Namecheap allows 50 per message), validated and saved;
 the owner is always in Cc. *Enviarme una prueba* sends only to the owner and is
-not recorded. If last month's report hasn't been sent by the end of day 5, the
-owner gets one reminder e-mail (from the scheduled check, or when the owner
-opens the page), and the dashboard shows a warning. Months before the site was
-in use are skipped.
+not recorded. If last month's report hasn't been sent by the end of day 5 (or of
+the automatic sending's day, when it is on), the owner gets one reminder e-mail
+(from the scheduled check, or when the owner opens the page), and the dashboard
+shows a warning. Months before the site was in use are skipped.
+
+**Automatic sending** (`SiteReport::autoSend`, run by the automations in the
+scheduled check; `PUT /api/site-report/auto` `{auto: bool, day: 1–28}`, owner,
+logged as `site_report_auto`). Off by default; stored in `report_settings`
+(`auto`, `day`, 5 by default). From 08:00 on that day it sends last month's report
+exactly like the owner's *Enviar* (client version, PDF attached, owner in Cc, no
+message), recorded in `site_reports` with `auto = 1` and `sent_by` NULL (migration
+`022_report_auto`) and in Actividad (`site_report_sent` with `auto: true`). Never
+twice for a month, never after a manual send, never without recipients (the
+reminder covers it) or for a month before the site was in use. A failed try is
+recorded (`status = failed`, `auto = 1`) and repeated 6 hours later, 3 times at most;
+then the reminder takes over. `GET /api/site-report` returns `settings.auto/day` and
+`status.auto`, `status.dueDay` and `status.nextAuto`. Time travel for checks:
+`bin/console automations <unix-time>` (line «Monthly report: …»).
 
 Google PageSpeed scores are fetched by the scheduled check at most once a day,
 only when `APP_URL` is a public https address. `PAGESPEED_API_KEY` (free Google

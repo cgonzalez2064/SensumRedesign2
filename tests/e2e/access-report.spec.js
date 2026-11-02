@@ -94,6 +94,26 @@ test('monthly report: preview, recipients with the owner always copied, test e-m
   await expect(page.getByText(`Prueba enviada a ${ADMIN.email}.`)).toBeVisible();
   await page.getByRole('button', { name: /Quitar a cliente@example.test/ }).click();
   await expect(page.locator('.tag', { hasText: 'cliente@example.test' })).toHaveCount(0);
+
+  // Automatic sending: off by default; on, on day 7; then off again (the other tests expect it off).
+  const auto = page.locator('#sr-auto');
+  await expect(auto).not.toBeChecked();
+  await expect(page.getByText('Apagado: el informe sale solo cuando tú lo envías.', { exact: false })).toBeVisible();
+  await expect(page.getByLabel('Día del envío')).toBeDisabled();
+  await page.locator('label[for="sr-auto"]').click();
+  await page.getByLabel('Día del envío').selectOption('7');
+  await expect(page.getByText('El día 7, desde las 8:00, se envía el informe del mes anterior', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Guardar envío automático' }).click();
+  await expect(page.getByText('Listo: el informe se enviará solo el día 7 de cada mes.')).toBeVisible();
+  await expect(page.locator('#sr-auto')).toBeChecked();
+  await expect(page.getByText('Próximo envío automático:', { exact: false })).toBeVisible();
+  await page.reload();
+  await expect(page.locator('#sr-auto')).toBeChecked();
+  await expect(page.getByLabel('Día del envío')).toHaveValue('7');
+  await page.locator('label[for="sr-auto"]').click();
+  await page.getByRole('button', { name: 'Guardar envío automático' }).click();
+  await expect(page.getByText('Envío automático apagado.')).toBeVisible();
+  await expect(page.locator('#sr-auto')).not.toBeChecked();
 });
 
 test('site administrators view both versions of the monthly report, without sending it', async ({ page }, info) => {
@@ -106,6 +126,7 @@ test('site administrators view both versions of the monthly report, without send
   await expect(page.locator('.report-preview .report-headline')).toBeVisible();
   await expect(page.getByRole('button', { name: /Enviar informe/ })).toHaveCount(0);
   await expect(page.getByText('Destinatarios')).toHaveCount(0);
+  await expect(page.getByText('Envío automático')).toHaveCount(0);
   await page.getByRole('button', { name: 'Detalle técnico' }).click();
   await expect(page.locator('.report-preview.report-technical')).toContainText('Seguridad y respaldos');
   await page.getByLabel('Mes del informe').selectOption({ index: 1 });

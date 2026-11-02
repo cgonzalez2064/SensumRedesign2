@@ -69,6 +69,14 @@ final class SiteReportController extends Controller
         exit;
     }
 
+    /** Informe mensual → Envío automático: on/off and the day of the month (owner). */
+    public function auto(): never
+    {
+        $saved = $this->report()->saveAuto($this->req->raw('auto'), $this->req->raw('day'));
+        $this->app->activity($this->uid(), 'site_report_auto', '', ['auto' => $saved['auto'], 'day' => $saved['day']], $this->req->ip());
+        Response::ok(['settings' => $saved, 'status' => $this->report()->status()]);
+    }
+
     public function settings(): never
     {
         $saved = $this->report()->saveSettings($this->req->raw('recipients'), $this->str('lang'));

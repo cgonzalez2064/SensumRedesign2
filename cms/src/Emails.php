@@ -314,6 +314,45 @@ final class Emails
     }
 
     /** A rounded call-to-action button for the branded layout. */
+    /**
+     * To the owner, when an update brings «Novedades» the team has not had by e-mail:
+     * which ones and how many people can use each; the choice to send them is the owner's.
+     * @param list<array{title:string,summary:string,eligible:int}> $items
+     */
+    public function announcementPending(array $owner, array $items): array
+    {
+        $lang = ($owner['lang'] ?? 'es') === 'en' ? 'en' : 'es';
+        $s = $this->strings($lang);
+        $e = fn (string $v) => self::esc($v);
+        $n = count($items);
+        $pick = fn (string $key, int $count) => self::fill(explode('|', $s[$key])[$count === 1 ? 0 : 1] ?? $s[$key], ['n' => (string) $count]);
+        $rows = '';
+        $text = '';
+        foreach ($items as $it) {
+            $people = $pick('announce.pending.people', (int) $it['eligible']);
+            $rows .= '<tr><td style="padding:12px 0;border-top:1px solid #ececf0"><div style="font-size:16px;font-weight:700;color:#1c1c1c">' . $e($it['title']) . '</div>'
+                . ($it['summary'] !== '' ? '<div style="font-size:14px;line-height:1.5;color:#5c5c66;margin-top:2px">' . $e($it['summary']) . '</div>' : '')
+                . '<div style="font-size:13px;color:#9a3412;margin-top:4px">' . $e($people) . '</div></td></tr>';
+            $text .= '* ' . $it['title'] . ' (' . $people . ")
+";
+        }
+        $link = $this->adminUrl('avisos');
+        $title = $pick('announce.pending.title', $n);
+        $body = '<h1 style="margin:0 0 10px;font-size:23px;line-height:1.3;color:#1c1c1c">' . $e($title) . '</h1>'
+            . '<p style="margin:0 0 14px;color:#2b2b31">' . $e($s['announce.pending.intro']) . '</p>'
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' . $rows . '</table>'
+            . self::cta($s['announce.pending.button'], $link)
+            . '<p style="margin:0;font-size:13px;line-height:1.5;color:#6b6b74">' . $e($s['announce.pending.skip']) . '</p>';
+        $layout = $this->branded($lang, $s['announce.tag'], $title, $body, $e($s['announce.pending.footer']));
+        return [
+            'to' => (string) $owner['email'],
+            'subject' => self::fill($s['announce.pending.subject'], ['n' => (string) $n]),
+            'text' => $title . "\n\n" . $s['announce.pending.intro'] . "\n\n" . $text . "\n" . $s['announce.pending.button'] . ': ' . $link . "\n\n" . $s['announce.pending.skip'] . "\n",
+            'html' => $layout['html'],
+            'embedded' => $layout['embedded'],
+        ];
+    }
+
     public static function cta(string $label, string $url): string
     {
         return '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 10px"><tr><td style="border-radius:10px;background:#f6740a">'

@@ -12,9 +12,10 @@ use Sensum\Cms\Http\ApiError;
  *  - technical(): for the owner and the team — backups, certificates, errors,
  *    interruptions, service levels and technical to-dos. Never sent.
  * The owner previews it, chooses who receives it, and sends it; the owner is
- * always in copy. Accounts with the "report" access view both versions. If
- * the previous month's report has not been sent by the end of day 5, the
- * owner gets a reminder.
+ * always in copy. Or it goes out on its own (autoSend): from 08:00 on the day
+ * the owner chose (5 by default), once per month. Accounts with the "report"
+ * access view both versions. If the previous month's report has not been sent
+ * by the end of that day, the owner gets a reminder.
  *
  * Figures come from what the Content Manager already records: the scheduled
  * check (availability), the error log (incidents), the activity log
@@ -26,6 +27,9 @@ final class SiteReport
 {
     public const MAX_RECIPIENTS = 20;
     public const NOTE_MAX = 600;
+    public const DEFAULT_DAY = 5;
+    public const AUTO_HOUR = 8;
+    private const AUTO_TRIES = 3;
 
     public function __construct(private App $app)
     {
@@ -33,17 +37,34 @@ final class SiteReport
 
     // ------------------------------------------------------------------ settings
 
-    /** @return array{recipients:list<string>, lang:string} */
+    /** @return array{recipients:list<string>, lang:string, auto:bool, day:int} */
     public function settings(): array
     {
         $s = $this->app->settings()->getJson('report_settings');
+        $day = (int) ($s['day'] ?? self::DEFAULT_DAY);
         return [
             'recipients' => array_values(array_filter((array) ($s['recipients'] ?? []), 'is_string')),
             'lang' => ($s['lang'] ?? 'es') === 'en' ? 'en' : 'es',
+            'auto' => ($s['auto'] ?? false) === true,
+            'day' => $day >= 1 && $day <= 28 ? $day : self::DEFAULT_DAY,
         ];
     }
 
-    /** @return array{recipients:list<string>, lang:string} */
+    /**
+     * Turns the automatic send on or off and sets its day (1–28, so every month has it).
+     * @return array{recipients:list<string>, lang:string, auto:bool, day:int}
+     */
+    public function saveAuto(mixed $auto, mixed $day): array
+    {
+        if (!is_bool($auto) || !is_int($day) || $day < 1 || $day > 28) {
+            throw ApiError::validation(is_bool($auto) ? ['day' => 'invalid'] : ['auto' => 'invalid']);
+        }
+        $settings = ['auto' => $auto, 'day' => $day] + $this->settings();
+        $this->app->settings()->setJson('report_settings', $settings);
+        return $this->settings();
+    }
+
+    /** @return array{recipients:list<string>, lang:string, auto:bool, day:int} */
     public function saveSettings(mixed $recipients, string $lang): array
     {
         if (!is_array($recipients) || !array_is_list($recipients)) {
@@ -62,9 +83,9 @@ final class SiteReport
         if (count($clean) > self::MAX_RECIPIENTS) {
             throw ApiError::validation(['recipients' => 'too_many']);
         }
-        $settings = ['recipients' => array_keys($clean), 'lang' => $lang === 'en' ? 'en' : 'es'];
+        $settings = ['recipients' => array_keys($clean), 'lang' => $lang === 'en' ? 'en' : 'es'] + $this->settings();
         $this->app->settings()->setJson('report_settings', $settings);
-        return $settings;
+        return $this->settings();
     }
 
     public function ownerEmail(): string
@@ -989,7 +1010,7 @@ final class SiteReport
      * Sends the report. A test goes only to the owner and is not recorded.
      * @return array{sent:bool, to:list<string>, cc:list<string>}
      */
-    public function send(string $period, int $userId, string $note, bool $test): array
+    public function send(string $period, ?int $userId, string $note, bool $test, bool $auto = false, ?int $at = null): array
     {
         $settings = $this->settings();
         $owner = $this->ownerEmail();
@@ -1020,8 +1041,8 @@ final class SiteReport
         }
         if (!$test) {
             $this->app->db()->insert(
-                'INSERT INTO site_reports (period, sent_at, sent_by, recipients, lang, status, summary) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [$period, time(), $userId, json_encode(array_merge($to, $cc)), $settings['lang'], $sent ? 'sent' : 'failed', json_encode($report['figures'])]
+                'INSERT INTO site_reports (period, sent_at, sent_by, recipients, lang, status, summary, auto) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                [$period, $at ?? time(), $userId, json_encode(array_merge($to, $cc)), $settings['lang'], $sent ? 'sent' : 'failed', json_encode($report['figures']), $auto ? 1 : 0]
             );
         }
         return ['sent' => $sent, 'to' => $to, 'cc' => $cc];
@@ -1033,25 +1054,75 @@ final class SiteReport
         return array_map(fn ($r) => [
             'period' => $r['period'], 'periodLabel' => $this->periodLabel((string) $r['period'], (string) $r['lang']),
             'sentAt' => (int) $r['sent_at'], 'sentBy' => $r['name'], 'recipients' => json_decode((string) $r['recipients'], true) ?: [],
-            'status' => $r['status'],
+            'status' => $r['status'], 'auto' => (int) $r['auto'] === 1,
         ], $this->app->db()->all(
             'SELECT r.*, u.name FROM site_reports r LEFT JOIN users u ON u.id = r.sent_by ORDER BY r.id DESC LIMIT 24'
         ));
     }
 
-    /** Whether the previous month's report went out, and the reminder state. */
+    /** Whether the previous month's report went out, the automatic send, and the reminder state. */
     public function status(?int $now = null): array
     {
         $now ??= time();
         $period = self::previousPeriod($now);
+        $set = $this->settings();
         $sentAt = $this->app->db()->value("SELECT MAX(sent_at) FROM site_reports WHERE period = ? AND status = 'sent'", [$period]);
+        // With the automatic send, the report is due on its day; otherwise on day 5.
+        $dueDay = $set['auto'] ? $set['day'] : self::DEFAULT_DAY;
+        $thisMonth = (int) strtotime(date('Y-m-', $now) . sprintf('%02d', $set['day']) . ' ' . self::AUTO_HOUR . ':00');
         return [
             'period' => $period,
             'sentAt' => $sentAt !== null ? (int) $sentAt : null,
-            'dueDay' => 5,
-            'overdue' => $sentAt === null && (int) date('j', $now) > 5,
+            'dueDay' => $dueDay,
+            'overdue' => $sentAt === null && (int) date('j', $now) > $dueDay,
             'reminderSentAt' => ((int) $this->app->settings()->get('report_reminder_' . $period, '0')) ?: null,
+            'auto' => $set['auto'],
+            // When the next automatic send will happen: this month's day, or next month's once this month's report went out.
+            'nextAuto' => !$set['auto'] ? null : ($sentAt === null ? max($thisMonth, $now) : (int) strtotime('+1 month', $thisMonth)),
         ];
+    }
+
+    /**
+     * The automatic send (Informe mensual → Envío automático): from 08:00 on the chosen
+     * day, last month's report goes to the recipients with its PDF and the owner in copy,
+     * as if the owner had pressed «Enviar». Never twice for a month, nor after a manual
+     * send; without recipients nothing goes out (the reminder tells the owner). A failed
+     * try is repeated 6 hours later, 3 times at most; then the reminder takes over.
+     */
+    public function autoSend(?int $now = null): string
+    {
+        $now ??= time();
+        $set = $this->settings();
+        if (!$set['auto']) {
+            return 'off';
+        }
+        $period = self::previousPeriod($now);
+        $db = $this->app->db();
+        if ($db->value("SELECT 1 FROM site_reports WHERE period = ? AND status = 'sent'", [$period])) {
+            return 'already sent';
+        }
+        $day = (int) date('j', $now);
+        if ($day < $set['day'] || ($day === $set['day'] && (int) date('G', $now) < self::AUTO_HOUR)) {
+            return 'not due';
+        }
+        [, $end] = self::bounds($period);
+        $first = $db->value('SELECT MIN(created_at) FROM users');
+        if ($first === null || (int) $first >= $end) {
+            return 'nothing to report (the site was not in use that month)';
+        }
+        if (!$set['recipients']) {
+            return 'no recipients (the owner is reminded)';
+        }
+        $tries = array_map('intval', array_column($db->all("SELECT sent_at FROM site_reports WHERE period = ? AND auto = 1 AND status = 'failed'", [$period]), 'sent_at'));
+        if (count($tries) >= self::AUTO_TRIES) {
+            return 'failed ' . self::AUTO_TRIES . ' times (the owner is reminded)';
+        }
+        if ($tries && max($tries) > $now - 6 * 3600) {
+            return 'failed, retrying later';
+        }
+        $r = $this->send($period, null, '', false, true, $now);
+        $this->app->activity(null, $r['sent'] ? 'site_report_sent' : 'site_report_failed', $period, ['recipients' => count($r['to']) + count($r['cc']), 'auto' => true]);
+        return $r['sent'] ? 'sent to ' . count($r['to']) . ' recipient(s), the owner in copy' : 'failed (retried in 6 hours)';
     }
 
     /**
@@ -1078,7 +1149,7 @@ final class SiteReport
         $emails = new Emails($this->app);
         $link = $emails->adminUrl('informe');
         $lines = [
-            self::fill($s['sr.remind.intro'], ['month' => $month]),
+            self::fill($s['sr.remind.intro'], ['month' => $month, 'day' => $st['dueDay']]),
             $recipients > 0 ? self::plural($s['sr.remind.recipients'], $recipients) : $s['sr.remind.noRecipients'],
         ];
         $body = '<div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#f6740a">' . Emails::esc($s['sr.remind.eyebrow']) . '</div>'

@@ -74,3 +74,24 @@ test('the owner tells the team what is new: one «Novedad», a message, a test, 
   expect(got.Text).toContain(`Actualizamos el panel (${info.project.name}).`);
   expect(got.HTML).toContain('/admin/#/wiki/');
 });
+
+test('«No avisar»: an item set aside is marked, and «Volver a proponer» brings it back', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop-chrome', 'one browser is enough');
+  await signIn(page);
+  await page.goto('/admin/#/avisos');
+  await expect(page.locator('main h1')).toHaveText('Avisos al equipo');
+  const item = page.locator('.announce-item', { hasText: 'Más secciones: pide lo que necesitas' });
+  await expect(item).toBeVisible();
+  for (const box of await page.locator('.announce-item input:checked').all()) await box.uncheck();
+  await item.locator('input').check();
+  await page.getByRole('button', { name: 'No avisar las marcadas' }).click();
+  await expect(page.getByText('Listo: esas novedades quedan sin aviso.', { exact: false })).toBeVisible();
+  await expect(item.locator('.badge', { hasText: 'Sin aviso' })).toBeVisible();
+  await expect(item.locator('input')).not.toBeChecked();
+  // The e-mail to the owner about new «Novedades» is on by default.
+  await expect(page.locator('#announce-notify')).toBeChecked();
+  await item.getByRole('button', { name: 'Volver a proponer' }).click();
+  await expect(page.getByText('La novedad vuelve a estar pendiente de aviso.')).toBeVisible();
+  await expect(item.locator('.badge', { hasText: 'Sin aviso' })).toHaveCount(0);
+  await expect(item.locator('input')).toBeChecked();
+});

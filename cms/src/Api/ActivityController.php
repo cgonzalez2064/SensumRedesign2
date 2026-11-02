@@ -29,7 +29,7 @@ final class ActivityController extends Controller
             'view_as_started', 'view_as_switched', 'view_as_ended', 'setup_completed', 'setup_denied'],
         'settings' => ['email_settings_changed', 'email_test', 'translation_settings_changed', 'alert_rules_changed', 'alert_test', 'backup_settings_changed',
             'backup_downloaded', 'integrity_accepted', 'site_report_settings', 'stats_settings_changed', 'ticket_settings_changed',
-            'team_announced', 'team_announcement_test'],
+            'team_announced', 'team_announcement_test', 'team_announcement_dismissed', 'team_announcement_settings', 'site_report_auto', 'site_report_sent', 'site_report_failed'],
         'support' => ['report_submitted', 'report_email_failed', 'ticket_status', 'ticket_edited', 'ticket_rated'],
     ];
     /** Actions about one person (their id is the target). */

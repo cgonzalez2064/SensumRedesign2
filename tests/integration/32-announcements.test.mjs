@@ -110,6 +110,41 @@ test('sending: one e-mail per person, in their language, only their items, never
   assert.equal(s.sql("SELECT count(*) FROM news_emailed WHERE news_id = '2026-10-mas-secciones'"), '2');
 });
 
+test('the choice is the owner\'s: one e-mail about new «Novedades», «No avisar» puts them aside', async () => {
+  for (const k of ['admin', 'sales']) {
+    assert.equal((await P[k].c.post('/api/announcements/dismiss', { ids: ['2026-10-wiki'] })).status, 403, k);
+    assert.equal((await P[k].c.put('/api/announcements/settings', { notify: false })).status, 403, k);
+  }
+  const pending = (await owner.get('/api/announcements')).data.news.filter((n) => n.eligible > n.emailed && !n.dismissed);
+  assert.ok(pending.length > 1, 'some «Novedades» the team has not had by e-mail');
+  // The scheduled check tells the owner once; nothing goes to the team.
+  const since = Date.now() - 1000;
+  assert.match(s.cli(['automations']), new RegExp(`^Team announcements: told the owner about ${pending.length} new item\\(s\\)$`, 'm'));
+  assert.match(s.cli(['automations']), /^Team announcements: nothing new$/m, 'once per item');
+  const mine = (await messagesTo(ADMIN.email)).filter((m) => m.Subject === `Novedades del panel para avisar al equipo (${pending.length})` && Date.parse(m.Created) >= since);
+  assert.equal(mine.length, 1);
+  const body = (await message(mine[0].ID)).Text;
+  for (const n of pending) assert.ok(body.includes(n.title), n.title);
+  assert.match(body, /\/admin\/#\/avisos/);
+  assert.match(body, /«No avisar»/);
+  assert.equal((await mails(P.sales.email)).length, 2, 'the team got nothing new');
+  // «No avisar»: set aside (no reminder in Inicio, not pre-selected), and undone.
+  const id = pending[0].id;
+  const off = await owner.post('/api/announcements/dismiss', { ids: [id], dismiss: true });
+  assert.equal(off.status, 200, off.text);
+  assert.equal(off.data.news.find((n) => n.id === id).dismissed, true);
+  assert.match(s.sql("SELECT details FROM activity_log WHERE action = 'team_announcement_dismissed' ORDER BY id DESC LIMIT 1"), new RegExp(id));
+  const on = await owner.post('/api/announcements/dismiss', { ids: [id], dismiss: false });
+  assert.equal(on.data.news.find((n) => n.id === id).dismissed, false);
+  assert.equal((await owner.post('/api/announcements/dismiss', { ids: ['no-existe'] })).status, 422);
+  // The e-mail to the owner can be turned off.
+  assert.equal((await owner.put('/api/announcements/settings', { notify: 'no' })).status, 422);
+  assert.equal((await owner.put('/api/announcements/settings', { notify: false })).status, 200);
+  assert.equal((await owner.get('/api/announcements')).data.notify, false);
+  assert.match(s.cli(['automations']), /^Team announcements: owner notice off$/m);
+  await owner.put('/api/announcements/settings', { notify: true });
+});
+
 test('inactive accounts, people who joined later and the owner-only «Novedad»', async () => {
   s.sql(`UPDATE users SET status = 'disabled' WHERE id = ${P.editor.id}`);
   const r = (await owner.post('/api/announcements/recipients', { ids: ['2026-10-wiki'] })).data.recipients.map((x) => x.id);
