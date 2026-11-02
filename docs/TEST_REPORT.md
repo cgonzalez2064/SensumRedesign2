@@ -9,7 +9,7 @@ Playwright 1.63, axe-core 4.x, Lighthouse 12, Mailpit 1.31 as the SMTP server.
 
 | Suite | Location | Size |
 |---|---|---|
-| API integration | `tests/integration/*.test.mjs` | 282 tests in 34 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation, PageSpeed and `crontab` use local stand-ins |
+| API integration | `tests/integration/*.test.mjs` | 288 tests in 35 files; each file runs its own PHP server with a throwaway database; some servers deliberately have SMTP down; translation, PageSpeed and `crontab` use local stand-ins |
 | Browser E2E | `tests/e2e/*.spec.js` | 93 specs × 3 browser profiles (279 runs, 65 skipped by design: phone-only, desktop-only or single-submission tests) |
 | Visual regression | `tests/visual/public-site.spec.js` | 22 reference states of the public site vs. the approved `main` |
 | Production build | `tests/apache/apache.test.mjs` | 14 checks of the built release under Apache + PHP-FPM (development and production-like copies) |
@@ -525,6 +525,25 @@ one failing step no longer stops the check. Design: `SECURITY_AUDIT.md` §27.
 | Visual regression (public site) | **22/22** identical |
 | Built release under Apache + PHP-FPM | **14/14** (`dist/release-20261027-da678a5`) |
 | Static analysis | PHPStan: no errors |
+
+## Change — the monthly report on its own, and the owner's choice on announcements (2026-11-02)
+
+The owner can let the monthly report go out on its own (Informe mensual → Envío automático,
+off by default, day 1–28) and decides whether the team hears about each update's «Novedades»
+(one e-mail to the owner, «No avisar» in Inicio and Avisos al equipo). Design:
+`SECURITY_AUDIT.md` §28. GitHub Actions had failed the previous push (dd6f781) on a race in
+`29-automations` («Pedir acceso»): the check waited for a number of e-mails the person already
+had; every check there now waits for its own subject.
+
+| Check | Result |
+|---|---|
+| API integration (35 files) | **288/288** (+6). `35-report-auto`, time travel with `bin/console automations <unix-time>`: owner only (401 signed out), strict values (day 0, 29 or "5", `auto` "yes" → 422), off by default and kept when the recipients are saved; not due before 08:00 on the day; at 08:10 the December report goes once to the recipient with its PDF, the owner in Cc, marked automatic in `site_reports` and Actividad; never again that month; not after a manual send, without recipients, for a month before the site was in use, or when off; with e-mail down: failed, «retrying later» within 6 hours, two more tries, then «failed 3 times» and the reminder; the reminder follows the chosen day. `32-announcements`: owner-only dismiss and switch; the scheduled check tells the owner once about every pending item (titles, link to Avisos al equipo, «No avisar») and the team gets nothing; «No avisar» and its undo; the switch turns the e-mail off. Found on the way: `31-wiki` depended on today's date (an account created after 27 October no longer sees October's «Novedades», as designed) — it now uses accounts that existed then |
+| Browser E2E (3 profiles) | Full run: **213 passed**, 67 skipped by design, 2 failed in the new tests themselves: the «No avisar» test unchecked a shrinking `:checked` list, and `value.spec`'s `getByLabel('Mes')` now also matched «…cada mes» of the new card (now «Mes del informe»). After the fixes and the final layout, the six affected files on the three devices: **86 passed**, 0 failed. New: automatic sending off by default, on for day 7 (saved, shown after reload, «Próximo envío automático»), then off; an administrator with report access doesn't see the card; «No avisar las marcadas» marks the item «Sin aviso» and «Volver a proponer» brings it back; the owner e-mail switch is on by default |
+| Production rehearsal | A copy in production's state — the package production runs since 27 October (`dd6f781`), the database at `021_announcements`, the site photos — served by Apache + PHP-FPM with the production `.htaccess`. Updated with the deploy guide's commands: `publish` answered «Changed: nothing», migration `022_report_auto` applied by itself, the three public pages byte-identical, `cron` both `[ OK ]`. Every public file outside `admin/` is identical between the two packages (CSS, JS, fonts, `.htaccess`, contact handler); six panel files change. In that copy the scheduled check told the owner about 9 pending «Novedades» once (nothing to the team) and, with the clock at 5 December 08:20, sent the November report on its own to the recipient with the PDF and the owner in Cc, once. Rollback rehearsed: the previous package with the same commands runs over the new database (health ok, pages identical) |
+| Visual regression (public site) | **22/22** identical |
+| Built release under Apache + PHP-FPM | **14/14** (`dist/release-20261102-263147e`) |
+| Static analysis | PHPStan: no errors |
+| Wiki | New owner screenshot `informe-envio` (8 variants), Inicio and Informe mensual captures refreshed; articles and one owner-only «Novedad» |
 
 ## Other audits
 
