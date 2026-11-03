@@ -15,8 +15,10 @@ const cliAsync = async (server, args, env = {}) => (await promisify(execFile)(PH
 
 // Google PageSpeed stand-in.
 let psiCalls = 0;
+let psiStatus = 200;
 const psi = createServer((req, res) => {
   psiCalls++;
+  if (psiStatus !== 200) { res.writeHead(psiStatus, { 'Content-Type': 'application/json' }); res.end('{"error":{"code":429}}'); return; }
   const mobile = new URL(req.url, 'http://x').searchParams.get('strategy') === 'mobile';
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ lighthouseResult: { categories: {
@@ -210,6 +212,28 @@ test('the scheduled check records availability, Google scores and the certificat
   const visibility = tech.sections.find((x) => x.title === 'Visibilidad en Google');
   assert.ok(visibility.items.includes('Velocidad en computadoras: 99/100 (excelente)'));
   assert.ok(visibility.items.includes('Velocidad en celulares: 86/100 (muy buena)'));
+});
+
+test('a failing PageSpeed call waits (a day on 429) instead of retrying every run, and logs once', async () => {
+  s.sql("DELETE FROM settings WHERE key IN ('pagespeed', 'pagespeed_state')");
+  psiStatus = 429;
+  const calls = psiCalls;
+  const out = await cliAsync(s, ['monitor']);
+  assert.match(out, /Google PageSpeed: failed \(mobile, HTTP 429\)/);
+  assert.equal(psiCalls, calls + 1, 'stops at the first failed strategy');
+  const state = JSON.parse(s.sql("SELECT value FROM settings WHERE key = 'pagespeed_state'"));
+  assert.equal(state.failures, 1);
+  assert.ok(state.retryAt - state.lastAttemptAt >= 86400, '429 waits a day');
+  const again = await cliAsync(s, ['monitor']);
+  assert.match(again, /Google PageSpeed: waiting after 1 failed attempt/);
+  assert.equal(psiCalls, calls + 1, 'no call while waiting');
+  // Backoff for other errors: 1 h, 3 h, 6 h, then a day.
+  assert.deepEqual(JSON.parse(php(s, "echo json_encode(array_map(fn ($n) => Sensum\\Cms\\PageSpeed::backoff($n, 500), [1, 2, 3, 4, 9]));")), [3600, 10800, 21600, 86400, 86400]);
+  // Once it works again the wait is cleared.
+  psiStatus = 200;
+  s.sql("UPDATE settings SET value = '{\"failures\":1,\"retryAt\":1}' WHERE key = 'pagespeed_state'");
+  assert.match(await cliAsync(s, ['monitor']), /Google PageSpeed: mobile 86 · desktop 99/);
+  assert.equal(s.sql("SELECT value FROM settings WHERE key = 'pagespeed_state'"), '[]');
 });
 
 test('sending: recipients in To, the owner in Cc, branded e-mail, history recorded', async () => {
